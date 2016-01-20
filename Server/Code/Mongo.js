@@ -12,6 +12,7 @@ const mongoURL = 'mongodb://localhost:27017/test';
 var connectedDb = null;
 
 // Call this just once, at the start of the server.
+// TODO: Need better error handling when can't initially connect. Right now have an ugly looking error when Mongo is not already started and we try to start our server.
 exports.connect = function() {
 	MongoClient.connect(mongoURL, function(err, db) {
 	  assert.equal(null, err);

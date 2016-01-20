@@ -4,7 +4,7 @@
 
 # The relative path for INPUTFILE assumes that we run this script from the directory where serverConstants.js is located.
 # Any spaces in the directory names don't need backslashes to escape the spaces.
-INPUTFILE="../../iOS Framework/Code/Internal/SMServerConstants.swift"
+INPUTFILE="../../iOSFramework/Code/Internal/SMServerConstants.swift"
 
 OUTPUTFILE="serverConstants.js"
 START="SERVER-CONSTANTS-START"
