@@ -1,0 +1,161 @@
+/* 
+From: https://developers.google.com/identity/protocols/CrossClientAuth
+
+"When developers build software, it routinely includes modules that run on a web server, other modules that run in the browser, and others that run as native mobile apps. Both developers and the people who use their software typically think of all these modules as part of a single app." 
+
+"Since the refresh token does not expire, it is the responsibility of the web component to store the refresh token in a secure and long-lived manner."
+
+"Use HTTP POST requests for all requests to the server, and include an ID token in the body of each POST request. The ID token, which you acquire as described in the preceding section, informs the back-end of the user's identity"
+*/
+
+/* From: https://developers.google.com/identity/protocols/OAuth2
+
+"Note: Save refresh tokens in secure long-term storage and continue to use them as long as they remain valid. Limits apply to the number of refresh tokens that are issued per client-user combination, and per user across all clients, and these limits are different. If your application requests enough refresh tokens to go over one of the limits, older refresh tokens stop working."
+*/
+
+/* Web vs. installed applications
+https://developers.google.com/identity/protocols/OAuth2
+*/
+
+/* Example Node.js code to use a refresh token to access Google Drive API
+https://developers.google.com/drive/web/quickstart/nodejs
+*/
+
+/* client_secrets.json file
+https://developers.google.com/api-client-library/python/guide/aaa_client_secrets 
+*/
+
+/* Structure of .credentials property of OAuth2Client object:
+
+https://www.npmjs.com/package/googleapis
+
+oauth2Client.setCredentials({
+  access_token: 'ACCESS TOKEN HERE',
+  refresh_token: 'REFRESH TOKEN HERE'
+});
+
+*/
+
+/* Errors:
+
+1) Error: invalid_client
+	Solution: I went into the Google API console and made a specific Web set of credentials for the server.
+	
+2) Error: unauthorized_client
+	I tried adding in the scope I was using to the iOS app, but that didn't work.
+	It appears that you cannot refresh using a different client:
+		http://stackoverflow.com/questions/13871982/unable-to-refresh-access-token-response-is-unauthorized-client
+	So, it seems that my algorithm is wrong. I was assuming you could pass the refresh token from the iOS app
+	to the server and do a refresh.
+*/
+
+/* idToken structure:
+http://stackoverflow.com/questions/8311836/how-to-identify-a-google-oauth2-user/13016081#13016081
+*/
+
+/* From: https://developers.google.com/identity/protocols/CrossClientAuth
+"The web component can exchange the code, as described in Handling the response, for an access token and a refresh token."
+    "Handling the response" seems to refer to the section "Handling the OAuth 2.0 server response" in https://developers.google.com/identity/protocols/OAuth2WebServer#handlingtheresponse
+    
+"Since the refresh token does not expire, it is the responsibility of the web component to store the refresh token in a secure and long-lived manner."
+
+ See also https://developers.google.com/identity/sign-in/ios/offline-access?hl=en
+*/
+
+/* RESTful exchange of authorization code for access token/refresh token
+https://developers.google.com/identity/protocols/OAuth2WebServer
+*/
+
+/* From: https://developers.google.com/drive/web/auth/web-server
+"Important: Always store user refresh tokens. If your application needs a new refresh token it must send a request with the approval_prompt query parameter set to force. This will cause the user to see a dialog to grant permission to your application again."
+*/
+
+/* Using Javascript with Google Drive:
+    http://stackoverflow.com/questions/10330992/authorization-of-google-drive-using-javascript
+*/
+
+Example response from Google Drive API:
+
+{
+    "kind": "drive#file",
+    "id": "0B3xI3Shw5ptRUHpTZGtkWnptcms",
+    "etag": "\"amKkzAMv_fUBF0Cxt1a1WaLm5Nk/MTQ1MTcwMzM2MDQwNQ\"",
+    "selfLink": "https://www.googleapis.com/drive/v2/files/0B3xI3Shw5ptRUHpTZGtkWnptcms",
+    "webContentLink": "https://docs.google.com/uc?id=0B3xI3Shw5ptRUHpTZGtkWnptcms&export=download",
+    "alternateLink": "https://drive.google.com/file/d/0B3xI3Shw5ptRUHpTZGtkWnptcms/view?usp=drivesdk",
+    "iconLink": "https://ssl.gstatic.com/docs/doclist/images/icon_10_text_list.png",
+    "title": "SingleFileUpload",
+    "mimeType": "text/plain",
+    "labels": {
+        "starred": false,
+        "hidden": false,
+        "trashed": false,
+        "restricted": false,
+        "viewed": true
+    },
+    "createdDate": "2016-01-02T02:56:00.405Z",
+    "modifiedDate": "2016-01-02T02:56:00.405Z",
+    "modifiedByMeDate": "2016-01-02T02:56:00.405Z",
+    "lastViewedByMeDate": "2016-01-02T02:56:00.405Z",
+    "markedViewedByMeDate": "1970-01-01T00:00:00.000Z",
+    "version": "71329",
+    "parents": [
+        {
+            "kind": "drive#parentReference",
+            "id": "0B3xI3Shw5ptRWk1ENl9TNEtkaWM",
+            "selfLink": "https://www.googleapis.com/drive/v2/files/0B3xI3Shw5ptRUHpTZGtkWnptcms/parents/0B3xI3Shw5ptRWk1ENl9TNEtkaWM",
+            "parentLink": "https://www.googleapis.com/drive/v2/files/0B3xI3Shw5ptRWk1ENl9TNEtkaWM",
+            "isRoot": false
+        }
+    ],
+    "downloadUrl": "https://doc-04-5k-docs.googleusercontent.com/docs/securesc/nl6tv0dbe1l96ij0vaei844bs0u3maqc/fi6hefnupvm2iol24g0fg7tchiq8vn6v/1451700000000/01427267752435231468/01427267752435231468/0B3xI3Shw5ptRUHpTZGtkWnptcms?e=download&gd=true",
+    "userPermission": {
+        "kind": "drive#permission",
+        "etag": "\"amKkzAMv_fUBF0Cxt1a1WaLm5Nk/eJKJ_Vl701KAy4cB8hWbUrZyN7k\"",
+        "id": "me",
+        "selfLink": "https://www.googleapis.com/drive/v2/files/0B3xI3Shw5ptRUHpTZGtkWnptcms/permissions/me",
+        "role": "owner",
+        "type": "user"
+    },
+    "originalFilename": "SingleFileUpload",
+    "fileExtension": "",
+    "md5Checksum": "51da48e94fea3c3b96cb8167a60f4daf",
+    "fileSize": "19",
+    "quotaBytesUsed": "19",
+    "ownerNames": [
+        "Christopher G. Prince"
+    ],
+    "owners": [
+        {
+            "kind": "drive#user",
+            "displayName": "Christopher G. Prince",
+            "picture": {
+                "url": "https://lh3.googleusercontent.com/-PuoGipqj3hE/AAAAAAAAAAI/AAAAAAAAAJ8/aSdvLsy51jE/s64/photo.jpg"
+            },
+            "isAuthenticatedUser": true,
+            "permissionId": "01427267752435231468",
+            "emailAddress": "crspybits@gmail.com"
+        }
+    ],
+    "lastModifyingUserName": "Christopher G. Prince",
+    "lastModifyingUser": {
+        "kind": "drive#user",
+        "displayName": "Christopher G. Prince",
+        "picture": {
+            "url": "https://lh3.googleusercontent.com/-PuoGipqj3hE/AAAAAAAAAAI/AAAAAAAAAJ8/aSdvLsy51jE/s64/photo.jpg"
+        },
+        "isAuthenticatedUser": true,
+        "permissionId": "01427267752435231468",
+        "emailAddress": "crspybits@gmail.com"
+    },
+    "editable": true,
+    "copyable": true,
+    "writersCanShare": true,
+    "shared": false,
+    "explicitlyTrashed": false,
+    "appDataContents": false,
+    "headRevisionId": "0B3xI3Shw5ptRY1ZLUmFxc2tNZkkyRFBnUEt4YWlvZ00yRU40PQ",
+    "spaces": [
+        "drive"
+    ]
+}

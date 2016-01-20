@@ -1,0 +1,32 @@
+The structure of files & directories represented by the SyncServer.
+
+We will not represent files in the long-term, but rather we'll represent:
+
+a) A group of files being uploaded, that will later be sent to cloud storage.
+    The files are uploaded by a specific user/device.
+
+b) A group of files being downloaded-- that are first received from cloud storage.
+    The files are being downloaded by a specific user/device.
+
+It would seem to make sense to organize:
+1) Separately by uploads vs. downloads,
+2) Within those categories by the user/device identifiers.
+
+So, I'm going to use the following directory structures:
+
+1) uploads/
+    user1.device1/
+        files being uploaded...
+
+    user2.device1/
+        files being uploaded...
+
+    etc.
+
+2) And a similar structure for a downloads/ directory.
+
+3) Each file within the userN.deviceM directories will be the UUID of the file assigned by the app.
+
+Each of the files within the specific directories will be removed after its specific upload or download has been assured.
+Each userN.deviceM directory will be removed once its set of uploads or downloads is complete.
+

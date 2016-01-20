@@ -1,0 +1,102 @@
+//
+//  CoreData.h
+//  Petunia
+//
+//  Created by Christopher Prince on 6/11/13.
+//  Copyright (c) 2013 Christopher Prince. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import <CoreData/CoreData.h>
+#import <UIKit/UIKit.h>
+
+#ifdef SMCOMMONLIB
+#import <SMCommon/NSObject+TargetsAndSelectors.h>
+#else
+#import "NSObject+TargetsAndSelectors.h"
+#endif
+
+@protocol CoreDataModel <NSObject>
+
+@required
+
+// This doesn't make assumptions about uuid's.
++ (NSManagedObject * _Nonnull) newObject;
++ (NSString * _Nonnull) entityName;
+
+@optional
+
+// Creates a UUID for the object iff makeUUID = YES; object must have an NSManagedObject field/property named "uuid", of type NSString.
++ (NSManagedObject * _Nonnull) newObjectAndMakeUUID: (BOOL) makeUUID;
+
++ (NSArray * _Nullable) fetchAllObjects;
++ (NSArray * _Nullable) fetchObjectsWithModifyingFetchRequest: (void (^ _Nonnull)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
+
+// This is relatively efficient: It doesn't fetch all objects into an array.
++ (NSUInteger) countOfObjects;
+
+@end
+
+@interface CoreData : NSObject
+
+// Keys for the dictionary in initWithNamesDictionary.
+
+// File names
+extern const NSString * _Nonnull CoreDataBundleModelName; // the model name
+extern const NSString * _Nonnull CoreDataSqlliteFileName;
+extern const NSString * _Nonnull CoreDataSqlliteBackupFileName;
+
+// This key is optional; useful for locating core data models outside of the main bundle (e.g., in a framework).
+extern const NSString * _Nonnull CoreDataModelBundle; // Bundle where model is located.
+
+#define COREDATA_BUNDLE_MODEL_NAME                      CoreDataBundleModelName
+#define COREDATA_SQLITE_FILE_NAME                       CoreDataSqlliteFileName
+#define COREDATA_SQLITE_BACKUP_FILE_NAME                CoreDataSqlliteBackupFileName
+#define COREDATA_MODEL_BUNDLE                           CoreDataModelBundle
+
+// Keys as above.
+- (instancetype _Nonnull) initWithNamesDictionary: (NSDictionary * _Nonnull) dictionary;
+
+// Only use these if you want to have just a single managed object context.
++ (void) useDefaultSession: (CoreData * _Nonnull) defaultSession;
++ (instancetype _Nonnull) defaultSession;
+
+// If you want to have multiple managed object contexts, you can use this.
++ (void) registerSession: (CoreData * _Nonnull) coreData forName: (NSString * _Nonnull) sessionName;
++ (instancetype _Nonnull) sessionNamed: (NSString * _Nonnull) sessionName;
+
+- (void) setupCustomAlert: (void (^ _Nullable)(UIAlertView * _Nonnull alert)) alert;
+
+@property (strong, nonatomic, readonly) NSManagedObjectContext * _Nonnull context;
+
+// Get callbacks when managed objects are deleted, updated, or inserted. Based on NSManagedObjectContextObjectsDidChangeNotification. The keys used in the associated NSMutableDictionary's are: NSDeletedObjectsKey, NSUpdatedObjectsKey, NSInsertedObjectsKey
+@property (strong, nonatomic, readonly) NSObject<TargetsAndSelectors> * _Nonnull didDeleteObjects;
+@property (strong, nonatomic, readonly) NSObject<TargetsAndSelectors> * _Nonnull didUpdateObjects;
+@property (strong, nonatomic, readonly) NSObject<TargetsAndSelectors> * _Nonnull didInsertObjects;
+
+// Allow or disallow undo. Default is off.
+- (void) undoIsOn: (BOOL) onOff;
+
+// No effect if undo is off.
+- (void) undo;
+
+// We need a saveContext that returns void for the cases where we are doing a performSelector
+- (void) saveContextVoidReturn;
+- (BOOL) saveContext;
+
+// These methods can return nil.
+- (NSManagedObject * _Nullable) newObjectWithEntityName: (NSString * _Nonnull) entityName;
+
+// If there is an error, error is returned non-nil. In this case, a UIAlertView will have been given to the user. Nil is returned in this case. With no error, and no objects found, nil is returned.
+- (NSArray * _Nullable) fetchAllObjectsWithEntityName: (NSString * _Nonnull) entityName andError: (NSError * _Nonnull * _Nonnull) error;
+- (NSArray * _Nullable) fetchObjectsWithEntityName: (NSString * _Nonnull) entityName error: (NSError * _Nonnull * _Nonnull) error modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
+
+- (NSFetchRequest * _Nullable) fetchRequestWithEntityName: (NSString * _Nonnull) entityName modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
+
+// Get the total number of objects, with that entity name, in the context.
+// If there is an error, error is returned non-nil. In this case, a UIAlertView will have been given to the user. Returns 0 on an error.
+- (NSUInteger) countOfObjectsWithEntityName: (NSString * _Nonnull ) entityName andError: (NSError * _Nonnull * _Nonnull) error;
+
+- (void) removeObject: (NSManagedObject * _Nonnull) managedObject;
+
+@end

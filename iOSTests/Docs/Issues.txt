@@ -1,0 +1,12 @@
+Issues I'm running into with XCTest:
+
+0) Just found a tricky bit here: Need to delay the initiation of the first test until the app launch has connected us with the server and checked our user info. Solving this by using a TimedCallback below [1].
+
+1) Xcode is saying "Test Succeeded" but it hasn't run the test. And this is occurring for my other tests too. (The other tests that used to work). Restarting the device worked: http://stackoverflow.com/questions/33404226/xcode-ui-automation-test-not-running-on-physical-device/34465123#34465123
+
+2) Singleton classes. Had to seriously change linkage/public attributes. See [2] below.
+http://stackoverflow.com/questions/27172481/swift-singleton-init-called-twice-in-xctest
+
+3) Something funky is going on with my Silent Sign in with Google Drive. Before running tests I'm having to: (a) delete the app, (b) do a regular build of the app, (c) sign in fully with Google Drive, and (d) stop the app. Hmmm. This may have been because of other errors I was having.
+
+4) Renaming an XCTest class causes quite a few problems.

@@ -1,0 +1,284 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		8357A3E91C0FD107005891B9 /* Locks.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = Locks.txt; path = Docs/Locks.txt; sourceTree = "<group>"; };
+		8357A3EA1C0FD864005891B9 /* PSLock.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSLock.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F28751C128D1D00385636 /* FileTransfers.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FileTransfers.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F28761C12D9E700385636 /* Server.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Server.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F28771C12DF1500385636 /* macros.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = macros.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F28781C13758900385636 /* File.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = File.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F28791C13CCE300385636 /* Logger.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Logger.js; sourceTree = "<group>"; };
+		836F287A1C13F4B800385636 /* PSOperationId.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSOperationId.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F287B1C13F68400385636 /* PSFileIndex.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSFileIndex.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		836F287E1C1679C900385636 /* Common.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Common.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		838607841C459D7300EB2FAD /* ClientFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = ClientFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83B0BEBE1C114935002B5735 /* CloudStorage.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = CloudStorage.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83EBF73A1C0A3BBE009F9796 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		83EBF73B1C0A3BBE009F9796 /* JSON.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = JSON.js; sourceTree = "<group>"; };
+		83EBF73C1C0A3BBE009F9796 /* Mongo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Mongo.js; sourceTree = "<group>"; };
+		83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PSUserCredentials.js; sourceTree = "<group>"; };
+		83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ServerConstants.js; sourceTree = "<group>"; };
+		83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = UserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83EBF7411C0A3BD4009F9796 /* client_secret.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = client_secret.json; sourceTree = "<group>"; };
+		83EBF7611C0C217A009F9796 /* PSOutboundFileChange.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSOutboundFileChange.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83EBF7661C0E890A009F9796 /* Operation.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Operation.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83EBF76A1C0E9E4E009F9796 /* dataModel.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = dataModel.txt; path = Docs/dataModel.txt; sourceTree = "<group>"; };
+		83EBF76B1C0E9E4E009F9796 /* GoogleAPI notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = "GoogleAPI notes.txt"; path = "Docs/GoogleAPI notes.txt"; sourceTree = "<group>"; };
+		83EBF76C1C0E9E4E009F9796 /* testCases.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = testCases.txt; path = Docs/testCases.txt; sourceTree = "<group>"; };
+		83EBF76D1C0E9E66009F9796 /* makeServerConstants.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = makeServerConstants.sh; path = Scripts/makeServerConstants.sh; sourceTree = "<group>"; };
+		83EBF76E1C0E9E66009F9796 /* startMongoDb.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = startMongoDb.sh; path = Scripts/startMongoDb.sh; sourceTree = "<group>"; };
+		83EBF76F1C0E9E66009F9796 /* startServer.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = startServer.sh; path = Scripts/startServer.sh; sourceTree = "<group>"; };
+		83EBF7701C0E9EB7009F9796 /* fileStructure.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = fileStructure.txt; path = Docs/fileStructure.txt; sourceTree = "<group>"; };
+		83EFAC031C3F784900D54E14 /* PSFileTransferLog.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PSFileTransferLog.js; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		836F287D1C166CE500385636 /* Persistent Storage */ = {
+			isa = PBXGroup;
+			children = (
+				8357A3EA1C0FD864005891B9 /* PSLock.sjs */,
+				836F287A1C13F4B800385636 /* PSOperationId.sjs */,
+				836F287B1C13F68400385636 /* PSFileIndex.sjs */,
+				83EBF7611C0C217A009F9796 /* PSOutboundFileChange.sjs */,
+				83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.js */,
+				83EFAC031C3F784900D54E14 /* PSFileTransferLog.js */,
+			);
+			name = "Persistent Storage";
+			sourceTree = "<group>";
+		};
+		83EBF72E1C0A3B5B009F9796 = {
+			isa = PBXGroup;
+			children = (
+				83EBF7691C0E8EDD009F9796 /* Docs */,
+				83EBF7421C0A3BE6009F9796 /* Scripts */,
+				83EBF7401C0A3BC3009F9796 /* Resources */,
+				83EBF7391C0A3B8E009F9796 /* JS */,
+			);
+			sourceTree = "<group>";
+		};
+		83EBF7391C0A3B8E009F9796 /* JS */ = {
+			isa = PBXGroup;
+			children = (
+				83EBF73A1C0A3BBE009F9796 /* index.js */,
+				836F28761C12D9E700385636 /* Server.sjs */,
+				83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */,
+				836F287D1C166CE500385636 /* Persistent Storage */,
+				836F28751C128D1D00385636 /* FileTransfers.sjs */,
+				83EBF7661C0E890A009F9796 /* Operation.sjs */,
+				836F28781C13758900385636 /* File.sjs */,
+				838607841C459D7300EB2FAD /* ClientFile.sjs */,
+				83B0BEBE1C114935002B5735 /* CloudStorage.sjs */,
+				83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */,
+				83EBF73C1C0A3BBE009F9796 /* Mongo.js */,
+				83EBF73B1C0A3BBE009F9796 /* JSON.js */,
+				836F28791C13CCE300385636 /* Logger.js */,
+				836F287E1C1679C900385636 /* Common.sjs */,
+			);
+			name = JS;
+			sourceTree = "<group>";
+		};
+		83EBF7401C0A3BC3009F9796 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				83EBF7411C0A3BD4009F9796 /* client_secret.json */,
+				836F28771C12DF1500385636 /* macros.sjs */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		83EBF7421C0A3BE6009F9796 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				83EBF76D1C0E9E66009F9796 /* makeServerConstants.sh */,
+				83EBF76E1C0E9E66009F9796 /* startMongoDb.sh */,
+				83EBF76F1C0E9E66009F9796 /* startServer.sh */,
+			);
+			name = Scripts;
+			sourceTree = "<group>";
+		};
+		83EBF7691C0E8EDD009F9796 /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				83EBF7701C0E9EB7009F9796 /* fileStructure.txt */,
+				83EBF76A1C0E9E4E009F9796 /* dataModel.txt */,
+				83EBF76B1C0E9E4E009F9796 /* GoogleAPI notes.txt */,
+				83EBF76C1C0E9E4E009F9796 /* testCases.txt */,
+				8357A3E91C0FD107005891B9 /* Locks.txt */,
+			);
+			name = Docs;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		83EBF7331C0A3B5B009F9796 /* Server */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 83EBF7361C0A3B5B009F9796 /* Build configuration list for PBXLegacyTarget "Server" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			dependencies = (
+			);
+			name = Server;
+			passBuildSettingsInEnvironment = 1;
+			productName = Server;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		83EBF72F1C0A3B5B009F9796 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0710;
+				ORGANIZATIONNAME = "Christopher Prince";
+				TargetAttributes = {
+					83EBF7331C0A3B5B009F9796 = {
+						CreatedOnToolsVersion = 7.1.1;
+					};
+				};
+			};
+			buildConfigurationList = 83EBF7321C0A3B5B009F9796 /* Build configuration list for PBXProject "Server" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 83EBF72E1C0A3B5B009F9796;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				83EBF7331C0A3B5B009F9796 /* Server */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		83EBF7341C0A3B5B009F9796 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		83EBF7351C0A3B5B009F9796 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+			};
+			name = Release;
+		};
+		83EBF7371C0A3B5B009F9796 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		83EBF7381C0A3B5B009F9796 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		83EBF7321C0A3B5B009F9796 /* Build configuration list for PBXProject "Server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83EBF7341C0A3B5B009F9796 /* Debug */,
+				83EBF7351C0A3B5B009F9796 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83EBF7361C0A3B5B009F9796 /* Build configuration list for PBXLegacyTarget "Server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83EBF7371C0A3B5B009F9796 /* Debug */,
+				83EBF7381C0A3B5B009F9796 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83EBF72F1C0A3B5B009F9796 /* Project object */;
+}

@@ -1,0 +1,26 @@
+
+/*
+Data Model:
+
+A) UserCredentials: Info for the users credentials for the particular cloud storage system in use
+
+	See PSUserCredentials.js
+
+B) OutboundFiles: Represents a collection of files that are on their way to the cloud storage system. These files are stored (temporarily) on the sync server.
+
+	See PSOutboundFiles.js
+
+C) Lock: Represents locks held on the FileIndex data for a particular user on a particular device.
+
+    See PSLock.js
+	
+D) FileIndex: Meta info about the users cloud-stored files, i.e., files that are stored (or were previously stored) in the specific cloud storage system given in Credentials.
+
+	{
+		_id: (UUID), // fileId (app/client assigned)
+		userId: (UUID), // reference into UserCredentials table
+		cloudFileName: (String), // name of the file on the cloud storage system (without path)
+		deleted: (true | false),
+		fileVersion: (Integer value)
+	}
+*/

@@ -1,0 +1,1 @@
+db.FileIndex.remove( {"_id": ObjectId("566514cdd4babaf41d1a176c")});

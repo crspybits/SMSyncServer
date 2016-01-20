@@ -1,0 +1,61 @@
+Send a GET request to the server; make sure the server detects this as an error, but doesn't fail overall.
+
+Try an unknown server operation.
+
+Try to sign in as an existing user, when there is no existing user with those credentials on the server.
+
+Don't send any user credentials in the request to the server.
+
+Don't send Google IdToken in the request to the server.
+
+Send a stale Google IdToken in the request to the server.
+
+Sign out from Google on the app, sign in; Sign out from Google on the app, sign in. Check the database server information for the user.
+    I had been getting *all* of the cloud_creds for the user set to null with this operation.
+
+Sign out; sign in (requires user interaction)
+    Ensure we get acceptable result from server.
+
+Silently sign in;
+    Ensure we get acceptable result from server.
+
+Single file upload.
+
+Multiple file upload.
+
+Google drive: Create the folder where the SyncServer files will reside (e.g., /Petunia) either: (a) manually, outside of SyncServer, or (b) within SyncServer. One of the questions here: Will SyncServer be able to add files to this folder if the user themselves creates it?
+
+UNIT TESTS:
+    Add a lock/remove a lock; make sure there are no locks.
+
+    Add a PSOutboundFileChange/remove it; make sure there are none.
+
+While one app with a specific userId has a log, another app should attempt to get the lock.
+    I.e., while one app is uploading, another app should attempt an upload.
+
+Upload a new file.
+
+Upload an update to an existing file with a +1 version number.
+    Make sure that the new entry in the FileIndex still has ObjectId for userId. E.g.,
+    "userId" : ObjectId("565be13f2917086977fe6f54"),
+
+Upload an update to an existing file with the same version number. (Error case).
+
+Upload a file that has the same cloud file name, but a different UUID. (Error case).
+
+How do we set up a test where two devices using the same userId (same cloud storage), and different devices, contends, at the same time, for a lock for uploading (or downloading)?
+
+Should also have a test where two devices with different userId's are executing at the same time to get locks.
+
+Call the commit operations API method *without* having called start operations.
+
+Call a file upload without having first called start operations.
+
+Call start operations, and then end operations without having done any uploads or any deletions.
+
+Try to get a fileIndex while the lock for that user is already held.
+
+Need to test failure of an operation post-commit.
+
+Add a new file on the client side, then have the upload sequence fail (e.g., because the IdToken was stale). Make sure the meta data on the client side doesn't get updated, so the file upload will still be attempted again.
+

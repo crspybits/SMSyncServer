@@ -1,0 +1,1 @@
+# See the [Docs](https://bitbucket.org/SMSyncServer/docs) repo for documentation, usage, and installation.

@@ -1,0 +1,6 @@
+11/22/15; This is the second time I installed Node-- on Crspybits-v2
+
+1) I downloaded Node (v5.1.0) and installed it.
+
+2) Change into my server home directory (~/Desktop/Node.js/Node1) and did:
+	npm init
