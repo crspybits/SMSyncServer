@@ -81,7 +81,7 @@ public protocol SMSyncServerDelegate : class {
     // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
     func syncServerRecovery(progress:SMSyncServerRecovery)
     
-    // Reports conflicting file versions when uploading or downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
+    // TODO: Reports conflicting file versions when uploading or downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
     // TODO: Can these occur both on upload and download?
     // func syncServerFileConflicts(conflictingFiles:[SMSyncConflicts], resolution:([SMSyncConflicts])->())
 
@@ -94,7 +94,6 @@ public protocol SMSyncServerDelegate : class {
 
 // Derived from NSObject because of the use of addTarget from TargetsAndSelectors below.
 public class SMSyncServer : NSObject {
-    
     private var _autoCommit = false
     private var _autoCommitIntervalSeconds:Float = 30
         
@@ -163,11 +162,12 @@ public class SMSyncServer : NSObject {
     }
     
     // Only retains a weak reference to the cloudStorageUserDelegate
-    public func appLaunchSetup(withCloudStorageUserDelegate cloudStorageUserDelegate:SMCloudStorageUserDelegate) {
+    public func appLaunchSetup(withServerURL serverURL: NSURL, andCloudStorageUserDelegate cloudStorageUserDelegate:SMCloudStorageUserDelegate) {
 
         Network.session().appStartup()
         SMServerNetworking.session.appLaunchSetup()
-        
+        SMServerAPI.session.serverURL = serverURL
+
         // This seems a little hacky, but can't find a better way to get the bundle of the framework containing our model. I.e., "this" framework. Just using a Core Data object contained in this framework to track it down.
         // Without providing this bundle reference, I wasn't able to dynamically locate the model contained in the framework.
         let bundle = NSBundle(forClass: NSClassFromString(SMLocalFile.entityName())!)

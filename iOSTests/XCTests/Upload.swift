@@ -125,9 +125,9 @@ class Upload: BaseClass {
         
         self.waitUntilSyncServerUserSignin() {
             
-            let fileName = "SingleDataUpload"
+            let cloudStorageFileName = "SingleDataUpload"
             let fileUUID = UUID.make()
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: fileName)
+            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
             
             let strData: NSString = "SingleDataUpload file contents"
             let data = strData.dataUsingEncoding(NSUTF8StringEncoding)

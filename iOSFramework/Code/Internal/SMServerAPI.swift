@@ -169,9 +169,12 @@ private func += <KeyType, ValueType> (inout left: Dictionary<KeyType, ValueType>
 }
 
 internal class SMServerAPI {
-    internal static let session = SMServerAPI()
+    internal var serverURL:NSURL!
+    internal var serverURLString:String {
+        return serverURL.absoluteString
+    }
     
-    private var serverOpURL:NSURL!
+    internal static let session = SMServerAPI()
     
     // Design-wise, it seems better to access a user/credentials delegate in the SMServerAPI class instead of letting this class access the SMSyncServerUser directly. This is because the SMSyncServerUser class needs to call the SMServerAPI interface (to sign a user in or create a new user), and such a direct cyclic dependency seems a poor design.
     internal weak var userDelegate:SMUserServerParamsDelegate!
@@ -184,10 +187,10 @@ internal class SMServerAPI {
     // All credentials parameters must be provided by serverCredentialParams.
     internal func createNewUser(serverCredentialParams:[String:AnyObject], completion:((returnCode:Int?, error:NSError?)->(Void))?) {
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCreateNewUser)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (returnCode, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
@@ -198,10 +201,10 @@ internal class SMServerAPI {
     // All credentials parameters must be provided by serverCredentialParams.
     internal func checkForExistingUser(serverCredentialParams:[String:AnyObject], completion:((returnCode:Int?, error:NSError?)->(Void))?) {
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCheckForExistingUser)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (returnCode, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
@@ -215,16 +218,16 @@ internal class SMServerAPI {
         let serverParams = self.userDelegate.serverParams
         Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationStartFileChanges)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
             var resultError = error
             let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(self.serverOpURL); OperationId: \(serverOperationId)")
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
             if (nil == resultError && nil == serverOperationId) {
                 resultError = Error.Create("No server operationId obtained")
             }
@@ -237,7 +240,7 @@ internal class SMServerAPI {
     // fileToUpload must have a localURL.
     private func uploadFile(fileToUpload: SMServerFile, completion:((returnCode:Int?, error:NSError?)->(Void))?) {
     
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL + "/" + SMServerConstants.operationUploadFile)!
+        let serverOpURL = NSURL(string: self.serverURLString + "/" + SMServerConstants.operationUploadFile)!
         
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -245,7 +248,7 @@ internal class SMServerAPI {
         var parameters = userParams!
         parameters += fileToUpload.dictionary
         
-        SMServerNetworking.session.uploadFileTo(self.serverOpURL, fileToUpload: fileToUpload.localURL!, withParameters: parameters) { serverResponse, error in
+        SMServerNetworking.session.uploadFileTo(serverOpURL, fileToUpload: fileToUpload.localURL!, withParameters: parameters) { serverResponse, error in
             let (returnCode, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(returnCode:returnCode, error: error)
         }
@@ -294,7 +297,7 @@ internal class SMServerAPI {
             return
         }
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationDeleteFiles)!
         
         let userParams = self.userDelegate.serverParams
@@ -310,7 +313,7 @@ internal class SMServerAPI {
         
         serverParams[SMServerConstants.filesToDeleteKey] = deletionServerParam
 
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: serverParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error: error)
@@ -322,10 +325,10 @@ internal class SMServerAPI {
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCommitFileChanges)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error: error)
         }
@@ -345,10 +348,10 @@ internal class SMServerAPI {
         
         Log.msg("parameters: \(parameters)")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationGetFileIndex)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
@@ -418,12 +421,12 @@ internal class SMServerAPI {
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         var parameters = userParams!
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCheckOperationStatus)!
         
         parameters[SMServerConstants.operationIdKey] = operationId
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             if (nil == error) {
                 let operationResult = SMOperationResult()
@@ -459,10 +462,10 @@ internal class SMServerAPI {
         var parameters = userParams!
         parameters[SMServerConstants.operationIdKey] = operationId
 
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationRemoveOperationId)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error:error)
         }
@@ -486,10 +489,10 @@ internal class SMServerAPI {
 
         Log.msg("parameters: \(userParams)")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationFileChangesRecovery)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
             if (error != nil) {
@@ -498,7 +501,7 @@ internal class SMServerAPI {
             }
             
             let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(self.serverOpURL); OperationId: \(serverOperationId)")
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
 
             var errorResult:NSError? = nil
             let fileIndex = self.processFileIndex(serverResponse, error:&errorResult)
@@ -516,10 +519,10 @@ internal class SMServerAPI {
 
         Log.msg("parameters: \(userParams)")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCleanup)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error: error)
         }
@@ -532,10 +535,10 @@ internal class SMServerAPI {
         
         Log.msg("parameters: \(userParams)")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationTransferRecovery)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error: error)
         }
@@ -546,16 +549,16 @@ internal class SMServerAPI {
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationStartDownloads)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
             var resultError = error
             let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(self.serverOpURL); OperationId: \(serverOperationId)")
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
             if (nil == resultError && nil == serverOperationId) {
                 resultError = Error.Create("No server operationId obtained")
             }
@@ -572,10 +575,10 @@ internal class SMServerAPI {
         var parameters = userParams!
         parameters[SMServerConstants.operationIdKey] = operationId
 
-        self.serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationEndDownloads)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: self.serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error:error)
         }
@@ -646,7 +649,7 @@ internal class SMServerAPI {
                 
                 Log.msg(message)
                 
-                return (returnCode: rc, error: Error.Create("An error occured when doing server operation: " + self.serverOpURL.absoluteString))
+                return (returnCode: rc, error: Error.Create("An error occured when doing server operation."))
             }
         }
         else {

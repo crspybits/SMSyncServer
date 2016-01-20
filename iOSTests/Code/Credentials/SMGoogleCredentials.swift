@@ -19,6 +19,8 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     // Hmmmm. I may be making incorrect assumptions about the longevity of these IdTokens. See https://github.com/google/google-auth-library-nodejs/issues/46 Does silently signing the user in generate a new IdToken?
     private static let IdToken = SMPersistItemString(name: "SMGoogleCredentials.IdToken", initialStringValue: "", persistType: .KeyChain)
     
+    private let serverClientID:String!
+    
     private var idToken:String! {
         set {
             SMGoogleCredentials.IdToken.stringValue = newValue
@@ -29,11 +31,10 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
         }
     }
    
-    /*
-    override public init() {
+    public init(serverClientID theServerClientID:String) {
+        self.serverClientID = theServerClientID
         super.init()
     }
-    */
     
     override public func syncServerAppLaunchSetup() {
         var configureError: NSError?
@@ -44,12 +45,7 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
         
         // Seem to need the following for accessing the serverAuthCode. Plus, you seem to need a "fresh" sign-in (not a silent sign-in). PLUS: serverAuthCode is *only* available when you don't do the silent sign in.
         // https://developers.google.com/identity/sign-in/ios/offline-access?hl=en
-        
-        // MARK: CHANGE THIS IN YOUR CODE
-        // When trying this out, you need to replace this with the client id, you create on the Google Developers site, for your own server.
-        GIDSignIn.sharedInstance().serverClientID = "973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com"
-        // You also need to replace the file GoogleService-Info.plist with your own, plus change the URL Scheme's, that are specific to the example credentials, with your own.
-        // MARK: CHANGE THIS IN YOUR CODE
+        GIDSignIn.sharedInstance().serverClientID = self.serverClientID 
 
         GIDSignIn.sharedInstance().scopes.append("https://www.googleapis.com/auth/drive.file")
         

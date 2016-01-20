@@ -11,7 +11,6 @@
 import Foundation
 
 public class SMServerConstants {
-    public static let serverURL = "http://192.168.0.7:8081"
     
     // Don't change the following constant. I'm using it to extract constants and use them in the Node.js
     // Each line in the following is assumed (by the processing script) to either be a comment (starts with "//"), or have the structure: public static let X = Y (with a possible following comment)
