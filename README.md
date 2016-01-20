@@ -15,7 +15,7 @@ See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading and deletion only. Support for downloading support is in progress.
+* The SMSyncServer project is in "alpha" and supports uploading and deletion only. Support for downloading is in progress.
 
 # Installation
 ## 1) Create Google Developer Credentials
@@ -107,57 +107,57 @@ See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin
     
 ## 2) Uploading: Temporary Files
 
-    let fileName = "SingleTemporaryFileUpload"
-    let (file, fileSizeBytes) = self.createFile(withName: fileName)
-    let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
-    
-    SMSyncServer.session.uploadTemporaryFile(file.url(), withFileAttributes: fileAttributes)
-    
-    SMSyncServer.session.commit()
+        let fileName = "SingleTemporaryFileUpload"
+        let (file, fileSizeBytes) = self.createFile(withName: fileName)
+        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+        
+        SMSyncServer.session.uploadTemporaryFile(file.url(), withFileAttributes: fileAttributes)
+        
+        SMSyncServer.session.commit()
 
 ## 3) Uploading: NSData
 
-    let cloudStorageFileName = "SingleDataUpload"
-    let fileUUID = UUID.make()
-    let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
-    
-    let strData: NSString = "SingleDataUpload file contents"
-    let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
-    
-    SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
-    
-    SMSyncServer.session.commit()
+        let cloudStorageFileName = "SingleDataUpload"
+        let fileUUID = UUID.make()
+        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
+        
+        let strData: NSString = "SingleDataUpload file contents"
+        let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
+        
+        SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
+        
+        SMSyncServer.session.commit()
 
 ## 4) Deletion
 
-    // File referenced by uuid is assumed to exist in cloud storage
-    let uuid = ...
-    
-    SMSyncServer.session.deleteFile(uuid)
-    
-    SMSyncServer.session.commit()
+        // File referenced by uuid is assumed to exist in cloud storage
+        let uuid = ...
+        
+        SMSyncServer.session.deleteFile(uuid)
+        
+        SMSyncServer.session.commit()
     
 ## 5) Optional SMSyncServer.session.delegate
 
-    public protocol SMSyncServerDelegate : class {
-    
-        // numberOperations includes upload and deletion operations.
-        func syncServerCommitComplete(numberOperations numberOperations:Int?)
+        public protocol SMSyncServerDelegate : class {
         
-        // Called after a single file/item has been uploaded to the SyncServer.
-        func syncServerSingleUploadComplete(uuid uuid:NSUUID)
-    
-        // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
-        func syncServerDeletionsSent(uuids:[NSUUID])
-    
-        // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-        func syncServerRecovery(progress:SMSyncServerRecovery)
-    
-        /* This error can occur in one of two types of circumstances:
-        1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-        2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
-        */
-        func syncServerError(error:NSError)
-    }
+            // numberOperations includes upload and deletion operations.
+            func syncServerCommitComplete(numberOperations numberOperations:Int?)
+            
+            // Called after a single file/item has been uploaded to the SyncServer.
+            func syncServerSingleUploadComplete(uuid uuid:NSUUID)
+        
+            // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
+            func syncServerDeletionsSent(uuids:[NSUUID])
+        
+            // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
+            func syncServerRecovery(progress:SMSyncServerRecovery)
+        
+            /* This error can occur in one of two types of circumstances:
+            1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
+            2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
+            */
+            func syncServerError(error:NSError)
+        }
 
 
