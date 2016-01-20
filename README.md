@@ -29,9 +29,11 @@ See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin
 
 ## 3) Server installation
 
-> The SMSyncServer server makes use of Node.js. Current tests are using v5.1.0 on Mac OS X. You can find [Node.js here](https://nodejs.org/).
+* The SMSyncServer server makes use of Node.js. Current tests are using v5.1.0 on Mac OS X. You can find [Node.js here](https://nodejs.org/).
 
-> Create your own `client_secret.json` file (See `Server/Code/client_secret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). Its structure is:
+* Create your own `client_secret.json` file (See `Server/Code/client_secret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). Its structure as follows:
+
+### `client_secret.json`
 
             {
               "installed": {
@@ -79,13 +81,6 @@ See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin
 
 * Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems  necessary to build).
 
-<!---
-Is this needed?
-Under Build Settings, search for Framework Search Paths. And add in:
-${TARGET_BUILD_DIR}/SMSyncServer.framework
-${TARGET_BUILD_DIR}/Google.framework
--->
-
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app. The following examples are extracted from those XCTests.
 
@@ -95,20 +90,20 @@ ${TARGET_BUILD_DIR}/Google.framework
 
 ## 1) Uploading: Immutable Files
 
-    let fileName1 = "TwoFileUpload1"
-
-    let (file1, fileSizeBytes1) = self.createFile(withName: fileName1)
-    let fileAttributes1 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file1.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName1)
+        let fileName1 = "TwoFileUpload1"
     
-    SMSyncServer.session.uploadImmutableFile(file1.url(), withFileAttributes: fileAttributes1)
-    
-    let fileName2 = "TwoFileUpload2"
-    let (file2, fileSizeBytes2) = self.createFile(withName: fileName2)
-    let fileAttributes2 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file2.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName2)
-    
-    SMSyncServer.session.uploadImmutableFile(file2.url(), withFileAttributes: fileAttributes2)
-    
-    SMSyncServer.session.commit()
+        let (file1, fileSizeBytes1) = self.createFile(withName: fileName1)
+        let fileAttributes1 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file1.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName1)
+        
+        SMSyncServer.session.uploadImmutableFile(file1.url(), withFileAttributes: fileAttributes1)
+        
+        let fileName2 = "TwoFileUpload2"
+        let (file2, fileSizeBytes2) = self.createFile(withName: fileName2)
+        let fileAttributes2 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file2.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName2)
+        
+        SMSyncServer.session.uploadImmutableFile(file2.url(), withFileAttributes: fileAttributes2)
+        
+        SMSyncServer.session.commit()
     
 ## 2) Uploading: Temporary Files
 
@@ -144,25 +139,25 @@ ${TARGET_BUILD_DIR}/Google.framework
     
 ## 5) Optional SMSyncServer.session.delegate
 
-public protocol SMSyncServerDelegate : class {
-
-    // numberOperations includes upload and deletion operations.
-    func syncServerCommitComplete(numberOperations numberOperations:Int?)
+    public protocol SMSyncServerDelegate : class {
     
-    // Called after a single file/item has been uploaded to the SyncServer.
-    func syncServerSingleUploadComplete(uuid uuid:NSUUID)
-
-    // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
-    func syncServerDeletionsSent(uuids:[NSUUID])
-
-    // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-    func syncServerRecovery(progress:SMSyncServerRecovery)
-
-    /* This error can occur in one of two types of circumstances:
-    1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-    2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
-    */
-    func syncServerError(error:NSError)
-}
+        // numberOperations includes upload and deletion operations.
+        func syncServerCommitComplete(numberOperations numberOperations:Int?)
+        
+        // Called after a single file/item has been uploaded to the SyncServer.
+        func syncServerSingleUploadComplete(uuid uuid:NSUUID)
+    
+        // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
+        func syncServerDeletionsSent(uuids:[NSUUID])
+    
+        // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
+        func syncServerRecovery(progress:SMSyncServerRecovery)
+    
+        /* This error can occur in one of two types of circumstances:
+        1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
+        2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
+        */
+        func syncServerError(error:NSError)
+    }
 
 
