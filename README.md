@@ -11,7 +11,7 @@ SMSyncServer has the following goals:
 (3) reducing data storage costs for app developers/publishers, and  
 (4) allowing sharing of data with other users. 
 
-See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin.biz/blog/2015/12/29/the-syncserver-permanent-access-to-your-app-data/)
+See the blog article at [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin.biz/blog/2015/12/29/the-syncserver-permanent-access-to-your-app-data/)
 
 # Development Status
 

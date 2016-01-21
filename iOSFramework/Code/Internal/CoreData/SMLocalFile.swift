@@ -45,7 +45,7 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         do {
             try resultObjects = CoreData.sessionNamed(SMCoreData.name).fetchAllObjectsWithEntityName(self.entityName())
         } catch (let error) {
-            // Somehow this is throwing an error if there are no result objects. But I'm not returning an error from fetchAllObjectsWithEntityName. Odd.
+            // Somehow, and sometimes, this is throwing an error if there are no result objects. But I'm not returning an error from fetchAllObjectsWithEntityName. Odd.
             Log.msg("Error in fetchAllObjects: \(error)")
         }
         
