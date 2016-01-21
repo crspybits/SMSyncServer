@@ -11,6 +11,8 @@
 		4AF31FA272CAB9B43640F522 /* Pods_XCTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
+		839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */; };
 		83D3E89F1C4C03F500BFDA93 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83D3E89E1C4C03F500BFDA93 /* Assets.xcassets */; };
 		83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8B31C4C072800BFDA93 /* FileViewerVC.swift */; };
@@ -34,8 +36,6 @@
 		83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */; };
 		83D3ECD31C4D927D00BFDA93 /* Kitty.png in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD21C4D927D00BFDA93 /* Kitty.png */; };
 		83D3ECD51C4D942000BFDA93 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */; };
-		83D3EDDC1C4DD36D00BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3EDDB1C4DD36D00BFDA93 /* SMCoreLib.framework */; };
-		83D3EDDD1C4DD36D00BFDA93 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3EDDB1C4DD36D00BFDA93 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		83D3EDE61C4E053A00BFDA93 /* ClientAppModel.xcdatamodel in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */; };
 		83D3EDEC1C4E2F3000BFDA93 /* CoreDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */; };
 /* End PBXBuildFile section */
@@ -72,7 +72,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */,
-				83D3EDDD1C4DD36D00BFDA93 /* SMCoreLib.framework in Embed Frameworks */,
+				839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -82,6 +82,7 @@
 /* Begin PBXFileReference section */
 		588A96CF00CEB88911F3F4B4 /* Pods-Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-Tests/Pods-Tests.release.xcconfig"; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
+		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		83D3E8751C4C01E800BFDA93 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83D3E88C1C4C01E800BFDA93 /* XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,7 +112,6 @@
 		83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = ClientAppModel.xcdatamodel; path = Resources/ClientAppModel.xcdatamodel; sourceTree = SOURCE_ROOT; };
 		83D3ECD21C4D927D00BFDA93 /* Kitty.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Kitty.png; path = Resources/Kitty.png; sourceTree = "<group>"; };
 		83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Supporting Files/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		83D3EDDB1C4DD36D00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-cetwbocjmllhqbcnlxcevbrsdjll/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataTests.swift; path = "Core Data/CoreDataTests.swift"; sourceTree = "<group>"; };
 		8F4C25D6AF6E58593D7A1C98 /* Pods-XCTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XCTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-XCTests/Pods-XCTests.release.xcconfig"; sourceTree = "<group>"; };
 		A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -126,8 +126,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				25A15FE102572BB137CB1ABB /* Pods_Tests.framework in Frameworks */,
-				83D3EDDC1C4DD36D00BFDA93 /* SMCoreLib.framework in Frameworks */,
 				839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */,
+				839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -153,6 +153,7 @@
 		83D3E86C1C4C01E800BFDA93 = {
 			isa = PBXGroup;
 			children = (
+				839A06A61C5057CD0037AD9A /* SMCoreLib.framework */,
 				83D3E8771C4C01E800BFDA93 /* Code */,
 				83D3E89C1C4C031E00BFDA93 /* Supporting Files */,
 				83D3E89B1C4C030700BFDA93 /* Resources */,
@@ -239,7 +240,6 @@
 			isa = PBXGroup;
 			children = (
 				839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */,
-				83D3EDDB1C4DD36D00BFDA93 /* SMCoreLib.framework */,
 				A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */,
 				BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */,
 			);

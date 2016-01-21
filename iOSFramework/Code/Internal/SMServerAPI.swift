@@ -170,6 +170,7 @@ private func += <KeyType, ValueType> (inout left: Dictionary<KeyType, ValueType>
 
 internal class SMServerAPI {
     internal var serverURL:NSURL!
+    
     internal var serverURLString:String {
         return serverURL.absoluteString
     }

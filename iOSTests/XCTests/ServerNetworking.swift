@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import SMSyncServer
+@testable import SMSyncServer
 import SMCoreLib
 
 /* With an empty server database and no files in the Google Drive folder:
@@ -65,26 +65,26 @@ class ServerNetworking: XCTestCase {
     }
     
     func testThatItFailsOnBadServerOperation() {
-        let serverOpURL = NSURL(string: SMServerConstants.serverURL)!
+        let serverOpURL = SMServerAPI.session.serverURL
         let parameters:[String:AnyObject] = [:]
-
+        
         self.doTheTestWith(serverOpURL, parameters: parameters, expectedRC:  SMServerConstants.rcUndefinedOperation)
     }
     
     // TODO: Should test that this one fails for all of the valid server operations. i.e., that you get a failure without creds on all of them.
     func testThatItFailsWithoutCredentials() {
-        let serverOpURL = NSURL(string: SMServerConstants.serverURL +
-                        "/" + SMServerConstants.operationStartFileChanges)!
+        let serverOpURL = NSURL(string: SMServerAPI.session.serverURLString +
+                        "/" + SMServerConstants.operationStartFileChanges)
         let parameters:[String:AnyObject] = [:]
         
-        self.doTheTestWith(serverOpURL, parameters: parameters, expectedRC:  SMServerConstants.rcOperationFailed)
+        self.doTheTestWith(serverOpURL!, parameters: parameters, expectedRC:  SMServerConstants.rcOperationFailed)
     }
     
     // This only works with the debug/simplified upload app.post method on the server. I'm trying to resolve the problem I've been having with the file size increasing on the server, when uploading a PNG file.
     func DISABLED_testPNGFileUploadWithSimplifiedServerPOSTMethod() {
         let expectation = self.expectationWithDescription("Handler called")
     
-        let serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: SMServerAPI.session.serverURLString +
                         "/" + SMServerConstants.operationUploadFile)!
         let parameters:[String:AnyObject] = [SMServerConstants.fileMIMEtypeKey: "image/png"]
         

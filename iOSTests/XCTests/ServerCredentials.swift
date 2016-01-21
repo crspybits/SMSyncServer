@@ -9,7 +9,7 @@
 // Assumptions: The SyncServer must be running.
 
 import XCTest
-import SMSyncServer
+@testable import SMSyncServer
 import SMCoreLib
 
 class ServerCredentials: XCTestCase {
@@ -82,7 +82,7 @@ class ServerCredentials: XCTestCase {
     }
     
     func doTestThatItFailsWithBadCredentials(badCreds:BadCredentialsType) {
-        let serverOpURL = NSURL(string: SMServerConstants.serverURL +
+        let serverOpURL = NSURL(string: SMServerAPI.session.serverURLString +
                         "/" + SMServerConstants.operationStartFileChanges)!
         let parameters = self.badCredentials(badCreds)
         

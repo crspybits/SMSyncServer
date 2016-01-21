@@ -89,7 +89,8 @@ public class SMSyncServerUser {
     // This method doesn't keep a reference to userCreds; it just allows the caller to check for an existing user on the server.
     public func checkForExistingUser(userCreds:SMCloudStorageUser, completion:((error: NSError?)->())?) {
     
-        SMServerAPI.session.checkForExistingUser(self.serverParameters(userCreds)) { (returnCode, error) in
+        SMServerAPI.session.checkForExistingUser(
+            self.serverParameters(userCreds)) { (returnCode, error) in
         
             let returnError = self.processSignInResult(forExistingUser: true, returnCode: returnCode, error: error)
             self.callSignInCompletion(withError: returnError)

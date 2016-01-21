@@ -54,7 +54,7 @@ See [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin
 
 * Before running the iOSTests example app, you need to make a few changes to the app to make use of your Google Developer credentials. To do make these changes, first launch the iOSTests app by opening Tests.workspace in Xcode. 
 
-* Next, you need to replace the GoogleService-Info.plist file and editing the URL Scheme's in in this Xcode project. See:
+* Next, you need to replace the `GoogleService-Info.plist` file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>
 
 * Make sure to change the Google **serverClientID** in the AppDelegate of the Xcode project. You can also search the code for the string: 
