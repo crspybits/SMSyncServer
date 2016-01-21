@@ -423,14 +423,14 @@ static CoreData* s_sharedInstance = nil;
     return object;
 }
 
-- (NSArray * _Nullable) fetchAllObjectsWithEntityName: (NSString * _Nonnull) entityName andError: (NSError * _Nonnull * _Nonnull) error;
+- (NSArray * _Nullable) fetchAllObjectsWithEntityName: (NSString * _Nonnull) entityName andError: (NSError * _Nullable * _Nullable) error;
 {
     return [self fetchObjectsWithEntityName:entityName error:error modifyingFetchRequestWith:nil];
 }
 
-- (NSArray * _Nullable) fetchObjectsWithEntityName: (NSString * _Nonnull) entityName error: (NSError * _Nonnull * _Nonnull) error modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
+- (NSArray * _Nullable) fetchObjectsWithEntityName: (NSString * _Nonnull) entityName error: (NSError * _Nullable * _Nullable) error modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
 {
-    *error = nil;
+    if (error) *error = nil;
     
     SPASLogDetail(@"entityName: %@", entityName);
     SPASLogDetail(@"dict: %@", self.dictNames);
@@ -444,7 +444,7 @@ static CoreData* s_sharedInstance = nil;
         objs = [self.context executeFetchRequest:fetchRequest error:error];
     }
     
-    if (*error) {
+    if (error && *error) {
         NSString *message = [NSString stringWithFormat:@"Error: %@", *error];
         SPASLogFile(@"%@", message);
 
@@ -477,9 +477,9 @@ static CoreData* s_sharedInstance = nil;
     return self.managedObjectContext;
 }
 
-- (NSUInteger) countOfObjectsWithEntityName: (NSString * _Nonnull ) entityName andError: (NSError * _Nonnull * _Nonnull) error;
+- (NSUInteger) countOfObjectsWithEntityName: (NSString * _Nonnull ) entityName andError: (NSError * _Nullable * _Nullable) error;
 {
-    *error = nil;
+    if (error) *error = nil;
     NSUInteger count = 0;
     
     if (self.context) {
@@ -488,8 +488,8 @@ static CoreData* s_sharedInstance = nil;
         count = [self.context countForFetchRequest:fetchRequest error:error];
     }
     
-    if (*error || !self.context) {
-        NSString *message = [NSString stringWithFormat:@"Error: %@; context= %@", *error, self.context];
+    if ((error && *error) || !self.context) {
+        NSString *message = [NSString stringWithFormat:@"Error: %@; context= %@", (error ? *error : @"") , self.context];
         SPASLogFile(@"%@", message);
         
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"There was an internal error counting objects with Core Data" message:message delegate:nil cancelButtonTitle:[[SMUIMessages session] OkMsg] otherButtonTitles:nil];

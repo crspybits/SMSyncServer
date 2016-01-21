@@ -88,14 +88,15 @@ extern const NSString * _Nonnull CoreDataModelBundle; // Bundle where model is l
 - (NSManagedObject * _Nullable) newObjectWithEntityName: (NSString * _Nonnull) entityName;
 
 // If there is an error, error is returned non-nil. In this case, a UIAlertView will have been given to the user. Nil is returned in this case. With no error, and no objects found, nil is returned.
-- (NSArray * _Nullable) fetchAllObjectsWithEntityName: (NSString * _Nonnull) entityName andError: (NSError * _Nonnull * _Nonnull) error;
-- (NSArray * _Nullable) fetchObjectsWithEntityName: (NSString * _Nonnull) entityName error: (NSError * _Nonnull * _Nonnull) error modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
+// 1/21/16; I have now changed the NSError references to _Nullable _Nullable to be consistent with "The particular type NSError ** is so often used to return errors via method parameters that it is always assumed to be a nullable pointer to a nullable NSError reference." (https://developer.apple.com/swift/blog/?id=25).
+- (NSArray * _Nullable) fetchAllObjectsWithEntityName: (NSString * _Nonnull) entityName andError: (NSError * _Nullable * _Nullable) error;
+- (NSArray * _Nullable) fetchObjectsWithEntityName: (NSString * _Nonnull) entityName error: ( NSError  * _Nullable * _Nullable) error modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
 
 - (NSFetchRequest * _Nullable) fetchRequestWithEntityName: (NSString * _Nonnull) entityName modifyingFetchRequestWith: (void (^ _Nullable)(NSFetchRequest * _Nonnull)) fetchRequestModifier;
 
 // Get the total number of objects, with that entity name, in the context.
 // If there is an error, error is returned non-nil. In this case, a UIAlertView will have been given to the user. Returns 0 on an error.
-- (NSUInteger) countOfObjectsWithEntityName: (NSString * _Nonnull ) entityName andError: (NSError * _Nonnull * _Nonnull) error;
+- (NSUInteger) countOfObjectsWithEntityName: (NSString * _Nonnull ) entityName andError: (NSError * _Nullable * _Nullable) error;
 
 - (void) removeObject: (NSManagedObject * _Nonnull) managedObject;
 
