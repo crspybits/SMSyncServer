@@ -302,6 +302,7 @@ static CoreData* s_sharedInstance = nil;
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:modelResource withExtension:@"mom"];
     
     if (!modelURL && modelBundle) {
+        // This is how I'm locating the CoreData model for my custom framework-- relative to the framework viewed as a bundle.
         modelURL = [modelBundle URLForResource:modelResource withExtension:@"mom"];
     }
     

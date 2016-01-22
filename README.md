@@ -5,13 +5,22 @@ Contents:
 [Usage examples](#markdown-header-usage-examples)  
 
 # Introduction
-SMSyncServer has the following goals:  
-(1) giving end-users permanent access to their mobile app data,  
-(2) synchronizing mobile app data across end-user devices,  
-(3) reducing data storage costs for app developers/publishers, and  
-(4) allowing sharing of data with other users. 
 
-See the blog article at [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin.biz/blog/2015/12/29/the-syncserver-permanent-access-to-your-app-data/)
+SMSyncServer has the following goals:  
+
+1. Giving end-users permanent access to their mobile app data,  
++ Synchronizing mobile app data across end-user devices,  
++ Reducing data storage costs for app developers/publishers, and  
++ Allowing sharing of data with other users. 
+
+SMSyncServer has an iOS client and a server written in Javascript/Node.js.
+
+See the blog articles:  
+
+* [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin.biz/blog/2015/12/29/the-syncserver-permanent-access-to-your-app-data/)  
+* [Blitz to get SMSyncServer Ready for Open-Source](http://www.spasticmuffin.biz/blog/2016/01/21/blitz-to-get-smsyncserver-ready-for-open-source/)
+
+Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
@@ -20,7 +29,7 @@ See the blog article at [The SyncServer: Permanent Access to Your App Data](http
 # Installation
 ## 1) Create Google Developer Credentials
 
-* Create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTets app or in your app making use of the iOSFramework. See
+* Create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests app or in your app making use of the iOSFramework. See
 <https://developers.google.com/identity/sign-in/ios/>
 
 ## 2) MongoDb installation
@@ -52,7 +61,7 @@ See the blog article at [The SyncServer: Permanent Access to Your App Data](http
 
 * A useful way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder.
 
-* Before running the iOSTests example app, you need to make a few changes to the app to make use of your Google Developer credentials. To do make these changes, first launch the iOSTests app by opening Tests.workspace in Xcode. 
+* Before running the iOSTests example app, you need to make a few changes to the app to make use of your Google Developer credentials. To make these changes, first launch the iOSTests app by opening Tests.workspace in Xcode. 
 
 * Next, you need to replace the `GoogleService-Info.plist` file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>

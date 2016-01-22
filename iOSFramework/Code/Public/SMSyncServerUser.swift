@@ -29,6 +29,7 @@ internal protocol SMUserServerParamsDelegate : class {
     var serverParams:[String:AnyObject]? {get}
 }
 
+// This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
 public enum SMCloudStorageUser {
     // When using as a parameter to call createNewUser, authCode must not be nil.
     case GoogleDrive(idToken:String!, authCode:String?)
