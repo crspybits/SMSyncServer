@@ -19,6 +19,7 @@ internal class SMDownloadFiles {
     private var serverOperationId:String?
     
     internal func pollForDownloads() {
+    /*
         SMServerAPI.session.startDownloads() { (operationId, error) in
             if error == nil {
                 self.serverOperationId = operationId
@@ -41,5 +42,6 @@ internal class SMDownloadFiles {
                 // TODO: Need to .Stop operations.
             }
         }
+    */
     }
 }

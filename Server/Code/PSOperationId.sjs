@@ -1,4 +1,4 @@
-// Persistent Storage to represent identifiers for operations, so an app/client can poll after a successful commit to determine the operation state.
+// Persistent Storage to represent identifiers for asynchronous cloud storage transfer operations, so an app/client can poll after a successful commit to determine the operation state.
 
 'use strict';
 
@@ -14,15 +14,15 @@ const collectionName = "OperationIds";
 // These must match those properties given in the data model below.
 const props = ["_id", "startDate", "operationType", "operationCount", "operationStatus", "error"];
 
-// TODO: The data model needs to have at least a userId to add some confirmation/error checking for operationCheckOperationStatus. Right now any user can access any operationId.
+// TODO: This data model needs to have at least a userId to add some confirmation/error checking for operationCheckOperationStatus. Right now any user can access any operationId.
 
 /* Data model
 	{
         _id: (ObjectId), // key for this operation identifier; assigned by Mongo.
         startDate: (Date/time), // date/time that the operation started
  
-        // For error checking and integrity -- to ensure the REST/API is being used as it should be. A given operation id can only be used for Upload or Download operations not for both.
-        operationType: (String), // Upload or Download
+        // For error checking and integrity -- to ensure the REST/API is being used as it should be. A given operation id can only be used for Outbound or Inbound operations not for both.
+        operationType: (String), // Outbound (after upload) or Inbound (before download).
  
         // Initialized to 0. Incremented immediately *prior* to attempting each cloud storage file operation. e.g., immediately before a transfer of a file to the server occurs this is incremented. In normal operation, this will end up being the number of entries/documents originally placed into the PSOutboundFileChange collection. If operationStatus indicates an error (i.e., the overall operation failed), and operationCount is 0, then no change was made to cloud storage.
         operationCount: (Integer),
@@ -72,8 +72,8 @@ PSOperationId.prototype.storeNew = function (callback) {
         callback(new Error("operationType was not given in PSOperationId"))
         return;
     }
-    else if (self.operationType != "Upload" && self.operationType != "Download") {
-        callback(new Error("operationType was not Upload or Download"))
+    else if (self.operationType != "Outbound" && self.operationType != "Inbound") {
+        callback(new Error("operationType was not Outbound or Inbound"))
         return;
     }
     
@@ -115,6 +115,7 @@ PSOperationId.prototype.update = function (callback) {
 }
 
 // Return a PSOperationId object from PS based on the given operationId. The operationId given can be of ObjectId type, or of string type. If of string type, it will be converted to an ObjectId.
+// It is considered an error to not find the given operationId in the collection.
 // Callback: two parameters: 1) error, and 2) the PSOperationId object if no error.
 PSOperationId.getFor = function(operationId, callback) {
     if (typeof operationId === 'string') {

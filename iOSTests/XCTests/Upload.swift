@@ -9,7 +9,6 @@
 // Test case: Failure after uploading all files, and immediately before transferring, so the recovery doesn't have to do any uploading just needs to redo the commit.
 
 import XCTest
-//import NetDb
 // The @testable notation lets us access "internal" classes within our project.
 @testable import Tests
 @testable import SMSyncServer
@@ -723,14 +722,14 @@ class Upload: BaseClass {
     // This test will intentionally fail the first time through (due to the app crash), and you have to manually run it a 2nd time to get it to succeed.
     // I am leaving this test normally disabled in XCTests in Xcode so that I can enable it, manually run it as needed, and then disable it again.
     func testThatRecoveryAfterAppCrashWorks() {
-        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
-        let progressCallbackExpected = self.expectationWithDescription("Upload Complete")
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
+        let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
         if Upload.recoveryAfterAppCrash.boolValue {
             Upload.recoveryAfterAppCrash.boolValue = false
             
-            let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+            let singleUploadExpectation = self.expectationWithDescription("Upload Callback")
 
             self.waitUntilSyncServerUserSignin() {
 
@@ -853,10 +852,10 @@ class Upload: BaseClass {
             var progressExpected:SMSyncServerRecovery!
             
             switch (context) {
-            case .StartFileChanges, .GetFileIndex, .UploadFiles:
+            case .Lock, .GetFileIndex, .UploadFiles:
                 progressExpected = .FileChanges
                 
-            case .CommitFileChanges:
+            case .CommitChanges:
                 progressExpected = .MayHaveCommitted
             }
             
@@ -890,7 +889,7 @@ class Upload: BaseClass {
     }
     
     func testThatStartFileChangesRecoveryWorks() {
-        self.doTestThatUploadRecoveryWorks(inContext: .StartFileChanges, withFileName: SMTestContext.StartFileChanges.rawValue)
+        self.doTestThatUploadRecoveryWorks(inContext: .Lock, withFileName: SMTestContext.Lock.rawValue)
     }
     
     func testThatGetFileIndexRecoveryWorks() {
@@ -901,17 +900,17 @@ class Upload: BaseClass {
         self.doTestThatUploadRecoveryWorks(inContext: .UploadFiles, withFileName: SMTestContext.UploadFiles.rawValue)
     }
     
-    func testThatCommitFileChangesRecoveryWorks() {
-        self.doTestThatUploadRecoveryWorks(inContext: .CommitFileChanges, withFileName: SMTestContext.CommitFileChanges.rawValue + "A")
+    func testThatCommitChangesRecoveryWorks() {
+        self.doTestThatUploadRecoveryWorks(inContext: .CommitChanges, withFileName: SMTestContext.CommitChanges.rawValue + "A")
     }
     
     // TODO: [3]. Create a test case where we exceed the number of successive times we can try to recover from the same error (.FileChangesRecovery).
     
-    // Server-side detailed testing following from CommitFileChanges
+    // Server-side detailed testing following from CommitChanges
     func testThatServerCommitChangesTestCaseWorks() {
         // The client goes through two calls to the progress delegate method in the recovery process for SMSyncServerConstants.dbTcCommitChanges.
         
-        let context = SMTestContext.CommitFileChanges
+        let context = SMTestContext.CommitChanges
         let serverTestCase = SMServerConstants.dbTcCommitChanges
         let fileName = context.rawValue + String(serverTestCase)
         var numberRecoverySteps = 0
@@ -972,7 +971,7 @@ class Upload: BaseClass {
     // Server-side detailed testing of Transfer Recovery.
     func transferRecovery(transferTestCase serverTestCase:Int) {
         
-        let context = SMTestContext.CommitFileChanges
+        let context = SMTestContext.CommitChanges
         let fileName = context.rawValue + String(serverTestCase)
         var numberRecoverySteps = 0
         
@@ -1045,7 +1044,7 @@ class Upload: BaseClass {
         self.extraServerResponseTime = 30
         
         let serverTestCase = SMServerConstants.dbTcSendFilesUpdate
-        let context = SMTestContext.CommitFileChanges
+        let context = SMTestContext.CommitChanges
         let fileName1 = context.rawValue + String(serverTestCase) + "A"
         let fileName2 = context.rawValue + String(serverTestCase) + "B"
 

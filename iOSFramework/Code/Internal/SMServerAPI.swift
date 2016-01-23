@@ -215,25 +215,17 @@ internal class SMServerAPI {
 
     //MARK: File operations
     
-    internal func startFileChanges(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    internal func lock(completion:((error:NSError?)->(Void))?) {
         let serverParams = self.userDelegate.serverParams
         Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationStartFileChanges)!
+                        "/" + SMServerConstants.operationLock)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
-            
-            var resultError = error
-            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
-            if (nil == resultError && nil == serverOperationId) {
-                resultError = Error.Create("No server operationId obtained")
-            }
-            
-            completion?(serverOperationId: serverOperationId, error: resultError)
+            completion?(error: error)
         }
     }
     
@@ -321,38 +313,39 @@ internal class SMServerAPI {
         }
     }
     
-    // You must have initiated startFileChanges beforehand, and uploaded/deleted one file after that.
-    internal func commitFileChanges(completion:((error:NSError?)->(Void))?) {
+    // You must have obtained a lock beforehand, and uploaded/deleted one file after that.
+    internal func commitChanges(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationCommitFileChanges)!
+                        "/" + SMServerConstants.operationCommitChanges)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(error: error)
+                        
+            var resultError = error
+            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
+            if (nil == resultError && nil == serverOperationId) {
+                resultError = Error.Create("No server operationId obtained")
+            }
+            
+            completion?(serverOperationId: serverOperationId, error: resultError)
         }
     }
     
-    // If you are calling this when you hold a lock (i.e., you have called startFileChanges), you must include the serverOperationId.
     // On success, the returned SMSyncServerFile objects will have nil localURL members.
-    internal func getFileIndex(serverOperationId operationId:String?, completion:((fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
+    internal func getFileIndex(completion:((fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
-
-        var parameters = userParams!
-        if (operationId != nil) {
-            parameters[SMServerConstants.operationIdKey] = operationId
-        }
-        
-        Log.msg("parameters: \(parameters)")
+        Log.msg("parameters: \(userParams)")
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationGetFileIndex)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
@@ -407,11 +400,6 @@ internal class SMServerAPI {
         else {
             return nil
         }
-    }
-    
-    // You must not hold the lock already.
-    internal func getFileIndex(completion:((fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
-        self.getFileIndex(serverOperationId: nil, completion: completion)
     }
     
     // Call this for an operation that has been successfully committed to see if it has subsequently completed and if it was successful.
@@ -472,9 +460,28 @@ internal class SMServerAPI {
         }
     }
     
+    // You must have obtained a lock beforehand. The serverOperationId may be returned nil even when there is no error: Just because an operationId has not been generated on the server yet.
+    internal func getOperationId(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    
+        let userParams = self.userDelegate.serverParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationGetOperationId)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
+                        
+            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
+            
+            completion?(serverOperationId: serverOperationId, error: error)
+        }
+    }
+    
     /* 
     Prepare so that we can recover from an error that occurred *prior* to any files being transferred to cloud storage.
-    The input parameter serverOperationId can be given as nil if startFileChanges reported failure, but actually did create a lock on the server.
+    The input parameter serverOperationId can be given as nil if lock reported failure, but actually did create a lock on the server.
     
     On success, this returns either: 
     
@@ -483,7 +490,7 @@ internal class SMServerAPI {
     (2) Neither of these.
         Indicates that recovery can take place by just restarting the upload process. No files have been uploaded/marked for deletion already. No lock is held. No OperationId is present.
     */
-    internal func fileChangesRecovery(completion:((serverOperationId:String?, fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
+    internal func changesRecovery(completion:((serverOperationId:String?, fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -491,7 +498,7 @@ internal class SMServerAPI {
         Log.msg("parameters: \(userParams)")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationFileChangesRecovery)!
+                        "/" + SMServerConstants.operationChangesRecovery)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
@@ -545,13 +552,13 @@ internal class SMServerAPI {
         }
     }
     
-    internal func startDownloads(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    internal func transferFromCloudStorage(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationStartDownloads)!
+                        "/" + SMServerConstants.operationTransferFromCloudStorage)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
@@ -565,23 +572,6 @@ internal class SMServerAPI {
             }
             
             completion?(serverOperationId: serverOperationId, error: resultError)
-        }
-    }
-    
-    internal func endDownloads(serverOperationId operationId:String, completion:((error:NSError?)->(Void))?) {
-
-        let userParams = self.userDelegate.serverParams
-        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
-    
-        var parameters = userParams!
-        parameters[SMServerConstants.operationIdKey] = operationId
-
-        let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationEndDownloads)!
-        
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
-            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(error:error)
         }
     }
     

@@ -21,13 +21,13 @@ internal enum SMUploadFilesMode : Int {
 
     // We're going to categorize errors on the server into a few main types for the purpose of recovery:
     
-    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between startFileChanges and commitFileChanges, prior to a successful commitFileChanges. (By successful commitFileChanges, I mean that the commit successfully started asynchronous operation of the file upload on the server).
-    case FileChangesRecovery
+    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between lock and commitChanges, prior to a successful commitChanges. (By successful commitChanges, I mean that the commit successfully started asynchronous operation of the file upload on the server).
+    case ChangesRecovery
     
     // 2) An edge recovery case that needs more execution-time evaluation to determine whether to categorize it as FileChangesRecovery or CloudStorageTransferRecovery.
     case MayHaveCommittedRecovery
     
-    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the FileChangesRecovery mode. i.e., commitFileChanges *was* successful.
+    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the FileChangesRecovery mode. i.e., commitChanges *was* successful.
     case CloudStorageTransferRecovery
 }
 
@@ -79,7 +79,7 @@ internal class SMUploadFiles : NSObject {
         _mode.intValue = newMode.rawValue
         
         switch (newMode) {
-        case .FileChangesRecovery:
+        case .ChangesRecovery:
             numberTimesTriedFileChangesRecovery = 0
 
         case .MayHaveCommittedRecovery:
@@ -143,7 +143,7 @@ internal class SMUploadFiles : NSObject {
                         self.prepareForUpload(givenAlreadyUploadedFiles: nil)
                     })
 
-            case .FileChangesRecovery:
+            case .ChangesRecovery:
                 self.sync(.Do, currentOperation: {
                     self.fileChangesRecovery()
                 })
@@ -318,15 +318,13 @@ internal class SMUploadFiles : NSObject {
         }
         
         // The .FileChangesRecovery recovery mode will let us know we need to recover if we fail sometime prior to the commmit operation. When the app restarts and/or we regain network access, we'll check this flag and see what we need to do.
-        SMUploadFiles.setMode(.FileChangesRecovery)
+        SMUploadFiles.setMode(.ChangesRecovery)
         
-        SMServerAPI.session.startFileChanges() { operationId, error in
-            Log.msg("startFileChanges: \(error)")
+        SMServerAPI.session.lock() { error in
+            Log.msg("lock: \(error)")
             
-            if SMTest.If.success(error, context: .StartFileChanges) {
-                self.serverOperationId = operationId
-                
-                SMServerAPI.session.getFileIndex(serverOperationId:operationId) { fileIndex, error in
+            if SMTest.If.success(error, context: .Lock) {
+                SMServerAPI.session.getFileIndex() { fileIndex, error in
                     if SMTest.If.success(error, context: .GetFileIndex) {
                         Log.msg("Success on getFileIndex!")
                         
@@ -389,9 +387,9 @@ internal class SMUploadFiles : NSObject {
         }
     }
     
-    // TODO: What happens to the server side execution when: (1) The app terminates (e.g., crashes, goes into background) while the server is running but the operation hasn't ended, yet, and (2) the app terminates and the operation has ended (as with the end of the commitFileChanges operation). I've been assuming with (2) at least that the server side execution will *not* be interrupted or otherwise altered.
+    // TODO: What happens to the server side execution when: (1) The app terminates (e.g., crashes, goes into background) while the server is running but the operation hasn't ended, yet, and (2) the app terminates and the operation has ended (as with the end of the commitChanges operation). I've been assuming with (2) at least that the server side execution will *not* be interrupted or otherwise altered.
     
-    // GOAL: Work on restarting uploads that have been interrupted prior to completion of a commitFileChanges operation. How do we tell, algorithmically, that this is needed?
+    // GOAL: Work on restarting uploads that have been interrupted prior to completion of a commitChanges operation. How do we tell, algorithmically, that this is needed?
 
     private func doUpload(withFilesToUpload filesToUpload:[SMServerFile]) {
 
@@ -405,16 +403,17 @@ internal class SMUploadFiles : NSObject {
                 // Just about to do the commit. If we detect failure of the commit on the client, we'll not be fully sure if the commit succeeded. E.g., we could lose a network connection as the commit is operating making it look as if the commit failed, but it actually succeeded.
                 SMUploadFiles.setMode(.MayHaveCommittedRecovery)
 
-                SMServerAPI.session.commitFileChanges() { error in
-                    Log.msg("SMSyncServer.session.commitFileChanges: \(error)")
-                    if SMTest.If.success(error, context: .CommitFileChanges) {
+                SMServerAPI.session.commitChanges() { operationId, error in
+                    Log.msg("SMSyncServer.session.commitChanges: \(error); operationId: \(operationId)")
+                    if SMTest.If.success(error, context: .CommitChanges) {
+                        self.serverOperationId = operationId
                         // We *know* we have a successful commit. Change to our last recovery case.
                         SMUploadFiles.setMode(.CloudStorageTransferRecovery)
                         
                         self.startToPollForOperationFinish()
                     }
                     else {
-                        // Failed on commitFileChanges
+                        // Failed on commitChanges
                         self.mayHaveCommittedRecovery()
                     }
                 }
@@ -561,7 +560,7 @@ internal class SMUploadFiles : NSObject {
     }
     
     // TODO: Create test case [3] in Upload tests.
-    // We know that we are recovering from an error that occurred sometime between startFileChanges (inclusive) and commitFileChanges (exclusive).
+    // We know that we are recovering from an error that occurred sometime between startFileChanges (inclusive) and commitChanges (exclusive).
     private func fileChangesRecovery() {
         self.delegate?.syncServerRecovery(.FileChanges)
         
@@ -579,7 +578,7 @@ internal class SMUploadFiles : NSObject {
 
             SMUploadFiles.numberTimesTriedFileChangesRecovery++
 
-            SMServerAPI.session.fileChangesRecovery() {serverOperationId, fileIndex, error in
+            SMServerAPI.session.changesRecovery() {serverOperationId, fileIndex, error in
                 if (nil == error) {
                     // Either restart from scratch, or restart given the fileIndex of files that have been processed already.
                     self.serverOperationId = serverOperationId
@@ -607,97 +606,6 @@ internal class SMUploadFiles : NSObject {
         })
     }
     
-    // This whole thing is an ugly edge case-- falling between the two main recovery cases.
-    // Getting to this point, it *seems* like the commitFileChanges failed. However, it's also possible that something just happened in getting the response back from the server and the commitFileChanges didn't fail. Need to determine if the commit was successful or not. I.e., if the operation is in progress (or has completed). If the commit was not successful, then we'll do .FileChangesRecovery.
-    private func mayHaveCommittedRecovery() {
-        self.delegate?.syncServerRecovery(.MayHaveCommitted)
-
-        self.sync(.ConditionalStop(stopConditional: {
-            return !Network.session().connected()
-        }), nextOperation: {
-            // This gets executed if we have network access.
-            SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery++
-            self.mayHaveCommittedRecoveryAux()
-        })
-    }
-    
-    private func mayHaveCommittedRecoveryAux() {
-        func switchToFileChangesRecovery() {
-            SMUploadFiles.setMode(.FileChangesRecovery)
-            self.fileChangesRecovery()
-        }
-        
-        SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, error in
-            if (error != nil) {
-                // Delay, and then check again.
-                Log.error("Error in checkOperationStatus in mayHaveCommittedRecovery: \(error); will retry")
-                if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
-                    let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
-
-                    TimedCallback.withDuration(duration) {
-                        self.mayHaveCommittedRecovery()
-                    }
-                }
-                else {
-                    self.callSyncServerError(Error.Create("Could not recover from .MayHaveCommittedRecovery state"))
-                }
-            }
-            else {
-                // TODO: How do we ensure that the set of cases in mayHaveCommittedRecovery() matches those that can actually be returned?
-                switch (operationResult!.status) {
-                case SMServerConstants.rcOperationStatusNotStarted:
-                    Log.msg("rcOperationStatusNotStarted")
-                    /* 
-                    Is it possible that the operation will start soon and progress into an InProgress state? It seems like it. The following would have to occur: (1) We get a failure in the return from SMSyncServer.session.commitFileChanges(), but that failure was a networking or other failure that wasn't actually because the SMSyncServer.session.commitFileChanges() failed on the server side, and (2) the server side was relatively slow in execution and the server side operation state hadn't yet changed to rcOperationStatusInProgress. So this is a combination of race condition and failure.
-                    What can we do to resolve this? What if we poll for this to change for a certain period of time?
-                    */
-                    if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
-                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
-
-                        TimedCallback.withDuration(duration) {
-                            self.mayHaveCommittedRecovery()
-                        }
-                    }
-                    else {
-                        // Assume that we've got the real deal. Commit actually failed.
-                        switchToFileChangesRecovery()
-                    }
-                    
-                case SMServerConstants.rcOperationStatusCommitFailed:
-                    Log.msg("rcOperationStatusCommitFailed")
-                    // [1]. We'll do a little more work than necessary with the FileChangesRecovery, but since we've not transferred any files yet this will work to kick off a retry of the commit.
-                    switchToFileChangesRecovery()
-                     
-                case SMServerConstants.rcOperationStatusSuccessfulCompletion:
-                    Log.msg("rcOperationStatusSuccessfulCompletion")
-                    self.wrapUpOperation(operationResult!)
-                    
-                case SMServerConstants.rcOperationStatusInProgress:
-                    // TODO: How do we know if we get here and we have an InProgress status whether (a) InProgress really means in InProgress, or (b) the file transfer has some how failed with didn't record that fact? For now we're just going to assume that InProgress really means InProgress. We could improve this in the future by updating a time/date stamp in the operation status on the server when ever a certain amount of data has been transferred to cloud storage (if somehow that can be done). That way if the time/date stamp is too old, we'd have a good idea that InProgress was wrong and we really had a failure.
-                    Log.msg("rcOperationStatusInProgress")
-                    self.startToPollForOperationFinish()
-                
-                case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
-
-                    if 0 == operationResult!.count {
-                        // Good. No files could have been transferred.
-                        switchToFileChangesRecovery()
-                    }
-                    else {
-                        // This is a more difficult case. What do we do?
-                        SMUploadFiles.setMode(.CloudStorageTransferRecovery)
-                        self.cloudStorageTransferRecovery()
-                    }
-                    
-                default:
-                    let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
-                    Log.error(msg)
-                    self.callSyncServerError(Error.Create(msg))
-                }
-            }
-        }
-    }
-    
     // It appears that some files were transferred to cloud storage, but we got an error part way through. With our assumptions so far, we'll still hold a lock.
     private func cloudStorageTransferRecovery() {
         self.delegate?.syncServerRecovery(.CloudStorageTransfer)
@@ -718,7 +626,7 @@ internal class SMUploadFiles : NSObject {
         SMServerAPI.session.transferRecovery { error in
 
             if (nil == error) {
-                // OK. This like a successful return from CommitFileChanges. We need to wait for the file transfer to complete.
+                // OK. This like a successful return from CommitChanges. We need to wait for the file transfer to complete.
                 SMUploadFiles.setMode(.CloudStorageTransferRecovery)
                 self.startToPollForOperationFinish()
             }
@@ -743,3 +651,126 @@ internal class SMUploadFiles : NSObject {
         }
     }
 }
+
+// MARK: mayHaveCommittedRecovery
+// This is an ugly edge case-- falling between the two main recovery cases.
+
+extension SMUploadFiles {
+    // Getting to this point, it *seems* like the commitChanges failed. However, it's also possible that something just happened in getting the response back from the server and the commitChanges didn't fail. Need to determine if the commit was successful or not. I.e., if the operation is in progress (or has completed). If the commit was not successful, then we'll do .ChangesRecovery.
+    private func mayHaveCommittedRecovery() {
+        self.delegate?.syncServerRecovery(.MayHaveCommitted)
+
+        self.sync(.ConditionalStop(stopConditional: {
+            return !Network.session().connected()
+        }), nextOperation: {
+            // This gets executed if we have network access.
+            SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery++
+            self.mayHaveCommittedRecoveryAux()
+        })
+    }
+    
+    private func switchToFileChangesRecovery() {
+        SMUploadFiles.setMode(.ChangesRecovery)
+        self.fileChangesRecovery()
+    }
+    
+    private func delayAndCheckMayHaveCommitedAgain() {
+        if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
+            let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
+
+            TimedCallback.withDuration(duration) {
+                self.mayHaveCommittedRecovery()
+            }
+        }
+        else {
+            self.callSyncServerError(Error.Create("Could not recover from .MayHaveCommittedRecovery state"))
+        }
+    }
+    
+    private func mayHaveCommittedRecoveryAux() {
+        if (nil == self.serverOperationId) {
+            // Need to double check if we actually have an operationId. Server could have generated an operationId, but just failed to get it to us.
+            SMServerAPI.session.getOperationId(){ (theServerOperationId, error) in
+                if nil == error {
+                    if nil == theServerOperationId {
+                        self.switchToFileChangesRecovery()
+                    }
+                    else {
+                        self.serverOperationId = theServerOperationId
+                        self.continueMayHaveCommittedRecoveryAux()
+                    }
+                }
+                else {
+                    Log.error("Error in checkOperationStatus in mayHaveCommittedRecovery: \(error); will retry")
+                    self.delayAndCheckMayHaveCommitedAgain()
+                }
+            }
+        }
+        else {
+            self.continueMayHaveCommittedRecoveryAux()
+        }
+    }
+    
+    private func continueMayHaveCommittedRecoveryAux() {
+        SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, error in
+            if (error != nil) {
+                Log.error("Error in checkOperationStatus in mayHaveCommittedRecovery: \(error); will retry")
+                self.delayAndCheckMayHaveCommitedAgain()
+            }
+            else {
+                // TODO: How do we ensure that the set of cases in mayHaveCommittedRecovery() matches those that can actually be returned?
+                switch (operationResult!.status) {
+                case SMServerConstants.rcOperationStatusNotStarted:
+                    Log.msg("rcOperationStatusNotStarted")
+                    /* 
+                    Is it possible that the operation will start soon and progress into an InProgress state? It seems like it. The following would have to occur: (1) We get a failure in the return from SMSyncServer.session.commitChanges(), but that failure was a networking or other failure that wasn't actually because the SMSyncServer.session.commitChanges() failed on the server side, and (2) the server side was relatively slow in execution and the server side operation state hadn't yet changed to rcOperationStatusInProgress. So this is a combination of race condition and failure.
+                    What can we do to resolve this? What if we poll for this to change for a certain period of time?
+                    */
+                    if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
+                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
+
+                        TimedCallback.withDuration(duration) {
+                            self.mayHaveCommittedRecovery()
+                        }
+                    }
+                    else {
+                        // Assume that we've got the real deal. Commit actually failed.
+                        self.switchToFileChangesRecovery()
+                    }
+                    
+                case SMServerConstants.rcOperationStatusCommitFailed:
+                    Log.msg("rcOperationStatusCommitFailed")
+                    // [1]. We'll do a little more work than necessary with the FileChangesRecovery, but since we've not transferred any files yet this will work to kick off a retry of the commit.
+                    self.switchToFileChangesRecovery()
+                     
+                case SMServerConstants.rcOperationStatusSuccessfulCompletion:
+                    Log.msg("rcOperationStatusSuccessfulCompletion")
+                    self.wrapUpOperation(operationResult!)
+                    
+                case SMServerConstants.rcOperationStatusInProgress:
+                    // TODO: How do we know if we get here and we have an InProgress status whether (a) InProgress really means in InProgress, or (b) the file transfer has some how failed with didn't record that fact? For now we're just going to assume that InProgress really means InProgress. We could improve this in the future by updating a time/date stamp in the operation status on the server when ever a certain amount of data has been transferred to cloud storage (if somehow that can be done). That way if the time/date stamp is too old, we'd have a good idea that InProgress was wrong and we really had a failure.
+                    Log.msg("rcOperationStatusInProgress")
+                    self.startToPollForOperationFinish()
+                
+                case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
+
+                    if 0 == operationResult!.count {
+                        // Good. No files could have been transferred.
+                        self.switchToFileChangesRecovery()
+                    }
+                    else {
+                        // This is a more difficult case. What do we do?
+                        SMUploadFiles.setMode(.CloudStorageTransferRecovery)
+                        self.cloudStorageTransferRecovery()
+                    }
+                    
+                default:
+                    let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
+                    Log.error(msg)
+                    self.callSyncServerError(Error.Create(msg))
+                }
+            }
+        }
+    }
+}
+

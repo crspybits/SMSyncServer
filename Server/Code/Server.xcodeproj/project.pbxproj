@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		833BFC9F1C52F7A000CFCBF6 /* PSInboundFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSInboundFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		8357A3EA1C0FD864005891B9 /* PSLock.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSLock.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28751C128D1D00385636 /* FileTransfers.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FileTransfers.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28761C12D9E700385636 /* Server.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Server.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
@@ -46,6 +47,7 @@
 				836F287A1C13F4B800385636 /* PSOperationId.sjs */,
 				836F287B1C13F68400385636 /* PSFileIndex.sjs */,
 				83EBF7611C0C217A009F9796 /* PSOutboundFileChange.sjs */,
+				833BFC9F1C52F7A000CFCBF6 /* PSInboundFile.sjs */,
 				83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.js */,
 				83EFAC031C3F784900D54E14 /* PSFileTransferLog.js */,
 			);

@@ -18,23 +18,28 @@ function define(name, value) {
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
 	define("operationRemoveUser", "RemoveUser");
 
-	define("operationStartFileChanges", "StartFileChanges");
+	define("operationLock", "Lock");
+    
 	define("operationUploadFile", "UploadFile");
 	define("operationDeleteFiles", "DeleteFiles");
-	define("operationCommitFileChanges", "CommitFileChanges");
     
+    // Already holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
 	define("operationGetFileIndex", "GetFileIndex");
     
-	define("operationStartDownloads", "StartDownloads");
+    // Both of these implicitly do an Unlock after the cloud storage transfer.
 	define("operationTransferFromCloudStorage", "TransferFromCloudStorage");
+	define("operationCommitChanges", "CommitChanges");
+    
+	define("operationGetOperationId", "GetOperationId");
+
+    // Carried out in an unlocked state.
 	define("operationDownloadFile", "DownloadFile");
-	define("operationEndDownloads", "EndDownloads");
 
 	define("operationCheckOperationStatus", "CheckOperationStatus");
 	define("operationRemoveOperationId", "RemoveOperationId");
 
     // Recovery from errors during upload or file changes process (i.e., prior to transferring files to cloud storage).
-	define("operationFileChangesRecovery", "FileChangesRecovery");
+	define("operationChangesRecovery", "ChangesRecovery");
 
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
 	define("operationTransferRecovery", "TransferRecovery");
@@ -73,6 +78,11 @@ function define(name, value) {
 	define("filesToDeleteKey", "FilesToDelete");
     // Value: an array of JSON objects with keys: fileUUIDKey, fileVersionKey, cloudFileNameKey, fileMIMEtypeKey.
     
+    // When one or more files are being transferred from cloud storage (operationTransferFromCloudStorage), use the following
+    // Key:
+	define("filesToTransferFromCloudStorageKey", "FilesToTransferFromCloudStorage");
+    // Value: an array of JSON objects with keys: fileUUIDKey, fileVersionKey, cloudFileNameKey, fileMIMEtypeKey.
+    
     // The following keys are required for file uploads and downloads (and some for deletions, see above).
     // Key:
 	define("fileUUIDKey", "FileUUID");
@@ -102,7 +112,7 @@ function define(name, value) {
     // Used with operationCheckOperationStatus and operationRemoveOperationId
     // Key:
 	define("operationIdKey", "OperationId");
-    // Value: An operationId that resulted from operationCommitFileChanges
+    // Value: An operationId that resulted from operationCommitChanges, or from operationTransferFromCloudStorage
     
     // Only used in development, not in production.
     // Key:
@@ -205,7 +215,7 @@ function define(name, value) {
     // No files transferred to cloud storage. Didn't successfully kick off commit-- commit would have returned an error.
 	define("rcOperationStatusCommitFailed", 201);
     
-    // Operation is in asynchronous operation. It is running after operationCommitFileChanges returned success to the REST/API caller.
+    // Operation is in asynchronous operation. It is running after operationCommitChanges returned success to the REST/API caller.
 	define("rcOperationStatusInProgress", 202);
     
     // These three can occur after the commit returns success to the client/app. For purposes of recovering from failure, the following three statuses should be taken to be the same-- just indicating failure. Use the resultOperationStatusCountKey to determine what kind of recovery to perform.

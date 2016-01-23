@@ -71,7 +71,7 @@ function Operation(request, response, errorHandling) {
 // Checks if the user is on the system, and as a side effect (if no error), adds a PSUserCredentials object as a new member, .psUserCreds
 // userMustBeOnSystem is optional, and defaults to true.
 // On failure, ends the operation connection.
-// Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock/operationId). Callback is *not* called on an error.
+// Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
 Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
     var self = this;
 
@@ -103,6 +103,12 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                     callback(null, null);
                 }
                 else {
+                    if (!isDefined(lock.operationId)) {
+                        logger.info("Valid user: With lock, but no operationId");
+                        callback(lock, null);
+                        return;
+                    }
+                    
                     var psOperationId = null;
                     
                     const operationIdData = {
@@ -123,7 +129,7 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                             self.endWithErrorDetails(message);
                         }
                         else {
-                            logger.info("Valid user: With lock");
+                            logger.info("Valid user: With lock & operationId");
                             callback(lock, psOperationId);
                         }
                     });

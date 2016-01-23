@@ -16,6 +16,7 @@ const props = ["_id", "operationId", "deviceId", "lockStart", "lastLockActivity"
         // userId; reference into PSUserCredentials. The lock is held across all deviceId's used by this userId. I.e., this locks the cloud storage referrred to by this userId.
 		_id: (ObjectId),
         
+        // Will be absent initially, when the lock is just created.
         // Refers to _id in PSOperationId. We keep this reference here, in the Locks  collection because we need to be able to update the operation id status when the operation is done. Also, the lock is providing an exclusive means to execute the operation. We don't just return the _id for the lock to the client app as a means of tracking the operation, because of the eventuality needing to break the lock. (Which will mean removing the entry from this lock collection).
         operationId: (ObjectId),
  
@@ -198,6 +199,36 @@ PSLock.prototype.removeLock = function (callback) {
 }
 
 PSLock.prototype.remove = PSLock.prototype.removeLock;
+
+// Update persistent store from self.
+// Callback is optional and if given has one parameter: error.
+PSLock.prototype.update = function (callback) {
+    var self = this;
+    
+    var query = {
+        _id: self._id
+    };
+    
+    // Make a clone so that I can remove the _id; don't want to update the _id.
+    // Not this though. Bad puppy!!
+    // var updatedData = JSON.parse(JSON.stringify(self.idData));
+    
+    var updatedData = Common.extractPropsFrom(self, props);
+    delete updatedData._id;
+    
+    var updates = {
+        $set: updatedData
+    };
+
+    logger.debug("updates: %j", updates);
+
+    Mongo.db().collection(collectionName).updateOne(query, updates,
+        function(err, results) {
+            if (isDefined(callback)) {
+                callback(err);
+            }
+        });
+}
 
 // export the class
 module.exports = PSLock;

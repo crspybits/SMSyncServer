@@ -99,13 +99,8 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
     });
 });
 
-/* [1].
-12/12/15; When considering the issue of making sure the files that were uploaded had versions that matched those on the server, after startFileChanges had been called, I originally thought it would be best to add a list parameter to startFileChanges-- where that list gave the UUID's and versions of the files that would be uploaded. However, this imposes an apparent race condition. The client would need to: 1) fetch back the index of files, 2) then call startFileChanges. And thus, there is  unlocked time between the index fetch and the startFileChanges, which at least conceptually, seems odd. Perhaps even worse, it's adding quite a bit of extra complication into the server when I really want to keep the server simple. I think it could just be simpler to have the client: A) call startFileChanges, B) fetch back the index of files, and C) either carry out the upload if all versions of files are suitable, or D) cancel the file change sequence.
-
-Does this make the server too unstructured? Since each file upload is being validated wrt. its file version, I don't see how.
-*/
 // Failure mode analysis: On a failure, it is still possible that either one or both of these is true: 1) PSOperationId has been created, and 2) the lock has been created.
-app.post('/' + ServerConstants.operationStartFileChanges, function (request, response) {
+app.post('/' + ServerConstants.operationLock, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -115,11 +110,9 @@ app.post('/' + ServerConstants.operationStartFileChanges, function (request, res
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
         
-        // a) Need to make sure no lock is held right now. e.g., no other user with this same userId is changing files. It is possible (though unlikely) that between the time that we check to see a lock is held, then try to get the lock, that someone else got the lock. Since we're using the userId as the primary key into PSLock, only one attempt to create the lock will be successful.
-        // b) Mark some state that indicates that we're uploading for this user/device. This central to the meaning of "starting file changes". This is going to take the form of creating a lock for this userId/deviceId.
-        // We'll combine the above two steps into one by just trying to get the lock.
+        // Need to make sure no lock is held right now. e.g., no other user with this same userId is changing files. It is possible (though unlikely) that between the time that we check to see a lock is held, then try to get the lock, that someone else got the lock. Since we're using the userId as the primary key into PSLock, only one attempt to create the lock will be successful.
         
-        // Do the directory creation first so that failing on directory creation doesn't leave us holding a lock.
+        // Do the directory creation first (the directory is needed for file upload and download) so that failing on directory creation doesn't leave us holding a lock.
         var localFiles = new File(op.userId(), op.deviceId());
         
         // This directory can serve for uploads to the cloud storage for the userId, and downloads from it. This works because the PSLock is going to lock uploads or downloads for the specific userId.
@@ -131,96 +124,53 @@ app.post('/' + ServerConstants.operationStartFileChanges, function (request, res
             else {
                 // Next, check to see if we've (user/device) already has a lock. This should be for error recovery if we do.
 
-                if (psLock) {
-                    // We have a lock. App must be doing error recovery. Make sure operation status is right.
-                    if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-                        var message = "Yikes-- an async operation is already in progress!"
-                        logger.error(message);
-                        op.endWithErrorDetails(message);
+                if (isDefined(psLock)){
+                    if (isDefined(psOperationId)) {
+                        // We have a lock and operationId. App must be doing error recovery. Make sure operation status is right.
+                        if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+                            var message = "Yikes-- an async operation is already in progress!"
+                            logger.error(message);
+                            op.endWithErrorDetails(message);
+                            return;
+                        }
                     }
-                    else {
-                         // Good-- We're not going to start another async operation.
-                        logger.info("Returning operationId (from existing lock) to client: " + psLock.operationId);
-                        op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
-                        op.endWithRC(ServerConstants.rcOK);
-                    }
+                    
+                     // Good-- We're not going to start another async operation.
+                    logger.info("Returning operationId to client: " + psLock.operationId);
+                    op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
+                    op.endWithRC(ServerConstants.rcOK);
+                    
                 } else {
-                    // No lock; create a new PSOperationId. I could get the lock first, but I don't have rollback capability with MongoDB, so leave the critical operation until last.
-                    // In terms of failure modes, if we fail on operationStartFileChanges, but have already created new PSOperationId, we will be left with a PSOperationId that we should be able to garbage collect later-- it will not be referenced from a PSLock.
-                    createOperationIdAndLock(op, "Upload");
+
+                    var lockData = {
+                        _id: op.userId(),
+                        deviceId: op.deviceId(),
+                    };
+                    
+                    var lock = null;
+                    
+                    try {
+                        lock = new PSLock(lockData);
+                    } catch (error) {
+                        // Failure mode analysis: Lock will not have been created yet.
+                        op.endWithErrorDetails(error);
+                        return;
+                    }
+
+                    lock.attemptToLock(function (error, lockAlreadyHeld) {
+                        if (error) {
+                            // Failure mode analysis: Lock may have been created (seems unlikely, but still possible).
+                            op.endWithErrorDetails(error);
+                        }
+                        else {
+                            op.endWithRC(ServerConstants.rcOK);
+                        }
+                    });
                 }
             }
         });
     });
 });
-
-// opterationType must be "Upload" or "Download"
-function createOperationIdAndLock(op, operationType) {
-    var psOperationId = null;
-    
-    try {
-        psOperationId = new PSOperationId({operationType: operationType});
-    } catch (error) {
-        op.endWithErrorDetails(error);
-        return;
-    };
-    
-    psOperationId.storeNew(function (error) {
-        if (error) {
-            op.endWithErrorDetails(error);
-        }
-        else {
-            // In recovery [2], we make use of the fact that if we have a lock, the lock records the operationId.
-            var lockData = {
-                _id: op.userId(),
-                deviceId: op.deviceId(),
-                operationId: psOperationId._id
-            };
-            
-            var lock = null;
-            
-            try {
-                lock = new PSLock(lockData);
-            } catch (error) {
-                // Failure mode analysis: Lock will not have been created yet, but we have already created a PSOperationId
-                psOperationId.remove(function (removeError) {
-                    if (removeError) {
-                        logger.error(removeError);
-                    }
-                    
-                    op.endWithErrorDetails(error);
-                });
-                return;
-            }
-
-            lock.attemptToLock(function (attemptToLockError, lockAlreadyHeld) {
-                if (attemptToLockError) {
-                    // Failure mode analysis: Lock may have been created (seems unlikely, but still possible), and we have already created a PSOperationId
-                    
-                    psOperationId.remove(function (removeError) {
-                        // Failure mode analysis: Lock may have been created, and we may have failed to remove the PSOperationId.
-                        if (removeError) {
-                            logger.error(removeError);
-                        }
-                        
-                        if (lockAlreadyHeld) {
-                            op.endWithRCAndErrorDetails(ServerConstants.rcLockAlreadyHeld, attemptToLockError);
-                        }
-                        else {
-                            op.endWithErrorDetails(attemptToLockError);
-                        }
-                    });
-                }
-                else {
-                    logger.info("Returning operationId to client: " + psOperationId._id);
-                    op.result[ServerConstants.resultOperationIdKey] =
-                        psOperationId._id;
-                    op.endWithRC(ServerConstants.rcOK);
-                }
-            });
-        }
-    });
-}
 
 // DEBUGGING
 /*
@@ -255,23 +205,23 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
     
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
-        //console.log("request.file: " + JSON.stringify(request.file));
+        // console.log("request.file: " + JSON.stringify(request.file));
         
         // Make sure user/device has started uploads. i.e., make sure this user/device has the lock.
 
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "Error: Don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
             // This check is to deal with error recovery.
-            var message = "Error: Have lock, but operation is already in progress!";
+            var message = "Error: Have lock, and an operation in-progress!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (psOperationId.operationType != "Upload") {
-            var message = "Error: Not doing upload operation!";
+        else if (isDefined(psOperationId) && (psOperationId.operationType != "Outbound")) {
+            var message = "Error: Not doing outbound operation!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
@@ -459,7 +409,7 @@ function checkIfFileExists(fileData, callback) {
     });
 }
 
-/* This doesn't remove the PSOperationId on an uplod error because the client/app may be in the middle of a long series of uploads/deletes and may need to retry a specific upload.
+/* This doesn't remove any PSOperationId on an uplod error because the client/app may be in the middle of a long series of uploads/deletes and may need to retry a specific upload.
 */
 app.post('/' + ServerConstants.operationDeleteFiles, function (request, response) {
     var op = new Operation(request, response);
@@ -475,14 +425,14 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             
         }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
             // This check is to deal with error recovery.
             var message = "Error: Have lock, but operation is already in progress!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (psOperationId.operationType != "Upload") {
-            var message = "Error: Not doing upload operation!";
+        else if (isDefined(psOperationId) && (psOperationId.operationType != "Outbound")) {
+            var message = "Error: Not doing outbound operation!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
@@ -601,7 +551,7 @@ function addToOutboundFileChanges(op, clientFile, deleteIfTrue, callback) {
     });
 }
 
-/* The rationale for waiting until the "commit" phase in order to do the actual file operations is that the relative stability of the server versus the stability of the mobile device is greater. E.g., at any time a mobile device can (a) lose its network connection, or (b) have its app go into the background and lose CPU. Once the files are on the server, we don't have as much possible variablity in these issues.
+/* The rationale for waiting until CommitChanges in order to do the transfer to cloud storage is the greater relative stability of the server versus the mobile device. E.g., at any time a mobile device can (a) lose its network connection, or (b) have its app go into the background and lose CPU. Once the files are on the server, we don't have as much possible variablity in these issues.
 */
 /* Failure mode analysis prior to returning success to the app/client from the commit:
 1) An error can occur in checking for the lock; in which case, the PSLock is still held, and the PSOperationId is sill present.
@@ -610,7 +560,7 @@ function addToOutboundFileChanges(op, clientFile, deleteIfTrue, callback) {
 
 Failure mode analysis after returning success from the commit:
 */
-app.post('/' + ServerConstants.operationCommitFileChanges, function (request, response) {
+app.post('/' + ServerConstants.operationCommitChanges, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -625,25 +575,59 @@ app.post('/' + ServerConstants.operationCommitFileChanges, function (request, re
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-            // This check is to deal with error recovery.
-            var message = "Error: Have lock, but operation is already in progress!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-        }
-        else if (psOperationId.operationType != "Upload") {
-            var message = "Error: Not doing upload operation!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        else if (isDefined(psOperationId)) {
+            if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+                // This check is to deal with error recovery.
+                var message = "Error: Have lock, but operation is already in progress!";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            } else if (psOperationId.operationType != "Outbound") {
+                var message = "Error: Not doing outbound operation!";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            } else {
+                // Already have operation Id.
+                commitChanges(op, psLock, psOperationId);
+            }
         }
         else {
-            // Need to kick off an operation that will execute untethered from the http request.
-            // We'll do a transfer, wait for it to complete. And then do the next, etc. This poses interesting problems for errors and reporting errors. AND, termination.
-            // It seems this untethered operation is a characteristic of Node.js: http://stackoverflow.com/questions/16180502/node-express-why-can-i-execute-code-after-res-send
-            // We'll have to do something separate to deal with (A) reporting/logging errors post-connection termation, (B) handling errors, and (C) ensuring termination (i.e., ensuring we don't run for too long).
-            // If we were using websockets, could we inform the app of an error in the file transfer? Presumably if the app was in the background, not launched, or not on the network, no.
             
-            // 1) Mark all files for user/device in PSOutboundFileChange's as committed.
+            var psOperationId = null;
+
+            try {
+                psOperationId = new PSOperationId({operationType: "Outbound"});
+            } catch (error) {
+                op.endWithErrorDetails(error);
+                return;
+            };
+
+            psOperationId.storeNew(function (error) {
+                if (error) {
+                    op.endWithErrorDetails(error);
+                }
+                else {
+                    commitChanges(op, psLock, psOperationId);
+                }
+            });
+        }
+    });
+});
+
+function commitChanges(op, psLock, psOperationId) {
+    // Always returning operationId, just for uniformity of operation of CommitChanges.
+    
+    logger.info("Returning operationId to client: " + psOperationId._id);
+    op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
+    
+    // Need to update lock with operationId. It's possible this has already been done, but doing it multiple times shouldn't matter.
+    
+    psLock.operationId = psOperationId._id;
+    psLock.update(function (error) {
+        if (error) {
+            op.endWithErrorDetails(error);
+        }
+        else {
+            // Mark all files for user/device in PSOutboundFileChange's as committed.
             PSOutboundFileChange.commit(op.userId(), op.deviceId(), function (error) {
                 if (objOrInject(error, op, ServerConstants.dbTcCommitChanges)) {
                     logger.error("Failed on PSOutboundFileChange.commit: " + error);
@@ -668,8 +652,13 @@ app.post('/' + ServerConstants.operationCommitFileChanges, function (request, re
             });
         }
     });
-});
+}
 
+// Need to kick off an operation that will execute untethered from the http request.
+// We'll do a transfer, wait for it to complete. And then do the next, etc. This poses interesting problems for errors and reporting errors. AND, termination.
+// It seems this untethered operation is a characteristic of Node.js: http://stackoverflow.com/questions/16180502/node-express-why-can-i-execute-code-after-res-send
+// We'll have to do something separate to deal with (A) reporting/logging errors post-connection termation, (B) handling errors, and (C) ensuring termination (i.e., ensuring we don't run for too long).
+// If we were using websockets, could we inform the app of an error in the file transfer? Presumably if the app was in the background, not launched, or not on the network, no.
 function startTransferringFiles(op, psLock, psOperationId) {
     // Change PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
     psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
@@ -751,29 +740,12 @@ app.post('/' + ServerConstants.operationGetFileIndex, function (request, respons
     }
     
     op.validateUser(function (psLock, psOperationId) {
-        // In order to get a coherent view of the files on the SyncServer it seems that we need to have a lock, at least temporarily, to generate the file index. Without a lock, some other client could be in the middle of changing (updating or deleting) files in the index. It doesn't seem, however, that we need a lock that spans server API calls. This call will just fail if we can't get a lock.
-        
-        // Optionally, the SyncServer API caller can hold a lock already. I.e., it should be possible to have started some file operations, and during that set of operations get a file index. In this case, we shouldn't again attempt to get a lock. See also design discussion in [1] above.
-        
-        var operationIdString = request.body[ServerConstants.operationIdKey];
-        var psOperationId = null;
-        
-        if (isDefined(operationIdString)) {
-            if (!psLock) {
-                var message = "Error: Don't have the lock!";
-                logger.error(message);
-                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            }
-            else {
-                // We already held the lock-- prior to this get file index operation, so get list of files, but don't remove the lock afterwards.
-                finishOperationGetFileIndex(op, null);
-            }
-        }
-        else if (psLock) {
-            var message = "You didn't give an operationId but do hold a lock!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            
+        // In order to get a coherent view of the files on the SyncServer it seems that we need to have a lock. Without a lock, some other client could be in the middle of changing (updating or deleting) files in the index.
+        // We can already hold the lock, or obtain the lock for just the duration of this call.
+
+        if (isDefined(psLock)) {
+            // We already held the lock-- prior to this get file index operation, so get list of files, but don't remove the lock afterwards.
+            finishOperationGetFileIndex(op, null);
         } else {
             // Create a lock.
         
@@ -872,7 +844,7 @@ app.post('/' + ServerConstants.operationCheckOperationStatus, function (request,
             return;
         }
                 
-        // Specifically *not* checking to see if we have a lock. If the operation has successfully completed, the lock will have been removed.
+        // Specifically *not* checking to see if we have a lock. If an Outbound transfer operation has successfully completed, the lock will have been removed.
         
         // We already have the psOperationId, but go ahead and use the app/client's operationId to look it up.
         PSOperationId.getFor(operationId, function (error, psOperationId) {
@@ -890,6 +862,32 @@ app.post('/' + ServerConstants.operationCheckOperationStatus, function (request,
                 op.endWithRC(ServerConstants.rcOK);
             }
         });
+    });
+});
+
+// This is useful in case the CommitChanges fails but the operation Id was generated.
+app.post('/' + ServerConstants.operationGetOperationId, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        if (!psLock) {
+            // If we don't have a lock, we can't have an operation Id. Considering this an API error, because the client/app should know they don't have a lock.
+            var message = "Error: Don't have the lock!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            if (isDefined(psOperationId)) {
+                logger.info("Returning operationId to client: " + psOperationId._id);
+                op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
+            }
+            
+            op.endWithRC(ServerConstants.rcOK);
+        }
     });
 });
 
@@ -939,7 +937,7 @@ function removeOperationId(op, request) {
     });
 }
 
-app.post('/' + ServerConstants.operationFileChangesRecovery, function (request, response) {
+app.post('/' + ServerConstants.operationChangesRecovery, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -957,31 +955,30 @@ app.post('/' + ServerConstants.operationFileChangesRecovery, function (request, 
         WHAT ABOUT: Before beginning this recovery, on the server, we check what the status of the Operation Id is. If the status is some error or failure, then we can proceed with the recovery. If the status not rcOperationStatusInProgress then the operation is not in asynchronous/concurrent execution, and we can proceed with the recovery.
         */
                     
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-            // This is really an error. We should never have an in-progress operation for FileChangesRecovery because we should only ever be doing a FileChangesRecovery prior to a successful commit.
+        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
+            // This is really an error. We should never have an in-progress operation for ChangesRecovery because we should only ever be doing a ChangesRecovery prior to a successful commit.
             var message = "Operation status was rcOperationStatusInProgress";
             logger.error(message);
             // Should we really call this a rcServerAPIError?
             op.endWithRCAndErrorDetails(ServerConstants.rcOperationInProgress, message);
         }
-        else if (psOperationId.operationType != "Upload") {
-            var message = "Error: Not doing upload operation!";
+        else if (isDefined(psOperationId) && (psOperationId.operationType != "Outbound")) {
+            var message = "Error: Not doing outbound transfer operation!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            
         }
         else {
-            finishFileChangesRecovery(op, psLock, psOperationId);
+            finishChangesRecovery(op, psLock, psOperationId);
         }
     });
 });
 
-function finishFileChangesRecovery(op, lock, psOperationId) {
+function finishChangesRecovery(op, lock, psOperationId) {
     PSOutboundFileChange.getAllFor(op.userId(), op.deviceId(),
         function (error, psOutboundFileChanges) {
             if (error) {
@@ -996,56 +993,64 @@ function finishFileChangesRecovery(op, lock, psOperationId) {
                         op.endWithErrorDetails(error);
                     }
                     else {
-                        // From [2] above, if we have a lock, we have an operationId, and the lock records the operationId.
-
-                        psOperationId.remove(function (error) {
-                            if (error) {
-                                op.endWithErrorDetails(error);
-                            }
-                            else {
-                                op.endWithRC(ServerConstants.rcOK);
-                            }
-                        });
+                        if (isDefined(psOperationId)) {
+                            psOperationId.remove(function (error) {
+                                if (error) {
+                                    op.endWithErrorDetails(error);
+                                }
+                                else {
+                                    op.endWithRC(ServerConstants.rcOK);
+                                }
+                            });
+                        }
+                        else {
+                            op.endWithRC(ServerConstants.rcOK);
+                        }
                     }
                 });
             }
             else {
                 logger.info("We've got PSOutboundFileChange items. Client/app will need to work from an existing set of file uploads.");
 
-                // With PSOutboundFileChange items, we will necessarily have a PSOperationId and a PSLock. This is because in order to create a PSOutboundFileChange, we necessarily have a PSLock. And if we hold a PSLock, we necessarily have a PSOperationId.
+                // With PSOutboundFileChange items, we will necessarily have a PSLock. This is because in order to create a PSOutboundFileChange, we necessarily have a PSLock.
                 // I'm going to format these PSOutboundFileChange items like they were a file index.
                 
-                // We need to get the lock so we can return the operationId.
-                // TODO: Plus, eventually, this action of getting the lock will update a date/time last used stamp on the lock.
-                
-                // Set the PSOperationId to an initial, non-error state.
-                psOperationId.operationStatus = ServerConstants.rcOperationStatusNotStarted;
-                psOperationId.error = null;
-                
-                psOperationId.update(function (updateError) {
-                    if (updateError) {
-                        logger.error("Could not update operation to rcOperationStatusNotStarted: %s", updateError);
-                        op.endWithErrorDetails(updateError);
+                function returnOutboundFileChanges() {
+                    var result = [];
+                    
+                    for (var index in psOutboundFileChanges) {
+                        var obj = psOutboundFileChanges[index];
+                        result.push(obj.convertToFileIndex());
                     }
-                    else {
-                        var result = [];
-                        
-                        for (var index in psOutboundFileChanges) {
-                            var obj = psOutboundFileChanges[index];
-                            result.push(obj.convertToFileIndex());
+                    
+                    op.result[ServerConstants.resultFileIndexKey] = result;
+                    op.endWithRC(ServerConstants.rcOK);
+                }
+                
+                if (isDefined(psOperationId)) {
+                    // Set the PSOperationId to an initial, non-error state.
+                    psOperationId.operationStatus = ServerConstants.rcOperationStatusNotStarted;
+                    psOperationId.error = null;
+                    
+                    psOperationId.update(function (updateError) {
+                        if (updateError) {
+                            logger.error("Could not update operation to rcOperationStatusNotStarted: %s", updateError);
+                            op.endWithErrorDetails(updateError);
                         }
-                        
-                        op.result[ServerConstants.resultOperationIdKey] =
-                            lock.operationId;
-                        op.result[ServerConstants.resultFileIndexKey] = result;
-                        op.endWithRC(ServerConstants.rcOK);
-                    }
-                });
+                        else {
+                            op.result[ServerConstants.resultOperationIdKey] = lock.operationId;
+                            returnOutboundFileChanges();
+                        }
+                    });
+                }
+                else {
+                    returnOutboundFileChanges();
+                }
             }
         });
 }
 
-// Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId.
+// Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId (if any).
 app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
@@ -1054,12 +1059,12 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     }
     
     op.validateUser(function (psLock, psOperationId) {
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
             // Yikes.
             var message = "Operation status was rcOperationStatusInProgress";
             logger.error(message);
@@ -1088,16 +1093,21 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
                                     op.endWithErrorDetails(message);
                                 }
                                 else {
-                                    psOperationId.remove(function (error) {
-                                        if (error) {
-                                            var message = "Failed removing PSOperationId!";
-                                            logger.error(message);
-                                            op.endWithErrorDetails(message);
-                                        }
-                                        else {
-                                            op.endWithRC(ServerConstants.rcOK);
-                                        }
-                                    });
+                                    if (isDefined(psOperationId)) {
+                                        psOperationId.remove(function (error) {
+                                            if (error) {
+                                                var message = "Failed removing PSOperationId!";
+                                                logger.error(message);
+                                                op.endWithErrorDetails(message);
+                                            }
+                                            else {
+                                                op.endWithRC(ServerConstants.rcOK);
+                                            }
+                                        });
+                                    }
+                                    else {
+                                        op.endWithRC(ServerConstants.rcOK);
+                                    }
                                 }
                             });
                         }
@@ -1117,8 +1127,14 @@ app.post('/' + ServerConstants.operationTransferRecovery, function (request, res
     
     op.validateUser(function (psLock, psOperationId) {
                     
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else if (!isDefined(psOperationId)) {
+            // Should not be doing a transfer recovery without an operationId.
+            var message = "There is no operationId!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
@@ -1128,8 +1144,8 @@ app.post('/' + ServerConstants.operationTransferRecovery, function (request, res
             logger.debug(message);
             op.endWithRC(ServerConstants.rcOK);
         }
-        else if (psOperationId.operationType != "Upload") {
-            var message = "Error: Not doing upload operation!";
+        else if (psOperationId.operationType != "Outbound") {
+            var message = "Error: Not doing outbound transfer operation!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
@@ -1153,8 +1169,8 @@ app.post('/' + ServerConstants.operationTransferRecovery, function (request, res
     });
 });
 
-// Obtains the lock and an operation id. The client app should then use get file index to determine if there are files needing to be downloaded.
-app.post('/' + ServerConstants.operationStartDownloads, function (request, response) {
+// Initiates an asynchronous operation transferring files from cloud storage. REST/API caller provides the list of files to be transferred.
+app.post('/' + ServerConstants.operationTransferFromCloudStorage, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -1166,44 +1182,33 @@ app.post('/' + ServerConstants.operationStartDownloads, function (request, respo
 
         var localFiles = new File(op.userId(), op.deviceId());
         
-        // Just in case the directory for uploads/downloads hasn't been created yet.
-        fse.ensureDir(localFiles.localDirectoryPath(), function (err) {
-            if (err) {
-                op.endWithErrorDetails(error);
-            }
-            else {
-                createOperationIdAndLock(op, "Download");
-            }
-        });
-    });
-});
-
-app.post('/' + ServerConstants.operationEndDownloads, function (request, response) {
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-    
-    op.validateUser(function (psLock, psOperationId) {
-                    
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
+        else if (isDefined(psOperationId)) {
+            // Should not already have an operationId because this is is going to create an operationId.
+            var message = "There is already an operationId!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
         else {
-            logger.trace("Removing the lock.");
-
-            psLock.removeLock(function (error) {
-                if (error) {
-                    var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
-                    op.endWithErrorDetails(errorMessage);
-                }
-                else {
-                    removeOperationId(op, request);
-                }
-            });
+            var clientFileArray = null;
+            try {
+                clientFileArray = ClientFile.objsFromArray(request.body[ServerConstants.filesToTransferFromCloudStorageKey]);
+            } catch (error) {
+                logger.error(error);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
+                return;
+            }
+            
+            if (clientFileArray.length == 0) {
+                var message = "No files given to transfer from cloud storage.";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                return;
+            }
         }
     });
 });

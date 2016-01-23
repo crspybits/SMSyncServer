@@ -10,10 +10,10 @@
 
 // Context for the failure test.
 public enum SMTestContext: String {
-    case StartFileChanges
+    case Lock
     case GetFileIndex
     case UploadFiles
-    case CommitFileChanges
+    case CommitChanges
 }
 
 import Foundation

@@ -7,7 +7,6 @@
 //
 
 import XCTest
-//import NetDb
 // The @testable notation lets us access "internal" classes within our project.
 @testable import SMSyncServer
 
@@ -25,21 +24,5 @@ class ServerAPI: BaseClass {
     
     // Initiate the download immediately followed by ending it. Should succeed, but call no callbacks.
     func testStartThenEndDownloads() {
-        let afterOperationsExpectation = self.expectationWithDescription("After Operations")
-        
-        self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.startDownloads() { (serverOperationId, error) in
-                XCTAssert(error == nil)
-                XCTAssert(serverOperationId != nil)
-
-                SMServerAPI.session.endDownloads(serverOperationId: serverOperationId!) { error in
-                    XCTAssert(error == nil)
-                    
-                    afterOperationsExpectation.fulfill()
-                }
-            }
-        }
-        
-        self.waitForExpectations()
     }
 }

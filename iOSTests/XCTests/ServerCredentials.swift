@@ -83,7 +83,7 @@ class ServerCredentials: XCTestCase {
     
     func doTestThatItFailsWithBadCredentials(badCreds:BadCredentialsType) {
         let serverOpURL = NSURL(string: SMServerAPI.session.serverURLString +
-                        "/" + SMServerConstants.operationStartFileChanges)!
+                        "/" + SMServerConstants.operationLock)!
         let parameters = self.badCredentials(badCreds)
         
         self.doTheTestWith(serverOpURL, parameters: parameters, expectedRC:  SMServerConstants.rcOperationFailed)
