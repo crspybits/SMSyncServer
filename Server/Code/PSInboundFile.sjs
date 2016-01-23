@@ -13,7 +13,7 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "InboundFiles";
 
 // These must exactly match those properties given in the data model below.
-const props = ["_id", "fileId", "userId", "deviceId", "cloudFileName", "mimeType", "appFileType", "fileVersion", "committed"];
+const props = ["_id", "fileId", "userId", "deviceId"];
 
 // Note that same names used across some of the properties in this class and PSFileIndex are important and various dependencies exist.
 
@@ -27,13 +27,6 @@ const props = ["_id", "fileId", "userId", "deviceId", "cloudFileName", "mimeType
 		userId: (String), // reference into PSUserCredentials (i.e., _id from PSUserCredentials)
  
         deviceId: (String, UUID), // identifies a specific mobile device (assigned by app)
- 
-        cloudFileName: (String), // name of the file in cloud storage excluding the folder path.
- 
-        mimeType: (String), // MIME type of the file
-        appFileType: (String), // App-specific file type
-        
-		fileVersion: (Integer value), // values must be >= 0.
 	}
 	
 	Details: The entry is removed from this collection immediately after the file has been received from the server. A Lock is held until all entries are removed for the particular userId/deviceId pair. While the lock is held, this userId cannot request uploads or downloads.
@@ -48,10 +41,67 @@ function PSInboundFile(fileData) {
     var self = this;
 
     Common.assignPropsTo(self, fileData, props);
+}
 
-    if (isDefined(self.fileVersion) && self.fileVersion < 0) {
-        throw new Error("fileVersion < 0: " + self.fileVersion);
-    }
+// instance methods
+
+// Save a new object in persistent storage based on the member variables of this instance.
+// Callback has one parameter: error.
+PSInboundFile.prototype.storeNew = function (callback) {
+    var self = this;
+
+    var copy = {};
+    Common.assignPropsTo(copy, self, props);
+    
+    // We should not allow multiple entries in the collection of inbound file changes for the the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
+    Common.lookup(copy, props, collectionName, function (error, objectFound) {
+        if (error) {
+            callback(error);
+        }
+        else if (objectFound) {
+            callback(new Error("storeNew: Found existing instance!"));
+        } else {
+            Common.storeNew(self, collectionName, props, callback);
+        }
+    });
+}
+
+// Looks up a PSInboundFile object based on the instance values. On success the instance has its values populated by the found object.
+// Callback parameters: 1) error, 2) if error is null, a boolean indicating if the object could be found. It is an error for more than one object to be found in a query using the instance values.
+PSInboundFile.prototype.lookup = function (callback) {
+    Common.lookup(this, props, collectionName, callback);
+}
+
+// Callback parameters: 1) error, 2) if error not null, an array of PSInboundFile objects describing the inbound files pending for this userId/deviceId. This array is zero length if no PSInboundFile objects were found.
+PSInboundFile.getAllFor = function (userId, deviceId, callback) {
+    var query = {
+        userId: userId,
+        deviceId: deviceId
+    };
+	
+	var cursor = Mongo.db().collection(collectionName).find(query);
+		
+	if (!cursor) {
+		callback("Failed on find!");
+		return;
+	}
+
+    var result = [];
+    
+    cursor.each(function(err, doc){
+        if (err) {
+            callback(err, null);
+            return;
+        }
+        else if (!doc) {
+            callback(null, result);
+            return;
+        }
+        
+        // make a new PSInboundFile for the doc
+        var inboundFile = new PSInboundFile(doc);
+        result.push(inboundFile);
+    });
 }
 
 // export the class

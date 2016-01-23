@@ -8,6 +8,7 @@ db.Locks.drop()
 db.OutboundFileChanges.drop()
 db.OperationIds.drop()
 db.FileIndex.drop()
-db.PSFileTransferLog.drop()
+db.FileTransferLog.drop()
+db.InboundFiles.drop()
 
 EOF

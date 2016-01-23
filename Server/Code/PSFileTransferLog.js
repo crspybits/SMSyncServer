@@ -11,7 +11,7 @@ var ServerConstants = require('./ServerConstants');
 var PSFileIndex = require('./PSFileIndex');
 var PSOutboundFileChange = require('./PSOutboundFileChange');
 
-const collectionName = "PSFileTransferLog";
+const collectionName = "FileTransferLog";
 
 // These must match those properties given in the data model below.
 const props = ["_id", "fileIndex", "outboundFileChange"];

@@ -68,6 +68,8 @@ function PSOperationId(idData) {
 PSOperationId.prototype.storeNew = function (callback) {
     var self = this;
     
+    // TODO: Make sure this user/device doesn't already have an operationId.
+
     if (!isDefined(self.operationType)) {
         callback(new Error("operationType was not given in PSOperationId"))
         return;

@@ -22,23 +22,27 @@ public class SMOperationResult {
 // Describes a file that is present on the local and/or remote systems.
 // This inherits from NSObject so I can use the .copy() method.
 internal class SMServerFile : NSObject, NSCopying {
+    
+    // The permanent identifier for the file on the app and SyncServer.
+    internal var uuid: NSUUID!
+    
     internal var localURL: NSURL?
     
     // This must be unique across all remote files for the cloud user. (Because currently all remote files are required to be in a single remote directory).
-    internal var remoteFileName:String!
+    // This optional for the case of transfering files from cloud storage where only a UUID is needed.
+    internal var remoteFileName:String?
     
     // TODO: Add MD5 hash of file.
-    
-    // The UUID is the permanent identifier for the file on the app and SyncServer.
-    internal var uuid: NSUUID!
-    
-    internal var mimeType:String!
+
+    // This optional for the case of transfering files from cloud storage where only a UUID is needed.
+    internal var mimeType:String?
     
     // An app-dependent type, so that the app can know, when it downloads a file from the SyncServer, how to process the file. This is optional as the app may or may not want to use it.
     internal var appFileType:String?
     
     // Files newly uploaded to the server (i.e., their UUID doesn't exist yet there) must have version 0. Updated files must have a version equal to +1 of that on the server currently.
-    internal var version: Int!
+    // This optional for the case of transfering files from cloud storage where only a UUID is needed.
+    internal var version: Int?
     
     // Used when uploading changes to the SyncServer to keep track of the local file meta data.
     internal var localFile:SMLocalFile?
@@ -49,7 +53,7 @@ internal class SMServerFile : NSObject, NSCopying {
     private override init() {
     }
     
-    internal init(localURL url:NSURL?, remoteFileName fileName:String, mimeType fileMIMEType:String, appFileType fileType:String?, uuid fileUUID:NSUUID, version fileVersion:Int) {
+    internal init(uuid fileUUID:NSUUID, localURL url:NSURL?=nil, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil,  version fileVersion:Int?=nil) {
         self.localURL = url
         self.remoteFileName = fileName
         self.uuid = fileUUID
@@ -148,11 +152,20 @@ internal class SMServerFile : NSObject, NSCopying {
             var result = [String:AnyObject]()
             
             result[SMServerConstants.fileUUIDKey] = self.uuid.UUIDString
-            result[SMServerConstants.fileVersionKey] = self.version
-            result[SMServerConstants.cloudFileNameKey] = self.remoteFileName
-            result[SMServerConstants.fileMIMEtypeKey] = self.mimeType
             
-            if (self.appFileType != nil) {
+            if self.version != nil {
+                result[SMServerConstants.fileVersionKey] = self.version
+            }
+            
+            if self.remoteFileName != nil {
+                result[SMServerConstants.cloudFileNameKey] = self.remoteFileName
+            }
+            
+            if self.mimeType != nil {
+                result[SMServerConstants.fileMIMEtypeKey] = self.mimeType
+            }
+            
+            if self.appFileType != nil {
                 result[SMServerConstants.appFileTypeKey] = self.appFileType
             }
             
@@ -282,7 +295,7 @@ internal class SMServerAPI {
     }
     
     // Indicates that a group of files in the cloud should be deleted.
-    // You must have initiated startFileChanges beforehand. This does nothing, but calls the callback if filesToDelete is nil or is empty.
+    // You must have a lock beforehand. This does nothing, but calls the callback if filesToDelete is nil or is empty.
     internal func deleteFiles(filesToDelete: [SMServerFile]?, completion:((error:NSError?)->(Void))?) {
     
         if filesToDelete == nil || filesToDelete!.count == 0 {
@@ -552,17 +565,27 @@ internal class SMServerAPI {
         }
     }
     
-    internal func startTransferFromCloudStorage(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    internal func startInboundTransfer(filesToTransfer: [SMServerFile], completion:((serverOperationId:String?, returnCode:Int?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
+        var serverParams = userParams!
+        var fileTransferServerParam = [AnyObject]()
+        
+        for serverFile in filesToTransfer {
+            let serverFileDict = serverFile.dictionary
+            fileTransferServerParam.append(serverFileDict)
+        }
+        
+        serverParams[SMServerConstants.filesToTransferFromCloudStorageKey] = fileTransferServerParam
+        
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationStartInboundTransfer)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
-            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
+            let (returnCode, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             
             var resultError = error
             let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
@@ -571,7 +594,7 @@ internal class SMServerAPI {
                 resultError = Error.Create("No server operationId obtained")
             }
             
-            completion?(serverOperationId: serverOperationId, error: resultError)
+            completion?(serverOperationId: serverOperationId, returnCode: returnCode, error: resultError)
         }
     }
     

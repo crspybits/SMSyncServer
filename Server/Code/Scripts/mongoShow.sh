@@ -31,7 +31,10 @@ db.FileIndex.find().pretty()
 showCollectionNameFor("OperationIds");
 db.OperationIds.find().pretty()
 
-showCollectionNameFor("PSFileTransferLog");
+showCollectionNameFor("FileTransferLog");
 db.PSFileTransferLog.find().pretty()
+
+showCollectionNameFor("InboundFiles");
+db.InboundFiles.find().pretty()
 
 EOF

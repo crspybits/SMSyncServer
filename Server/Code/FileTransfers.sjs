@@ -11,6 +11,7 @@ var PSFileIndex = require('./PSFileIndex.sjs')
 var File = require('./File.sjs');
 var PSFileTransferLog = require('./PSFileTransferLog');
 var ServerConstants = require('./ServerConstants');
+var PSInboundFile = require('./PSInboundFile');
 
 const maxNumberSendAttempts = 3;
 
@@ -338,6 +339,32 @@ FileTransfers.prototype.ensureLogEntryConsistency = function (logEntry, callback
             });
         }
     });
+}
+
+// The files are specified in the PSInboundFile's for the user/device.
+// This will try each file transfer a specific number of times before giving up.
+// Each time a file is transferred, the specific entry will be removed from PSInboundFile's.
+// Callback: One parameter: Error.
+FileTransfers.prototype.receiveFiles = function (callback) {
+    var self = this;
+    
+    PSInboundFile.getAllFor(self.op.userId(), self.op.deviceId(),
+        function (error, inboundFiles) {
+            if (error) {
+                callback(error);
+            }
+            else if (inboundFiles.length == 0 ) {
+                logger.trace("No inbound files to receive.");
+                callback(null);
+            }
+            else {
+                logger.trace(inboundFiles.length + " inbound files to receive.");
+                callback(null);
+                //self.receiveEachFile(inboundFiles, function (error) {
+                //    callback(error);
+                //});
+            }
+        });
 }
 
 // export the class

@@ -82,7 +82,8 @@ function define(name, value) {
     // When one or more files are being transferred from cloud storage (operationTransferFromCloudStorage), use the following
     // Key:
 	define("filesToTransferFromCloudStorageKey", "FilesToTransferFromCloudStorage");
-    // Value: an array of JSON objects with keys: fileUUIDKey, fileVersionKey, cloudFileNameKey, fileMIMEtypeKey.
+    // Value: an array of JSON objects with keys: fileUUIDKey
+    // Only the UUID key is needed because no change is being made to the file index-- the transfer operation consists of copying the current version of the file from cloud storage to the server temporary storage.
     
     // The following keys are required for file uploads and downloads (and some for deletions, see above).
     // Key:
@@ -127,6 +128,7 @@ function define(name, value) {
 	define("dbTcSendFiles", 4);
 	define("dbTcSendFilesUpdate", 5);
 	define("dbTcRemoveLock", 6);
+	define("dbTcReceiveFiles", 7);
     
     // MARK: Responses from server
     

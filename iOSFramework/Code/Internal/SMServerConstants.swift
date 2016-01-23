@@ -91,7 +91,8 @@ public class SMServerConstants {
     // When one or more files are being transferred from cloud storage (operationTransferFromCloudStorage), use the following
     // Key:
     public static let filesToTransferFromCloudStorageKey = "FilesToTransferFromCloudStorage"
-    // Value: an array of JSON objects with keys: fileUUIDKey, fileVersionKey, cloudFileNameKey, fileMIMEtypeKey.
+    // Value: an array of JSON objects with keys: fileUUIDKey
+    // Only the UUID key is needed because no change is being made to the file index-- the transfer operation consists of copying the current version of the file from cloud storage to the server temporary storage.
     
     // The following keys are required for file uploads and downloads (and some for deletions, see above).
     // Key:
@@ -136,6 +137,7 @@ public class SMServerConstants {
     public static let dbTcSendFiles = 4
     public static let dbTcSendFilesUpdate = 5
     public static let dbTcRemoveLock = 6
+    public static let dbTcReceiveFiles = 7
     
     // MARK: Responses from server
     

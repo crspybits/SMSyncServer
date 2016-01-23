@@ -9,6 +9,7 @@
 import XCTest
 // The @testable notation lets us access "internal" classes within our project.
 @testable import SMSyncServer
+import SMCoreLib
 
 class ServerAPI: BaseClass {
     
@@ -22,7 +23,75 @@ class ServerAPI: BaseClass {
         super.tearDown()
     }
     
-    // Initiate the download immediately followed by ending it. Should succeed, but call no callbacks.
-    func testStartThenEndDownloads() {
+    func testThatStartInboundTransferWithNoLockFails() {
+        let afterStartExpectation = self.expectationWithDescription("After Start")
+        
+        let noServerFiles = [SMServerFile]()
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, returnCode, error)  in
+            
+                XCTAssert(serverOperationId == nil)
+                XCTAssert(error != nil)
+                XCTAssert(returnCode! == SMServerConstants.rcServerAPIError)
+                afterStartExpectation.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    func testThatStartInboundTransferWith0FilesFails() {
+        let afterStartExpectation = self.expectationWithDescription("After Cleanup")
+        
+        let noServerFiles = [SMServerFile]()
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.lock() { error in
+                XCTAssert(error == nil)
+                
+                SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, returnCode, error)  in
+                
+                    XCTAssert(error != nil)
+                    XCTAssert(serverOperationId == nil)
+                    XCTAssert(returnCode! == SMServerConstants.rcServerAPIError)
+                    
+                    // Get rid of the lock.
+                    SMServerAPI.session.cleanup(){ error in
+                        XCTAssert(error == nil)
+                        
+                        afterStartExpectation.fulfill()
+                    }
+                }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    func testThatStartInboundTransferWith1FileWorks() {
+        let afterStartExpectation = self.expectationWithDescription("After Cleanup")
+        
+        var serverFiles = [SMServerFile]()
+        let uuid = NSUUID(UUIDString: UUID.make())
+        let file = SMServerFile(uuid: uuid!)
+        serverFiles.append(file)
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.lock() { error in
+                XCTAssert(error == nil)
+                
+                SMServerAPI.session.startInboundTransfer(serverFiles) { (serverOperationId, returnCode, error)  in
+                
+                    XCTAssert(error == nil)
+                    XCTAssert(serverOperationId != nil)
+                    XCTAssert(returnCode! == SMServerConstants.rcOK)
+                    
+                    afterStartExpectation.fulfill()
+                }
+            }
+        }
+        
+        self.waitForExpectations()
     }
 }

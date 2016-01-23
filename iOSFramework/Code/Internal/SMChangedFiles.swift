@@ -111,7 +111,7 @@ internal class SMChangedFiles {
             
             if nil == serverFile {
                 // No file with this UUID on the server. This must be a new file.
-                serverFile = SMServerFile(localURL: nil, remoteFileName: localFile.remoteFileName! as String, mimeType: localFile.mimeType!, appFileType:localFile.appFileType, uuid: NSUUID(UUIDString: localFile.uuid!)!, version: Int(localFile.localVersion!.intValue))
+                serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!,localURL: nil, remoteFileName: localFile.remoteFileName! as String, mimeType: localFile.mimeType!, appFileType:localFile.appFileType, version: Int(localFile.localVersion!.intValue))
                 
                 Assert.If(0 != localFile.localVersion, thenPrintThisString: "Yikes: The first version of the file was not 0")
             }

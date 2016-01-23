@@ -31,6 +31,7 @@ var PSOperationId = require('./PSOperationId.sjs');
 var PSFileIndex = require('./PSFileIndex');
 var Common = require('./Common');
 var ClientFile = require('./ClientFile');
+var PSInboundFile = require('./PSInboundFile');
 
 // See http://stackoverflow.com/questions/31496100/cannot-app-usemulter-requires-middleware-function-error
 // See also https://codeforgeek.com/2014/11/file-uploads-using-node-js/
@@ -647,7 +648,7 @@ function startOutboundTransfer(op, psLock, psOperationId) {
                     });
                 }
                 else {
-                    startTransferringFiles(op, psLock, psOperationId);
+                    startOutboundTransferOfFiles(op, psLock, psOperationId);
                 }
             });
         }
@@ -659,7 +660,7 @@ function startOutboundTransfer(op, psLock, psOperationId) {
 // It seems this untethered operation is a characteristic of Node.js: http://stackoverflow.com/questions/16180502/node-express-why-can-i-execute-code-after-res-send
 // We'll have to do something separate to deal with (A) reporting/logging errors post-connection termation, (B) handling errors, and (C) ensuring termination (i.e., ensuring we don't run for too long).
 // If we were using websockets, could we inform the app of an error in the file transfer? Presumably if the app was in the background, not launched, or not on the network, no.
-function startTransferringFiles(op, psLock, psOperationId) {
+function startOutboundTransferOfFiles(op, psLock, psOperationId) {
     // Change PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
     psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
     psOperationId.error = null;
@@ -1160,9 +1161,9 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
                 }
                 else {
                     // Originally I was thinking of this as now being in the same kind of situation as file changes recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like file changes recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
-                    // startTransferringFiles calls transferFilesToCloudStorage, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
+                    // startOutboundTransferOfFiles calls transferFilesToCloudStorage, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
                     // In fact, this will act in the same manner as the end part of CommitFileChanges-- it will let the file transfer run asynchronously and "return" to the server REST API caller.
-                    startTransferringFiles(op, psLock, psOperationId);
+                    startOutboundTransferOfFiles(op, psLock, psOperationId);
                 }
             });
         }
@@ -1194,14 +1195,19 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
+            logger.info("Parameters for files to transfer from cloud storage: %j", request.body[ServerConstants.filesToTransferFromCloudStorageKey]);
+
             var clientFileArray = null;
+            const requiredProps = [ServerConstants.fileUUIDKey];
             try {
-                clientFileArray = ClientFile.objsFromArray(request.body[ServerConstants.filesToTransferFromCloudStorageKey]);
+                clientFileArray = ClientFile.objsFromArray(request.body[ServerConstants.filesToTransferFromCloudStorageKey], requiredProps);
             } catch (error) {
                 logger.error(error);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
                 return;
             }
+            
+            logger.info("Files to transfer from cloud storage: %j", clientFileArray);
             
             if (clientFileArray.length == 0) {
                 var message = "No files given to transfer from cloud storage.";
@@ -1209,9 +1215,128 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
                 return;
             }
+            
+            // Need to create PSInboundFile's for each of the files to be transferred.
+            function createInboundFile(clientFile, callback) {
+                var inboundFile = null;
+                
+                var fileMetaData = {
+                    fileId: clientFile[ServerConstants.fileUUIDKey],
+                    userId: op.userId(),
+                    deviceId: op.deviceId()
+                };
+                
+                try {
+                    inboundFile = new PSInboundFile(fileMetaData);
+                } catch (error) {
+                    op.endWithErrorDetails(error);
+                    return;
+                }
+                
+                inboundFile.storeNew(callback);
+            }
+            
+            Common.applyFunctionToEach(createInboundFile, clientFileArray, function (error) {
+                if (error) {
+                    op.endWithErrorDetails(error);
+                }
+                else {
+                    var psOperationId = null;
+                    
+                    // Set PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
+                    const operationData = {
+                        operationType: "Inbound",
+                        operationStatus: ServerConstants.rcOperationStatusInProgress
+                    };
+                    
+                    try {
+                        psOperationId = new PSOperationId(operationData);
+                    } catch (error) {
+                        op.endWithErrorDetails(error);
+                        return;
+                    };
+
+                    psOperationId.storeNew(function (error) {
+                        if (error) {
+                            op.endWithErrorDetails(error);
+                        }
+                        else {
+                            // Need to add the operationId into the psLock.
+                            
+                            psLock.operationId = psOperationId._id;
+                            psLock.update(function (error) {
+                                if (error) {
+                                    op.endWithErrorDetails(error);
+                                }
+                                else {
+                                    // Tell the user we're off to the races, and end the connection.
+                                    op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
+                                    op.endWithRC(ServerConstants.rcOK);
+                                    
+                                    // Do the file transfer from the cloud storage system.
+                                    transferFilesFromCloudStorage(op, psLock, psOperationId);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 });
+
+function transferFilesFromCloudStorage(op, psLock, psOperationId) {
+
+    function updateOperationId(psOperationId, rc, errorMessage) {
+        if (errorMessage) {
+            logger.error(errorMessage);
+            psOperationId.error = errorMessage;
+        }
+        else {
+            psOperationId.error = null;
+        }
+        
+        psOperationId.operationStatus = rc;
+        psOperationId.update();
+    }
+    
+    logger.info("Attempting FileTransfers.setup...");
+    var fileTransfers = new FileTransfers(op, psOperationId);
+
+    fileTransfers.setup(function (error) {
+        if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
+            var errorMessage = "Failed on setup: " + JSON.stringify(error);
+            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
+        }
+        else {
+            logger.info("Attempting FileTransfers.receiveFiles...");
+
+            fileTransfers.receiveFiles(function (receiveFilesError) {
+                if (objOrInject(receiveFilesError, op, ServerConstants.dbTcReceiveFiles)) {
+                    var errorMessage = "Error receiving files: " +
+                        JSON.stringify(receiveFilesError);
+                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
+                    
+                    // I'm not going to remove the lock here to give the app a chance to recover from this error in a locked condition.
+                    return;
+                }
+
+                psLock.removeLock(function (error) {
+                    if (objOrInject(error, op, ServerConstants.dbTcRemoveLock)) {
+                        var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
+                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
+                    }
+                    else {
+                        logger.trace("Removed the lock.");
+
+                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
+                        logger.trace("Successfully completed operation!");
+                    }
+                });
+            });
+        }
+    });
+}
 
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");
