@@ -23,12 +23,13 @@ function define(name, value) {
 	define("operationUploadFile", "UploadFile");
 	define("operationDeleteFiles", "DeleteFiles");
     
-    // Already holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
+    // Holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
 	define("operationGetFileIndex", "GetFileIndex");
     
     // Both of these implicitly do an Unlock after the cloud storage transfer.
-	define("operationTransferFromCloudStorage", "TransferFromCloudStorage");
-	define("operationCommitChanges", "CommitChanges");
+    // operationStartOutboundTransfer is also known as the "commit" operation.
+	define("operationStartOutboundTransfer", "StartOutboundTransfer");
+	define("operationStartInboundTransfer", "StartInboundTransfer");
     
 	define("operationGetOperationId", "GetOperationId");
 
@@ -38,11 +39,11 @@ function define(name, value) {
 	define("operationCheckOperationStatus", "CheckOperationStatus");
 	define("operationRemoveOperationId", "RemoveOperationId");
 
-    // Recovery from errors during upload or file changes process (i.e., prior to transferring files to cloud storage).
-	define("operationChangesRecovery", "ChangesRecovery");
+    // Recovery from errors during upload process (i.e., prior to transferring files to cloud storage).
+	define("operationUploadRecovery", "UploadRecovery");
 
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
-	define("operationTransferRecovery", "TransferRecovery");
+	define("operationOutboundTransferRecovery", "OutboundTransferRecovery");
 
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
 	define("operationCleanup", "Cleanup");

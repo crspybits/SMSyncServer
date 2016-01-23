@@ -1118,7 +1118,7 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     });
 });
 
-app.post('/' + ServerConstants.operationTransferRecovery, function (request, response) {
+app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -1170,7 +1170,7 @@ app.post('/' + ServerConstants.operationTransferRecovery, function (request, res
 });
 
 // Initiates an asynchronous operation transferring files from cloud storage. REST/API caller provides the list of files to be transferred.
-app.post('/' + ServerConstants.operationTransferFromCloudStorage, function (request, response) {
+app.post('/' + ServerConstants.operationStartInboundTransfer, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();

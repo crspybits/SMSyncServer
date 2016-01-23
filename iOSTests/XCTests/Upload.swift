@@ -748,7 +748,7 @@ class Upload: BaseClass {
                 }
             
                 self.progressCallbacks.append() { progress in
-                    XCTAssertEqual(progress, SMSyncServerRecovery.FileChanges)
+                    XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
                     progressCallbackExpected.fulfill()
 
                     SMTest.session.crash()
@@ -763,7 +763,7 @@ class Upload: BaseClass {
             // 2nd run of test.
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.FileChanges)
+                XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
                 progressCallbackExpected.fulfill()
             }
             
@@ -853,9 +853,9 @@ class Upload: BaseClass {
             
             switch (context) {
             case .Lock, .GetFileIndex, .UploadFiles:
-                progressExpected = .FileChanges
+                progressExpected = .Upload
                 
-            case .CommitChanges:
+            case .OutboundTransfer:
                 progressExpected = .MayHaveCommitted
             }
             
@@ -901,7 +901,7 @@ class Upload: BaseClass {
     }
     
     func testThatCommitChangesRecoveryWorks() {
-        self.doTestThatUploadRecoveryWorks(inContext: .CommitChanges, withFileName: SMTestContext.CommitChanges.rawValue + "A")
+        self.doTestThatUploadRecoveryWorks(inContext: .OutboundTransfer, withFileName: SMTestContext.OutboundTransfer.rawValue + "A")
     }
     
     // TODO: [3]. Create a test case where we exceed the number of successive times we can try to recover from the same error (.FileChangesRecovery).
@@ -910,7 +910,7 @@ class Upload: BaseClass {
     func testThatServerCommitChangesTestCaseWorks() {
         // The client goes through two calls to the progress delegate method in the recovery process for SMSyncServerConstants.dbTcCommitChanges.
         
-        let context = SMTestContext.CommitChanges
+        let context = SMTestContext.OutboundTransfer
         let serverTestCase = SMServerConstants.dbTcCommitChanges
         let fileName = context.rawValue + String(serverTestCase)
         var numberRecoverySteps = 0
@@ -941,7 +941,7 @@ class Upload: BaseClass {
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.FileChanges)
+                XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -971,7 +971,7 @@ class Upload: BaseClass {
     // Server-side detailed testing of Transfer Recovery.
     func transferRecovery(transferTestCase serverTestCase:Int) {
         
-        let context = SMTestContext.CommitChanges
+        let context = SMTestContext.OutboundTransfer
         let fileName = context.rawValue + String(serverTestCase)
         var numberRecoverySteps = 0
         
@@ -1003,7 +1003,7 @@ class Upload: BaseClass {
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.CloudStorageTransfer)
+                XCTAssertEqual(progress, SMSyncServerRecovery.OutboundTransfer)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -1044,7 +1044,7 @@ class Upload: BaseClass {
         self.extraServerResponseTime = 30
         
         let serverTestCase = SMServerConstants.dbTcSendFilesUpdate
-        let context = SMTestContext.CommitChanges
+        let context = SMTestContext.OutboundTransfer
         let fileName1 = context.rawValue + String(serverTestCase) + "A"
         let fileName2 = context.rawValue + String(serverTestCase) + "B"
 
@@ -1084,7 +1084,7 @@ class Upload: BaseClass {
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.CloudStorageTransfer)
+                XCTAssertEqual(progress, SMSyncServerRecovery.OutboundTransfer)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
