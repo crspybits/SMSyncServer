@@ -21,14 +21,14 @@ internal enum SMUploadFilesMode : Int {
 
     // We're going to categorize errors on the server into a few main types for the purpose of recovery:
     
-    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between lock and commitChanges, prior to a successful commitChanges. (By successful commitChanges, I mean that the commit successfully started asynchronous operation of the file upload on the server).
-    case ChangesRecovery
+    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between lock and the commit, prior to a successful commi. (By successful commi, I mean that the commit successfully started asynchronous operation of the file transfer on the server).
+    case UploadRecovery
     
-    // 2) An edge recovery case that needs more execution-time evaluation to determine whether to categorize it as FileChangesRecovery or CloudStorageTransferRecovery.
+    // 2) An edge recovery case that needs more execution-time evaluation to determine whether to categorize it as UploadRecovery or OutboundTransferRecovery.
     case MayHaveCommittedRecovery
     
-    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the FileChangesRecovery mode. i.e., commitChanges *was* successful.
-    case CloudStorageTransferRecovery
+    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the UploadRecovery mode. i.e., the commit *was* successful.
+    case OutboundTransferRecovery
 }
 
 /* 
@@ -50,9 +50,9 @@ internal class SMUploadFiles : NSObject {
     }
     
     // I could make these a persistent var, but little seems to be gained by that other than reducing the number of times we try to recover. I've made this a "static" so I can access it within the setMode method below.
-    private static var numberTimesTriedFileChangesRecovery = 0
+    private static var numberTimesTriedUploadRecovery = 0
     private static var numberTimesTriedMayHaveCommittedRecovery = 0
-    private static var numberTimesTriedCloudStorageTransferRecovery = 0
+    private static var numberTimesTriedOutboundTransferRecovery = 0
 
     internal static var maxTimesToTryRecovery = 3
     
@@ -79,14 +79,14 @@ internal class SMUploadFiles : NSObject {
         _mode.intValue = newMode.rawValue
         
         switch (newMode) {
-        case .ChangesRecovery:
-            numberTimesTriedFileChangesRecovery = 0
+        case .UploadRecovery:
+            self.numberTimesTriedUploadRecovery = 0
 
         case .MayHaveCommittedRecovery:
-            numberTimesTriedMayHaveCommittedRecovery = 0
+            self.numberTimesTriedMayHaveCommittedRecovery = 0
         
-        case .CloudStorageTransferRecovery:
-            numberTimesTriedCloudStorageTransferRecovery = 0
+        case .OutboundTransferRecovery:
+            self.numberTimesTriedOutboundTransferRecovery = 0
             
         default:
             break
@@ -143,9 +143,9 @@ internal class SMUploadFiles : NSObject {
                         self.prepareForUpload(givenAlreadyUploadedFiles: nil)
                     })
 
-            case .ChangesRecovery:
+            case .UploadRecovery:
                 self.sync(.Do, currentOperation: {
-                    self.fileChangesRecovery()
+                    self.uploadRecovery()
                 })
             
             case .MayHaveCommittedRecovery:
@@ -153,9 +153,9 @@ internal class SMUploadFiles : NSObject {
                     self.mayHaveCommittedRecovery()
                 })
             
-            case .CloudStorageTransferRecovery:
+            case .OutboundTransferRecovery:
                 self.sync(.Do, currentOperation: {
-                    self.cloudStorageTransferRecovery()
+                    self.outboundTransferRecovery()
                 })
             
             case .NonRecoverableError:
@@ -317,8 +317,8 @@ internal class SMUploadFiles : NSObject {
             return
         }
         
-        // The .FileChangesRecovery recovery mode will let us know we need to recover if we fail sometime prior to the commmit operation. When the app restarts and/or we regain network access, we'll check this flag and see what we need to do.
-        SMUploadFiles.setMode(.ChangesRecovery)
+        // The .UploadRecovery recovery mode will let us know we need to recover if we fail sometime prior to the commmit operation. When the app restarts and/or we regain network access, we'll check this flag and see what we need to do.
+        SMUploadFiles.setMode(.UploadRecovery)
         
         SMServerAPI.session.lock() { error in
             Log.msg("lock: \(error)")
@@ -332,14 +332,14 @@ internal class SMUploadFiles : NSObject {
                     }
                     else {
                         // Error with SMSyncServer.session.getFileIndex; do recovery.
-                        self.fileChangesRecovery()
+                        self.uploadRecovery()
                     }
                 }
             }
             else {
-                // Error with SMSyncServer.session.startFileChanges
-                // Cleaning up may not be needed as we may not hold the lock, or have an operationId, but do it anyways to be safe.
-                self.fileChangesRecovery()
+                // Error with SMSyncServer.session.lock
+                // Cleaning up may not be needed as we may not hold the lock, but do it anyways to be safe.
+                self.uploadRecovery()
             }
         }
     }
@@ -382,7 +382,7 @@ internal class SMUploadFiles : NSObject {
                 self.doUpload(withFilesToUpload: filesToUpload!)
             }
             else {
-                self.fileChangesRecovery()
+                self.uploadRecovery()
             }
         }
     }
@@ -403,12 +403,12 @@ internal class SMUploadFiles : NSObject {
                 // Just about to do the commit. If we detect failure of the commit on the client, we'll not be fully sure if the commit succeeded. E.g., we could lose a network connection as the commit is operating making it look as if the commit failed, but it actually succeeded.
                 SMUploadFiles.setMode(.MayHaveCommittedRecovery)
 
-                SMServerAPI.session.commitChanges() { operationId, error in
-                    Log.msg("SMSyncServer.session.commitChanges: \(error); operationId: \(operationId)")
-                    if SMTest.If.success(error, context: .CommitChanges) {
+                SMServerAPI.session.startOutboundTransfer() { operationId, error in
+                    Log.msg("SMSyncServer.session.startOutboundTransfer: \(error); operationId: \(operationId)")
+                    if SMTest.If.success(error, context: .OutboundTransfer) {
                         self.serverOperationId = operationId
                         // We *know* we have a successful commit. Change to our last recovery case.
-                        SMUploadFiles.setMode(.CloudStorageTransferRecovery)
+                        SMUploadFiles.setMode(.OutboundTransferRecovery)
                         
                         self.startToPollForOperationFinish()
                     }
@@ -425,7 +425,7 @@ internal class SMUploadFiles : NSObject {
                 }
                 else {
                     // Failed on uploadFiles-- Attempt recovery.
-                    self.fileChangesRecovery()
+                    self.uploadRecovery()
                 }
             }
         }
@@ -433,7 +433,7 @@ internal class SMUploadFiles : NSObject {
     
     // Start timer to poll the server to check if our operation has succeeded. That check will update our local file meta data if/when the file sync completes successfully.
     private func startToPollForOperationFinish() {
-        SMUploadFiles.setMode(.CloudStorageTransferRecovery)
+        SMUploadFiles.setMode(.OutboundTransferRecovery)
 
         self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMUploadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: "pollIfFileOperationFinished", andTarget: self)
         self.checkIfUploadOperationFinishedTimer!.start()
@@ -560,9 +560,9 @@ internal class SMUploadFiles : NSObject {
     }
     
     // TODO: Create test case [3] in Upload tests.
-    // We know that we are recovering from an error that occurred sometime between startFileChanges (inclusive) and commitChanges (exclusive).
-    private func fileChangesRecovery() {
-        self.delegate?.syncServerRecovery(.FileChanges)
+    // We know that we are recovering from an error that occurred sometime between lock (inclusive) and commit (exclusive).
+    private func uploadRecovery() {
+        self.delegate?.syncServerRecovery(.Upload)
         
         // TODO: Create test case [2] in Upload tests.
         
@@ -576,30 +576,30 @@ internal class SMUploadFiles : NSObject {
         }), nextOperation: {
             // This gets executed if we have network access.
 
-            SMUploadFiles.numberTimesTriedFileChangesRecovery++
+            SMUploadFiles.numberTimesTriedUploadRecovery++
 
-            SMServerAPI.session.changesRecovery() {serverOperationId, fileIndex, error in
+            SMServerAPI.session.uploadRecovery() {serverOperationId, fileIndex, error in
                 if (nil == error) {
                     // Either restart from scratch, or restart given the fileIndex of files that have been processed already.
                     self.serverOperationId = serverOperationId
                     self.prepareForUpload(givenAlreadyUploadedFiles: fileIndex)
                 }
-                else if SMUploadFiles.numberTimesTriedFileChangesRecovery < SMUploadFiles.maxTimesToTryRecovery {
+                else if SMUploadFiles.numberTimesTriedUploadRecovery < SMUploadFiles.maxTimesToTryRecovery {
                     
                         // Error, but try again later.
                     
-                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedFileChangesRecovery)
+                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedUploadRecovery)
 
                         TimedCallback.withDuration(duration) {
-                            self.fileChangesRecovery()
+                            self.uploadRecovery()
                         }
                 }
                 else {
-                    Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedFileChangesRecovery) times, and can't get it to work")
+                    Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedUploadRecovery) times, and can't get it to work")
                     
                     // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
                     self.sync(.Stop, currentOperation: {
-                        self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedFileChangesRecovery) recovery attempts"))
+                        self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedUploadRecovery) recovery attempts"))
                     })
                 }
             }
@@ -607,45 +607,44 @@ internal class SMUploadFiles : NSObject {
     }
     
     // It appears that some files were transferred to cloud storage, but we got an error part way through. With our assumptions so far, we'll still hold a lock.
-    private func cloudStorageTransferRecovery() {
-        self.delegate?.syncServerRecovery(.CloudStorageTransfer)
+    private func outboundTransferRecovery() {
+        self.delegate?.syncServerRecovery(.OutboundTransfer)
 
         self.sync(.ConditionalStop(stopConditional: {
             return !Network.session().connected()
         }), nextOperation: {
             // This gets executed if we have network access.
-            SMUploadFiles.numberTimesTriedCloudStorageTransferRecovery++
-            self.cloudStorageTransferRecoveryAux()
+            SMUploadFiles.numberTimesTriedOutboundTransferRecovery++
+            self.outboundTransferRecoveryAux()
         })
     }
     
-    private func cloudStorageTransferRecoveryAux() {
+    private func outboundTransferRecoveryAux() {
         // Since we still hold the lock, we can try to recover using the fileChangesRecovery. Again, it will do a little more work than we want, but it will get to the point of retrying the transfers from the SyncServer to cloud storage again. Will it retry the ones that have already been done? No. For successful transfers, the server will have removed those from the outbound files and added entries into the PSFileIndex. For failure, it is possible that we have some inconsistency in the server tables. E.g., a file was transferred, its entry removed from the outbound file changes, but its entry didn't make it into the file index.
         // It would be good to do a server integrity check based on our current expectations of what should be there.
 
-        SMServerAPI.session.transferRecovery { error in
-
+        SMServerAPI.session.outboundTransferRecovery { error in
             if (nil == error) {
-                // OK. This like a successful return from CommitChanges. We need to wait for the file transfer to complete.
-                SMUploadFiles.setMode(.CloudStorageTransferRecovery)
+                // OK. Looks like a successful commit. We need to wait for the file transfer to complete.
+                SMUploadFiles.setMode(.OutboundTransferRecovery)
                 self.startToPollForOperationFinish()
             }
-            else if SMUploadFiles.numberTimesTriedCloudStorageTransferRecovery < SMUploadFiles.maxTimesToTryRecovery {
+            else if SMUploadFiles.numberTimesTriedOutboundTransferRecovery < SMUploadFiles.maxTimesToTryRecovery {
                 
                     // Error, but try again later.
                 
-                    let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedCloudStorageTransferRecovery)
+                    let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedOutboundTransferRecovery)
 
                     TimedCallback.withDuration(duration) {
-                        self.cloudStorageTransferRecovery()
+                        self.outboundTransferRecovery()
                     }
             }
             else {
-                Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedCloudStorageTransferRecovery) times, and can't get it to work")
+                Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) times, and can't get it to work")
                 
                 // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
                 self.sync(.Stop, currentOperation: {
-                    self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedCloudStorageTransferRecovery) recovery attempts"))
+                    self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) recovery attempts"))
                 })
             }
         }
@@ -669,9 +668,9 @@ extension SMUploadFiles {
         })
     }
     
-    private func switchToFileChangesRecovery() {
-        SMUploadFiles.setMode(.ChangesRecovery)
-        self.fileChangesRecovery()
+    private func switchToUploadRecovery() {
+        SMUploadFiles.setMode(.UploadRecovery)
+        self.uploadRecovery()
     }
     
     private func delayAndCheckMayHaveCommitedAgain() {
@@ -693,7 +692,7 @@ extension SMUploadFiles {
             SMServerAPI.session.getOperationId(){ (theServerOperationId, error) in
                 if nil == error {
                     if nil == theServerOperationId {
-                        self.switchToFileChangesRecovery()
+                        self.switchToUploadRecovery()
                     }
                     else {
                         self.serverOperationId = theServerOperationId
@@ -735,13 +734,13 @@ extension SMUploadFiles {
                     }
                     else {
                         // Assume that we've got the real deal. Commit actually failed.
-                        self.switchToFileChangesRecovery()
+                        self.switchToUploadRecovery()
                     }
                     
                 case SMServerConstants.rcOperationStatusCommitFailed:
                     Log.msg("rcOperationStatusCommitFailed")
                     // [1]. We'll do a little more work than necessary with the FileChangesRecovery, but since we've not transferred any files yet this will work to kick off a retry of the commit.
-                    self.switchToFileChangesRecovery()
+                    self.switchToUploadRecovery()
                      
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
                     Log.msg("rcOperationStatusSuccessfulCompletion")
@@ -756,12 +755,12 @@ extension SMUploadFiles {
 
                     if 0 == operationResult!.count {
                         // Good. No files could have been transferred.
-                        self.switchToFileChangesRecovery()
+                        self.switchToUploadRecovery()
                     }
                     else {
                         // This is a more difficult case. What do we do?
-                        SMUploadFiles.setMode(.CloudStorageTransferRecovery)
-                        self.cloudStorageTransferRecovery()
+                        SMUploadFiles.setMode(.OutboundTransferRecovery)
+                        self.outboundTransferRecovery()
                     }
                     
                 default:

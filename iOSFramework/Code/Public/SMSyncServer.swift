@@ -14,9 +14,9 @@ import Foundation
 import SMCoreLib
 
 public enum SMSyncServerRecovery {
-    case FileChanges
+    case Upload
     case MayHaveCommitted
-    case CloudStorageTransfer
+    case OutboundTransfer
 }
 
 public class SMSyncAttributes {

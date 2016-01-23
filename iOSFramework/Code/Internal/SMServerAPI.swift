@@ -314,12 +314,12 @@ internal class SMServerAPI {
     }
     
     // You must have obtained a lock beforehand, and uploaded/deleted one file after that.
-    internal func commitChanges(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    internal func startOutboundTransfer(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationCommitChanges)!
+                        "/" + SMServerConstants.operationStartOutboundTransfer)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
@@ -490,7 +490,7 @@ internal class SMServerAPI {
     (2) Neither of these.
         Indicates that recovery can take place by just restarting the upload process. No files have been uploaded/marked for deletion already. No lock is held. No OperationId is present.
     */
-    internal func changesRecovery(completion:((serverOperationId:String?, fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
+    internal func uploadRecovery(completion:((serverOperationId:String?, fileIndex:[SMServerFile]?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -498,7 +498,7 @@ internal class SMServerAPI {
         Log.msg("parameters: \(userParams)")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationChangesRecovery)!
+                        "/" + SMServerConstants.operationUploadRecovery)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
@@ -536,7 +536,7 @@ internal class SMServerAPI {
         }
     }
     
-    internal func transferRecovery(completion:((error:NSError?)->(Void))?) {
+    internal func outboundTransferRecovery(completion:((error:NSError?)->(Void))?) {
 
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -544,7 +544,7 @@ internal class SMServerAPI {
         Log.msg("parameters: \(userParams)")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationTransferRecovery)!
+                        "/" + SMServerConstants.operationOutboundTransferRecovery)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
@@ -552,13 +552,13 @@ internal class SMServerAPI {
         }
     }
     
-    internal func transferFromCloudStorage(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
+    internal func startTransferFromCloudStorage(completion:((serverOperationId:String?, error:NSError?)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationTransferFromCloudStorage)!
+                        "/" + SMServerConstants.operationStartInboundTransfer)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         

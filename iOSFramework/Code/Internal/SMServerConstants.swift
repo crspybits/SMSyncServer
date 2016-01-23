@@ -32,12 +32,13 @@ public class SMServerConstants {
     public static let operationUploadFile = "UploadFile"
     public static let operationDeleteFiles = "DeleteFiles"
     
-    // Already holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
+    // Holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
     public static let operationGetFileIndex = "GetFileIndex"
     
     // Both of these implicitly do an Unlock after the cloud storage transfer.
-    public static let operationTransferFromCloudStorage = "TransferFromCloudStorage"
-    public static let operationCommitChanges = "CommitChanges"
+    // These are also known as "commit" operations.
+    public static let operationStartOutboundTransfer = "StartOutboundTransfer"
+    public static let operationStartInboundTransfer = "StartInboundTransfer"
     
     public static let operationGetOperationId = "GetOperationId"
 
@@ -47,11 +48,11 @@ public class SMServerConstants {
     public static let operationCheckOperationStatus = "CheckOperationStatus"
     public static let operationRemoveOperationId = "RemoveOperationId"
 
-    // Recovery from errors during upload or file changes process (i.e., prior to transferring files to cloud storage).
-    public static let operationChangesRecovery = "ChangesRecovery"
+    // Recovery from errors during upload process (i.e., prior to transferring files to cloud storage).
+    public static let operationUploadRecovery = "UploadRecovery"
 
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
-    public static let operationTransferRecovery = "TransferRecovery"
+    public static let operationOutboundTransferRecovery = "OutboundTransferRecovery"
 
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
     public static let operationCleanup = "Cleanup"

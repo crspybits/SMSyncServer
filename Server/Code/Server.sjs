@@ -551,7 +551,7 @@ function addToOutboundFileChanges(op, clientFile, deleteIfTrue, callback) {
     });
 }
 
-/* The rationale for waiting until CommitChanges in order to do the transfer to cloud storage is the greater relative stability of the server versus the mobile device. E.g., at any time a mobile device can (a) lose its network connection, or (b) have its app go into the background and lose CPU. Once the files are on the server, we don't have as much possible variablity in these issues.
+/* The rationale for waiting until operationStartOutboundTransfer in order to do the transfer to cloud storage is the greater relative stability of the server versus the mobile device. E.g., at any time a mobile device can (a) lose its network connection, or (b) have its app go into the background and lose CPU. Once the files are on the server, we don't have as much possible variablity in these issues.
 */
 /* Failure mode analysis prior to returning success to the app/client from the commit:
 1) An error can occur in checking for the lock; in which case, the PSLock is still held, and the PSOperationId is sill present.
@@ -560,7 +560,7 @@ function addToOutboundFileChanges(op, clientFile, deleteIfTrue, callback) {
 
 Failure mode analysis after returning success from the commit:
 */
-app.post('/' + ServerConstants.operationCommitChanges, function (request, response) {
+app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -570,7 +570,7 @@ app.post('/' + ServerConstants.operationCommitChanges, function (request, respon
     op.validateUser(function (psLock, psOperationId) {
         // Make sure user/device has started uploads. i.e., make sure this user/device has the lock.
 
-        if (!psLock) {
+        if (!isDefined(psLock)) {
             var message = "Error: Don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
@@ -587,7 +587,7 @@ app.post('/' + ServerConstants.operationCommitChanges, function (request, respon
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             } else {
                 // Already have operation Id.
-                commitChanges(op, psLock, psOperationId);
+                startOutboundTransfer(op, psLock, psOperationId);
             }
         }
         else {
@@ -606,15 +606,15 @@ app.post('/' + ServerConstants.operationCommitChanges, function (request, respon
                     op.endWithErrorDetails(error);
                 }
                 else {
-                    commitChanges(op, psLock, psOperationId);
+                    startOutboundTransfer(op, psLock, psOperationId);
                 }
             });
         }
     });
 });
 
-function commitChanges(op, psLock, psOperationId) {
-    // Always returning operationId, just for uniformity of operation of CommitChanges.
+function startOutboundTransfer(op, psLock, psOperationId) {
+    // Always returning operationId, just for uniformity.
     
     logger.info("Returning operationId to client: " + psOperationId._id);
     op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
@@ -937,7 +937,7 @@ function removeOperationId(op, request) {
     });
 }
 
-app.post('/' + ServerConstants.operationChangesRecovery, function (request, response) {
+app.post('/' + ServerConstants.operationUploadRecovery, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -951,7 +951,7 @@ app.post('/' + ServerConstants.operationChangesRecovery, function (request, resp
         The important issue is with the PSOutboundFileChange entries in the database: Because they typically represent upload work done. If we have one or more of these, we'll be restarting. If we have none of these, we'll clean up and let the app start file changes from scratch.
         */
         /* 
-        12/25/15; Up until this point, I was allowing StartFileChanges to be called muliple times (i.e., I was making use of this for recovery-- do I didn't have to release the lock and reacquire it). However, I ran into an issue with testing: 1) I simulated failure of the commit operation on the client side, and 2) the app tried to do a recovery. However, because the commit actually succeeded, at the same time as the commit was occuring on the server, the app was starting up a concurrent StartFileChanges, and so I ended up with two concurrent commits occuring for the same user/device. In general, this poses an issue: When you believe you've got an error on the commit, how do you ensure that the commit isn't actually proceeding?
+        12/25/15; Up until this point, I was allowing lock to be called muliple times (i.e., I was making use of this for recovery-- so I didn't have to release the lock and reacquire it). However, I ran into an issue with testing: 1) I simulated failure of the commit operation on the client side, and 2) the app tried to do a recovery. However, because the commit actually succeeded, at the same time as the commit was occuring on the server, the app was starting up a concurrent lock, and so I ended up with two concurrent commits occuring for the same user/device. In general, this poses an issue: When you believe you've got an error on the commit, how do you ensure that the commit isn't actually proceeding?
         WHAT ABOUT: Before beginning this recovery, on the server, we check what the status of the Operation Id is. If the status is some error or failure, then we can proceed with the recovery. If the status not rcOperationStatusInProgress then the operation is not in asynchronous/concurrent execution, and we can proceed with the recovery.
         */
                     
@@ -961,7 +961,7 @@ app.post('/' + ServerConstants.operationChangesRecovery, function (request, resp
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
-            // This is really an error. We should never have an in-progress operation for ChangesRecovery because we should only ever be doing a ChangesRecovery prior to a successful commit.
+            // This is really an error. We should never have an in-progress operation for UploadRecovery because we should only ever be doing a UploadRecovery prior to a successful commit.
             var message = "Operation status was rcOperationStatusInProgress";
             logger.error(message);
             // Should we really call this a rcServerAPIError?
@@ -973,12 +973,12 @@ app.post('/' + ServerConstants.operationChangesRecovery, function (request, resp
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
-            finishChangesRecovery(op, psLock, psOperationId);
+            finishUploadRecovery(op, psLock, psOperationId);
         }
     });
 });
 
-function finishChangesRecovery(op, lock, psOperationId) {
+function finishUploadRecovery(op, lock, psOperationId) {
     PSOutboundFileChange.getAllFor(op.userId(), op.deviceId(),
         function (error, psOutboundFileChanges) {
             if (error) {

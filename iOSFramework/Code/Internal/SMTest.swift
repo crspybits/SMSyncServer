@@ -13,7 +13,7 @@ public enum SMTestContext: String {
     case Lock
     case GetFileIndex
     case UploadFiles
-    case CommitChanges
+    case OutboundTransfer
 }
 
 import Foundation
