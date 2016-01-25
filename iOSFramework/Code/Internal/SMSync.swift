@@ -132,7 +132,7 @@ internal class SMSync {
     
     // Start a delayed operation if there is one.
     // Formerly: .DoDelayed
-    internal func startDelayed(currentlyOperating currentlyOperatingExpected:Bool?, currentOperation:(()->())?=nil) {
+    internal func startDelayed(currentlyOperating currentlyOperatingExpected:Bool?) {
     
         var doDelayed = false
         
@@ -156,8 +156,6 @@ internal class SMSync {
             
             SMSync._doOperationLater.boolValue = false
         }
-        
-        currentOperation?()
         
         if doDelayed {
             self.delayDelegate?.smSyncDelayedOperation()
@@ -185,11 +183,9 @@ internal class SMSync {
     
     // Unconditionally stop operations. E.g., an API error or failed during multiple recovery attempts.
     // Formerly: .Stop
-    internal func stop(butDoOperation operation:(()->())?=nil) {
+    internal func stop() {
         Synchronized.block(self) {
             self.stopAux()
         }
-        
-        operation?()
     }
 }

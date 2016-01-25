@@ -67,6 +67,7 @@ function PSOutboundFileChange(fileData) {
 }
 
 // Return only the data properties.
+// Can throw error.
 PSOutboundFileChange.prototype.dataProps = function () {
     var self = this;
     var returnProps = {};

@@ -69,6 +69,9 @@ public protocol SMSyncServerDelegate : class {
     // The callee owns the localFile after this call completes.
     func syncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes)
     
+    // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
+    func syncServerDeletionReceived(uuid uuid:NSUUID)
+    
     // numberOperations includes upload and deletion operations.
     func syncServerCommitComplete(numberOperations numberOperations:Int?)
     
@@ -90,6 +93,10 @@ public protocol SMSyncServerDelegate : class {
     2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
     */
     func syncServerError(error:NSError)
+    
+#if DEBUG
+    func syncServerNoFilesToDownload()
+#endif
 }
 
 // Derived from NSObject because of the use of addTarget from TargetsAndSelectors below.
@@ -107,6 +114,7 @@ public class SMSyncServer : NSObject {
     public weak var delegate:SMSyncServerDelegate? {
         set {
             SMUploadFiles.session.delegate = newValue
+            SMDownloadFiles.session.delegate = newValue
         }
         get {
             return SMUploadFiles.session.delegate

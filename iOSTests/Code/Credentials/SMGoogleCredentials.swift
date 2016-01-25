@@ -109,6 +109,13 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     }
 }
 
+/* 1/24/16; I just got this:
+Error signing in: Error Domain=com.google.HTTPStatus Code=500 "(null)" UserInfo={json={
+    error = "internal_failure";
+    "error_description" = "Backend Error";
+}, data=<7b0a2022 6572726f 72223a20 22696e74 65726e61 6c5f6661 696c7572 65222c0a 20226572 726f725f 64657363 72697074 696f6e22 3a202242 61636b65 6e642045 72726f72 220a7d0a>}
+*/
+
 extension SMGoogleCredentials : GIDSignInDelegate {
 
     public func signIn(signIn: GIDSignIn!, didSignInForUser user: GIDGoogleUser!,
@@ -145,7 +152,7 @@ extension SMGoogleCredentials : GIDSignInDelegate {
                     }
                 }
             } else {
-                print("Error signing in: \(error)")
+                Log.error("Error signing in: \(error)")
             }
     }
     

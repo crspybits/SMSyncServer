@@ -100,6 +100,10 @@ internal class SMFileDiffs {
                 return (files:nil, error: Error.Create("File you are deleting is not on the server!"))
             }
             
+            if serverFile!.deleted!.boolValue {
+                return (files:nil, error: Error.Create("The server file you are attempting to delete was already deleted!"))
+            }
+            
             // Also seems odd to delete a file version that you don't know about.
             if localVersion != serverFile!.version {
                 return (files:nil, error: Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)"))
@@ -143,10 +147,6 @@ internal class SMFileDiffs {
             
             var serverFile:SMServerFile? = self.getFile(fromFiles: self.serverFileIndex, withUUID:  NSUUID(UUIDString: localFile.uuid!)!)
             
-            if serverFile != nil && localVersion != serverFile!.version {
-                return (files:nil, error: Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)"))
-            }
-            
             if nil == serverFile {
                 // No file with this UUID on the server. This must be a new file.
                 serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!,localURL: nil, remoteFileName: localFile.remoteFileName! as String, mimeType: localFile.mimeType!, appFileType:localFile.appFileType, version: Int(localFile.localVersion!.intValue))
@@ -154,6 +154,14 @@ internal class SMFileDiffs {
                 Assert.If(0 != localFile.localVersion, thenPrintThisString: "Yikes: The first version of the file was not 0")
             }
             else {
+                if localVersion != serverFile!.version {
+                    return (files:nil, error: Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)"))
+                }
+                
+                if serverFile!.deleted!.boolValue {
+                    return (files:nil, error: Error.Create("The server file you are attempting to upload was already deleted!"))
+                }
+                
                 // I'm making a copy of the serverFile object because serverFile is a reference to an object in self.serverFileIndex, and I don't want that array modified.
                 serverFile = serverFile!.copy() as? SMServerFile
                 serverFile!.version = localVersion + 1
@@ -198,6 +206,13 @@ internal class SMFileDiffs {
                 result = [SMServerFile]()
                 
                 for serverFile in serverFileIndex {
+                    if serverFile.deleted! {
+                        // File was deleted on the server.
+                        // TODO: We need to check to see if this file is marked as deleted in the local meta data, if we know about its UUID. If we know about its UUID, but it's not marked as deleted, we can mark it as deleted. 
+                        // TODO: WE ALSO need to give a delegate callback for this to tell the SMSyncServer Framework client that the file was deleted.
+                        continue
+                    }
+                    
                     let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
                     if localFile == nil {
                         // Case 1) Server file doesn't yet exist on the app/client.

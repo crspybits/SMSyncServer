@@ -299,11 +299,17 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                 }
                 
                 if (fileIndexObj) {
+                    if (fileIndexObj.deleted) {
+                        var errorMessage = "File was already deleted!";
+                        logger.error(errorMessage);
+                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, errorMessage);
+                        return;
+                    }
+                    
                     var errorMessage = fileIndexObj.checkNewFileVersion(clientFile[ServerConstants.fileVersionKey]);
                     if (isDefined(errorMessage)) {
                         logger.error(errorMessage);
-                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                errorMessage);
+                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, errorMessage);
                         return;
                     }
                 }
@@ -1208,8 +1214,41 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     op.endWithErrorDetails(error);
                     return;
                 }
+
+                // Add cloudFileName and mimeType to the PSInboundFile object.
+                var fileIndexData = {
+                    fileId: inboundFile.fileId,
+                    userId: inboundFile.userId,
+                };
                 
-                inboundFile.storeNew(callback);
+                var fileIndexObj = null;
+                
+                try {
+                    fileIndexObj = new PSFileIndex(fileIndexData);
+                } catch (error) {
+                    callback(error);
+                    return;
+                }
+            
+                fileIndexObj.lookup(function (error, objectFound) {
+                    if (error) {
+                        callback(error);
+                    }
+                    else if (!objectFound) {
+                        callback(new Error("File not found: %j", fileIndexObj));
+                    }
+                    else if (fileIndexObj.deleted) {
+                        callback(new Error("File marked as deleted: %j", fileIndexObj));
+                    }
+                    else {
+                        inboundFile.cloudFileName = fileIndexObj.cloudFileName;
+                        inboundFile.mimeType = fileIndexObj.mimeType;
+
+                        inboundFile.storeNew(function (error) {
+                            callback(error);
+                        });
+                    }
+                });
             }
             
             Common.applyFunctionToEach(createInboundFile, clientFileArray, function (error) {

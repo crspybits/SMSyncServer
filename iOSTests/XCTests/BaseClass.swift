@@ -39,6 +39,10 @@ class BaseClass: XCTestCase {
     var deletionSequenceNumber = 0
     var deletionCallbacks:[deletionCallback]!
 
+    typealias downloadCallback = ()->()
+    var downloadSequenceNumber = 0
+    var downloadCallbacks:[downloadCallback]!
+
     typealias errorCallback = ()->()
     var errorSequenceNumber = 0
     var errorCallbacks:[errorCallback]!
@@ -56,6 +60,7 @@ class BaseClass: XCTestCase {
         self.progressCallbacks = [progressCallback]()
         self.singleUploadCallbacks = [singleUploadCallback]()
         self.deletionCallbacks = [deletionCallback]()
+        self.downloadCallbacks = [downloadCallback]()
         self.singleProgressCallback = nil
     }
     
@@ -153,10 +158,22 @@ extension BaseClass : SMSyncServerDelegate {
     }
     
     func syncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
+        self.downloadCallbacks[self.downloadSequenceNumber]()
+        self.downloadSequenceNumber += 1
+    }
+    
+    func syncServerDeletionReceived(uuid uuid: NSUUID) {
     }
     
     func syncServerError(error:NSError) {
         let sequenceNumber = self.errorSequenceNumber++
         self.errorCallbacks[sequenceNumber]()
     }
+    
+#if DEBUG
+    func syncServerNoFilesToDownload() {
+        let sequenceNumber = self.downloadSequenceNumber++
+        self.downloadCallbacks[sequenceNumber]()
+    }
+#endif
 }

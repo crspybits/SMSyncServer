@@ -13,7 +13,7 @@
 import Foundation
 import SMCoreLib
 
-public class SMOperationResult {
+public struct SMOperationResult {
     var status:Int!
     var error:String!
     var count:Int!
@@ -50,7 +50,8 @@ internal class SMServerFile : NSObject, NSCopying {
     // Used in a file index reply from the server to indicate the size of the file stored in cloud storage. (Will not be present in all replies, e.g., in a fileChangesRecovery).
     internal var sizeBytes:Int32?
     
-    // TODO: Need a Bool which indicates that the file has been deleted on the server.
+    // Indicates whether or not the file has been deleted on the server.
+    internal var deleted:Bool?
     
     private override init() {
     }
@@ -88,7 +89,7 @@ internal class SMServerFile : NSObject, NSCopying {
     }
     
     internal class func create(fromDictionary dict:[String:AnyObject]) -> SMServerFile? {
-        let props = [SMServerConstants.fileIndexFileId, SMServerConstants.fileIndexFileVersion, SMServerConstants.fileIndexCloudFileName, SMServerConstants.fileIndexMimeType]
+        let props = [SMServerConstants.fileIndexFileId, SMServerConstants.fileIndexFileVersion, SMServerConstants.fileIndexCloudFileName, SMServerConstants.fileIndexMimeType, SMServerConstants.fileIndexDeleted]
         // Not including SMServerConstants.fileIndexAppFileType as it's optional
     
         for prop in props {
@@ -128,6 +129,15 @@ internal class SMServerFile : NSObject, NSCopying {
         else {
             Log.msg("Didn't get a String for mimeType")
             return nil
+        }
+        
+        let fileDeleted = SMServerAPI.getIntFromServerResponse(dict[SMServerConstants.fileIndexDeleted])
+        if nil == fileDeleted {
+            Log.msg("Didn't get an Int for fileDeleted: \(dict[SMServerConstants.fileIndexDeleted].dynamicType)")
+            return nil
+        }
+        else {
+            newObj.deleted = Bool(fileDeleted!)
         }
         
         if let fileType = dict[SMServerConstants.fileIndexAppFileType] as? String {
@@ -447,7 +457,7 @@ internal class SMServerAPI {
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             if (nil == error) {
-                let operationResult = SMOperationResult()
+                var operationResult = SMOperationResult()
                 
                 operationResult.status = SMServerAPI.getIntFromServerResponse(serverResponse![SMServerConstants.resultOperationStatusCodeKey])
                 if nil == operationResult.status {

@@ -102,13 +102,12 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
     }
     
     private var checkIfUploadOperationFinishedTimer:RepeatingTimer?
-    
+    private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
+
     // This describes the files that need to be uploaded/deleted on the server. And the set of changes that need to be synced against the local meta data.
     private var pendingUploadFiles:[SMServerFile]?
     private var pendingDeleteFiles:[SMServerFile]?
 
-    private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
-        
     private override init() {
         super.init()
     }
@@ -168,12 +167,13 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         Assert.If(SMUploadFiles.mode != .NonRecoverableError, thenPrintThisString: "We're not in the NonRecoverableError mode")
         SMUploadFiles.setMode(.Normal)
     }
-        
-    //MARK: Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
+    
+    // MARK: Start: Methods that call delegate methods
+    // Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
+    
     private func callSyncServerCommitComplete(numberOperations numberOperations:Int?) {
-        SMSync.session.startDelayed(currentlyOperating: true, currentOperation: {
-                self.delegate?.syncServerCommitComplete(numberOperations: numberOperations)
-            })
+        SMSync.session.startDelayed(currentlyOperating: true)
+        self.delegate?.syncServerCommitComplete(numberOperations: numberOperations)
     }
     
     private func callSyncServerError(error:NSError) {
@@ -182,11 +182,12 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
         SMUploadFiles.setMode(.NonRecoverableError)
         
-        SMSync.session.stop() {
-            self.delegate?.syncServerError(error)
-        }
+        SMSync.session.stop()
+        self.delegate?.syncServerError(error)
     }
     
+    // MARK: End: Methods that call delegate methods
+
     // The alreadyUploadedFiles parameter is for usage of this method in recovery: The parameter gives the collection of files that have already been uploaded to the SyncServer (but not yet transferred to cloud storage).
     private func prepareForUpload(givenAlreadyUploadedFiles alreadyUploadedFiles:[SMServerFile]?) {
         
@@ -477,9 +478,8 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                     Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedUploadRecovery) times, and can't get it to work")
                     
                     // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
-                    SMSync.session.stop() {
-                        self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedUploadRecovery) recovery attempts"))
-                    }
+                    SMSync.session.stop()
+                    self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedUploadRecovery) recovery attempts"))
                 }
             }
         })
@@ -522,9 +522,9 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) times, and can't get it to work")
                 
                 // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
-                SMSync.session.stop() {
-                    self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) recovery attempts"))
-                }
+                SMSync.session.stop()
+                self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) recovery attempts"))
+
             }
         }
     }

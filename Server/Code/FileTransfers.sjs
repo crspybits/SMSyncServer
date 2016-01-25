@@ -198,9 +198,16 @@ FileTransfers.prototype.finishSendFile = function (err, remainingSendAttempts, c
         logger.debug("Updating from outboundFileChange: %j", outboundFileChange);
         logger.debug("Updating with: %j", fileIndexData);
         
+        var dataProps = null;
+        try {
+            dataProps = outboundFileChange.dataProps();
+        } catch (error) {
+            callback(error);
+        }
+        
         var logFileObjData = {
             fileIndex: fileIndexData,
-            outboundFileChange: outboundFileChange.dataProps()
+            outboundFileChange: dataProps
         };
         
         var fileTransferLogObj = null;
@@ -413,70 +420,46 @@ FileTransfers.prototype.receiveFileUsingMultipleAttempts =
         logger.info("Receive attempt " + currentReceiveAttempt + " for file: " + JSON.stringify(inboundFile));
         
         var fileToReceive = new File(inboundFile.userId, inboundFile.deviceId, inboundFile.fileId);
+        fileToReceive.cloudFileName = inboundFile.cloudFileName;
+        fileToReceive.mimeType = inboundFile.mimeType;
+
+        // Increment operationCount of the PSOperationId so we can distinguish between two main kinds of failures and recovery for the app/client: Errors that occurred prior to any transfer of data from cloud storage and errors that occurred after possible transfer of data.
+        // Note that the accuracy of the operationCount field of the PSOperationId is by no means guaranteed. E.g., if the psOperationId update succeeds, but the receiveFile fails, and then later a recovery redoes this process, the PSOperationId operationCount will be inaccurate.
         
-        // Add cloudFileName and mimeType to the File object.
-        var fileIndexData = {
-            fileId: inboundFile.fileId,
-            userId: inboundFile.userId,
-        };
+        self.psOperationId.operationCount++;
+        self.psOperationId.error = null;
         
-        var fileIndexObj = null;
-        
-        try {
-            fileIndexObj = new PSFileIndex(fileIndexData);
-        } catch (error) {
-            callback(error);
-            return;
-        }
-        
-        fileIndexObj.lookup(function (error, objectFound) {
+        self.psOperationId.update(function (error) {
             if (error) {
                 callback(error);
+                return;
             }
-            else {
-                fileToReceive.cloudFileName = fileIndexObj.cloudFileName;
-                fileToReceive.mimeType = fileIndexObj.mimeType;
- 
-                // Increment operationCount of the PSOperationId so we can distinguish between two main kinds of failures and recovery for the app/client: Errors that occurred prior to any transfer of data from cloud storage and errors that occurred after possible transfer of data.
-                // Note that the accuracy of the operationCount field of the PSOperationId is by no means guaranteed. E.g., if the psOperationId update succeeds, but the receiveFile fails, and then later a recovery redoes this process, the PSOperationId operationCount will be inaccurate.
-                
-                self.psOperationId.operationCount++;
-                self.psOperationId.error = null;
-                
-                self.psOperationId.update(function (error) {
-                    if (error) {
-                        callback(error);
-                        return;
+
+            self.cloudStorage.inboundTransfer(fileToReceive, function (error, fileProperties) {
+                if (error) {
+                    logger.error("Error receiving file on attempt %d: %j", currentReceiveAttempt, error);
+                    
+                    if (remainingReceiveAttempts <= 0) {
+                        callback(new Error("*** Error receiving file from cloud storage"));
                     }
+                    else {
+                        self.receiveFileUsingMultipleAttempts(inboundFile,
+                            remainingReceiveAttempts - 1, callback);
+                    }
+                }
+                else {
+                    // Success receiving the file from cloud storage.
+                    // Mark the inbound file as tranferred from cloud storage-- we'll be downloading the file from the sync server to the client in an unlocked state, so the PSInboundFile object now just indicates the presence of of the file in local temporary, sync server, storage.
+                    
+                    logger.trace("Success receiving file from cloud storage!");
+                    logger.info("Updating inboundFile: %j", inboundFile);
 
-                    self.cloudStorage.inboundTransfer(fileToReceive,
-                        function (error, fileProperties) {
-
-                            if (error) {
-                                logger.error("Error receiving file on attempt %d: %j", currentReceiveAttempt, error);
-                                
-                                if (remainingReceiveAttempts <= 0) {
-                                    callback(new Error("*** Error receiving file from cloud storage"));
-                                }
-                                else {
-                                    self.receiveFileUsingMultipleAttempts(inboundFile,
-                                        remainingReceiveAttempts - 1, callback);
-                                }
-                            }
-                            else {
-                                // Success receiving the file from cloud storage.
-                                // Mark the inbound file as tranferred from cloud storage-- we'll be downloading the file from the sync server to the client in an unlocked state, so the PSInboundFile object now just indicates the presence of of the file in local temporary, sync server, storage.
-                                
-                                logger.debug("Updating inboundFile: %j", inboundFile);
-
-                                inboundFile.received = true;
-                                inboundFile.update(function (error) {
-                                    callback(error);
-                                });
-                            }
-                        });
-                });
-            }
+                    inboundFile.received = true;
+                    inboundFile.update(function (error) {
+                        callback(error);
+                    });
+                }
+            });
         });
     }
 

@@ -7,6 +7,7 @@
 //
 
 import XCTest
+@testable import SMSyncServer
 
 class Download: BaseClass {
     
@@ -20,10 +21,55 @@ class Download: BaseClass {
         super.tearDown()
     }
     
-    // TODO: Server files which already exist on the app/client and have the same version.
+    // TODO: Server files which already exist on the app/client and have the same version, i.e., there are no files to download.
     
-    // TODO: Server files which don't yet exist on the app/client.
+    // Download a single server file which doesn't yet exist on the app/client.
+    func testThatDownloadOfOneFileWorks() {
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
+        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let singleDownloadExpectation = self.expectationWithDescription("Single Download")
+        
+        self.extraServerResponseTime = 30
+        
+        self.waitUntilSyncServerUserSignin() {
+            
+            let fileName = "DownloadOfOneFile"
+            let (file, fileSizeBytes) = self.createFile(withName: fileName)
+            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+            
+            SMSyncServer.session.uploadImmutableFile(file.url(), withFileAttributes: fileAttributes)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == file.uuid!)
+                singleUploadExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                self.checkFileSize(file.uuid!, size: fileSizeBytes) {
+                    uploadCompleteCallbackExpectation.fulfill()
+                    
+                    // Now, forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData()
+                    
+                    SMDownloadFiles.session.checkForDownloads()
+                }
+            }
+            
+            self.downloadCallbacks.append() {
+                singleDownloadExpectation.fulfill()
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
     
+    // TODO: Download two server files which don't yet exist on the app/client.
+
+    // TODO: Start one download, and immediately after starting that download, commit an upload.
+
     // TODO: Server files which are updated versions of those on app/client.
     
     /* TODO:

@@ -13,7 +13,7 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "InboundFiles";
 
 // These must exactly match those properties given in the data model below.
-const props = ["_id", "fileId", "userId", "deviceId", "received"];
+const props = ["_id", "fileId", "userId", "deviceId", "cloudFileName", "mimeType", "received"];
 
 // Note that same names used across some of the properties in this class and PSFileIndex are important and various dependencies exist.
 
@@ -28,6 +28,10 @@ const props = ["_id", "fileId", "userId", "deviceId", "received"];
  
         deviceId: (String, UUID), // identifies a specific mobile device (assigned by app)
         
+        // These are added as part of operationStartInboundTransfer in part because they are needed later in the inbound transfer, but also to check the .deleted property of the PSFileIndex fairly early in the file transfer process
+        cloudFileName: (String), // Just for convenience
+        mimeType: (String), // Just for convenience
+ 
         received: (Boolean) // Has the file been received from cloud storage?
 	}
 	
@@ -57,7 +61,12 @@ PSInboundFile.prototype.storeNew = function (callback) {
     var self = this;
 
     var copy = {};
-    Common.assignPropsTo(copy, self, props);
+    
+    try {
+        Common.assignPropsTo(copy, self, props);
+    } catch (error) {
+        callback(error);
+    }
     
     // We should not allow multiple entries in the collection of inbound file changes for the the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
     Common.lookup(copy, props, collectionName, function (error, objectFound) {
