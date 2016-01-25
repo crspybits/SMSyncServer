@@ -14,6 +14,7 @@ var ServerConstants = require('./ServerConstants');
 var PSInboundFile = require('./PSInboundFile');
 
 const maxNumberSendAttempts = 3;
+const maxNumberReceiveAttempts = 3;
 
 /* Constructor
     Parameters: 
@@ -132,19 +133,19 @@ FileTransfers.prototype.sendFileUsingMultipleAttempts =
             
             if (outboundFileChange.toDelete) {
                 self.cloudStorage.deleteFile(fileToSend, function (err, fileProperties) {
-                    self.finishSendFile(err, remainingSendAttempts, outboundFileChange, fileProperties, callback);
+                    self.finishSendFile(err, remainingSendAttempts, currentSendAttempt, outboundFileChange, fileProperties, callback);
                 });
             }
             else {
-                self.cloudStorage.transferFile(fileToSend, function (err, fileProperties) {
-                    self.finishSendFile(err, remainingSendAttempts, outboundFileChange, fileProperties, callback);
+                self.cloudStorage.outboundTransfer(fileToSend, function (err, fileProperties) {
+                    self.finishSendFile(err, remainingSendAttempts, currentSendAttempt, outboundFileChange, fileProperties, callback);
                 });
             }
         });
     }
 
 // PRIVATE
-FileTransfers.prototype.finishSendFile = function (err, remainingSendAttempts, outboundFileChange, fileProperties, callback) {
+FileTransfers.prototype.finishSendFile = function (err, remainingSendAttempts, currentSendAttempt, outboundFileChange, fileProperties, callback) {
 
     var self = this;
     
@@ -152,7 +153,7 @@ FileTransfers.prototype.finishSendFile = function (err, remainingSendAttempts, o
         logger.error("Error sending/removing file on attempt %d: %j", currentSendAttempt, err);
         
         if (remainingSendAttempts <= 0) {
-            callback("*** Error sending/removing file to cloud storage");
+            callback(new Error("*** Error sending/removing file to cloud storage"));
         }
         else {
             self.sendFileUsingMultipleAttempts(outboundFileChange,
@@ -359,13 +360,125 @@ FileTransfers.prototype.receiveFiles = function (callback) {
             }
             else {
                 logger.trace(inboundFiles.length + " inbound files to receive.");
-                callback(null);
-                //self.receiveEachFile(inboundFiles, function (error) {
-                //    callback(error);
-                //});
+                self.receiveEachFile(inboundFiles, function (error) {
+                    callback(error);
+                });
             }
         });
 }
+
+// PRIVATE (only part of the prototype so I can access member variables).
+// Recursively receives each file in the inboundFiles array
+// Callback: One param: error
+FileTransfers.prototype.receiveEachFile = function (inboundFiles, callback) {
+    var self = this;
+    
+    if (!isDefined(inboundFiles)) {
+        callback(new Error("**** Error: No inboundFiles were given"));
+        return;
+    }
+    
+    self.receiveFileUsingMultipleAttempts(inboundFiles[0], maxNumberReceiveAttempts,
+        function (error) {
+            if (error) {
+                callback(error);
+            }
+            else {
+                if (inboundFiles.length > 1) {
+                    // Remove the 0th element from inboundFiles.
+                    inboundFiles.shift()
+                    
+                    self.receiveEachFile(inboundFiles, callback);
+                }
+                else {
+                    callback(null);
+                }
+            }
+        });
+}
+
+// PRIVATE (only part of the prototype so I can access member variables).
+// Callback: One param: error
+FileTransfers.prototype.receiveFileUsingMultipleAttempts =
+    function (inboundFile, remainingReceiveAttempts, callback) {
+        var self = this;
+
+        if (!isDefined(inboundFile)) {
+            callback(new Error("**** Error: No inboundFile was given"));
+            return;
+        }
+    
+        var currentReceiveAttempt = maxNumberReceiveAttempts - remainingReceiveAttempts + 1;
+        
+        logger.info("Receive attempt " + currentReceiveAttempt + " for file: " + JSON.stringify(inboundFile));
+        
+        var fileToReceive = new File(inboundFile.userId, inboundFile.deviceId, inboundFile.fileId);
+        
+        // Add cloudFileName and mimeType to the File object.
+        var fileIndexData = {
+            fileId: inboundFile.fileId,
+            userId: inboundFile.userId,
+        };
+        
+        var fileIndexObj = null;
+        
+        try {
+            fileIndexObj = new PSFileIndex(fileIndexData);
+        } catch (error) {
+            callback(error);
+            return;
+        }
+        
+        fileIndexObj.lookup(function (error, objectFound) {
+            if (error) {
+                callback(error);
+            }
+            else {
+                fileToReceive.cloudFileName = fileIndexObj.cloudFileName;
+                fileToReceive.mimeType = fileIndexObj.mimeType;
+ 
+                // Increment operationCount of the PSOperationId so we can distinguish between two main kinds of failures and recovery for the app/client: Errors that occurred prior to any transfer of data from cloud storage and errors that occurred after possible transfer of data.
+                // Note that the accuracy of the operationCount field of the PSOperationId is by no means guaranteed. E.g., if the psOperationId update succeeds, but the receiveFile fails, and then later a recovery redoes this process, the PSOperationId operationCount will be inaccurate.
+                
+                self.psOperationId.operationCount++;
+                self.psOperationId.error = null;
+                
+                self.psOperationId.update(function (error) {
+                    if (error) {
+                        callback(error);
+                        return;
+                    }
+
+                    self.cloudStorage.inboundTransfer(fileToReceive,
+                        function (error, fileProperties) {
+
+                            if (error) {
+                                logger.error("Error receiving file on attempt %d: %j", currentReceiveAttempt, error);
+                                
+                                if (remainingReceiveAttempts <= 0) {
+                                    callback(new Error("*** Error receiving file from cloud storage"));
+                                }
+                                else {
+                                    self.receiveFileUsingMultipleAttempts(inboundFile,
+                                        remainingReceiveAttempts - 1, callback);
+                                }
+                            }
+                            else {
+                                // Success receiving the file from cloud storage.
+                                // Mark the inbound file as tranferred from cloud storage-- we'll be downloading the file from the sync server to the client in an unlocked state, so the PSInboundFile object now just indicates the presence of of the file in local temporary, sync server, storage.
+                                
+                                logger.debug("Updating inboundFile: %j", inboundFile);
+
+                                inboundFile.received = true;
+                                inboundFile.update(function (error) {
+                                    callback(error);
+                                });
+                            }
+                        });
+                });
+            }
+        });
+    }
 
 // export the class
 module.exports = FileTransfers;

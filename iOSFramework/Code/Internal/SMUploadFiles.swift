@@ -34,20 +34,11 @@ internal enum SMUploadFilesMode : Int {
 /* 
 This class uses RepeatingTimer. It must have NSObject as a base class.
 */
-internal class SMUploadFiles : NSObject {
+internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
     // This is a singleton because we need centralized control over the file upload operations.
     internal static let session = SMUploadFiles()
     
     internal weak var delegate:SMSyncServerDelegate?
-    
-    // To ensure that multiple calls to upload cannot be occuring at the same time.
-    private var currentlyOperating = false
-    
-    internal var isOperating: Bool {
-        get {
-            return self.currentlyOperating
-        }
-    }
     
     // I could make these a persistent var, but little seems to be gained by that other than reducing the number of times we try to recover. I've made this a "static" so I can access it within the setMode method below.
     private static var numberTimesTriedUploadRecovery = 0
@@ -55,9 +46,6 @@ internal class SMUploadFiles : NSObject {
     private static var numberTimesTriedOutboundTransferRecovery = 0
 
     internal static var maxTimesToTryRecovery = 3
-    
-    // true iff another upload operation needs to be done immediately after the current one is done.
-    private static let _doOperationLater = SMPersistItemBool(name: "SMUploadFiles.DoOperationLater", initialBoolValue: false, persistType: .UserDefaults)
     
     // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
     private static let _mode = SMPersistItemInt(name: "SMUploadFiles.Mode", initialIntValue: SMUploadFilesMode.Normal.rawValue, persistType: .UserDefaults)
@@ -126,6 +114,7 @@ internal class SMUploadFiles : NSObject {
     }
     
     internal func appLaunchSetup() {
+        SMSync.session.delayDelegate = self
         self.start(withCurrentlyOperatingExpected: false)
     }
     
@@ -138,25 +127,22 @@ internal class SMUploadFiles : NSObject {
     private func start(withCurrentlyOperatingExpected currentlyOperatingExpected:Bool?) {
         switch (SMUploadFiles.mode) {
             case .Normal:
-                self.sync(.DoDelayed(currentlyOperatingExpected: currentlyOperatingExpected),
-                    nextOperation: {
-                        self.prepareForUpload(givenAlreadyUploadedFiles: nil)
-                    })
+                SMSync.session.startDelayed(currentlyOperating:currentlyOperatingExpected)
 
             case .UploadRecovery:
-                self.sync(.Do, currentOperation: {
+                SMSync.session.start() {
                     self.uploadRecovery()
-                })
+                }
             
             case .MayHaveCommittedRecovery:
-                self.sync(.Do, currentOperation: {
+                SMSync.session.start() {
                     self.mayHaveCommittedRecovery()
-                })
+                }
             
             case .OutboundTransferRecovery:
-                self.sync(.Do, currentOperation: {
+                SMSync.session.start() {
                     self.outboundTransferRecovery()
-                })
+                }
             
             case .NonRecoverableError:
                 Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
@@ -165,134 +151,29 @@ internal class SMUploadFiles : NSObject {
     
     // If an upload is currently in progress, an upload will be done as soon as the current one is completed.
     internal func prepareForUpload() {
-        self.sync(.DoOrDelay, nextOperation: {
-            self.prepareForUpload(givenAlreadyUploadedFiles: nil)
-        })
+        SMSync.session.startOrDelay()
     }
     
+    // MARK: Start SMSyncDelayedOperationDelegate method
+    
+    // I don't think this can actually be private to be called as a delegate method. But conceptually, it's private.
+    internal func smSyncDelayedOperation() {
+        self.prepareForUpload(givenAlreadyUploadedFiles: nil)
+    }
+    
+    // MARK: End SMSyncDelayedOperationDelegate method
+
     // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
     internal func resetFromError() {
         Assert.If(SMUploadFiles.mode != .NonRecoverableError, thenPrintThisString: "We're not in the NonRecoverableError mode")
         SMUploadFiles.setMode(.Normal)
     }
-    
-    private enum OperationSyncType {
-        // Unconditionally do an operation (includes upload and recovery operations). Must not currently be operating.
-        case Do
         
-        // Do the upload unless there is an upload currently happening.
-        case DoOrDelay
-        
-        // Do a delayed upload if there is one.
-        case DoDelayed(currentlyOperatingExpected:Bool?)
-        
-        // Conditionally stop operations. E.g., possible network loss.
-        case ConditionalStop(stopConditional:()->Bool)
-        
-        // Completely stop operations. E.g., an API error or failed during multiple recovery attempts.
-        case Stop
-    }
-    
-    // Centralize access to SMUploadFiles._doOperationLater and self.currentlyOperating so we don't get multiple operations being executed concurrently.
-    // In the .ConditionalStop case, the stopConditional will be executed within with the Synchronized.block
-    private func sync(syncType:OperationSyncType, currentOperation:(()->())?=nil, nextOperation:(()->())?=nil) {
-    
-        var doCurrent:Bool = false
-        var doNext:Bool = false
-        
-        Synchronized.block(self) {
-        
-            func stop() {
-                Log.msg("Stopping!")
-                self.currentlyOperating = false
-                SMUploadFiles._doOperationLater.boolValue = false
-                doCurrent = true
-            }
-            
-            switch (syncType) {
-            case .Do:
-                if self.currentlyOperating {
-                    Log.warning(".Do, but self.currentlyOperating is true")
-                }
-                else {
-                    self.currentlyOperating = true
-                    SMUploadFiles._doOperationLater.boolValue = false
-                    doCurrent = true
-                    doNext = true
-                }
-                
-            case .DoOrDelay:
-                if self.currentlyOperating {
-                    Log.warning(".DoOrDelay: Currently operating");
-                    SMUploadFiles._doOperationLater.boolValue = true
-                }
-                else {
-                    self.currentlyOperating = true
-                    
-                    // This shouldn't be necessary, but just to be safe.
-                    SMUploadFiles._doOperationLater.boolValue = false
-                    
-                    doCurrent = true
-                    doNext = true
-                }
-                
-            case .DoDelayed (let currentlyOperatingExpected):
-                if currentlyOperatingExpected == nil {
-                    // Not quite sure what to do here if we *are* currently operating: This will be for the case of the network coming back online in .Normal mode. Just return and cross our fingers.
-                    if self.currentlyOperating {
-                        return
-                    }
-                }
-                else {
-                    Assert.If(currentlyOperatingExpected! != self.currentlyOperating, thenPrintThisString: "Didn't get expected currentlyOperating value")
-                }
-                
-                let needToUploadAgain = SMUploadFiles._doOperationLater.boolValue
-                if !needToUploadAgain {
-                    self.currentlyOperating = false
-                }
-                // Else: self.currentlyOperating remains true because we'll start an upload next.
-                
-                SMUploadFiles._doOperationLater.boolValue = false
-                
-                doCurrent = true
-                
-                if needToUploadAgain {
-                    doNext = true
-                }
-            
-            // If the stopConditional returns true, then the nextOperation is *not* executed.
-            case .ConditionalStop (let stopConditional):
-                if stopConditional() {
-                    stop()
-                }
-                else {
-                    // Not stopping: Do the next operation.
-                    doNext = true
-                }
-                
-            case .Stop:
-                stop()
-            }
-
-        } // End Synchronized.block(self)
-        
-        if doCurrent {
-            currentOperation?()
-        }
-        
-        if doNext {
-            nextOperation?()
-        }
-    }
-    
-    //MARK: Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure the self.currentlyOperating flag is maintained correctly.
+    //MARK: Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
     private func callSyncServerCommitComplete(numberOperations numberOperations:Int?) {
-        self.sync(.DoDelayed(currentlyOperatingExpected:true), currentOperation: {
-            self.delegate?.syncServerCommitComplete(numberOperations: numberOperations)
-        }, nextOperation: {
-            self.prepareForUpload(givenAlreadyUploadedFiles: nil)
-        })
+        SMSync.session.startDelayed(currentlyOperating: true, currentOperation: {
+                self.delegate?.syncServerCommitComplete(numberOperations: numberOperations)
+            })
     }
     
     private func callSyncServerError(error:NSError) {
@@ -301,19 +182,19 @@ internal class SMUploadFiles : NSObject {
         // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
         SMUploadFiles.setMode(.NonRecoverableError)
         
-        self.sync(.Stop, currentOperation: {
+        SMSync.session.stop() {
             self.delegate?.syncServerError(error)
-        })
+        }
     }
     
     // The alreadyUploadedFiles parameter is for usage of this method in recovery: The parameter gives the collection of files that have already been uploaded to the SyncServer (but not yet transferred to cloud storage).
     private func prepareForUpload(givenAlreadyUploadedFiles alreadyUploadedFiles:[SMServerFile]?) {
         
-        let changedFiles = SMChangedFiles()
-        Log.msg("\(changedFiles.count) files have changed")
-        if changedFiles.count == 0 {
-            // We have a lock on SMUploadFiles, so we're safe to .Stop, not .DoDelayed
-            self.sync(.Stop, currentOperation: nil)
+        let localChanges = SMFileDiffs(type: .LocalChanges)
+        Log.msg("\(localChanges.count) local files have changed")
+        if localChanges.count == 0 {
+            // We are the operation executing, so we're safe to stop.
+            SMSync.session.stop()
             return
         }
         
@@ -328,7 +209,7 @@ internal class SMUploadFiles : NSObject {
                     if SMTest.If.success(error, context: .GetFileIndex) {
                         Log.msg("Success on getFileIndex!")
                         
-                        self.doDeletionAndUpload(changedFiles, serverFileIndex:fileIndex, alreadyUploadedFiles:alreadyUploadedFiles)
+                        self.doDeletionAndUpload(localChanges, serverFileIndex:fileIndex, alreadyUploadedFiles:alreadyUploadedFiles)
                     }
                     else {
                         // Error with SMSyncServer.session.getFileIndex; do recovery.
@@ -344,23 +225,23 @@ internal class SMUploadFiles : NSObject {
         }
     }
     
-    private func doDeletionAndUpload(changedFiles:SMChangedFiles, serverFileIndex:[SMServerFile]?, alreadyUploadedFiles:[SMServerFile]?) {
+    private func doDeletionAndUpload(localChanges:SMFileDiffs, serverFileIndex:[SMServerFile]?, alreadyUploadedFiles:[SMServerFile]?) {
     
-        changedFiles.serverFileIndex = serverFileIndex
+        localChanges.serverFileIndex = serverFileIndex
         
         var error:NSError?
         var filesToUpload:[SMServerFile]?
         
-        (self.pendingDeleteFiles, error) = changedFiles.filesToDelete()
+        (self.pendingDeleteFiles, error) = localChanges.filesToDelete()
         if nil == error {
             // Call filesToUpload with only having set serverFileIndex so we know how to update the meta data should the upload be successful
-            (self.pendingUploadFiles, error) = changedFiles.filesToUpload()
+            (self.pendingUploadFiles, error) = localChanges.filesToUpload()
         }
      
         if nil == error {
             // This to deal with the recovery case: If we've already uploaded some files, and are restarting the upload.
-            changedFiles.alreadyUploaded = alreadyUploadedFiles
-            (filesToUpload, error) = changedFiles.filesToUpload()
+            localChanges.alreadyUploaded = alreadyUploadedFiles
+            (filesToUpload, error) = localChanges.filesToUpload()
         }
         
         if error != nil {
@@ -568,12 +449,10 @@ internal class SMUploadFiles : NSObject {
         
         // Don't attempt the recovery if we don't have network access. This instance of stopping is not an API error. Doing this in self.sync because we'll need to stop operations if the network has failed (e.g., network failure could be the reason that the original operation failed and whey we're in fileChangesRecovery).
 
-        self.sync(.ConditionalStop(stopConditional: {
-            
-            // The network failure test must be executed within the self.sync Synchronized.block to avoid a race condition between the restart due to the network coming back online. e.g., either this self.sync call will start the next operation (recovery) or the network online callback will, but not both.
-            return !Network.session().connected()
-            
-        }), nextOperation: {
+        SMSync.session.continueIf({
+            // The network failure test isexecuted within the Synchronized.block, which avoids a race condition between the restart due to the network coming back online. e.g., either this SMSync.session.continueIf call will start the next operation (recovery) or the network online callback will, but not both.
+            return Network.session().connected()
+        }, then: {
             // This gets executed if we have network access.
 
             SMUploadFiles.numberTimesTriedUploadRecovery++
@@ -598,9 +477,9 @@ internal class SMUploadFiles : NSObject {
                     Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedUploadRecovery) times, and can't get it to work")
                     
                     // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
-                    self.sync(.Stop, currentOperation: {
+                    SMSync.session.stop() {
                         self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedUploadRecovery) recovery attempts"))
-                    })
+                    }
                 }
             }
         })
@@ -610,9 +489,9 @@ internal class SMUploadFiles : NSObject {
     private func outboundTransferRecovery() {
         self.delegate?.syncServerRecovery(.OutboundTransfer)
 
-        self.sync(.ConditionalStop(stopConditional: {
-            return !Network.session().connected()
-        }), nextOperation: {
+        SMSync.session.continueIf({
+            return Network.session().connected()
+        }, then: {
             // This gets executed if we have network access.
             SMUploadFiles.numberTimesTriedOutboundTransferRecovery++
             self.outboundTransferRecoveryAux()
@@ -643,9 +522,9 @@ internal class SMUploadFiles : NSObject {
                 Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) times, and can't get it to work")
                 
                 // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
-                self.sync(.Stop, currentOperation: {
+                SMSync.session.stop() {
                     self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedOutboundTransferRecovery) recovery attempts"))
-                })
+                }
             }
         }
     }
@@ -659,9 +538,9 @@ extension SMUploadFiles {
     private func mayHaveCommittedRecovery() {
         self.delegate?.syncServerRecovery(.MayHaveCommitted)
 
-        self.sync(.ConditionalStop(stopConditional: {
-            return !Network.session().connected()
-        }), nextOperation: {
+        SMSync.session.continueIf({
+            return Network.session().connected()
+        }, then: {
             // This gets executed if we have network access.
             SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery++
             self.mayHaveCommittedRecoveryAux()

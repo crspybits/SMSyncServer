@@ -73,10 +73,85 @@ CloudStorage.prototype.deleteFile = function (fileToSend, callback) {
     self.sendFile(true, fileToSend, callback);
 }
 
-// Copy data (i.e., upload) the data of the file from the SyncServer to cloud storage.
-CloudStorage.prototype.transferFile = function (fileToSend, callback) {
+// Copy data (i.e., upload) of the file from the SyncServer to cloud storage.
+// Callback params: 1) error, 2) file properties (if error is null).
+CloudStorage.prototype.outboundTransfer = function (fileToSend, callback) {
     var self = this;
     self.sendFile(false, fileToSend, callback);
+}
+
+// Copy data (i.e., download) of the file to the SyncServer from cloud storage.
+// Callback params: 1) error, 2) file properties (if error is null).
+CloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
+    var self = this;
+    
+    var drive = google.drive({ version: 'v2', auth: self.oauth2Client });
+    
+    var cloudFileName = fileToReceive.cloudFileName;
+    var mimeType = fileToReceive.mimeType;
+    
+    var dest = fs.createWriteStream(fileToReceive.localFileNameWithPath());
+    
+    // Adapted from https://developers.google.com/drive/v3/web/manage-downloads
+    // See also https://gist.github.com/davestevens/6f376f220cc31b4a25cd
+    
+    if (!isDefined(self.cloudFolderId)) {
+        callback(new Error("cloudFolderId is not defined!"), null);
+        return;
+    }
+    
+    // I'm *not* including the mime type in the search criteria. Rather just look to see if a file with this title is present in the folder. Then, as a second step, check to see if the mime type is what we expect. I suspect with Google Drive we can have two files with the same name but different mime types.
+    
+    // First, see if our file exists in the cloud folder.
+    var query = "title = '" + cloudFileName + "' "
+            + " and '" + self.cloudFolderId + "' in parents and trashed = false";
+    
+    self.listFiles(query, function (error, files) {
+        if (error) {
+            callback(error, null);
+        }
+        else if (files.length != 1) {
+            callback(
+                new Error("Yikes! Some funky error! More than one file or zero files: "
+                    + JSON.stringify(files)), null);
+        }
+        else {
+            var existingFile = files[0];
+            
+            // We're not going to allow two files with the same file name, and different MIME type. I think Google Drive allows this, but we'll consider it an error just because at this point I don't think we need this flexibility.
+            
+            if (existingFile.mimeType != mimeType) {
+                callback(new Error("Two files with same name and different mime type!"), null);
+                return;
+            }
+
+            var parameters = {
+                fileId: existingFile.id,
+                alt: "media"
+            };
+
+            logger.debug("Receiving Google Drive file with fileId: %s", existingFile.id);
+           
+            var suffixCall = {
+                method: "pipe",
+                param: dest
+            };
+           
+            self.callGoogleDriveAPI(drive.files.get, parameters, suffixCall, function(err, response) {
+                var fileProperties = null;
+                if (err) {
+                    logger.error('The API returned an error: %j', err);
+                }
+                else {
+                    fileProperties = {};
+                    fileProperties.fileSizeBytes = response.fileSize;
+                }
+                
+                callback(err, fileProperties);
+                logger.debug("fileProperties: %j", fileProperties);
+            });
+        }
+    });
 }
 
 // It seems you can't replace a file in Google Drive, with one of the existing title, all in one step. See http://stackoverflow.com/questions/34110694/can-i-do-a-google-drive-insert-rest-operation-replacing-an-existing-file-with-t
@@ -88,7 +163,7 @@ CloudStorage.prototype.transferFile = function (fileToSend, callback) {
 CloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback) {
     var self = this;
     
-    var drive = google.drive({ version: 'v2', auth: this.oauth2Client });
+    var drive = google.drive({ version: 'v2', auth: self.oauth2Client });
     
     var cloudFileName = fileToSend.cloudFileName;
     var mimeType = fileToSend.mimeType;
@@ -177,7 +252,7 @@ CloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback)
                     });
                 }
             }
-            else {
+            else { // File absent on Google Drive.
                 if (deleteTheFile) {
                     var message = "Yikes: Attempting to delete an absent file!";
                     logger.error(message);
@@ -216,11 +291,6 @@ CloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback)
             }
         }
     });
-}
-
-// Receive a file to the users cloud storage.
-CloudStorage.prototype.receiveFile = function (callback) {
-
 }
 
 // PRIVATE (but need access to object members)
@@ -296,49 +366,67 @@ This is because of an expired access token.
 
 // PRIVATE
 // Calls a Google Drive REST API function. Assumes that the callback & the apiFunction callback take two parameters, error and response. If the operation fails on an AccessTokenExpired error, this attempts to refresh the access token. If a second error occurs, this reported back to the original callback.
-CloudStorage.prototype.callGoogleDriveAPI = function (apiFunction, parameters, callback) {
+// suffixCall is optional and if given is an object with properties: method (method name string), and param (parameter value). It will be called on the function result of calling the apiFunction.
+CloudStorage.prototype.callGoogleDriveAPI = function (apiFunction, parameters, suffixCall, callback) {
     var self = this;
     
-    self.callGoogleDriveAPIAux(2, apiFunction, parameters, callback);
+    self.callGoogleDriveAPIAux(2, apiFunction, parameters, suffixCall, callback);
 }
 
 // Don't call this directly. Call the above function.
-CloudStorage.prototype.callGoogleDriveAPIAux = function (numberAttempts, apiFunction, parameters, callback) {
-    var self = this;
+CloudStorage.prototype.callGoogleDriveAPIAux =
+    function (numberAttempts, apiFunction, parameters, suffixCall, callback) {
+        var self = this;
+        
+        if (typeof suffixCall === 'function') {
+            callback = suffixCall;
+            suffixCall = null;
+        }
 
-    apiFunction(parameters, function (err, response) {
-        if (err && (numberAttempts > 1) && isDefined(err.code) && (AccessTokenExpired == err.code)) {
-            // Attempt to refresh the access token, and then if successful, call the API function again.
-            logger.trace("Access token expired: Attempting to refresh");
-            
-            self.userCreds.refreshSecurityTokens(function (err) {                    
-                if (err) {
-                    logger.error("Failed on refreshing access token: %j", err);
-                    callback(err, response);
-                }
-                else {
-                    logger.info("Succeeded on refreshing access token");
+        function apiFunctionCallback(err, response) {
+           if (err && (numberAttempts > 1) && isDefined(err.code) && (AccessTokenExpired == err.code)) {
+                // Attempt to refresh the access token, and then if successful, call the API function again.
+                logger.trace("Access token expired: Attempting to refresh");
+                
+                self.userCreds.refreshSecurityTokens(function (err) {                    
+                    if (err) {
+                        logger.error("Failed on refreshing access token: %j", err);
+                        callback(err, response);
+                    }
+                    else {
+                        logger.info("Succeeded on refreshing access token");
 
-                    // Save the updated userCreds to persistent storage.
-                    var psUserCreds = new PSUserCredentials(self.userCreds);
-                    psUserCreds.update(function (error) {
-                        if (error) {
-                            logger.error("Failed to save updated access token to persistent storage %j", error)
-                            callback(error, null);
-                        }
-                        else {
-                            // Call the API function again. Use recursion.
-                            self.callGoogleDriveAPIAux(numberAttempts--, apiFunction, parameters, callback);
-                        }
-                    });
-                }
-            });
+                        // Save the updated userCreds to persistent storage.
+                        var psUserCreds = new PSUserCredentials(self.userCreds);
+                        psUserCreds.update(function (error) {
+                            if (error) {
+                                logger.error("Failed to save updated access token to persistent storage %j", error)
+                                callback(error, null);
+                            }
+                            else {
+                                // Call the API function again. Use recursion.
+                                self.callGoogleDriveAPIAux(numberAttempts--, apiFunction, parameters, callback);
+                            }
+                        });
+                    }
+                });
+            }
+            else {
+                callback(err, response);
+            }
+        }
+        
+        if (isDefined(suffixCall)) {
+            (apiFunction(parameters, function (err, response) {
+                apiFunctionCallback(err, response);
+            }))[suffixCall.method](suffixCall.param);
         }
         else {
-            callback(err, response);
+            apiFunction(parameters, function (err, response) {
+                apiFunctionCallback(err, response);
+            });
         }
-    });
-}
+    }
 
 
 // export the class

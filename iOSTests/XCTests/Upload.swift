@@ -49,7 +49,7 @@ class Upload: BaseClass {
     }
     
     func testThatSingleFileUploadWorks() {
-        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         
         self.extraServerResponseTime = 30
@@ -1030,7 +1030,7 @@ class Upload: BaseClass {
     
     // Simulate a failure while transferring files to cloud storage.
     func testThatServerSendFilesTestCaseWorks() {
-        self.transferRecovery(transferTestCase: SMServerConstants.dbTcSendFiles)
+        self.transferRecovery(transferTestCase: SMServerConstants.dbTcTransferFiles)
     }
     
     // Simulate a failure while updating collections on the server during transfer to cloud storage-- this is important so that we know that the log scheme I'm using on the server can enable recovery.

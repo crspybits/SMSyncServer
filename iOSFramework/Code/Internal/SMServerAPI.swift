@@ -50,6 +50,8 @@ internal class SMServerFile : NSObject, NSCopying {
     // Used in a file index reply from the server to indicate the size of the file stored in cloud storage. (Will not be present in all replies, e.g., in a fileChangesRecovery).
     internal var sizeBytes:Int32?
     
+    // TODO: Need a Bool which indicates that the file has been deleted on the server.
+    
     private override init() {
     }
     
@@ -234,6 +236,20 @@ internal class SMServerAPI {
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationLock)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+        
+            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
+            completion?(error: error)
+        }
+    }
+    
+    internal func unlock(completion:((error:NSError?)->(Void))?) {
+        let serverParams = self.userDelegate.serverParams
+        Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
+        
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationUnlock)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         

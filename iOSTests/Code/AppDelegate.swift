@@ -17,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // My testing so far has been with the Node.js server running on my development Mac on my local network.
     // TODO: Need to make use of https
     // MARK: CHANGE THIS IN YOUR CODE
-    let serverURL = NSURL(string: "http://192.168.0.7:8081")
+    let serverURL = NSURL(string: "http://192.168.0.8:8081")
     // MARK: CHANGE THIS IN YOUR CODE
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {

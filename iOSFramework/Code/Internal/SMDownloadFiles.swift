@@ -19,29 +19,50 @@ internal class SMDownloadFiles {
     private var serverOperationId:String?
     
     internal func pollForDownloads() {
-    /*
-        SMServerAPI.session.startDownloads() { (operationId, error) in
+        SMSync.session.startIf({
+            return Network.session().connected()
+        }, then: {
+            self.pollForDownloadsAux()
+        })
+    }
+    
+    private func pollForDownloadsAux() {
+        SMServerAPI.session.lock() { (error) in
             if error == nil {
-                self.serverOperationId = operationId
-                
                 SMServerAPI.session.getFileIndex() { (fileIndex, error) in
                     if error == nil {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
-                        // There is also the possiblity of (a) some of our local files needing to be uploaded, and (b) conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
+                        // TODO: There is also the possiblity of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
+                        let fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
+                        if let downloadFiles = fileDiffs.filesToDownload() {
+                            
+                        }
+                        else {
+                            // No files to download. Release the lock.
+                            SMServerAPI.session.unlock() { error in
+                                if error == nil {
+                                    SMSync.session.startDelayed(
+                                        currentlyOperating: true)
+                                }
+                                else {
+                                    Log.error("Failed on unlock")
+                                    // TODO: Recovery: Need to remove lock.
+                                }
+                            }
+                        }
                     }
                     else {
-                        // No need to do recovery since we just started. 
+                        // TODO: Recovery: Need to remove lock.
                         Log.error("Failed on getFileIndex")
                         // TODO: Need to .Stop operations.
                     }
                 }
             }
             else {
-                // No need to do recovery since we just started. 
-                Log.error("Failed on startDownloads")
+                // No need to do recovery since we just started. It is also possible that the lock is held at this point.
+                Log.error("Failed on obtaining lock")
                 // TODO: Need to .Stop operations.
             }
         }
-    */
     }
 }

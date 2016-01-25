@@ -73,7 +73,7 @@ class ServerAPI: BaseClass {
         let afterStartExpectation = self.expectationWithDescription("After Cleanup")
         
         var serverFiles = [SMServerFile]()
-        let uuid = NSUUID(UUIDString: UUID.make())
+        let uuid = NSUUID(UUIDString: "A8111BC9-D01B-4D77-A1A2-4447F63015DC")
         let file = SMServerFile(uuid: uuid!)
         serverFiles.append(file)
         

@@ -173,6 +173,34 @@ app.post('/' + ServerConstants.operationLock, function (request, response) {
     });
 });
 
+app.post('/' + ServerConstants.operationUnlock, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        if (isDefined(psLock)) {
+            if (isDefined(psOperationId)) {
+                op.endWithErrorDetails("Can't use explicit unlock when there is an operationId!");
+            }
+            else {
+                psLock.removeLock(function (error) {
+                    if (error) {
+                        op.endWithErrorDetails("Failed to remove the lock: " + error);
+                    }
+                    else {
+                        op.endWithRC(ServerConstants.rcOK);
+                    }
+                });
+            }
+        } else {
+            op.endWithErrorDetails("No lock to unlock!");
+        }
+    });
+});
+
 // DEBUGGING
 /*
 app.post('/' + ServerConstants.operationUploadFile, upload, function (request, response) {
@@ -625,6 +653,7 @@ function startOutboundTransfer(op, psLock, psOperationId) {
     psLock.operationId = psOperationId._id;
     psLock.update(function (error) {
         if (error) {
+            logger.error("Error updating psLock: " + error);
             op.endWithErrorDetails(error);
         }
         else {
@@ -675,60 +704,7 @@ function startOutboundTransferOfFiles(op, psLock, psOperationId) {
             op.endWithRC(ServerConstants.rcOK);
             
             // 3) Do the file transfer to the cloud storage system.
-            transferFilesToCloudStorage(op, psLock, psOperationId);
-        }
-    });
-}
-
-function transferFilesToCloudStorage(op, psLock, psOperationId) {
-
-    function updateOperationId(psOperationId, rc, errorMessage) {
-        if (errorMessage) {
-            logger.error(errorMessage);
-            psOperationId.error = errorMessage;
-        }
-        else {
-            psOperationId.error = null;
-        }
-        
-        psOperationId.operationStatus = rc;
-        psOperationId.update();
-    }
-    
-    logger.info("Attempting FileTransfers.setup...");
-    var fileTransfers = new FileTransfers(op, psOperationId);
-
-    fileTransfers.setup(function (error) {
-        if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
-            var errorMessage = "Failed on setup: " + JSON.stringify(error);
-            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
-        }
-        else {
-            logger.info("Attempting FileTransfers.sendFiles...");
-
-            fileTransfers.sendFiles(function (sendFilesError) {
-                if (objOrInject(sendFilesError, op, ServerConstants.dbTcSendFiles)) {
-                    var errorMessage = "Error sending files: " +
-                        JSON.stringify(sendFilesError);
-                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
-                    
-                    // I'm not going to remove the lock here to give the app a chance to recover from this error in a locked condition.
-                    return;
-                }
-
-                psLock.removeLock(function (error) {
-                    if (objOrInject(error, op, ServerConstants.dbTcRemoveLock)) {
-                        var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
-                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
-                    }
-                    else {
-                        logger.trace("Removed the lock.");
-
-                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
-                        logger.trace("Successfully completed operation!");
-                    }
-                });
-            });
+            cloudStorageTransfer(op, psLock, psOperationId, "sendFiles")
         }
     });
 }
@@ -1161,7 +1137,7 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
                 }
                 else {
                     // Originally I was thinking of this as now being in the same kind of situation as file changes recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like file changes recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
-                    // startOutboundTransferOfFiles calls transferFilesToCloudStorage, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
+                    // startOutboundTransferOfFiles calls cloudStorageTransfer, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
                     // In fact, this will act in the same manner as the end part of CommitFileChanges-- it will let the file transfer run asynchronously and "return" to the server REST API caller.
                     startOutboundTransferOfFiles(op, psLock, psOperationId);
                 }
@@ -1262,7 +1238,6 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                         }
                         else {
                             // Need to add the operationId into the psLock.
-                            
                             psLock.operationId = psOperationId._id;
                             psLock.update(function (error) {
                                 if (error) {
@@ -1273,8 +1248,8 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                                     op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
                                     op.endWithRC(ServerConstants.rcOK);
                                     
-                                    // Do the file transfer from the cloud storage system.
-                                    transferFilesFromCloudStorage(op, psLock, psOperationId);
+                                    // Do the asynchronous file transfer from the cloud storage system.
+                                    cloudStorageTransfer(op, psLock, psOperationId, "receiveFiles")
                                 }
                             });
                         }
@@ -1285,7 +1260,8 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
     });
 });
 
-function transferFilesFromCloudStorage(op, psLock, psOperationId) {
+// transferMethod is given by a string.
+function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
 
     function updateOperationId(psOperationId, rc, errorMessage) {
         if (errorMessage) {
@@ -1309,12 +1285,11 @@ function transferFilesFromCloudStorage(op, psLock, psOperationId) {
             updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
         }
         else {
-            logger.info("Attempting FileTransfers.receiveFiles...");
+            logger.info("Attempting FileTransfers.%s...", transferMethod);
 
-            fileTransfers.receiveFiles(function (receiveFilesError) {
-                if (objOrInject(receiveFilesError, op, ServerConstants.dbTcReceiveFiles)) {
-                    var errorMessage = "Error receiving files: " +
-                        JSON.stringify(receiveFilesError);
+            fileTransfers[transferMethod](function (error) {
+                if (objOrInject(error, op, ServerConstants.dbTcTransferFiles)) {
+                    var errorMessage = "Error transferring files: " + JSON.stringify(error);
                     updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
                     
                     // I'm not going to remove the lock here to give the app a chance to recover from this error in a locked condition.

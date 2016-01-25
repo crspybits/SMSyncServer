@@ -73,7 +73,7 @@
 		83D3ED931C4DC92800BFDA93 /* TimedCallback.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED821C4DC92800BFDA93 /* TimedCallback.m */; };
 		83D3ED941C4DC92800BFDA93 /* UUID.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED831C4DC92800BFDA93 /* UUID.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED951C4DC92800BFDA93 /* UUID.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED841C4DC92800BFDA93 /* UUID.m */; };
-		83D3ED961C4DC92800BFDA93 /* WeakRef.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED851C4DC92800BFDA93 /* WeakRef.h */; };
+		83D3ED961C4DC92800BFDA93 /* WeakRef.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED851C4DC92800BFDA93 /* WeakRef.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED971C4DC92800BFDA93 /* WeakRef.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED861C4DC92800BFDA93 /* WeakRef.m */; };
 		83D3EDA11C4DC93900BFDA93 /* Assert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED981C4DC93900BFDA93 /* Assert.swift */; };
 		83D3EDA21C4DC93900BFDA93 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED991C4DC93900BFDA93 /* Error.swift */; };

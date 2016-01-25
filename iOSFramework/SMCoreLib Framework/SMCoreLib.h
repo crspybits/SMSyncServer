@@ -39,6 +39,7 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/UIView+Extras.h>
 #import <SMCoreLib/UserMessage.h>
 #import <SMCoreLib/BiRef.h>
+#import <SMCoreLib/WeakRef.h>
 #import <SMCoreLib/Debounce.h>
 
 

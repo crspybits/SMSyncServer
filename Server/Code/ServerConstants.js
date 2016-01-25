@@ -31,6 +31,9 @@ function define(name, value) {
 	define("operationStartOutboundTransfer", "StartOutboundTransfer");
 	define("operationStartInboundTransfer", "StartInboundTransfer");
     
+    // Provided to deal with the case of checking for downloads, but no downloads need to be carried out. Don't use if an operationId has been generated.
+	define("operationUnlock", "Unlock");
+    
 	define("operationGetOperationId", "GetOperationId");
 
     // Carried out in an unlocked state.
@@ -125,10 +128,9 @@ function define(name, value) {
 	define("dbTcCommitChanges", 1);
 	define("dbTcInProgress", 2);
 	define("dbTcSetup", 3);
-	define("dbTcSendFiles", 4);
+	define("dbTcTransferFiles", 4);
 	define("dbTcSendFilesUpdate", 5);
 	define("dbTcRemoveLock", 6);
-	define("dbTcReceiveFiles", 7);
     
     // MARK: Responses from server
     

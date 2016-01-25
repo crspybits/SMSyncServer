@@ -200,5 +200,31 @@ Common.storeNew = function (self, collectionName, props, callback) {
   		});
 }
 
+// Update persistent store from self.
+// Callback has one parameter: error.
+Common.update = function (self, collectionName, props, callback) {    
+    var query = {
+        _id: self._id
+    };
+    
+    // Make a clone so that I can remove the _id; don't want to update the _id.
+    // Not this though. Bad puppy!!
+    // var updatedData = JSON.parse(JSON.stringify(self.idData));
+    
+    var updatedData = Common.extractPropsFrom(self, props);
+    delete updatedData._id;
+    
+    var updates = {
+        $set: updatedData
+    };
+
+    logger.debug("updates: %j", updates);
+
+    Mongo.db().collection(collectionName).updateOne(query, updates,
+        function(err, results) {
+            callback(err);
+        });
+}
+
 // export the class
 module.exports = Common;

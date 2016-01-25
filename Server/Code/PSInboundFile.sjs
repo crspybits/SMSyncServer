@@ -13,7 +13,7 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "InboundFiles";
 
 // These must exactly match those properties given in the data model below.
-const props = ["_id", "fileId", "userId", "deviceId"];
+const props = ["_id", "fileId", "userId", "deviceId", "received"];
 
 // Note that same names used across some of the properties in this class and PSFileIndex are important and various dependencies exist.
 
@@ -27,6 +27,8 @@ const props = ["_id", "fileId", "userId", "deviceId"];
 		userId: (String), // reference into PSUserCredentials (i.e., _id from PSUserCredentials)
  
         deviceId: (String, UUID), // identifies a specific mobile device (assigned by app)
+        
+        received: (Boolean) // Has the file been received from cloud storage?
 	}
 	
 	Details: The entry is removed from this collection immediately after the file has been received from the server. A Lock is held until all entries are removed for the particular userId/deviceId pair. While the lock is held, this userId cannot request uploads or downloads.
@@ -39,6 +41,10 @@ const props = ["_id", "fileId", "userId", "deviceId"];
 // Throws an exception in the case of an error.
 function PSInboundFile(fileData) {
     var self = this;
+    
+    if (!isDefined(fileData.received)) {
+        fileData.received = false;
+    }
 
     Common.assignPropsTo(self, fileData, props);
 }
@@ -101,6 +107,16 @@ PSInboundFile.getAllFor = function (userId, deviceId, callback) {
         // make a new PSInboundFile for the doc
         var inboundFile = new PSInboundFile(doc);
         result.push(inboundFile);
+    });
+}
+
+// Update persistent store from self.
+// Callback has one parameter: error.
+PSInboundFile.prototype.update = function (callback) {
+    var self = this;
+
+    Common.update(self, collectionName, props, function (error) {
+        callback(error);
     });
 }
 

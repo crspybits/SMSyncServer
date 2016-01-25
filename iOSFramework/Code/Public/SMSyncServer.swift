@@ -376,7 +376,7 @@ public class SMSyncServer : NSObject {
     // Returns true iff the SMSyncServer is currently in the process of uploading file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging).
     public var isOperating: Bool {
         get {
-            return SMUploadFiles.session.isOperating
+            return SMSync.session.isOperating
         }
     }
     

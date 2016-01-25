@@ -40,6 +40,9 @@ public class SMServerConstants {
     public static let operationStartOutboundTransfer = "StartOutboundTransfer"
     public static let operationStartInboundTransfer = "StartInboundTransfer"
     
+    // Provided to deal with the case of checking for downloads, but no downloads need to be carried out. Don't use if an operationId has been generated.
+    public static let operationUnlock = "Unlock"
+    
     public static let operationGetOperationId = "GetOperationId"
 
     // Carried out in an unlocked state.
@@ -134,10 +137,9 @@ public class SMServerConstants {
     public static let dbTcCommitChanges = 1
     public static let dbTcInProgress = 2
     public static let dbTcSetup = 3
-    public static let dbTcSendFiles = 4
+    public static let dbTcTransferFiles = 4
     public static let dbTcSendFilesUpdate = 5
     public static let dbTcRemoveLock = 6
-    public static let dbTcReceiveFiles = 7
     
     // MARK: Responses from server
     

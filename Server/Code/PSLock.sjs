@@ -114,7 +114,7 @@ PSLock.checkForOurLock = function (userId, deviceId, callback) {
 	var cursor = Mongo.db().collection(collectionName).find(query);
 		
 	if (!cursor) {
-		callback("Failed on find!", null);
+		callback(new Error("Failed on find!"), null);
 		return;
 	}
 		
@@ -128,7 +128,7 @@ PSLock.checkForOurLock = function (userId, deviceId, callback) {
 		}
 		else if (count > 1) {
             // Should never get here. Put it in just for integrity checking.
-			callback("More than one user/device with lock!", null);
+			callback(new Error("More than one user/device with lock!"), null);
 		}
 		else if (0 == count) {
             // We don't have the lock
@@ -145,14 +145,14 @@ PSLock.checkForOurLock = function (userId, deviceId, callback) {
                     // 1/6/16; This test is here because I believe I got a failure on this today.
                     var msg = "Don't have doc on nextObject";
                     logger.error(msg);
-					callback(msg, null);
+					callback(new Error(msg), null);
 				}
                 else if (deviceId == doc.deviceId) {
                     // We have the lock.
                     callback(null, new PSLock(doc));
                 }
                 else {
-                    callback("User held lock, but not our device!", null);
+                    callback(new Error("User held lock, but not our device!"), null);
                 }
 			});
 		}
@@ -171,7 +171,7 @@ PSLock.prototype.removeLock = function (callback) {
         }
         else if (!psLock) {
             logger.error("Don't have the lock!");
-            callback("We don't have the lock! Thus, we can't remove it!");
+            callback(new Error("We don't have the lock! Thus, we can't remove it!"));
         }
         else {
             var query = {
@@ -185,10 +185,10 @@ PSLock.prototype.removeLock = function (callback) {
                     callback(err);
                 }
                 else if (0 == results.deletedCount) {
-                    callback("Could not remove lock!");
+                    callback(new Error("Could not remove lock!"));
                 }
                 else if (results.deletedCount > 1) {
-                    callback("Yikes! We removed more than one lock!");
+                    callback(new Error("Yikes! We removed more than one lock!"));
                 }
                 else {
                     callback(null);
@@ -204,30 +204,12 @@ PSLock.prototype.remove = PSLock.prototype.removeLock;
 // Callback is optional and if given has one parameter: error.
 PSLock.prototype.update = function (callback) {
     var self = this;
-    
-    var query = {
-        _id: self._id
-    };
-    
-    // Make a clone so that I can remove the _id; don't want to update the _id.
-    // Not this though. Bad puppy!!
-    // var updatedData = JSON.parse(JSON.stringify(self.idData));
-    
-    var updatedData = Common.extractPropsFrom(self, props);
-    delete updatedData._id;
-    
-    var updates = {
-        $set: updatedData
-    };
 
-    logger.debug("updates: %j", updates);
-
-    Mongo.db().collection(collectionName).updateOne(query, updates,
-        function(err, results) {
-            if (isDefined(callback)) {
-                callback(err);
-            }
-        });
+    Common.update(self, collectionName, props, function (error) {
+        if (isDefined(callback)) {
+            callback(error);
+        }
+    });
 }
 
 // export the class
