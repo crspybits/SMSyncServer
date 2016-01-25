@@ -14,14 +14,32 @@ import SMSyncServer
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
-    // My testing so far has been with the Node.js server running on my development Mac on my local network.
-    // TODO: Need to make use of https
-    // MARK: CHANGE THIS IN YOUR CODE
-    let serverURL = NSURL(string: "http://192.168.0.8:8081")
-    // MARK: CHANGE THIS IN YOUR CODE
+    // MARK: Users of SMSyncServer iOSTests client need to change the contents of this file.
+    private let smSyncServerClientPlist = "SMSyncServer-client.plist"
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         
+        // Extract parameters out of smSyncServerClientPlist
+        let bundlePath = NSBundle.mainBundle().bundlePath as NSString
+        let syncServerClientPlistPath = bundlePath.stringByAppendingPathComponent(smSyncServerClientPlist)
+        let syncServerClientPlistData = NSDictionary(contentsOfFile: syncServerClientPlistPath)
+        
+        Assert.If(syncServerClientPlistData == nil, thenPrintThisString: "Could not access your \(smSyncServerClientPlist) file at: \(syncServerClientPlistPath)")
+        
+        var serverURLString:String?
+        var cloudFolderPath:String?
+        var googleServerClientId:String?
+        
+        func getDictVar(varName:String, inout result:String?) {
+            result = syncServerClientPlistData![varName] as? String
+            Assert.If(result == nil, thenPrintThisString: "Could not access \(varName) in \(smSyncServerClientPlist)")
+            Log.msg("Using: \(varName): \(result)")
+        }
+        
+        getDictVar("ServerURL", result: &serverURLString)
+        getDictVar("CloudFolderPath", result: &cloudFolderPath)
+        getDictVar("GoogleServerClientID", result: &googleServerClientId)
+    
         let coreDataSession = CoreData(namesDictionary: [
             CoreDataBundleModelName: "ClientAppModel",
             CoreDataSqlliteBackupFileName: "~ClientAppModel.sqlite",
@@ -31,15 +49,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         CoreData.registerSession(coreDataSession, forName: CoreDataTests.name)
         
         // TODO: Eventually give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
-        SMSyncServerUser.session.cloudFolderPath = "Petunia.SyncServer"
+        SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        // MARK: CHANGE THIS IN YOUR CODE
-        // When trying this example app, you need to replace serverClientID with the client id, you create on the Google Developers site, for your own server.
-        // You also need to replace the file GoogleService-Info.plist with your own, plus change the URL Scheme's, that are specific to the example credentials, with your own.
-        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: "973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com")
-        // MARK: CHANGE THIS IN YOUR CODE
+        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId!)
         
-        SMSyncServer.session.appLaunchSetup(withServerURL: self.serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
+        let serverURL = NSURL(string: serverURLString!)
+        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
 
         return true
     }

@@ -61,18 +61,25 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 * A useful way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder.
 
-* Before running the iOSTests example app, you need to make a few changes to the app to make use of your Google Developer credentials. To make these changes, first launch the iOSTests app by opening Tests.workspace in Xcode. 
-
-* Next, you need to replace the `GoogleService-Info.plist` file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
+* Next, you need to replace the `GoogleService-Info.plist` symbolic link with your actual .plist file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>
 
-* Make sure to change the Google **serverClientID** in the AppDelegate of the Xcode project. You can also search the code for the string: 
+* You need to replace the `SMSyncServer-client.plist` symbolic link with your actual .plist file. The value of the GoogleServerClientID key is from your Google credentials. The CloudFolderPath key should be the name of the directory (no slashes-- we're not supporting subdirectories yet) where your SMSyncServer files will be stored in Google Drive. ServerURL is the URL of your SMSyncServer Node.js server. Here's it's format:
 
-    CHANGE THIS IN YOUR CODE
-    
-* Additionally, you need to change the **serverURL**, also in the AppDelegate. This is the URL for your Node.js server (see below). Again, you can search for
+### `SMSyncServer-client.plist`
 
-    CHANGE THIS IN YOUR CODE
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>ServerURL</key>
+                <string>http://URL-OF-YOUR-SMSyncServerNode.js.Server</string>
+                <key>CloudFolderPath</key>
+                <string>YourCustomPathFromGoogleDriveRoot</string>
+                <key>GoogleServerClientID</key>
+                <string>YourGoogleServerClientID</string>
+            </dict>
+            </plist>
 
 * You should now be ready to build the Tests.workspace onto your device.
 

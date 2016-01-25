@@ -13,6 +13,7 @@
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
 		839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
 		83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */; };
 		83D3E89F1C4C03F500BFDA93 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83D3E89E1C4C03F500BFDA93 /* Assets.xcassets */; };
 		83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8B31C4C072800BFDA93 /* FileViewerVC.swift */; };
@@ -83,6 +84,7 @@
 		588A96CF00CEB88911F3F4B4 /* Pods-Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-Tests/Pods-Tests.release.xcconfig"; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
+		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		83D3E8751C4C01E800BFDA93 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83D3E88C1C4C01E800BFDA93 /* XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -219,6 +221,7 @@
 			children = (
 				83D3E8BD1C4C079900BFDA93 /* Info.plist */,
 				83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */,
+				839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -378,6 +381,7 @@
 				83D3ECD31C4D927D00BFDA93 /* Kitty.png in Resources */,
 				83D3ECD51C4D942000BFDA93 /* GoogleService-Info.plist in Resources */,
 				83D3E89F1C4C03F500BFDA93 /* Assets.xcassets in Resources */,
+				839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */,
 				83D3ECCE1C4D91EE00BFDA93 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
