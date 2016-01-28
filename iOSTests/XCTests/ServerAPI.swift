@@ -69,7 +69,7 @@ class ServerAPI: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatStartInboundTransferWith1FileWorks() {
+    func DISABLED_testThatStartInboundTransferWith1FileWorks() {
         let afterStartExpectation = self.expectationWithDescription("After Cleanup")
         
         var serverFiles = [SMServerFile]()
@@ -94,4 +94,26 @@ class ServerAPI: BaseClass {
         
         self.waitForExpectations()
     }
+    
+    // Test downloading of a random UUID from the server. Should fail because that file is not on the server/ready to download.
+    func testThatDownloadOfRandomUUIDFails() {
+        let expectation = self.expectationWithDescription("Handler called")
+
+        self.waitUntilSyncServerUserSignin() {
+
+            let downloadFileURL = FileStorage.urlOfItem("download1")
+            let serverFile = SMServerFile(uuid: NSUUID())
+            serverFile.localURL = downloadFileURL
+            
+            SMServerAPI.session.downloadFile(serverFile) { error in
+                XCTAssert(error != nil)
+                expectation.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    // TODO: Try starting a download directly, using the SMServerAPI method, and have a lock. This should fail.
+    // TODO: Try to download a file, through the SMServerAPI, that is on the server, but isn't in the PSInboundFile's.
 }

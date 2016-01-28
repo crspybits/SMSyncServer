@@ -155,7 +155,6 @@
 		83D3E86C1C4C01E800BFDA93 = {
 			isa = PBXGroup;
 			children = (
-				839A06A61C5057CD0037AD9A /* SMCoreLib.framework */,
 				83D3E8771C4C01E800BFDA93 /* Code */,
 				83D3E89C1C4C031E00BFDA93 /* Supporting Files */,
 				83D3E89B1C4C030700BFDA93 /* Resources */,
@@ -243,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */,
+				839A06A61C5057CD0037AD9A /* SMCoreLib.framework */,
 				A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */,
 				BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */,
 			);

@@ -200,6 +200,22 @@ Operation.prototype.endWithRC = function (returnCode) {
     this.end();
 }
 
+// I'm dealing with ending downloads differently as I can't see a general way to get JSON params AND the file back to the client/app, other than using a custom HTTP header in the response.
+Operation.prototype.prepareToEndDownload = function () {
+    var result =  JSON.stringify(this.result);
+    return result;
+}
+
+Operation.prototype.prepareToEndDownloadWithRC = function (returnCode) {
+    this.result[ServerConstants.resultCodeKey] = returnCode;
+    return this.prepareToEndDownload();
+}
+
+Operation.prototype.prepareToEndDownloadWithRCAndErrorDetails = function (returnCode, error) {
+    this.result[ServerConstants.errorDetailsKey] = error;
+    return this.prepareToEndDownloadWithRC(returnCode);
+}
+
 /* 
     update is of type bool:
         If the user exists in persistent storage, and:

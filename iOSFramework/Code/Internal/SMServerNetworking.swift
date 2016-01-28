@@ -31,6 +31,8 @@ public class SMServerNetworking {
     }
     
     private var uploadTask:NSURLSessionUploadTask?
+    //private var downloadTask:NSURLSessionDownloadTask?
+    //private var dataTask:NSURLSessionDataTask?
     
     public func appLaunchSetup() {
         // To get "spinner" in status bar when ever we have network activity.
@@ -301,4 +303,285 @@ public class SMServerNetworking {
             })
             */
     }
+    
+    public func downloadFileFrom(serverURL: NSURL, fileToDownload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
+        
+        Log.special("serverURL: \(serverURL)")
+        Log.special("fileToDownload: \(fileToDownload)")
+        
+        var sendParameters:[String:AnyObject]? = parameters
+        
+#if DEBUG
+        if (SMTest.session.serverDebugTest != nil) {
+            if parameters == nil {
+                sendParameters = [String:AnyObject]()
+            }
+            
+            sendParameters![SMServerConstants.debugTestCaseKey] = SMTest.session.serverDebugTest
+        }
+#endif
+
+        if !Network.connected() {
+            completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcNetworkFailure], error: Error.Create("Network not connected."))
+            return
+        }
+        
+        //self.download1(serverURL)
+        //self.download2(serverURL)
+        //self.download3(serverURL, parameters:sendParameters)
+        
+        let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+        // TODO: When do we need a delegate/delegateQueue here?
+        let session = NSURLSession(configuration: sessionConfig, delegate: nil, delegateQueue: nil)
+        let request = NSMutableURLRequest(URL: serverURL)
+        request.HTTPMethod = "POST"
+        
+        if sendParameters != nil {
+            var jsonData:NSData?
+            
+            do {
+                try jsonData = NSJSONSerialization.dataWithJSONObject(sendParameters!, options: NSJSONWritingOptions(rawValue: 0))
+            } catch (let error) {
+                completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcInternalError], error: Error.Create("Could not serialize JSON parameters: \(error)"))
+                return
+            }
+            
+            request.HTTPBody = jsonData
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.setValue("\(jsonData!.length)", forHTTPHeaderField: "Content-Length")
+        }
+        
+        let task = session.downloadTaskWithRequest(request) { (urlOfDownload:NSURL?, response:NSURLResponse?, error:NSError?)  in
+             if (error == nil) {
+                // Success
+                if let httpResponse = response as? NSHTTPURLResponse {
+                    let statusCode = httpResponse.statusCode
+                    if statusCode != 200 {
+                        completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Status code= \(statusCode) was not 200!"))
+                        return
+                    }
+                    
+                    Log.msg("urlOfDownload: \(urlOfDownload)")
+                    
+                    // I've not been able to figure out how to get a file downloaded along with parameters (e.g., return result from the server), so I'm using a custom HTTP header to get result parameters back from the server.
+                    
+                    Log.msg("httpResponse.allHeaderFields: \(httpResponse.allHeaderFields)")
+                    let downloadParams = httpResponse.allHeaderFields[SMServerConstants.httpDownloadParamHeader]
+                    Log.msg("downloadParams: \(downloadParams)")
+                    
+                    if let downloadParamsString = downloadParams as? String {
+                        let downloadParamsDict = self.convertJSONStringToDictionary(downloadParamsString)
+
+                        Log.msg("downloadParamsDict: \(downloadParamsDict)")
+                        if downloadParamsDict == nil {
+                            completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Did not get parameters from server!"))
+                        }
+                        else {
+                            completion?(serverResponse: downloadParamsDict, error: nil)
+                        }
+                    }
+                    else {
+                        completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Did not get downloadParamsString from server!"))
+                    }
+                }
+                else {
+                    // Could not get NSHTTPURLResponse
+                    completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Did not get NSHTTPURLResponse from server!"))
+                }
+            }
+            else {
+                // Failure
+                completion?(serverResponse: nil, error: error)
+            }
+        }
+        
+        task.resume()
+    }
+
+/*
+    func download0() {
+        //let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
+        //let manager = AFURLSessionManager(sessionConfiguration: configuration)
+        var error:NSError? = nil
+
+        // Not getting anything received on server.
+        // let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: sendParameters, constructingBodyWithBlock: nil, error: &error)
+        
+        // Not getting anything received on server.
+        // let request = AFHTTPRequestSerializer().requestWithMethod("POST", URLString: serverURL.absoluteString, parameters: parameters, error: &error)
+        
+        let request = NSMutableURLRequest(URL: serverURL)
+        request.HTTPMethod = "POST"
+        
+        if nil != error {
+            completion?(serverResponse: nil, error: error)
+            return
+        }
+
+        // Doesn't show up on server.
+        /*
+        self.dataTask = self.manager.dataTaskWithRequest(request,
+            uploadProgress: { (uploadProgress:NSProgress) -> Void in
+                
+            }, downloadProgress: { (downloadProgress:NSProgress) -> Void in
+                
+            }) { (response:NSURLResponse, responseObject:AnyObject?, error:NSError?) -> Void in
+            }
+        */
+
+        self.downloadTask = self.manager.downloadTaskWithRequest(request,
+            progress: { (progress:NSProgress) in
+            
+            }, destination: { (targetPath:NSURL, response:NSURLResponse) -> NSURL in
+                // destination: A block object to be executed in order to determine the destination of the downloaded file. This block takes two arguments, the target path & the server response, and returns the desired file URL of the resulting download. The temporary file used during the download will be automatically deleted after being moved to the returned URL.
+                Log.msg("destination: targetPath: \(targetPath)")
+                Log.msg("destination: response: \(response)")
+                return fileToDownload
+            }, completionHandler: { (response:NSURLResponse, url:NSURL?, error:NSError?) in
+                // completionHandler A block to be executed when a task finishes. This block has no return value and takes three arguments: the server response, the path of the downloaded file, and the error describing the network or parsing error that occurred, if any.
+                Log.msg("response: \(response)")
+                Log.msg("url: \(url)")
+                completion?(serverResponse: nil, error: error)
+            })
+    }
+*/
+
+/*
+    // This gets through to the server, but, of course, I'm not getting the credentials parameters.
+    func download1(URL: NSURL) {
+        let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+        let session = NSURLSession(configuration: sessionConfig, delegate: nil, delegateQueue: nil)
+        let request = NSMutableURLRequest(URL: URL)
+        request.HTTPMethod = "POST"
+        
+        let task = session.dataTaskWithRequest(request, completionHandler: { (data: NSData?, response: NSURLResponse?, error: NSError?) in
+            if (error == nil) {
+                // Success
+                let statusCode = (response as! NSHTTPURLResponse).statusCode
+                Log.msg("statusCode: \(statusCode)")
+                Log.msg("response: \(response)")
+                Log.msg("data: \(data)")
+                // This is your file-variable:
+                // data
+            }
+            else {
+                // Failure
+                Log.msg("Failure: \(error)")
+            }
+        })
+        
+        task.resume()
+    }
+
+    // This also gets through to the server, but, of course, I'm not getting the credentials parameters.
+    func download2(URL: NSURL) {
+        let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+        let session = NSURLSession(configuration: sessionConfig, delegate: nil, delegateQueue: nil)
+        let request = NSMutableURLRequest(URL: URL)
+        request.HTTPMethod = "POST"
+        
+        let task = session.downloadTaskWithRequest(request) { (urlOfDownload:NSURL?, response:NSURLResponse?, error:NSError?)  in
+             if (error == nil) {
+                // Success
+                let statusCode = (response as! NSHTTPURLResponse).statusCode
+                Log.msg("statusCode: \(statusCode)")
+                Log.msg("response: \(response)")
+                Log.msg("urlOfDownload: \(urlOfDownload)")
+            }
+            else {
+                // Failure
+                Log.msg("Failure: \(error)")
+            }
+        }
+        
+        task.resume()
+    }
+*/
+    
+    func download3(URL: NSURL, parameters:[String:AnyObject]?) {
+        let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+        let session = NSURLSession(configuration: sessionConfig, delegate: nil, delegateQueue: nil)
+        let request = NSMutableURLRequest(URL: URL)
+        request.HTTPMethod = "POST"
+        
+        if parameters != nil {
+            var jsonData:NSData?
+            
+            do {
+                try jsonData = NSJSONSerialization.dataWithJSONObject(parameters!, options: NSJSONWritingOptions(rawValue: 0))
+            } catch (let error) {
+                Log.msg("error: \(error)")
+                return
+            }
+            
+            request.HTTPBody = jsonData
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.setValue("\(jsonData!.length)", forHTTPHeaderField: "Content-Length")
+        }
+        
+        let task = session.downloadTaskWithRequest(request) { (urlOfDownload:NSURL?, response:NSURLResponse?, error:NSError?)  in
+             if (error == nil) {
+                // Success
+                let httpResponse = response as! NSHTTPURLResponse
+                
+                let statusCode = httpResponse.statusCode
+                // statusCode should be 200-- check it.
+                
+                Log.msg("statusCode: \(statusCode)")
+                Log.msg("urlOfDownload: \(urlOfDownload)")
+                Log.msg("httpResponse.allHeaderFields: \(httpResponse.allHeaderFields)")
+                let downloadParams = httpResponse.allHeaderFields[SMServerConstants.httpDownloadParamHeader]
+                Log.msg("downloadParams: \(downloadParams)")
+                Log.msg("downloadParams type: \(downloadParams.dynamicType)")
+                if let downloadParamsString = downloadParams as? String {
+                    let downloadParamsDict = self.convertJSONStringToDictionary(downloadParamsString)
+                    Log.msg("downloadParamsDict: \(downloadParamsDict)")
+                    if downloadParamsDict == nil {
+                    }
+                    else {
+                    
+                    }
+                }
+            }
+            else {
+                // Failure
+                Log.msg("Failure: \(error)")
+            }
+        }
+        
+        task.resume()
+    }
+    
+    // See http://stackoverflow.com/questions/30480672/how-to-convert-a-json-string-to-a-dictionary
+    private func convertJSONStringToDictionary(text: String) -> [String:AnyObject]? {
+        if let data = text.dataUsingEncoding(NSUTF8StringEncoding) {
+            do {
+                let json = try NSJSONSerialization.JSONObjectWithData(data, options: .MutableContainers) as? [String:AnyObject]
+                return json
+            } catch {
+                Log.error("Something went wrong")
+            }
+        }
+        return nil
+    }
+    
+/*
+NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
+
+NSURL *URL = [NSURL URLWithString:@"http://example.com/download.zip"];
+NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+
+NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:request progress:nil destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+    NSURL *documentsDirectoryURL = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:nil];
+    return [documentsDirectoryURL URLByAppendingPathComponent:[response suggestedFilename]];
+} completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+    NSLog(@"File downloaded to: %@", filePath);
+}];
+[downloadTask resume];
+*/
+    
+    
 }

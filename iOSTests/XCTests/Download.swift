@@ -67,12 +67,11 @@ class Download: BaseClass {
     }
     
     // TODO: Download two server files which don't yet exist on the app/client.
-
+    
     // TODO: Start one download, and immediately after starting that download, commit an upload.
 
     // TODO: Server files which are updated versions of those on app/client.
     
-    /* TODO:
-        Each of the conflict cases: update conflict, and the two deletion conflicts.
-    */
+    // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts.
+    
 }

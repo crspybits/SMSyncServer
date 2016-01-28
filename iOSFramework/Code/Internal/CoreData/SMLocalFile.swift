@@ -46,6 +46,8 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
             try resultObjects = CoreData.sessionNamed(SMCoreData.name).fetchAllObjectsWithEntityName(self.entityName())
         } catch (let error) {
             // Somehow, and sometimes, this is throwing an error if there are no result objects. But I'm not returning an error from fetchAllObjectsWithEntityName. Odd.
+            // Some ideas from Chris Chares on dealing with this issue if it keeps cropping up: https://gist.github.com/ChrisChares/aab07590ab28ac8da05e
+            // See also the link he passed along: https://developer.apple.com/library/ios/documentation/Swift/Conceptual/BuildingCocoaApps/AdoptingCocoaDesignPatterns.html#//apple_ref/doc/uid/TP40014216-CH7-ID6
             Log.msg("Error in fetchAllObjects: \(error)")
         }
         

@@ -6,7 +6,6 @@
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 
-
 // To enable the DEBUG conditional compilation flag in Swift I found that the solution was to add -DDEBUG to OTHER_SWIFT_FLAGS in settings. See also http://marginalfutility.net/2015/10/11/swift-compiler-flags/ This flag is only enabled for debug builds, not release builds.
 
 #import <UIKit/UIKit.h>

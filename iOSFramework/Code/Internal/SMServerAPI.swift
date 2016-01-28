@@ -624,6 +624,30 @@ internal class SMServerAPI {
         }
     }
     
+    // File will be downloaded to fileToDownload.localURL (which is required). (No other SMServerFile attributes are required, except, of course for the uuid).
+    internal func downloadFile(fileToDownload: SMServerFile, completion:((error:NSError?)->(Void))?) {
+
+        Assert.If(fileToDownload.localURL == nil, thenPrintThisString: "Didn't give localURL with file")
+        
+        let userParams = self.userDelegate.serverParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+        
+        var serverParams = userParams!
+        let serverFileDict = fileToDownload.dictionary
+        serverParams[SMServerConstants.fileToDownload] = serverFileDict
+        
+        Log.msg("parameters: \(serverParams)")
+
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationDownloadFile)!
+        
+        SMServerNetworking.session.downloadFileFrom(serverOpURL, fileToDownload: fileToDownload.localURL!, withParameters: serverParams) { (serverResponse, error) in
+        
+            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
+            completion?(error: error)
+        }
+    }
+    
     /* Running into an issue here when I try to convert the fileVersion out of the dictionary directly to an Int:
     
     2015-12-10 07:17:32 +0000: [fg0,0,255;Didn't get an Int for fileVersion: Optional<AnyObject>[; [create(fromDictionary:) in SMSyncServer.swift, line 69]

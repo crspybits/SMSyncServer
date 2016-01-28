@@ -51,6 +51,12 @@ function define(name, value) {
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
 	define("operationCleanup", "Cleanup");
 
+    // MARK: Custom HTTP headers sent back from server
+    // For custom header naming conventions, see http://stackoverflow.com/questions/3561381/custom-http-headers-naming-conventions
+    
+    // Used for operationDownloadFile only.
+	define("httpDownloadParamHeader", "SMSyncServer-Download-Parameters");
+
     // MARK: Credential parameters sent to the server.
     
     // Key:
@@ -88,7 +94,12 @@ function define(name, value) {
     // Value: an array of JSON objects with keys: fileUUIDKey
     // Only the UUID key is needed because no change is being made to the file index-- the transfer operation consists of copying the current version of the file from cloud storage to the server temporary storage.
     
-    // The following keys are required for file uploads and downloads (and some for deletions, see above).
+    // When a file is being downloaded (operationDownloadFile), use the following key.
+	define("fileToDownload", "FileToDownload");
+    // Value: a JSON object with key: fileUUIDKey.
+    // Like above, no change is being made to the file index, thus only the UUID is needed.
+    
+    // The following keys are required for file uploads (and some for deletions and downloads, see above).
     // Key:
 	define("fileUUIDKey", "FileUUID");
     // Value: A UUID assigned by the app that uniquely represents this file.

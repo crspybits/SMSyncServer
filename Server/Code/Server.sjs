@@ -1352,6 +1352,106 @@ function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
     });
 }
 
+app.post('/' + ServerConstants.operationDownloadFile, function (request, response) {
+    // logger.debug("DownloadFile operation: %j", request.body);
+
+    // rc, and errorMessage are optional, but if given, must be given together.
+    function endDownloadWithError(op, rc, errorMessage) {
+        var clientResultInfo = null;
+        
+        if (isDefined(rc)) {
+            clientResultInfo = op.prepareToEndDownloadWithRCAndErrorDetails(rc, errorMessage);
+        }
+        else {
+            clientResultInfo = op.prepareToEndDownload();
+        }
+        
+        response.setHeader(ServerConstants.httpDownloadParamHeader, clientResultInfo);
+        op.end();
+    }
+    
+    var op = new Operation(request, response);
+    if (op.error) {
+        endDownloadWithError(op);
+        return;
+    }
+
+    op.validateUser(function (psLock, psOperationId) {
+        if (isDefined(psLock)) {
+            // Should not have the lock to download files.
+            var message = "Error: Have the lock!";
+            logger.error(message);
+            endDownloadWithError(op, ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            // Pull parameters for file to be downloaded from HTTP request.
+            var clientFileObj = null;
+            var requiredPropsParam = [ServerConstants.fileUUIDKey];
+            
+            try {
+                clientFileObj = new ClientFile(request.body[ServerConstants.fileToDownload], requiredPropsParam);
+            } catch (error) {
+                logger.error(error);
+                endDownloadWithError(op, ServerConstants.rcServerAPIError, error);
+                return;
+            }
+            
+            logger.debug("File to be downloaded: %j", clientFileObj);
+            
+            // Lookup the file in PSInboundFile's
+            var inboundFileData = {
+                fileId: clientFileObj[ServerConstants.fileUUIDKey],
+                userId: op.userId(),
+                deviceId: op.deviceId(),
+                received: true
+            };
+            
+            var psInboundFile = null;
+            
+            try {
+                psInboundFile = new PSInboundFile(inboundFileData);
+            } catch (error) {
+                logger.error(error);
+                endDownloadWithError(op, ServerConstants.rcServerAPIError, error);
+                return;
+            }
+            
+            psInboundFile.lookup(function (error, fileIsPresent) {
+                if (error) {
+                    endDownloadWithError(op, ServerConstants.rcOperationFailed, error);
+                }
+                else if (!fileIsPresent) {
+                    endDownloadWithError(op, ServerConstants.rcServerAPIError, "File wasn't in PSInboundFile and marked as received!");
+                }
+                else {
+                    // Can download the file.
+                    
+                    var localFile = new File(op.userId(), op.deviceId(), psInboundFile.fileId);
+                    var fileNameWithPathToDownload = localFile.localFileNameWithPath();
+                            
+                    const clientFileName = "download"
+                    const downloadFileMimeType = psInboundFile.mimeType;
+                    
+                    var clientResultInfo = op.prepareToEndDownloadWithRC(ServerConstants.rcOK);
+                    logger.trace("Sending response back to client: " + clientResultInfo);
+
+                    response.setHeader('Content-Type', downloadFileMimeType);
+                    response.setHeader('Content-disposition', 'attachment; filename=' + clientFileName);
+                    response.setHeader(ServerConstants.httpDownloadParamHeader, clientResultInfo);
+
+                    // Start download.
+                    // See http://stackoverflow.com/questions/7288814/download-a-file-from-nodejs-server-using-express
+                    // And http://code.runnable.com/UTlPPF-f2W1TAAEW/download-files-with-express-for-node-js
+                    response.download(fileNameWithPathToDownload);
+                    
+                    // TODO: After the file has been downloaded, remove it from the PSInboundFile's.
+                    // TODO: And remove the file from local storage on the sync server.
+                }
+            });
+        }
+    });
+});
+
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");
     var op = new Operation(request, response, true);
