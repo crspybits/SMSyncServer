@@ -114,6 +114,31 @@ class ServerAPI: BaseClass {
         self.waitForExpectations()
     }
     
-    // TODO: Try starting a download directly, using the SMServerAPI method, and have a lock. This should fail.
-    // TODO: Try to download a file, through the SMServerAPI, that is on the server, but isn't in the PSInboundFile's.
+    // Start a download directly, using the SMServerAPI method, and have a lock. This should fail-- because we always download files in an unlocked state.
+    func testThatDownloadWithLockFails() {
+        let expectation = self.expectationWithDescription("Handler called")
+
+        self.waitUntilSyncServerUserSignin() {
+
+            SMServerAPI.session.lock() { error in
+                XCTAssert(error == nil)
+
+                let downloadFileURL = FileStorage.urlOfItem("download1")
+                let serverFile = SMServerFile(uuid: NSUUID())
+                serverFile.localURL = downloadFileURL
+            
+                SMServerAPI.session.downloadFile(serverFile) { error in
+                    // Should get an error here.
+                    XCTAssert(error != nil)
+                    
+                    SMServerAPI.session.unlock() { error in
+                        XCTAssert(error == nil)
+                        expectation.fulfill()
+                    }
+                }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
 }

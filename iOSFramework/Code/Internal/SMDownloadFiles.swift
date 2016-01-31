@@ -16,9 +16,10 @@ import SMCoreLib
 This class uses RepeatingTimer. It must have NSObject as a base class.
 */
 internal class SMDownloadFiles : NSObject {
-    private var checkIfUploadOperationFinishedTimer:RepeatingTimer?
+    private var checkIfInboundTransferOperationFinishedTimer:RepeatingTimer?
     private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
     private var numberInboundTransfersExpected = 0
+    private var filesToDownload:[SMServerFile]?
     
     // This is a singleton because we need centralized control over the file download operations.
     internal static let session = SMDownloadFiles()
@@ -30,6 +31,10 @@ internal class SMDownloadFiles : NSObject {
     private var serverOperationId:String?
     
     internal weak var delegate:SMSyncServerDelegate?
+    
+    internal func appLaunchSetup() {
+        SMServerAPI.session.downloadDelegate = self
+    }
 
     internal func checkForDownloads() {
         SMSync.session.startIf({
@@ -47,8 +52,10 @@ internal class SMDownloadFiles : NSObject {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
                         // TODO: There is also the possiblity of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
                         let fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
-                        if let downloadFiles = fileDiffs.filesToDownload() {
-                            self.doDownloads(downloadFiles)
+                        self.filesToDownload = fileDiffs.filesToDownload()
+                        if self.filesToDownload != nil {
+                            // There were some files to download.
+                            self.doInboundTransfers()
                         }
                         else {
                             // No files to download. Release the lock.
@@ -78,10 +85,10 @@ internal class SMDownloadFiles : NSObject {
         }
     }
     
-    private func doDownloads(filesToDownload:[SMServerFile]) {
-        self.numberInboundTransfersExpected = filesToDownload.count
+    private func doInboundTransfers() {
+        self.numberInboundTransfersExpected = self.filesToDownload!.count
         
-        SMServerAPI.session.startInboundTransfer(filesToDownload) { (theServerOperationId, returnCode, error) in
+        SMServerAPI.session.startInboundTransfer(self.filesToDownload!) { (theServerOperationId, returnCode, error) in
             if error == nil {
                 self.serverOperationId = theServerOperationId
                 self.startToPollForOperationFinish()
@@ -98,21 +105,21 @@ internal class SMDownloadFiles : NSObject {
     private func startToPollForOperationFinish() {
         //SMUploadFiles.setMode(.OutboundTransferRecovery)
 
-        self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMDownloadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: "pollIfFileOperationFinished", andTarget: self)
-        self.checkIfUploadOperationFinishedTimer!.start()
+        self.checkIfInboundTransferOperationFinishedTimer = RepeatingTimer(interval: SMDownloadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: "pollIfFileOperationFinished", andTarget: self)
+        self.checkIfInboundTransferOperationFinishedTimer!.start()
     }
     
     // PRIVATE
     // TODO: How do we know if we've been checking for too long?
     internal func pollIfFileOperationFinished() {
         Log.msg("checkIfFileOperationFinished")
-        self.checkIfUploadOperationFinishedTimer!.cancel()
+        self.checkIfInboundTransferOperationFinishedTimer!.cancel()
         
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, error in
             if (error != nil) {
                 // TODO: How many times to check/recheck and still get an error?
                 Log.error("Yikes: Error checking operation status: \(error)")
-                self.checkIfUploadOperationFinishedTimer!.start()
+                self.checkIfInboundTransferOperationFinishedTimer!.start()
             }
             else {
                 // TODO: Deal with other collection of operation status here.
@@ -120,7 +127,7 @@ internal class SMDownloadFiles : NSObject {
                 switch (operationResult!.status) {
                 case SMServerConstants.rcOperationStatusInProgress:
                     Log.msg("Operation still in progress")
-                    self.checkIfUploadOperationFinishedTimer!.start()
+                    self.checkIfInboundTransferOperationFinishedTimer!.start()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
                     self.wrapUpOperation(operationResult!)
@@ -158,18 +165,22 @@ internal class SMDownloadFiles : NSObject {
         
             self.serverOperationId = nil
 
-            if (error != nil) {
+            if error != nil {
                 // Not much of an error, but log it.
                 Log.file("Failed removing OperationId from server: \(error)")
             }
             
-            // Really: Have to download the files, one by one now.
-            
-            // TEMPORARY
-            let url = NSURL()
-            let attr = SMSyncAttributes(withUUID: NSUUID())
-            self.callSyncServerSingleFileDownloadComplete(url, withFileAttributes: attr)
-            // TEMPORARY
+            // Files were transferred from cloud storage to sync server. Download them from the sync server.
+            SMServerAPI.session.downloadFiles(self.filesToDownload!) { error in
+                if error == nil {
+                    // Done!
+                    self.callSyncServerAllDownloadsComplete()
+                }
+                else {
+                    // TODO: Initiate recovery. Retry download again? We have no evidence this was a server API error, nor is this a recovery error at this point (i.e., so we don't want to just call the delegate error method).
+                    Log.error("Failed on downloadFiles")
+                }
+            }
         }
     }
     
@@ -177,8 +188,13 @@ internal class SMDownloadFiles : NSObject {
     // Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
 
     private func callSyncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
-        SMSync.session.startDelayed(currentlyOperating: true)
+        Log.msg("Finished downloading file with UUID: \(attr.uuid)")
         self.delegate?.syncServerSingleFileDownloadComplete(localFile, withFileAttributes: attr)
+    }
+    
+    private func callSyncServerAllDownloadsComplete() {
+        SMSync.session.startDelayed(currentlyOperating: true)
+        self.delegate?.syncServerAllDownloadsComplete()
     }
 
     private func callSyncServerNoFilesToDownload() {
@@ -199,4 +215,14 @@ internal class SMDownloadFiles : NSObject {
     }
     
     // MARK: End: Methods that call delegate methods
+}
+
+
+// MARK: SMServerAPIDownloadDelegate methods
+
+extension SMDownloadFiles : SMServerAPIDownloadDelegate {
+    internal func smServerAPIFileDownloaded(file: SMServerFile) {
+        let attr = SMSyncAttributes(withUUID: file.uuid)
+        self.callSyncServerSingleFileDownloadComplete(file.localURL!, withFileAttributes: attr)
+    }
 }

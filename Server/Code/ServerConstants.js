@@ -36,8 +36,10 @@ function define(name, value) {
     
 	define("operationGetOperationId", "GetOperationId");
 
-    // Carried out in an unlocked state.
+    // Both of the following are carried out in an unlocked state.
 	define("operationDownloadFile", "DownloadFile");
+    // Remove the downloaded file from the server.
+	define("operationRemoveDownloadFile", "RemoveDownloadFile");
 
 	define("operationCheckOperationStatus", "CheckOperationStatus");
 	define("operationRemoveOperationId", "RemoveOperationId");
@@ -94,8 +96,8 @@ function define(name, value) {
     // Value: an array of JSON objects with keys: fileUUIDKey
     // Only the UUID key is needed because no change is being made to the file index-- the transfer operation consists of copying the current version of the file from cloud storage to the server temporary storage.
     
-    // When a file is being downloaded (operationDownloadFile), use the following key.
-	define("fileToDownload", "FileToDownload");
+    // When a file is being downloaded (operationDownloadFile, or operationRemoveDownloadFile), use the following key.
+	define("downloadFileAttributes", "DownloadFileAttr");
     // Value: a JSON object with key: fileUUIDKey.
     // Like above, no change is being made to the file index, thus only the UUID is needed.
     

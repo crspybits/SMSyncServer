@@ -210,6 +210,8 @@ internal class SMFileDiffs {
                         // File was deleted on the server.
                         // TODO: We need to check to see if this file is marked as deleted in the local meta data, if we know about its UUID. If we know about its UUID, but it's not marked as deleted, we can mark it as deleted. 
                         // TODO: WE ALSO need to give a delegate callback for this to tell the SMSyncServer Framework client that the file was deleted.
+                        // I.e., call syncServerDeletionReceived
+                        // TODO: Consider synchronization issues here. Want to make sure these deletion operations are carried out in an atomic-like manner.
                         continue
                     }
                     
@@ -247,6 +249,14 @@ internal class SMFileDiffs {
             return nil
         }
         else {
+            // Need to give each of these file descriptions a localURL property. We'll need that when doing the download.
+            
+            for serverFile in result {
+                let localFile = SMFiles.createTemporaryFile()
+                Assert.If(localFile == nil, thenPrintThisString: "Could not create temporary file")
+                serverFile.localURL = localFile
+            }
+            
             return result
         }
     }

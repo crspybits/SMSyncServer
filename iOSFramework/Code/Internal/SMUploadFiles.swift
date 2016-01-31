@@ -114,6 +114,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
     
     internal func appLaunchSetup() {
         SMSync.session.delayDelegate = self
+        SMServerAPI.session.uploadDelegate = self
         self.start(withCurrentlyOperatingExpected: false)
     }
     
@@ -275,9 +276,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
 
     private func doUpload(withFilesToUpload filesToUpload:[SMServerFile]) {
 
-        SMServerAPI.session.uploadFiles(filesToUpload, perUploadCallback:
-                self.delegate?.syncServerSingleUploadComplete
-            ) { returnCode, error in
+        SMServerAPI.session.uploadFiles(filesToUpload) { returnCode, error in
             Log.msg("SMSyncServer.session.uploadFiles: \(error)")
             
             if SMTest.If.success(error, context: .UploadFiles) {
@@ -527,6 +526,14 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
 
             }
         }
+    }
+}
+
+// MARK: SMServerAPIUploadDelegate methods
+
+extension SMUploadFiles : SMServerAPIUploadDelegate {
+    internal func smServerAPIFileUploaded(file: NSUUID) {
+        self.delegate?.syncServerSingleUploadComplete(uuid: file)
     }
 }
 

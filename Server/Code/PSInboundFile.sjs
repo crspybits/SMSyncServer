@@ -129,5 +129,39 @@ PSInboundFile.prototype.update = function (callback) {
     });
 }
 
+// Remove the PSInboundFile object from MongoDb.
+// If the deletion of the PSInboundFile object fails, the local file system file doesn't get deleted.
+// Callback parameter: error
+PSInboundFile.prototype.remove = function (callback) {
+    var self = this;
+    
+    // Overkill on overqualifying the query, but why not?
+    var query = Common.extractPropsFrom(self, props);
+
+    Mongo.db().collection(collectionName).deleteOne(query,
+        function(err, results) {
+            // console.log(results);
+            
+            if (err) {
+                callback(err);
+            }
+            else if (0 == results.deletedCount) {
+                callback(new Error("Could not delete remove PSInboundFile!"));
+            }
+            else if (results.deletedCount > 1) {
+                callback(new Error("Yikes! Removed more than one PSInboundFile!"));
+            }
+            else {
+                // TODO: Make sure this doesn't fail if the file isn't there already. This should help in error recovery.
+                var localFile = new File(self.userId, self.deviceId, self.fileId);
+                var localFileNameWithPath = localFile.localFileNameWithPath();
+
+                fse.remove(localFileNameWithPath, function (err) {
+                    callback(err);
+                });
+            }
+        });
+}
+
 // export the class
 module.exports = PSInboundFile;

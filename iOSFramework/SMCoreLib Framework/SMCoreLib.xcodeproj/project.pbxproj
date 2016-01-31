@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
 		83D3ECF01C4DBFD000BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
 		83D3ECF51C4DBFD000BFDA93 /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -108,6 +110,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
+		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
@@ -392,6 +396,8 @@
 				83D3EDB91C4DC97400BFDA93 /* NSObject+TargetsAndSelectors.m */,
 				83D3EDB21C4DC96400BFDA93 /* UIView+Extras.h */,
 				83D3EDB31C4DC96400BFDA93 /* UIView+Extras.m */,
+				55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */,
+				55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -473,6 +479,7 @@
 				83D3ED701C4DC8F300BFDA93 /* SMMutableDictionary.h in Headers */,
 				83D3ED6C1C4DC8CE00BFDA93 /* Network.h in Headers */,
 				83D3ED541C4DC85300BFDA93 /* UIProgressView+AFNetworking.h in Headers */,
+				55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */,
 				83D3EDA91C4DC93900BFDA93 /* SPASLog.h in Headers */,
 				83D3ED8B1C4DC92800BFDA93 /* FileStorage.h in Headers */,
 				83D3ED921C4DC92800BFDA93 /* TimedCallback.h in Headers */,
@@ -623,6 +630,7 @@
 				83D3ED671C4DC89200BFDA93 /* KeyChain.m in Sources */,
 				83D3ED8A1C4DC92800BFDA93 /* Debounce.m in Sources */,
 				83D3ED591C4DC85300BFDA93 /* UIWebView+AFNetworking.m in Sources */,
+				55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */,
 				83D3EDB51C4DC96400BFDA93 /* UIView+Extras.m in Sources */,
 				83D3ED971C4DC92800BFDA93 /* WeakRef.m in Sources */,
 				83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */,

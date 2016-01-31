@@ -66,8 +66,11 @@ public class SMSyncConflicts : SMSyncAttributes {
 // TODO: These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
     
-    // The callee owns the localFile after this call completes.
-    func syncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes)
+    // The callee owns the localFile after this call completes. The file is temporary in the sense that it will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a permanent location.
+    func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes)
+    
+    // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
+    func syncServerAllDownloadsComplete()
     
     // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
     func syncServerDeletionReceived(uuid uuid:NSUUID)
@@ -175,6 +178,7 @@ public class SMSyncServer : NSObject {
         Network.session().appStartup()
         SMServerNetworking.session.appLaunchSetup()
         SMServerAPI.session.serverURL = serverURL
+        SMDownloadFiles.session.appLaunchSetup()
 
         // This seems a little hacky, but can't find a better way to get the bundle of the framework containing our model. I.e., "this" framework. Just using a Core Data object contained in this framework to track it down.
         // Without providing this bundle reference, I wasn't able to dynamically locate the model contained in the framework.
@@ -198,6 +202,8 @@ public class SMSyncServer : NSObject {
     // PRIVATE
     internal func signInCompletedAction() {
         Log.msg("signInCompletedAction")
+        
+        // This will start a delayed upload, if there was one, so leave this until after user is signed in.
         SMUploadFiles.session.appLaunchSetup()
         
         // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
@@ -296,28 +302,15 @@ public class SMSyncServer : NSObject {
     public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
-        // I'm going to use a directory within /Documents and not the NSTemporaryDirectory because I want control over when these files are deleted. It is possible that it will take any number of days for these files to be uploaded. I don't want to take the chance that they will be deleted before I'm done with them.
+        let localFile = SMFiles.createTemporaryFile()
+        Assert.If(localFile == nil, thenPrintThisString: "Yikes: Could not create file!")
         
-        let tempDirectory = FileStorage.pathToItem(SMAppConstants.tempDirectory)
-        let tempDirURL = NSURL(fileURLWithPath: tempDirectory)
-        
-        // Don't let the files be backed up to iCloud-- Apple doesn't like this (e.g., when reviewing apps).
-        if FileStorage.createDirectoryIfNeeded(tempDirURL) {
-            let result = FileStorage.addSkipBackupAttributeToItemAtURL(tempDirURL)
-            Assert.If(!result, thenPrintThisString: "Could not addSkipBackupAttributeToItemAtURL")
-        }
-        
-        let tempFileName = FileStorage.createTempFileNameInDirectory(tempDirectory, withPrefix: "SMSyncServer", andExtension: "dat")
-        let fileNameWithPath = tempDirectory + "/" + tempFileName
-        Log.msg(fileNameWithPath);
-        let localFile:NSURL = NSURL(fileURLWithPath: fileNameWithPath)
-        
-        if !data.writeToURL(localFile, atomically: true) {
+        if !data.writeToURL(localFile!, atomically: true) {
             Assert.badMojo(alwaysPrintThisString:"Could not write data to temporary file!")
             return
         }
 
-        self.uploadFile(localFile, ofType: .Temporary, withFileAttributes: attr)
+        self.uploadFile(localFile!, ofType: .Temporary, withFileAttributes: attr)
     }
     
     // Enqueue a deletion operation. The operation persists across app launches. It is an error to try again later to upload, download, or delete the data/file referenced by this UUID. You can only delete files that are already known to the SMSyncServer (e.g., that you've uploaded). Any previous queued uploads for this uuid are expunged-- only the delete is carried out.

@@ -186,6 +186,14 @@ internal class SMServerFile : NSObject, NSCopying {
     }
 }
 
+internal protocol SMServerAPIUploadDelegate : class {
+    func smServerAPIFileUploaded(file: NSUUID)
+}
+
+internal protocol SMServerAPIDownloadDelegate : class {
+    func smServerAPIFileDownloaded(file: SMServerFile)
+}
+
 // http://stackoverflow.com/questions/24051904/how-do-you-add-a-dictionary-of-items-into-another-dictionary
 private func += <KeyType, ValueType> (inout left: Dictionary<KeyType, ValueType>, right: Dictionary<KeyType, ValueType>) {
     for (k, v) in right { 
@@ -204,6 +212,9 @@ internal class SMServerAPI {
     
     // Design-wise, it seems better to access a user/credentials delegate in the SMServerAPI class instead of letting this class access the SMSyncServerUser directly. This is because the SMSyncServerUser class needs to call the SMServerAPI interface (to sign a user in or create a new user), and such a direct cyclic dependency seems a poor design.
     internal weak var userDelegate:SMUserServerParamsDelegate!
+    
+    internal weak var uploadDelegate: SMServerAPIUploadDelegate?
+    internal weak var downloadDelegate: SMServerAPIDownloadDelegate?
     
     private init() {
     }
@@ -287,9 +298,9 @@ internal class SMServerAPI {
     }
     
     // Recursive multiple file upload implementation. If there are no files in the filesToUpload parameter array, this doesn't call the server, and has no effect but calling the completion handler with nil parameters.
-    internal func uploadFiles(filesToUpload: [SMServerFile], perUploadCallback:((uuid:NSUUID)->())?, completion:((returnCode:Int?, error:NSError?)->(Void))?) {
+    internal func uploadFiles(filesToUpload: [SMServerFile], completion:((returnCode:Int?, error:NSError?)->(Void))?) {
         if filesToUpload.count >= 1 {
-            self.uploadFilesAux(filesToUpload, perUploadCallback: perUploadCallback, completion: completion)
+            self.uploadFilesAux(filesToUpload, completion: completion)
         }
         else {
             Log.warning("No files to upload")
@@ -299,15 +310,15 @@ internal class SMServerAPI {
     
     // Assumes we've already validated that there is at least one file to upload.
     // TODO: If we get a failure uploading an individual file, retry some MAX number of times.
-    private func uploadFilesAux(filesToUpload: [SMServerFile], perUploadCallback:((uuid:NSUUID)->())?, completion:((returnCode:Int?, error:NSError?)->(Void))?) {
+    private func uploadFilesAux(filesToUpload: [SMServerFile], completion:((returnCode:Int?, error:NSError?)->(Void))?) {
         if filesToUpload.count >= 1 {
             let serverFile = filesToUpload[0]
             Log.msg("Uploading file: \(serverFile.localURL)")
             self.uploadFile(serverFile) { returnCode, error in
                 if (nil == error) {
-                    perUploadCallback?(uuid: serverFile.uuid)
+                    self.uploadDelegate?.smServerAPIFileUploaded(serverFile.uuid)
                     let remainingFiles = Array(filesToUpload[1..<filesToUpload.count])
-                    self.uploadFilesAux(remainingFiles, perUploadCallback:perUploadCallback, completion: completion)
+                    self.uploadFilesAux(remainingFiles, completion: completion)
                 }
                 else {
                     completion?(returnCode:returnCode, error:error)
@@ -624,6 +635,7 @@ internal class SMServerAPI {
         }
     }
     
+    // Aside from testing, we're only using this method inside of this class. Use downloadFiles() for non-testing.
     // File will be downloaded to fileToDownload.localURL (which is required). (No other SMServerFile attributes are required, except, of course for the uuid).
     internal func downloadFile(fileToDownload: SMServerFile, completion:((error:NSError?)->(Void))?) {
 
@@ -634,7 +646,7 @@ internal class SMServerAPI {
         
         var serverParams = userParams!
         let serverFileDict = fileToDownload.dictionary
-        serverParams[SMServerConstants.fileToDownload] = serverFileDict
+        serverParams[SMServerConstants.downloadFileAttributes] = serverFileDict
         
         Log.msg("parameters: \(serverParams)")
 
@@ -642,6 +654,73 @@ internal class SMServerAPI {
                         "/" + SMServerConstants.operationDownloadFile)!
         
         SMServerNetworking.session.downloadFileFrom(serverOpURL, fileToDownload: fileToDownload.localURL!, withParameters: serverParams) { (serverResponse, error) in
+        
+            let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
+            completion?(error: error)
+        }
+    }
+    
+    // Recursive multiple file download implementation. If there are no files in the filesToDownload parameter array, this doesn't call the server, and has no effect but calling the completion handler with nil parameters.
+    internal func downloadFiles(filesToDownload: [SMServerFile], completion:((error:NSError?)->(Void))?) {
+        if filesToDownload.count >= 1 {
+            self.downloadFilesAux(filesToDownload, completion: completion)
+        }
+        else {
+            Log.warning("No files to download")
+            completion?(error: nil)
+        }
+    }
+    
+    // Assumes we've already validated that there is at least one file to download.
+    // TODO: If we get a failure download an individual file, retry some MAX number of times.
+    private func downloadFilesAux(filesToDownload: [SMServerFile], completion:((error:NSError?)->(Void))?) {
+        if filesToDownload.count >= 1 {
+            let serverFile = filesToDownload[0]
+            Log.msg("Downloading file: \(serverFile.localURL)")
+            self.downloadFile(serverFile) {error in
+                if (nil == error) {
+                    self.downloadDelegate?.smServerAPIFileDownloaded(serverFile)
+
+                    // I'm going to remove the downloaded file from the server immediately after the download. Partly, this is so I don't have to push the call to this SMServerAPI method higher up; partly this is an optimization-- so that we can release temporary file storage on the server more quickly.
+                    
+                    self.removeDownloadFile(serverFile) { (error) in
+                        if error == nil {
+                            let remainingFiles = Array(filesToDownload[1..<filesToDownload.count])
+                            self.downloadFilesAux(remainingFiles, completion: completion)
+                        }
+                        else {
+                            completion?(error:error)
+                        }
+                    }
+                }
+                else {
+                    completion?(error:error)
+                }
+            }
+        }
+        else {
+            // The base-case of the recursion: All has completed normally, will have nil parameters for completion.
+            completion?(error: nil)
+        }
+    }
+    
+    // Remove the temporary downloadable file from the server. (Doesn't remove the info from the file index).
+    // I'm not going to expose this method outside of this class-- we'll just do this removal internally, after a download.
+    private func removeDownloadFile(fileToRemove: SMServerFile, completion:((error:NSError?)->(Void))?) {
+        
+        let userParams = self.userDelegate.serverParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+        
+        var serverParams = userParams!
+        let serverFileDict = fileToRemove.dictionary
+        serverParams[SMServerConstants.downloadFileAttributes] = serverFileDict
+        
+        Log.msg("parameters: \(serverParams)")
+
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationRemoveDownloadFile)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams) { (serverResponse, error) in
         
             let (_, error) = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(error: error)

@@ -1384,47 +1384,12 @@ app.post('/' + ServerConstants.operationDownloadFile, function (request, respons
             endDownloadWithError(op, ServerConstants.rcServerAPIError, message);
         }
         else {
-            // Pull parameters for file to be downloaded from HTTP request.
-            var clientFileObj = null;
-            var requiredPropsParam = [ServerConstants.fileUUIDKey];
-            
-            try {
-                clientFileObj = new ClientFile(request.body[ServerConstants.fileToDownload], requiredPropsParam);
-            } catch (error) {
-                logger.error(error);
-                endDownloadWithError(op, ServerConstants.rcServerAPIError, error);
-                return;
-            }
-            
-            logger.debug("File to be downloaded: %j", clientFileObj);
-            
-            // Lookup the file in PSInboundFile's
-            var inboundFileData = {
-                fileId: clientFileObj[ServerConstants.fileUUIDKey],
-                userId: op.userId(),
-                deviceId: op.deviceId(),
-                received: true
-            };
-            
-            var psInboundFile = null;
-            
-            try {
-                psInboundFile = new PSInboundFile(inboundFileData);
-            } catch (error) {
-                logger.error(error);
-                endDownloadWithError(op, ServerConstants.rcServerAPIError, error);
-                return;
-            }
-            
-            psInboundFile.lookup(function (error, fileIsPresent) {
+            getDownloadFileInfo(request, op, function (error, returnCode, psInboundFile) {
                 if (error) {
-                    endDownloadWithError(op, ServerConstants.rcOperationFailed, error);
-                }
-                else if (!fileIsPresent) {
-                    endDownloadWithError(op, ServerConstants.rcServerAPIError, "File wasn't in PSInboundFile and marked as received!");
+                    endDownloadWithError(op, returnCode, error);
                 }
                 else {
-                    // Can download the file.
+                   // Can download the file.
                     
                     var localFile = new File(op.userId(), op.deviceId(), psInboundFile.fileId);
                     var fileNameWithPathToDownload = localFile.localFileNameWithPath();
@@ -1442,15 +1407,105 @@ app.post('/' + ServerConstants.operationDownloadFile, function (request, respons
                     // Start download.
                     // See http://stackoverflow.com/questions/7288814/download-a-file-from-nodejs-server-using-express
                     // And http://code.runnable.com/UTlPPF-f2W1TAAEW/download-files-with-express-for-node-js
+                    // And http://expressjs.com/en/api.html
                     response.download(fileNameWithPathToDownload);
                     
-                    // TODO: After the file has been downloaded, remove it from the PSInboundFile's.
-                    // TODO: And remove the file from local storage on the sync server.
+                    // I'm not going to remove this from PSInboundFile's immediately after the download has completed, nor am I going to remove the file from local storage. I'm going to provide a separate API method for the client to do that-- in case of some kind of error (e.g., on the client side), where the client wants to retry the download.
                 }
             });
         }
     });
 });
+
+// Enable the client to remove a downloaded file from the PSInboundFile's, and from local storage on the sync server.
+app.post('/' + ServerConstants.operationRemoveDownloadFile, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        // User is on the system.
+        
+        if (isDefined(psLock)) {
+            var message = "We have the lock, but shouldn't!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            getDownloadFileInfo(request, op, function (error, returnCode, psInboundFile) {
+                if (error) {
+                    op.endWithRCAndErrorDetails(ServerConstants.rcOperationFailed, message);
+                }
+                else {
+                    psInboundFile.remove(function (error) {
+                        if (error) {
+                            op.endWithRCAndErrorDetails(ServerConstants.rcOperationFailed, error);
+                        }
+                        else {
+                            op.endWithRC(ServerConstants.rcOK);
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
+// Pull info for file to be downloaded from HTTP request.
+/* Callback has parameters:
+    1) error
+    2) if error, return code
+    3) if no error, psInboundFile
+ 
+*/
+function getDownloadFileInfo(request, op, callback) {
+
+    var clientFileObj = null;
+    var requiredPropsParam = [ServerConstants.fileUUIDKey];
+    
+    try {
+        clientFileObj = new ClientFile(request.body[ServerConstants.downloadFileAttributes], requiredPropsParam);
+    } catch (error) {
+        logger.error(error);
+        callback(error, ServerConstants.rcServerAPIError, null);
+        return;
+    }
+    
+    logger.debug("File download info: %j", clientFileObj);
+    
+    // Lookup the file in PSInboundFile's
+    var inboundFileData = {
+        fileId: clientFileObj[ServerConstants.fileUUIDKey],
+        userId: op.userId(),
+        deviceId: op.deviceId(),
+        received: true
+    };
+    
+    var psInboundFile = null;
+    
+    try {
+        psInboundFile = new PSInboundFile(inboundFileData);
+    } catch (error) {
+        logger.error(error);
+        callback(error, ServerConstants.rcServerAPIError, null);
+        return;
+    }
+    
+    psInboundFile.lookup(function (error, fileIsPresent) {
+        if (error) {
+            callback(error, ServerConstants.rcOperationFailed, null);
+        }
+        else if (!fileIsPresent) {
+            callback("File wasn't in PSInboundFile and marked as received!", ServerConstants.rcServerAPIError, null);
+        }
+        else {
+            // Can download the file.
+            callback(null, null, psInboundFile);
+        }
+    });
+}
 
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");

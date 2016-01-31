@@ -378,7 +378,32 @@ public class SMServerNetworking {
                             completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Did not get parameters from server!"))
                         }
                         else {
-                            completion?(serverResponse: downloadParamsDict, error: nil)
+                            // urlOfDownload is the temporary file location given by downloadTaskWithRequest. Not sure how long it persists. Move it to our own temporary location. We're more assured of that lasting.
+                            
+                            Assert.If(urlOfDownload == nil, thenPrintThisString: "Didn't get a downloaded file!")
+                            
+                            // Make sure destination file (fileToDownload) isn't there first. Get an error with moveItemAtURL if it is.
+                            
+                            let mgr = NSFileManager.defaultManager()
+
+                            // I don't really care about an error here, attempting to removeItemAtURL.
+                            do {
+                                try mgr.removeItemAtURL(fileToDownload)
+                            } catch (let err) {
+                                Log.error("\(err)")
+                            }
+                            
+                            var error:NSError?
+                            do {
+                                try mgr.moveItemAtURL(urlOfDownload!, toURL: fileToDownload)
+                            } catch (let err) {
+                                let errorString = "\(err)"
+                                error = Error.Create(errorString)
+                                Log.error(errorString)
+                            }
+                            
+                            // serverResponse will be non-nil if we throw an errow in the file move, but the caller should check the error so, should be OK.
+                            completion?(serverResponse: downloadParamsDict, error: error)
                         }
                     }
                     else {

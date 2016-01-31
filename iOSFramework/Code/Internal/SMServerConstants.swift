@@ -45,8 +45,10 @@ public class SMServerConstants {
     
     public static let operationGetOperationId = "GetOperationId"
 
-    // Carried out in an unlocked state.
+    // Both of the following are carried out in an unlocked state.
     public static let operationDownloadFile = "DownloadFile"
+    // Remove the downloaded file from the server.
+    public static let operationRemoveDownloadFile = "RemoveDownloadFile"
 
     public static let operationCheckOperationStatus = "CheckOperationStatus"
     public static let operationRemoveOperationId = "RemoveOperationId"
@@ -103,8 +105,8 @@ public class SMServerConstants {
     // Value: an array of JSON objects with keys: fileUUIDKey
     // Only the UUID key is needed because no change is being made to the file index-- the transfer operation consists of copying the current version of the file from cloud storage to the server temporary storage.
     
-    // When a file is being downloaded (operationDownloadFile), use the following key.
-    public static let fileToDownload = "FileToDownload"
+    // When a file is being downloaded (operationDownloadFile, or operationRemoveDownloadFile), use the following key.
+    public static let downloadFileAttributes = "DownloadFileAttr"
     // Value: a JSON object with key: fileUUIDKey.
     // Like above, no change is being made to the file index, thus only the UUID is needed.
     

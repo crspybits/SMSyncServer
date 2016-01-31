@@ -39,9 +39,17 @@ class BaseClass: XCTestCase {
     var deletionSequenceNumber = 0
     var deletionCallbacks:[deletionCallback]!
 
-    typealias downloadCallback = ()->()
+    typealias downloadCallback = (localFile:NSURL, attr: SMSyncAttributes)->()
     var downloadSequenceNumber = 0
     var downloadCallbacks:[downloadCallback]!
+
+    typealias noDownloadsCallback = ()->()
+    var noDownloadsSequenceNumber = 0
+    var noDownloadsCallbacks:[noDownloadsCallback]!
+    
+    typealias allDownloadsCompleteCallback = ()->()
+    var allDownloadsCompleteSequenceNumber = 0
+    var allDownloadsCompleteCallbacks:[allDownloadsCompleteCallback]!
 
     typealias errorCallback = ()->()
     var errorSequenceNumber = 0
@@ -61,6 +69,8 @@ class BaseClass: XCTestCase {
         self.singleUploadCallbacks = [singleUploadCallback]()
         self.deletionCallbacks = [deletionCallback]()
         self.downloadCallbacks = [downloadCallback]()
+        self.allDownloadsCompleteCallbacks = [allDownloadsCompleteCallback]()
+        self.noDownloadsCallbacks = [noDownloadsCallback]()
         self.singleProgressCallback = nil
     }
     
@@ -157,9 +167,16 @@ extension BaseClass : SMSyncServerDelegate {
         self.commitCompleteCallbacks[sequenceNumber](numberUploads: numberUploads)
     }
     
+    // The callee owns the localFile after this call completes.
     func syncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
-        self.downloadCallbacks[self.downloadSequenceNumber]()
+        self.downloadCallbacks[self.downloadSequenceNumber](localFile: localFile, attr: attr)
         self.downloadSequenceNumber += 1
+    }
+    
+    // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
+    func syncServerAllDownloadsComplete() {
+        self.allDownloadsCompleteCallbacks[self.allDownloadsCompleteSequenceNumber]()
+        self.allDownloadsCompleteSequenceNumber += 1
     }
     
     func syncServerDeletionReceived(uuid uuid: NSUUID) {
@@ -172,8 +189,8 @@ extension BaseClass : SMSyncServerDelegate {
     
 #if DEBUG
     func syncServerNoFilesToDownload() {
-        let sequenceNumber = self.downloadSequenceNumber++
-        self.downloadCallbacks[sequenceNumber]()
+        self.noDownloadsCallbacks[self.noDownloadsSequenceNumber]()
+        self.noDownloadsSequenceNumber += 1
     }
 #endif
 }
