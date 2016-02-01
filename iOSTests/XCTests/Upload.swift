@@ -174,6 +174,8 @@ class Upload: BaseClass {
             
             let file = AppFile.newObjectAndMakeUUID(true)
             file.fileName =  "Kitty.png"
+            CoreData.sessionNamed(CoreDataTests.name).saveContext()
+            
             // Odd that this has to be in app bundle not testing bundle...
             let url = NSBundle.mainBundle().URLForResource("Kitty", withExtension: "png")
         
@@ -970,6 +972,8 @@ class Upload: BaseClass {
     
     // Server-side detailed testing of Transfer Recovery.
     func transferRecovery(transferTestCase serverTestCase:Int) {
+        
+        self.extraServerResponseTime = 30
         
         let context = SMTestContext.OutboundTransfer
         let fileName = context.rawValue + String(serverTestCase)

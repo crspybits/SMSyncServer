@@ -11,6 +11,7 @@
 import Foundation
 import UIKit
 import SMCoreLib
+import SMSyncServer
 
 class MainPageVC : UIViewController {
     static let FileNameIndex = SMPersistItemInt(name: "MainPageVC.FileNameIndex", initialIntValue: 0, persistType: .UserDefaults)
@@ -71,6 +72,10 @@ extension MainPageVC : UITableViewDelegate, UITableViewDataSource {
         
         let file = self.coreDataSource.objectAtIndexPath(indexPath) as! AppFile
         cell.textLabel!.text = file.fileName
+        
+        if let _ = SMSyncServer.session.fileStatus(NSUUID(UUIDString: file.uuid!)!) {
+            cell.accessoryType = .Checkmark
+        }
         
         return cell
     }

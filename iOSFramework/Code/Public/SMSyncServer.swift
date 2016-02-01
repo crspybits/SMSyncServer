@@ -33,7 +33,7 @@ public class SMSyncAttributes {
     public var appFileType:String?
     
     // TODO: An optional app-specific identifier for a logical group or category that the file/data item belongs to. The intent behind this identifier is to make downloading logical groups of files easier. E.g., so that not all changed files need to be downloaded at once.
-    public var appGroupId:NSUUID?
+    //public var appGroupId:NSUUID?
     
     public init(withUUID id:NSUUID) {
         self.uuid = id
@@ -66,7 +66,7 @@ public class SMSyncConflicts : SMSyncAttributes {
 // TODO: These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
     
-    // The callee owns the localFile after this call completes. The file is temporary in the sense that it will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a permanent location.
+    // The callee owns the localFile after this call completes. The file is temporary in the sense that it will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location.
     func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes)
     
     // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
@@ -75,14 +75,14 @@ public protocol SMSyncServerDelegate : class {
     // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
     func syncServerDeletionReceived(uuid uuid:NSUUID)
     
-    // numberOperations includes upload and deletion operations.
-    func syncServerCommitComplete(numberOperations numberOperations:Int?)
-    
-    // Called after a single file/item has been uploaded to the SyncServer.
+    // Called after a single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
     func syncServerSingleUploadComplete(uuid uuid:NSUUID)
     
-    // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
+    // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
     func syncServerDeletionsSent(uuids:[NSUUID])
+    
+    // This is called after the server has finished performing the transfers of files to cloud storage/deletions in cloud storage. numberOperations includes upload and deletion operations.
+    func syncServerCommitComplete(numberOperations numberOperations:Int?)
     
     // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
     func syncServerRecovery(progress:SMSyncServerRecovery)
@@ -215,6 +215,19 @@ public class SMSyncServer : NSObject {
         if Network.session().connected() {
             SMUploadFiles.session.networkOnline()
         }
+    }
+    
+    // Returns a SMSyncAttributes object iff the file is locally known (on the device) to the SMSyncServer. Nil could be returned if the file was uploaded by another app/client to the server recently, but not downloaded to the current device (app/client) yet.
+    public func fileStatus(uuid: NSUUID) -> SMSyncAttributes? {
+        var fileAttr:SMSyncAttributes?
+        if let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString) {
+            fileAttr = SMSyncAttributes(withUUID: uuid)
+            fileAttr!.mimeType = localFileMetaData.mimeType
+            fileAttr!.remoteFileName = localFileMetaData.remoteFileName
+            fileAttr!.appFileType = localFileMetaData.appFileType
+        }
+        
+        return fileAttr
     }
     
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
@@ -360,17 +373,24 @@ public class SMSyncServer : NSObject {
         CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
     
-    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server.
-    public func resetMetaData() {
+    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
+    public func resetMetaData(forUUIDString uuidString:String?=nil) {
         Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
         
-        if let metaDataArray = SMLocalFile.fetchAllObjects() {
-            for localFile in metaDataArray {
-                CoreData.sessionNamed(SMCoreData.name).removeObject(localFile as! NSManagedObject)
+        if uuidString == nil {
+            if let metaDataArray = SMLocalFile.fetchAllObjects() {
+                for localFile in metaDataArray {
+                    CoreData.sessionNamed(SMCoreData.name).removeObject(localFile as! NSManagedObject)
+                }
             }
-            
-            CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
+        else {
+            if let localFile = SMLocalFile.fetchObjectWithUUID(uuidString!) {
+                CoreData.sessionNamed(SMCoreData.name).removeObject(localFile)
+            }
+        }
+        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
 #endif
 

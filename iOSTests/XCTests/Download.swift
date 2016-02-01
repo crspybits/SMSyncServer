@@ -8,6 +8,8 @@
 
 import XCTest
 @testable import SMSyncServer
+@testable import Tests
+import SMCoreLib
 
 class Download: BaseClass {
     
@@ -64,6 +66,15 @@ class Download: BaseClass {
     
     // Download a single server file which doesn't yet exist on the app/client.
     func testThatDownloadOfOneFileWorks() {
+        let fileName = "DownloadOfOneFile"
+        let (originalFile, fileSizeBytes) = self.createFile(withName: fileName)
+        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: originalFile.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+        
+        self.downloadOneFile(originalFileAttr:fileAttributes, originalFileURL: originalFile.url(), originalFileSizeBytes: fileSizeBytes)
+    }
+    
+    func downloadOneFile(originalFileAttr originalFileAttr:SMSyncAttributes, originalFileURL: NSURL, originalFileSizeBytes:Int) {
+
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let singleDownloadExpectation = self.expectationWithDescription("Single Download")
@@ -73,33 +84,28 @@ class Download: BaseClass {
         self.extraServerResponseTime = 60
         
         self.waitUntilSyncServerUserSignin() {
-            
-            let fileName = "DownloadOfOneFile"
-            let (originalFile, fileSizeBytes) = self.createFile(withName: fileName)
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: originalFile.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
-            
-            SMSyncServer.session.uploadImmutableFile(originalFile.url(), withFileAttributes: fileAttributes)
+            SMSyncServer.session.uploadImmutableFile(originalFileURL, withFileAttributes: originalFileAttr)
             
             self.singleUploadCallbacks.append() { uuid in
-                XCTAssert(uuid.UUIDString == originalFile.uuid!)
+                XCTAssert(uuid.UUIDString == originalFileAttr.uuid.UUIDString)
                 singleUploadExpectation.fulfill()
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 1)
-                self.checkFileSize(originalFile.uuid!, size: fileSizeBytes) {
+                self.checkFileSize(originalFileAttr.uuid.UUIDString, size: originalFileSizeBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
                     
                     // Now, forget locally about that uploaded file so we can download it.
-                    SMSyncServer.session.resetMetaData()
+                    SMSyncServer.session.resetMetaData(forUUIDString:originalFileAttr.uuid.UUIDString)
                     
                     SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
             self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
-                XCTAssert(downloadedFileAttr.uuid.UUIDString == originalFile.uuid!)
-                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile.url(), file2: downloadedFile)
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == originalFileAttr.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFileURL, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
                 numberDownloads++
                 singleDownloadExpectation.fulfill()
@@ -116,9 +122,71 @@ class Download: BaseClass {
         self.waitForExpectations()
     }
     
-    // TODO: Try a download of a larger file, such as my Kitty.png file.
+    // Try a download of a larger file, such as my Kitty.png file.
+    func testThatDownloadOfALargerFileWorks() {
+        let file = AppFile.newObjectAndMakeUUID(true)
+        file.fileName =  "Kitty.png"
+        CoreData.sessionNamed(CoreDataTests.name).saveContext()
+        
+        let url = NSBundle.mainBundle().URLForResource("Kitty", withExtension: "png")
+        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "image/png", andRemoteFileName: file.fileName!)
+        let sizeInBytesExpectedOnServer = 917630
+
+        self.downloadOneFile(originalFileAttr:fileAttributes, originalFileURL: url!, originalFileSizeBytes: sizeInBytesExpectedOnServer)
+    }
     
-    // TODO: Try to download a file, through the SMServerAPI, that is on the server, but isn't in the PSInboundFile's.
+    // Try to download a file, through the SMServerAPI, that is on the server, but isn't in the PSInboundFile's. i.e., that hasn't been transfered from the cloud to the server.
+    func testThatDownloadOfUntransferredServerFileDoesntWork() {
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
+        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let unlockExpectation = self.expectationWithDescription("Unlock Complete")
+
+        self.extraServerResponseTime = 30
+        
+        self.waitUntilSyncServerUserSignin() {
+            
+            let fileName = "DownloadOfUntransferredServerFile"
+            let (file, fileSizeBytes) = self.createFile(withName: fileName)
+            let fileUUID = NSUUID(UUIDString: file.uuid!)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: fileName)
+            
+            SMSyncServer.session.uploadImmutableFile(file.url(), withFileAttributes: fileAttributes)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == file.uuid!)
+                singleUploadExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                self.checkFileSize(file.uuid!, size: fileSizeBytes) {
+                    uploadCompleteCallbackExpectation.fulfill()
+
+                    SMServerAPI.session.lock() { error in
+                        XCTAssert(error == nil)
+
+                        let downloadFileURL = FileStorage.urlOfItem("download1")
+                        let serverFile = SMServerFile(uuid: fileUUID)
+                        serverFile.localURL = downloadFileURL
+                    
+                        SMServerAPI.session.downloadFile(serverFile) { error in
+                            // Should get an error here: Because we're trying to download a file that's not in the PSInboundFiles and marked as received. I.e., it hasn't been transferred from the server.
+                            XCTAssert(error != nil)
+                            
+                            SMServerAPI.session.unlock() { error in
+                                XCTAssert(error == nil)
+                                unlockExpectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
     
     // TODO: Download two server files which don't yet exist on the app/client.
     

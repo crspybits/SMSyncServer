@@ -157,6 +157,7 @@ internal class SMDownloadFiles : NSObject {
         }
         else {
             self.callSyncServerError(Error.Create("Something bad is going on: number inbound transfers expected \(self.numberInboundTransfersExpected) was greater than operation count \(operationResult.count)"))
+            return
         }
         
         //SMUploadFiles.setMode(.Normal)
@@ -221,8 +222,36 @@ internal class SMDownloadFiles : NSObject {
 // MARK: SMServerAPIDownloadDelegate methods
 
 extension SMDownloadFiles : SMServerAPIDownloadDelegate {
+    // SMServerFile parameter used in call must include mimeType, remoteFileName, version and appFileType if on server
     internal func smServerAPIFileDownloaded(file: SMServerFile) {
+        var localFileMetaData:SMLocalFile?
+        
+        Assert.If(nil == file.mimeType, thenPrintThisString: "mimeType not given by server!")
+        Assert.If(nil == file.remoteFileName, thenPrintThisString: "remoteFileName not given by server!")
+        Assert.If(nil == file.version, thenPrintThisString: "version not given by server!")
+        
+        // Check to see if we already know about this file
+        localFileMetaData = SMLocalFile.fetchObjectWithUUID(file.uuid!.UUIDString)
+        
+        if nil == localFileMetaData {
+            // We need to create meta data to represent the downloaded file locally to the SMSyncServer.
+            localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
+            localFileMetaData!.uuid = file.uuid.UUIDString
+            localFileMetaData!.mimeType = file.mimeType
+            localFileMetaData!.appFileType = file.appFileType
+            localFileMetaData!.remoteFileName = file.remoteFileName
+        }
+        
+        // Update version in any event.
+        localFileMetaData!.localVersion = file.version
+
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+        
         let attr = SMSyncAttributes(withUUID: file.uuid)
+        attr.appFileType = file.appFileType
+        attr.mimeType = file.mimeType
+        attr.remoteFileName = file.remoteFileName
+        
         self.callSyncServerSingleFileDownloadComplete(file.localURL!, withFileAttributes: attr)
     }
 }

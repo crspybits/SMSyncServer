@@ -21,6 +21,7 @@ class BaseClass: XCTestCase {
     let minServerResponseTime:NSTimeInterval = 15
     var extraServerResponseTime:Double = 0
     
+    // I have sometimes been getting test failures where it looks like the callback is not defined. i.e., there are no entries in the particular callbacks array. However, the callback was defined. This takes the form of an array index out-of-bounds crash. What was happening is that the timeout was exceeded on the prior test, and so XCTests moved on to the next test, but the prior test was actually still running-- interacting with the server. And when it finished, it tried doing the callbacks, which were no longer defined as the setup had been done for the next test. The cure was to extend the duration of the timeouts.
     typealias progressCallback = (progress:SMSyncServerRecovery)->()
     // If you give this, then progressCallbacks is not used.
     var singleProgressCallback:progressCallback?
@@ -143,8 +144,8 @@ extension BaseClass : SMSyncServerDelegate {
     // Expect this to be called first for the recovery tests.
     func syncServerRecovery(progress:SMSyncServerRecovery) {
         if nil == self.singleProgressCallback {
-            let sequenceNumber = self.progressSequenceNumber++
-            self.progressCallbacks[sequenceNumber](progress: progress)
+            self.progressCallbacks[self.progressSequenceNumber](progress: progress)
+            self.progressSequenceNumber += 1
         }
         else {
             self.singleProgressCallback!(progress: progress)
@@ -152,19 +153,19 @@ extension BaseClass : SMSyncServerDelegate {
     }
     
     func syncServerDeletionsSent(uuids: [NSUUID]) {
-        let sequenceNumber = self.deletionSequenceNumber++
-        self.deletionCallbacks[sequenceNumber](uuids: uuids)
+        self.deletionCallbacks[self.deletionSequenceNumber](uuids: uuids)
+        self.deletionSequenceNumber += 1
     }
     
     func syncServerSingleUploadComplete(uuid uuid: NSUUID) {
-        let sequenceNumber = self.singleUploadSequenceNumber++
-        self.singleUploadCallbacks[sequenceNumber](uuid: uuid)
+        self.singleUploadCallbacks[self.singleUploadSequenceNumber](uuid: uuid)
+        self.singleUploadSequenceNumber += 1
     }
     
     // And this is to be called second (i.e., in the case of the recovery tests).
     func syncServerCommitComplete(numberOperations numberUploads:Int?) {
-        let sequenceNumber = self.commitCompleteSequenceNumber++
-        self.commitCompleteCallbacks[sequenceNumber](numberUploads: numberUploads)
+        self.commitCompleteCallbacks[self.commitCompleteSequenceNumber](numberUploads: numberUploads)
+        self.commitCompleteSequenceNumber += 1
     }
     
     // The callee owns the localFile after this call completes.
@@ -183,8 +184,8 @@ extension BaseClass : SMSyncServerDelegate {
     }
     
     func syncServerError(error:NSError) {
-        let sequenceNumber = self.errorSequenceNumber++
-        self.errorCallbacks[sequenceNumber]()
+        self.errorCallbacks[self.errorSequenceNumber]()
+        self.errorSequenceNumber += 1
     }
     
 #if DEBUG

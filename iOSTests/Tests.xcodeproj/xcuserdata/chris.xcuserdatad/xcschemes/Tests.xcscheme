@@ -37,11 +37,6 @@
                BlueprintName = "XCTests"
                ReferencedContainer = "container:Tests.xcodeproj">
             </BuildableReference>
-            <SkippedTests>
-               <Test
-                  Identifier = "Upload/testThatRecoveryAfterAppCrashWorks()">
-               </Test>
-            </SkippedTests>
          </TestableReference>
       </Testables>
       <MacroExpansion>

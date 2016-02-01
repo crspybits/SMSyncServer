@@ -1501,7 +1501,7 @@ function getDownloadFileInfo(request, op, callback) {
             callback("File wasn't in PSInboundFile and marked as received!", ServerConstants.rcServerAPIError, null);
         }
         else {
-            // Can download the file.
+            // Can download the file, or delete the file info.
             callback(null, null, psInboundFile);
         }
     });

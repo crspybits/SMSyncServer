@@ -362,6 +362,11 @@ public class SMServerNetworking {
                         return
                     }
                     
+                    if urlOfDownload == nil {
+                        completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Got nil downloaded file URL!"))
+                        return
+                    }
+                    
                     Log.msg("urlOfDownload: \(urlOfDownload)")
                     
                     // I've not been able to figure out how to get a file downloaded along with parameters (e.g., return result from the server), so I'm using a custom HTTP header to get result parameters back from the server.
@@ -378,9 +383,9 @@ public class SMServerNetworking {
                             completion?(serverResponse: [SMServerConstants.resultCodeKey:SMServerConstants.rcOperationFailed], error: Error.Create("Did not get parameters from server!"))
                         }
                         else {
-                            // urlOfDownload is the temporary file location given by downloadTaskWithRequest. Not sure how long it persists. Move it to our own temporary location. We're more assured of that lasting.
+                            // We can still get to this point without a downloaded file. Oddly enough the urlOfDownload might not be nil, but we won't have a downloaded file. Our downloadParamsDict will indicate the error, and the caller will have to figure things out.
                             
-                            Assert.If(urlOfDownload == nil, thenPrintThisString: "Didn't get a downloaded file!")
+                            // urlOfDownload is the temporary file location given by downloadTaskWithRequest. Not sure how long it persists. Move it to our own temporary location. We're more assured of that lasting.
                             
                             // Make sure destination file (fileToDownload) isn't there first. Get an error with moveItemAtURL if it is.
                             
@@ -390,14 +395,14 @@ public class SMServerNetworking {
                             do {
                                 try mgr.removeItemAtURL(fileToDownload)
                             } catch (let err) {
-                                Log.error("\(err)")
+                                Log.error("removeItemAtURL: \(err)")
                             }
                             
                             var error:NSError?
                             do {
                                 try mgr.moveItemAtURL(urlOfDownload!, toURL: fileToDownload)
                             } catch (let err) {
-                                let errorString = "\(err)"
+                                let errorString = "moveItemAtURL: \(err)"
                                 error = Error.Create(errorString)
                                 Log.error(errorString)
                             }
