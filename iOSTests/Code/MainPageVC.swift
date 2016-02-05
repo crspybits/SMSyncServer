@@ -76,6 +76,9 @@ extension MainPageVC : UITableViewDelegate, UITableViewDataSource {
         if let _ = SMSyncServer.session.fileStatus(NSUUID(UUIDString: file.uuid!)!) {
             cell.accessoryType = .Checkmark
         }
+        else {
+            cell.accessoryType = .None
+        }
         
         return cell
     }

@@ -41,6 +41,6 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/WeakRef.h>
 #import <SMCoreLib/Debounce.h>
 #import <SMCoreLib/UIDevice+Extras.h>
-
-
+#import <SMCoreLib/SMModal.h>
+#import <SMCoreLib/ChangeFrameTransitioningDelegate.h>
 

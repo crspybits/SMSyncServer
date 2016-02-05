@@ -188,13 +188,344 @@ class Download: BaseClass {
         self.waitForExpectations()
     }
     
-    // TODO: Download two server files which don't yet exist on the app/client.
-    
-    // TODO: Start one download, and immediately after starting that download, commit an upload. Expect that download should finish, and then upload should start, serially, after the download.
-    
-    // TODO: Start download that will download two files, and immediately after starting that download, commit an upload. Expect that both downloads should finish, and then upload should start, serially, after the downloads.
+    // Download two server files which don't yet exist on the app/client.
+    func testThatDownloadOfTwoFilesWorks() {
+        let fileName1 = "DownloadOfTwoFilesA"
+        let (originalFile1, fileSizeBytes1) = self.createFile(withName: fileName1)
+        let file1UUID = NSUUID(UUIDString: originalFile1.uuid!)!
+        let fileAttributes1 = SMSyncAttributes(withUUID: file1UUID, mimeType: "text/plain", andRemoteFileName: fileName1)
+        
+        let fileName2 = "DownloadOfTwoFilesB"
+        let (originalFile2, fileSizeBytes2) = self.createFile(withName: fileName2)
+        let file2UUID = NSUUID(UUIDString: originalFile2.uuid!)!
+        let fileAttributes2 = SMSyncAttributes(withUUID: file2UUID, mimeType: "text/plain", andRemoteFileName: fileName2)
 
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
+        let singleUploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
+        let singleUploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
+
+        let singleDownloadExpectation1 = self.expectationWithDescription("Single1 Download")
+        let singleDownloadExpectation2 = self.expectationWithDescription("Single2 Download")
+
+        let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        var numberDownloads = 0
+        
+        self.extraServerResponseTime = 60
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMSyncServer.session.uploadImmutableFile(originalFile1.url(), withFileAttributes: fileAttributes1)
+            SMSyncServer.session.uploadImmutableFile(originalFile2.url(), withFileAttributes: fileAttributes2)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                singleUploadExpectation1.fulfill()
+            }
+
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == fileAttributes2.uuid.UUIDString)
+                singleUploadExpectation2.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 2)
+                self.checkFileSize(fileAttributes1.uuid.UUIDString, size: fileSizeBytes1) {
+                    self.checkFileSize(fileAttributes2.uuid.UUIDString, size: fileSizeBytes2) {
+                
+                        uploadCompleteCallbackExpectation.fulfill()
+                        
+                        let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                        XCTAssert(fileAttr1 != nil)
+                        XCTAssert(!fileAttr1!.deleted!)
+
+                        let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                        XCTAssert(fileAttr2 != nil)
+                        XCTAssert(!fileAttr2!.deleted!)
+                        
+                        // Now, forget locally about the uploaded files so we can download them.
+                        SMSyncServer.session.resetMetaData(forUUIDString:fileAttributes1.uuid.UUIDString)
+                        SMSyncServer.session.resetMetaData(forUUIDString:fileAttributes2.uuid.UUIDString)
+                        
+                        SMDownloadFiles.session.checkForDownloads()
+                    }
+                }
+            }
+            
+            // The ordering of the following two downloads isn't really well specified, but guessing it'll be in the same order as uploaded. Could make the check for download more complicated and order invariant...
+            
+            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile1.url(), file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads++
+                singleDownloadExpectation1.fulfill()
+            }
+            
+            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == fileAttributes2.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile2.url(), file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads++
+                singleDownloadExpectation2.fulfill()
+            }
+            
+            self.allDownloadsCompleteCallbacks.append() {
+                XCTAssert(numberDownloads == 2)
+                
+                let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                XCTAssert(fileAttr1 != nil)
+                XCTAssert(!fileAttr1!.deleted!)
+
+                let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                XCTAssert(fileAttr2 != nil)
+                XCTAssert(!fileAttr2!.deleted!)
+                
+                allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    // Start one download, and immediately after starting that download, commit an upload. Expect that download should finish, and then upload should start, serially, after the download.
+    func testThatDownloadOfOneFileFollowedByAnUploadWorks() {
+        // Upload, then download this file.
+        let fileName1 = "DownloadOfOneFileFollowedByAnUploadA"
+        let (originalFile1, fileSizeBytes1) = self.createFile(withName: fileName1)
+        let file1UUID = NSUUID(UUIDString: originalFile1.uuid!)!
+        let fileAttributes1 = SMSyncAttributes(withUUID: file1UUID, mimeType: "text/plain", andRemoteFileName: fileName1)
+        
+        // Upload this one after the download.
+        let fileName2 = "DownloadOfOneFileFollowedByAnUploadB"
+        let (originalFile2, fileSizeBytes2) = self.createFile(withName: fileName2)
+        let file2UUID = NSUUID(UUIDString: originalFile2.uuid!)!
+        let fileAttributes2 = SMSyncAttributes(withUUID: file2UUID, mimeType: "text/plain", andRemoteFileName: fileName2)
+
+        let uploadCompleteCallbackExpectation1 = self.expectationWithDescription("Commit1 Complete")
+        let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Commit2 Complete")
+
+        let singleUploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
+        let singleUploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
+
+        let singleDownloadExpectation = self.expectationWithDescription("Single Download")
+
+        let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        var numberDownloads = 0
+        var expectSecondUpload = false
+        
+        self.extraServerResponseTime = 60
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMSyncServer.session.uploadImmutableFile(originalFile1.url(), withFileAttributes: fileAttributes1)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                singleUploadExpectation1.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                self.checkFileSize(fileAttributes1.uuid.UUIDString, size: fileSizeBytes1) {
+                
+                    uploadCompleteCallbackExpectation1.fulfill()
+                    
+                    let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                    XCTAssert(fileAttr1 != nil)
+                    XCTAssert(!fileAttr1!.deleted!)
+                    
+                    // Now, forget locally about the uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUIDString:fileAttributes1.uuid.UUIDString)
+                    
+                    SMDownloadFiles.session.checkForDownloads()
+                    
+                    SMSyncServer.session.uploadImmutableFile(originalFile2.url(), withFileAttributes: fileAttributes2)
+                    
+                    SMSyncServer.session.commit()
+                }
+            }
+ 
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(expectSecondUpload)
+                
+                XCTAssert(uuid.UUIDString == fileAttributes2.uuid.UUIDString)
+                singleUploadExpectation2.fulfill()
+            }
+
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                self.checkFileSize(fileAttributes2.uuid.UUIDString, size: fileSizeBytes2) {
+                
+                    let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                    XCTAssert(fileAttr2 != nil)
+                    XCTAssert(!fileAttr2!.deleted!)
+                    
+                    uploadCompleteCallbackExpectation2.fulfill()
+                }
+            }
+            
+            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile1.url(), file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads++
+                singleDownloadExpectation.fulfill()
+            }
+            
+            self.allDownloadsCompleteCallbacks.append() {
+                XCTAssert(numberDownloads == 1)
+                
+                let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                XCTAssert(fileAttr1 != nil)
+                XCTAssert(!fileAttr1!.deleted!)
+                
+                expectSecondUpload = true
+                
+                allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
+
+    // Start download of two files, and immediately after starting that download, commit an upload. Expect that both downloads should finish, and then upload should start, serially, after the downloads.
+    func testThatDownloadOfTwoFilesFollowedByUploadWorks() {
+        let fileName1 = "DownloadOfTwoFilesFollowedByUploadA"
+        let (originalFile1, fileSizeBytes1) = self.createFile(withName: fileName1)
+        let file1UUID = NSUUID(UUIDString: originalFile1.uuid!)!
+        let fileAttributes1 = SMSyncAttributes(withUUID: file1UUID, mimeType: "text/plain", andRemoteFileName: fileName1)
+        
+        let fileName2 = "DownloadOfTwoFilesFollowedByUploadB"
+        let (originalFile2, fileSizeBytes2) = self.createFile(withName: fileName2)
+        let file2UUID = NSUUID(UUIDString: originalFile2.uuid!)!
+        let fileAttributes2 = SMSyncAttributes(withUUID: file2UUID, mimeType: "text/plain", andRemoteFileName: fileName2)
+
+        let fileName3 = "DownloadOfTwoFilesFollowedByUploadC"
+        let (originalFile3, fileSizeBytes3) = self.createFile(withName: fileName3)
+        let file3UUID = NSUUID(UUIDString: originalFile3.uuid!)!
+        let fileAttributes3 = SMSyncAttributes(withUUID: file3UUID, mimeType: "text/plain", andRemoteFileName: fileName3)
+
+        let uploadCompleteCallbackExpectation1 = self.expectationWithDescription("Commit1 Complete")
+        let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Commit2 Complete")
+
+        let singleUploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
+        let singleUploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
+        let singleUploadExpectation3 = self.expectationWithDescription("Upload3 Complete")
+
+        let singleDownloadExpectation1 = self.expectationWithDescription("Single1 Download")
+        let singleDownloadExpectation2 = self.expectationWithDescription("Single2 Download")
+
+        let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        var numberDownloads = 0
+        var expectThirdUpload = false
+        
+        self.extraServerResponseTime = 60
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMSyncServer.session.uploadImmutableFile(originalFile1.url(), withFileAttributes: fileAttributes1)
+            SMSyncServer.session.uploadImmutableFile(originalFile2.url(), withFileAttributes: fileAttributes2)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                singleUploadExpectation1.fulfill()
+            }
+
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == fileAttributes2.uuid.UUIDString)
+                singleUploadExpectation2.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 2)
+                self.checkFileSize(fileAttributes1.uuid.UUIDString, size: fileSizeBytes1) {
+                    self.checkFileSize(fileAttributes2.uuid.UUIDString, size: fileSizeBytes2) {
+                
+                        uploadCompleteCallbackExpectation1.fulfill()
+                        
+                        let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                        XCTAssert(fileAttr1 != nil)
+                        XCTAssert(!fileAttr1!.deleted!)
+
+                        let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                        XCTAssert(fileAttr2 != nil)
+                        XCTAssert(!fileAttr2!.deleted!)
+                        
+                        // Now, forget locally about the uploaded files so we can download them.
+                        SMSyncServer.session.resetMetaData(forUUIDString:fileAttributes1.uuid.UUIDString)
+                        SMSyncServer.session.resetMetaData(forUUIDString:fileAttributes2.uuid.UUIDString)
+                        
+                        SMDownloadFiles.session.checkForDownloads()
+                        
+                        SMSyncServer.session.uploadImmutableFile(originalFile3.url(), withFileAttributes: fileAttributes3)
+                        SMSyncServer.session.commit()
+                    }
+                }
+            }
+            
+            // The ordering of the following two downloads isn't really well specified, but guessing it'll be in the same order as uploaded. Could make the check for download more complicated and order invariant...
+            
+            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == fileAttributes1.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile1.url(), file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads++
+                singleDownloadExpectation1.fulfill()
+            }
+            
+            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == fileAttributes2.uuid.UUIDString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: originalFile2.url(), file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads++
+                singleDownloadExpectation2.fulfill()
+            }
+            
+            self.allDownloadsCompleteCallbacks.append() {
+                XCTAssert(numberDownloads == 2)
+                
+                let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                XCTAssert(fileAttr1 != nil)
+                XCTAssert(!fileAttr1!.deleted!)
+
+                let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                XCTAssert(fileAttr2 != nil)
+                XCTAssert(!fileAttr2!.deleted!)
+                
+                expectThirdUpload = true
+                
+                allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(expectThirdUpload)
+                
+                XCTAssert(uuid.UUIDString == fileAttributes3.uuid.UUIDString)
+                singleUploadExpectation3.fulfill()
+            }
+
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                self.checkFileSize(fileAttributes3.uuid.UUIDString, size: fileSizeBytes3) {
+                
+                    let fileAttr3 = SMSyncServer.session.fileStatus(file3UUID)
+                    XCTAssert(fileAttr3 != nil)
+                    XCTAssert(!fileAttr3!.deleted!)
+                    
+                    uploadCompleteCallbackExpectation2.fulfill()
+                }
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
+    
     // TODO: Server files which are updated versions of those on app/client.
     
-    // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts.
+    // TODO: Server file has been deleted, so download causes deletion of file on app/client. NOTE: This isn't yet handled by SMFileDiffs.
+    
+    // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts. NOTE: This isn't yet handled by SMFileDiffs.
 }

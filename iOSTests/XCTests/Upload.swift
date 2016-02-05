@@ -58,7 +58,8 @@ class Upload: BaseClass {
             
             let fileName = "SingleFileUpload"
             let (file, fileSizeBytes) = self.createFile(withName: fileName)
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+            let fileUUID = NSUUID(UUIDString: file.uuid!)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: fileName)
             
             SMSyncServer.session.uploadImmutableFile(file.url(), withFileAttributes: fileAttributes)
             
@@ -70,6 +71,10 @@ class Upload: BaseClass {
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 1)
                 self.checkFileSize(file.uuid!, size: fileSizeBytes) {
+                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    XCTAssert(fileAttr != nil)
+                    XCTAssert(!fileAttr!.deleted!)
+                
                     uploadCompleteCallbackExpectation.fulfill()
                 }
             }
@@ -88,7 +93,8 @@ class Upload: BaseClass {
             
             let fileName = "SingleTemporaryFileUpload"
             let (file, fileSizeBytes) = self.createFile(withName: fileName)
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+            let fileUUID = NSUUID(UUIDString: file.uuid!)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: fileName)
             
             SMSyncServer.session.uploadTemporaryFile(file.url(), withFileAttributes: fileAttributes)
             
@@ -106,6 +112,10 @@ class Upload: BaseClass {
                 
                 // File should have been deleted by now.
                 XCTAssert(!FileStorage.itemExists(fileName))
+                
+                let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                XCTAssert(fileAttr != nil)
+                XCTAssert(!fileAttr!.deleted!)
                 
                 self.checkFileSize(file.uuid!, size: fileSizeBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
@@ -125,8 +135,9 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             
             let cloudStorageFileName = "SingleDataUpload"
-            let fileUUID = UUID.make()
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
+            let fileUUIDString = UUID.make()
+            let fileUUID = NSUUID(UUIDString: fileUUIDString)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
             
             let strData: NSString = "SingleDataUpload file contents"
             let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
@@ -137,7 +148,7 @@ class Upload: BaseClass {
             var tempFiles2:NSArray!
 
             self.singleUploadCallbacks.append() { uuid in
-                XCTAssert(uuid.UUIDString == fileUUID!)
+                XCTAssert(uuid.UUIDString == fileUUIDString!)
                 
                 // NOTE: This is using some internal SMSyncServer knowledge of the location of the temporary file.
                 tempFiles1 = FileStorage.filesInHomeDirectory("Documents/" + SMAppConstants.tempDirectory)
@@ -152,8 +163,12 @@ class Upload: BaseClass {
                 tempFiles2 = FileStorage.filesInHomeDirectory("Documents/" + SMAppConstants.tempDirectory)
                 XCTAssert(tempFiles1.count == tempFiles2.count + 1)
                 
-                self.checkFileSize(fileUUID!, size: strData.length) {
+                self.checkFileSize(fileUUIDString!, size: strData.length) {
                     uploadCompleteCallbackExpectation.fulfill()
+                    
+                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    XCTAssert(fileAttr != nil)
+                    XCTAssert(!fileAttr!.deleted!)
                 }
             }
             
@@ -186,7 +201,8 @@ class Upload: BaseClass {
             // Updating to AFNetworking 3...
             // RESOLUTION: I have now set the COMPRESS_PNG_FILES Build Setting to NO to deal with this.
             
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "image/png", andRemoteFileName: file.fileName!)
+            let fileUUID = NSUUID(UUIDString: file.uuid!)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "image/png", andRemoteFileName: file.fileName!)
             
             SMSyncServer.session.uploadImmutableFile(url!, withFileAttributes: fileAttributes)
             
@@ -199,6 +215,10 @@ class Upload: BaseClass {
                 XCTAssert(numberUploads == 1)
                 self.checkFileSize(file.uuid!, size: sizeInBytesExpectedOnServer) {
                     uploadCompleteCallbackExpectation.fulfill()
+                    
+                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    XCTAssert(fileAttr != nil)
+                    XCTAssert(!fileAttr!.deleted!)
                 }
             }
             
@@ -217,13 +237,15 @@ class Upload: BaseClass {
             
             let fileName1 = "TwoFileUpload1"
             let (file1, fileSizeBytes1) = self.createFile(withName: fileName1)
-            let fileAttributes1 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file1.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName1)
+            let file1UUID = NSUUID(UUIDString: file1.uuid!)!
+            let fileAttributes1 = SMSyncAttributes(withUUID: file1UUID, mimeType: "text/plain", andRemoteFileName: fileName1)
             
             SMSyncServer.session.uploadImmutableFile(file1.url(), withFileAttributes: fileAttributes1)
             
             let fileName2 = "TwoFileUpload2"
             let (file2, fileSizeBytes2) = self.createFile(withName: fileName2)
-            let fileAttributes2 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file2.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName2)
+            let file2UUID = NSUUID(UUIDString: file2.uuid!)!
+            let fileAttributes2 = SMSyncAttributes(withUUID: file2UUID, mimeType: "text/plain", andRemoteFileName: fileName2)
             
             SMSyncServer.session.uploadImmutableFile(file2.url(), withFileAttributes: fileAttributes2)
             
@@ -242,6 +264,15 @@ class Upload: BaseClass {
                 // This double call to the server to check file size is inefficient, but not a big deal here.
                 self.checkFileSize(file1.uuid!, size: fileSizeBytes1) {
                     self.checkFileSize(file2.uuid!, size: fileSizeBytes2) {
+                    
+                        let fileAttr1 = SMSyncServer.session.fileStatus(file1UUID)
+                        XCTAssert(fileAttr1 != nil)
+                        XCTAssert(!fileAttr1!.deleted!)
+                        
+                        let fileAttr2 = SMSyncServer.session.fileStatus(file2UUID)
+                        XCTAssert(fileAttr2 != nil)
+                        XCTAssert(!fileAttr2!.deleted!)
+                    
                         uploadCompleteCallbackExpectation.fulfill()
                     }
                 }
@@ -262,7 +293,8 @@ class Upload: BaseClass {
             
             let fileName = "TwoFileUpdateUpload1"
             let (file1, _) = self.createFile(withName: fileName)
-            let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file1.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
+            let fileUUID = NSUUID(UUIDString: file1.uuid!)!
+            let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: fileName)
             
             SMSyncServer.session.uploadImmutableFile(file1.url(), withFileAttributes: fileAttributes)
             
@@ -288,6 +320,11 @@ class Upload: BaseClass {
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 1)
                 self.checkFileSize(file1.uuid!, size: fileSizeBytes) {
+
+                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    XCTAssert(fileAttr != nil)
+                    XCTAssert(!fileAttr!.deleted!)
+
                     uploadCompleteCallbackExpectation.fulfill()
                 }
             }

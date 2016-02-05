@@ -10,6 +10,7 @@
 #import <objc/runtime.h>
 #import "UIDevice+Extras.h"
 #import "SMAppearance.h"
+#import "UIView+Extras.h"
 
 // 12/2/15; Running into some problems getting V1 of UIView+Extras.h in Petunia instead of what we are now using and needing (V3). I think I only need this #import for the Common Framework, only import it then.
 #ifdef SMCOMMONLIB

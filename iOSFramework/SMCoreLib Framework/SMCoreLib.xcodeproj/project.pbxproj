@@ -9,6 +9,18 @@
 /* Begin PBXBuildFile section */
 		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
+		835D800E1C6422F9004DBF79 /* SMModal.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D800C1C6422F9004DBF79 /* SMModal.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		835D800F1C6422F9004DBF79 /* SMModal.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D800D1C6422F9004DBF79 /* SMModal.m */; };
+		835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80161C6423BF004DBF79 /* SMAppearance.h */; };
+		835D80191C6423BF004DBF79 /* SMAppearance.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80171C6423BF004DBF79 /* SMAppearance.m */; };
+		835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801B1C6423FA004DBF79 /* SMRotation.h */; };
+		835D801E1C6423FA004DBF79 /* SMRotation.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D801C1C6423FA004DBF79 /* SMRotation.m */; };
+		835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801F1C64242E004DBF79 /* UIViewController+Extras.h */; };
+		835D80221C64242E004DBF79 /* UIViewController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80201C64242E004DBF79 /* UIViewController+Extras.m */; };
+		835D80251C64243E004DBF79 /* UINavigationController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80231C64243E004DBF79 /* UINavigationController+Extras.h */; };
+		835D80261C64243E004DBF79 /* UINavigationController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80241C64243E004DBF79 /* UINavigationController+Extras.m */; };
+		835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */; };
 		83D3ECF01C4DBFD000BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
 		83D3ECF51C4DBFD000BFDA93 /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -112,6 +124,18 @@
 /* Begin PBXFileReference section */
 		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
 		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
+		835D800C1C6422F9004DBF79 /* SMModal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMModal.h; sourceTree = "<group>"; };
+		835D800D1C6422F9004DBF79 /* SMModal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMModal.m; sourceTree = "<group>"; };
+		835D80161C6423BF004DBF79 /* SMAppearance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMAppearance.h; sourceTree = "<group>"; };
+		835D80171C6423BF004DBF79 /* SMAppearance.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMAppearance.m; sourceTree = "<group>"; };
+		835D801B1C6423FA004DBF79 /* SMRotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMRotation.h; sourceTree = "<group>"; };
+		835D801C1C6423FA004DBF79 /* SMRotation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMRotation.m; sourceTree = "<group>"; };
+		835D801F1C64242E004DBF79 /* UIViewController+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Extras.h"; path = "Code/Categories/v1/UIViewController+Extras.h"; sourceTree = "<group>"; };
+		835D80201C64242E004DBF79 /* UIViewController+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIViewController+Extras.m"; path = "Code/Categories/v1/UIViewController+Extras.m"; sourceTree = "<group>"; };
+		835D80231C64243E004DBF79 /* UINavigationController+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UINavigationController+Extras.h"; path = "Code/Categories/v1/UINavigationController+Extras.h"; sourceTree = "<group>"; };
+		835D80241C64243E004DBF79 /* UINavigationController+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UINavigationController+Extras.m"; path = "Code/Categories/v1/UINavigationController+Extras.m"; sourceTree = "<group>"; };
+		835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ChangeFrameTransitioningDelegate.h; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.h; sourceTree = SOURCE_ROOT; };
+		835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ChangeFrameTransitioningDelegate.m; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.m; sourceTree = SOURCE_ROOT; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
@@ -224,6 +248,56 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		835D800A1C6422CE004DBF79 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				835D80101C64233B004DBF79 /* ChangeFrameTransitioningDelegate */,
+				835D800B1C6422F9004DBF79 /* SMModal */,
+				835D801A1C6423FA004DBF79 /* SMRotation */,
+			);
+			name = ViewControllers;
+			sourceTree = "<group>";
+		};
+		835D800B1C6422F9004DBF79 /* SMModal */ = {
+			isa = PBXGroup;
+			children = (
+				835D800C1C6422F9004DBF79 /* SMModal.h */,
+				835D800D1C6422F9004DBF79 /* SMModal.m */,
+			);
+			name = SMModal;
+			path = Code/ViewControllers/v1/SMModal;
+			sourceTree = "<group>";
+		};
+		835D80101C64233B004DBF79 /* ChangeFrameTransitioningDelegate */ = {
+			isa = PBXGroup;
+			children = (
+				835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */,
+				835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */,
+			);
+			name = ChangeFrameTransitioningDelegate;
+			path = "../../../Common/SMCoreLib Framework/Code/ViewControllers/v1/ChangeFrameTransitioningDelegate";
+			sourceTree = "<group>";
+		};
+		835D80151C6423BF004DBF79 /* SMAppearance */ = {
+			isa = PBXGroup;
+			children = (
+				835D80161C6423BF004DBF79 /* SMAppearance.h */,
+				835D80171C6423BF004DBF79 /* SMAppearance.m */,
+			);
+			name = SMAppearance;
+			path = Code/General/v1/SMAppearance;
+			sourceTree = "<group>";
+		};
+		835D801A1C6423FA004DBF79 /* SMRotation */ = {
+			isa = PBXGroup;
+			children = (
+				835D801B1C6423FA004DBF79 /* SMRotation.h */,
+				835D801C1C6423FA004DBF79 /* SMRotation.m */,
+			);
+			name = SMRotation;
+			path = Code/ViewControllers/v1/SMRotation;
+			sourceTree = "<group>";
+		};
 		83D3ECDB1C4DBFCF00BFDA93 = {
 			isa = PBXGroup;
 			children = (
@@ -274,6 +348,7 @@
 				83D3ED081C4DC7B200BFDA93 /* PersistentVars */,
 				83D3ED071C4DC7AD00BFDA93 /* SDKs */,
 				83D3ED061C4DC7A300BFDA93 /* Views */,
+				835D800A1C6422CE004DBF79 /* ViewControllers */,
 			);
 			name = Code;
 			sourceTree = "<group>";
@@ -350,6 +425,7 @@
 				83D3ED7E1C4DC92800BFDA93 /* Synchronized.swift */,
 				83D3ED7F1C4DC92800BFDA93 /* RepeatingTimer.h */,
 				83D3ED801C4DC92800BFDA93 /* RepeatingTimer.m */,
+				835D80151C6423BF004DBF79 /* SMAppearance */,
 				83D3ED811C4DC92800BFDA93 /* TimedCallback.h */,
 				83D3ED821C4DC92800BFDA93 /* TimedCallback.m */,
 				83D3ED831C4DC92800BFDA93 /* UUID.h */,
@@ -390,6 +466,8 @@
 		83D3ED0F1C4DC80000BFDA93 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				835D801F1C64242E004DBF79 /* UIViewController+Extras.h */,
+				835D80201C64242E004DBF79 /* UIViewController+Extras.m */,
 				83D3EDB61C4DC97400BFDA93 /* NSObject+Extras.h */,
 				83D3EDB71C4DC97400BFDA93 /* NSObject+Extras.m */,
 				83D3EDB81C4DC97400BFDA93 /* NSObject+TargetsAndSelectors.h */,
@@ -398,6 +476,8 @@
 				83D3EDB31C4DC96400BFDA93 /* UIView+Extras.m */,
 				55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */,
 				55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */,
+				835D80231C64243E004DBF79 /* UINavigationController+Extras.h */,
+				835D80241C64243E004DBF79 /* UINavigationController+Extras.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -484,8 +564,11 @@
 				83D3ED8B1C4DC92800BFDA93 /* FileStorage.h in Headers */,
 				83D3ED921C4DC92800BFDA93 /* TimedCallback.h in Headers */,
 				83D3ED461C4DC85300BFDA93 /* AFAutoPurgingImageCache.h in Headers */,
+				835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */,
 				83D3ED301C4DC84500BFDA93 /* AFURLSessionManager.h in Headers */,
 				83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */,
+				835D800E1C6422F9004DBF79 /* SMModal.h in Headers */,
+				835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */,
 				83D3ED661C4DC89200BFDA93 /* KeyChain.h in Headers */,
 				83D3ED741C4DC90400BFDA93 /* SMUIMessages.h in Headers */,
 				83D3ED871C4DC92800BFDA93 /* BiRef.h in Headers */,
@@ -496,12 +579,15 @@
 				83D3ED121C4DC81000BFDA93 /* UserMessage.h in Headers */,
 				83D3ED581C4DC85300BFDA93 /* UIWebView+AFNetworking.h in Headers */,
 				83D3ED4E1C4DC85300BFDA93 /* UIButton+AFNetworking.h in Headers */,
+				835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */,
 				83D3EDA61C4DC93900BFDA93 /* SMAssert.h in Headers */,
 				83D3ED8D1C4DC92800BFDA93 /* SMIdentifiers2.h in Headers */,
 				83D3ED511C4DC85300BFDA93 /* UIImageView+AFNetworking.h in Headers */,
 				83D3ED961C4DC92800BFDA93 /* WeakRef.h in Headers */,
+				835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */,
 				83D3EDB41C4DC96400BFDA93 /* UIView+Extras.h in Headers */,
 				83D3ED601C4DC87700BFDA93 /* NSArray+Globbing.h in Headers */,
+				835D80251C64243E004DBF79 /* UINavigationController+Extras.h in Headers */,
 				83D3EDB01C4DC94800BFDA93 /* CoreData.h in Headers */,
 				83D3ED2C1C4DC84500BFDA93 /* AFURLRequestSerialization.h in Headers */,
 				83D3ED941C4DC92800BFDA93 /* UUID.h in Headers */,
@@ -626,12 +712,14 @@
 				83D3ED571C4DC85300BFDA93 /* UIRefreshControl+AFNetworking.m in Sources */,
 				83D3ED521C4DC85300BFDA93 /* UIImageView+AFNetworking.m in Sources */,
 				83D3EDB11C4DC94800BFDA93 /* CoreData.m in Sources */,
+				835D80191C6423BF004DBF79 /* SMAppearance.m in Sources */,
 				83D3EDBF1C4DCC5C00BFDA93 /* SMDefs.swift in Sources */,
 				83D3ED671C4DC89200BFDA93 /* KeyChain.m in Sources */,
 				83D3ED8A1C4DC92800BFDA93 /* Debounce.m in Sources */,
 				83D3ED591C4DC85300BFDA93 /* UIWebView+AFNetworking.m in Sources */,
 				55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */,
 				83D3EDB51C4DC96400BFDA93 /* UIView+Extras.m in Sources */,
+				835D800F1C6422F9004DBF79 /* SMModal.m in Sources */,
 				83D3ED971C4DC92800BFDA93 /* WeakRef.m in Sources */,
 				83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */,
 				83D3EDA81C4DC93900BFDA93 /* SMDebug.swift in Sources */,
@@ -645,6 +733,7 @@
 				83D3ED2D1C4DC84500BFDA93 /* AFURLRequestSerialization.m in Sources */,
 				83D3EDBB1C4DC97400BFDA93 /* NSObject+Extras.m in Sources */,
 				83D3ED4B1C4DC85300BFDA93 /* AFNetworkActivityIndicatorManager.m in Sources */,
+				835D80221C64242E004DBF79 /* UIViewController+Extras.m in Sources */,
 				83D3ED311C4DC84500BFDA93 /* AFURLSessionManager.m in Sources */,
 				83D3ED291C4DC84500BFDA93 /* AFNetworkReachabilityManager.m in Sources */,
 				83D3ED2F1C4DC84500BFDA93 /* AFURLResponseSerialization.m in Sources */,
@@ -654,8 +743,11 @@
 				83D3ED751C4DC90400BFDA93 /* SMUIMessages.m in Sources */,
 				83D3ED931C4DC92800BFDA93 /* TimedCallback.m in Sources */,
 				83D3EDA21C4DC93900BFDA93 /* Error.swift in Sources */,
+				835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */,
 				83D3EDBD1C4DC97400BFDA93 /* NSObject+TargetsAndSelectors.m in Sources */,
 				83D3ED8C1C4DC92800BFDA93 /* FileStorage.m in Sources */,
+				835D80261C64243E004DBF79 /* UINavigationController+Extras.m in Sources */,
+				835D801E1C6423FA004DBF79 /* SMRotation.m in Sources */,
 				83D3ED261C4DC84500BFDA93 /* AFHTTPSessionManager.m in Sources */,
 				83D3ED8E1C4DC92800BFDA93 /* SMIdentifiers2.m in Sources */,
 				83D3ED471C4DC85300BFDA93 /* AFAutoPurgingImageCache.m in Sources */,

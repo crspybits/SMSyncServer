@@ -32,6 +32,9 @@ public class SMSyncAttributes {
     // TODO: Optionally provides the app with some app-specific type information about the file.
     public var appFileType:String?
     
+    // Only used by SMSyncServer fileStatus method. true indicates that the file was deleted on the server.
+    public var deleted:Bool?
+    
     // TODO: An optional app-specific identifier for a logical group or category that the file/data item belongs to. The intent behind this identifier is to make downloading logical groups of files easier. E.g., so that not all changed files need to be downloaded at once.
     //public var appGroupId:NSUUID?
     
@@ -225,6 +228,10 @@ public class SMSyncServer : NSObject {
             fileAttr!.mimeType = localFileMetaData.mimeType
             fileAttr!.remoteFileName = localFileMetaData.remoteFileName
             fileAttr!.appFileType = localFileMetaData.appFileType
+            fileAttr!.deleted = false
+            if localFileMetaData.deletedOnServer != nil {
+                fileAttr!.deleted = localFileMetaData.deletedOnServer!.boolValue
+            }
         }
         
         return fileAttr

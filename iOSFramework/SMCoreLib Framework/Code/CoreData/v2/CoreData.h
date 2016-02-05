@@ -16,6 +16,8 @@
 #import "NSObject+TargetsAndSelectors.h"
 #endif
 
+@class CoreData;
+
 @protocol CoreDataModel <NSObject>
 
 @required
@@ -25,6 +27,9 @@
 + (NSString * _Nonnull) entityName;
 
 @optional
+
+// If you give this, the presumption (which is typical) is that there is only a single CoreData session (e.g., a NSManagedObjectContext) for the entity/NSManagedObject sub-type.
++ (CoreData * _Nonnull) sessionForEntity;
 
 // Creates a UUID for the object iff makeUUID = YES; object must have an NSManagedObject field/property named "uuid", of type NSString.
 + (NSManagedObject * _Nonnull) newObjectAndMakeUUID: (BOOL) makeUUID;
