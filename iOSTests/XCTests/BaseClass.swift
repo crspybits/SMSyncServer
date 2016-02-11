@@ -73,6 +73,10 @@ class BaseClass: XCTestCase {
         self.allDownloadsCompleteCallbacks = [allDownloadsCompleteCallback]()
         self.noDownloadsCallbacks = [noDownloadsCallback]()
         self.singleProgressCallback = nil
+        
+        TestBasics.session.failure = {
+            XCTFail()
+        }
     }
     
     override func tearDown() {
@@ -90,53 +94,6 @@ class BaseClass: XCTestCase {
     func waitForExpectations() {
         // [1]. Also needed to add in delay here. Note: This that calling waitForExpectationsWithTimeout within the TimedCallback does *not* work-- XCTest takes this to mean the test succeeded.
         self.waitForExpectationsWithTimeout(self.minServerResponseTime + self.initialDelayBeforeFirstTest + self.extraServerResponseTime, handler: nil)
-    }
-    
-    func makeNewFile(withFileName fileName: String) -> AppFile {
-        let file = AppFile.newObjectAndMakeUUID(true)
-        file.fileName = fileName
-        
-        let path = FileStorage.pathToItem(file.fileName)
-        NSFileManager.defaultManager().createFileAtPath(path, contents: nil, attributes: nil)
-
-        CoreData.sessionNamed(CoreDataTests.name).saveContext()
-        
-        return file
-    }
-    
-    func createFile(withName fileName: String) -> (file:AppFile, fileSizeInBytes:Int) {
-        let file = self.makeNewFile(withFileName: fileName)
-        let fileContents:NSString = fileName + "123" // sample data
-        let fileSizeBytes = fileContents.length
-        
-        do {
-            try fileContents.writeToURL(file.url(), atomically: true, encoding: NSASCIIStringEncoding)
-        } catch {
-            XCTFail("Failed to write file: \(error)!")
-        }
-        
-        return (file, fileSizeBytes)
-    }
-        
-    // Make sure the file size we got on cloud storage was what we expected.
-    func checkFileSize(uuid:String, size:Int, finish:()->()) {
-        SMServerAPI.session.getFileIndex() { (fileIndex, error) in
-            if error == nil {
-                let result = fileIndex!.filter({
-                    $0.uuid.UUIDString == uuid && $0.sizeBytes == Int32(size)
-                })
-                if result.count == 1 {
-                    finish()
-                }
-                else {
-                    Log.msg("Did not find expected \(size) bytes for uuid \(uuid)")
-                    XCTFail()
-                }
-            }
-            else {
-                XCTFail()
-            }
-        }
     }
 }
 

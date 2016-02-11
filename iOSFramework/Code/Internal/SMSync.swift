@@ -37,7 +37,7 @@ internal class SMSync {
     private static let _session = SMSync()
     
     // true iff another operation needs to be done immediately after the current one is done.
-    private static let _doOperationLater = SMPersistItemBool(name: "SMMonitor.DoOperationLater", initialBoolValue: false, persistType: .UserDefaults)
+    private static let _doOperationLater = SMPersistItemBool(name: "SMSync.DoOperationLater", initialBoolValue: false, persistType: .UserDefaults)
         
     // To ensure that multiple operations cannot be occuring at the same time.
     private var currentlyOperating = false

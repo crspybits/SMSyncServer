@@ -15,12 +15,16 @@
 		835D80191C6423BF004DBF79 /* SMAppearance.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80171C6423BF004DBF79 /* SMAppearance.m */; };
 		835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801B1C6423FA004DBF79 /* SMRotation.h */; };
 		835D801E1C6423FA004DBF79 /* SMRotation.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D801C1C6423FA004DBF79 /* SMRotation.m */; };
-		835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801F1C64242E004DBF79 /* UIViewController+Extras.h */; };
+		835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801F1C64242E004DBF79 /* UIViewController+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D80221C64242E004DBF79 /* UIViewController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80201C64242E004DBF79 /* UIViewController+Extras.m */; };
 		835D80251C64243E004DBF79 /* UINavigationController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80231C64243E004DBF79 /* UINavigationController+Extras.h */; };
 		835D80261C64243E004DBF79 /* UINavigationController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80241C64243E004DBF79 /* UINavigationController+Extras.m */; };
 		835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */; };
+		83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1E11C692E820086B22F /* NSDate+Extras.m */; };
+		83A4F1E41C692E820086B22F /* NSDate+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1E21C692E820086B22F /* NSDate+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		83A4F1F01C6977370086B22F /* SMEdgeInsetLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */; };
 		83D3ECF01C4DBFD000BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
 		83D3ECF51C4DBFD000BFDA93 /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -136,6 +140,10 @@
 		835D80241C64243E004DBF79 /* UINavigationController+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UINavigationController+Extras.m"; path = "Code/Categories/v1/UINavigationController+Extras.m"; sourceTree = "<group>"; };
 		835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ChangeFrameTransitioningDelegate.h; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.h; sourceTree = SOURCE_ROOT; };
 		835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ChangeFrameTransitioningDelegate.m; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.m; sourceTree = SOURCE_ROOT; };
+		83A4F1E11C692E820086B22F /* NSDate+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSDate+Extras.m"; path = "Code/Categories/v1/NSDate+Extras.m"; sourceTree = "<group>"; };
+		83A4F1E21C692E820086B22F /* NSDate+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSDate+Extras.h"; path = "Code/Categories/v1/NSDate+Extras.h"; sourceTree = "<group>"; };
+		83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMEdgeInsetLabel.h; sourceTree = "<group>"; };
+		83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMEdgeInsetLabel.m; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
@@ -298,6 +306,25 @@
 			path = Code/ViewControllers/v1/SMRotation;
 			sourceTree = "<group>";
 		};
+		83A4F1EC1C6977190086B22F /* UserMessage */ = {
+			isa = PBXGroup;
+			children = (
+				83D3ED101C4DC81000BFDA93 /* UserMessage.h */,
+				83D3ED111C4DC81000BFDA93 /* UserMessage.m */,
+			);
+			name = UserMessage;
+			sourceTree = "<group>";
+		};
+		83A4F1ED1C6977370086B22F /* SMEdgeInsetLabel */ = {
+			isa = PBXGroup;
+			children = (
+				83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */,
+				83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */,
+			);
+			name = SMEdgeInsetLabel;
+			path = Code/Views/v1/SMEdgeInsetLabel;
+			sourceTree = "<group>";
+		};
 		83D3ECDB1C4DBFCF00BFDA93 = {
 			isa = PBXGroup;
 			children = (
@@ -356,8 +383,8 @@
 		83D3ED061C4DC7A300BFDA93 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				83D3ED101C4DC81000BFDA93 /* UserMessage.h */,
-				83D3ED111C4DC81000BFDA93 /* UserMessage.m */,
+				83A4F1ED1C6977370086B22F /* SMEdgeInsetLabel */,
+				83A4F1EC1C6977190086B22F /* UserMessage */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -466,6 +493,8 @@
 		83D3ED0F1C4DC80000BFDA93 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				83A4F1E21C692E820086B22F /* NSDate+Extras.h */,
+				83A4F1E11C692E820086B22F /* NSDate+Extras.m */,
 				835D801F1C64242E004DBF79 /* UIViewController+Extras.h */,
 				835D80201C64242E004DBF79 /* UIViewController+Extras.m */,
 				83D3EDB61C4DC97400BFDA93 /* NSObject+Extras.h */,
@@ -571,6 +600,7 @@
 				835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */,
 				83D3ED661C4DC89200BFDA93 /* KeyChain.h in Headers */,
 				83D3ED741C4DC90400BFDA93 /* SMUIMessages.h in Headers */,
+				83A4F1F01C6977370086B22F /* SMEdgeInsetLabel.h in Headers */,
 				83D3ED871C4DC92800BFDA93 /* BiRef.h in Headers */,
 				83D3ED2E1C4DC84500BFDA93 /* AFURLResponseSerialization.h in Headers */,
 				83D3EDAE1C4DC94800BFDA93 /* CoreDataSource.h in Headers */,
@@ -600,6 +630,7 @@
 				83D3ED501C4DC85300BFDA93 /* UIImage+AFNetworking.h in Headers */,
 				83D3ED481C4DC85300BFDA93 /* AFImageDownloader.h in Headers */,
 				83D3ED251C4DC84500BFDA93 /* AFHTTPSessionManager.h in Headers */,
+				83A4F1E41C692E820086B22F /* NSDate+Extras.h in Headers */,
 				83D3ED271C4DC84500BFDA93 /* AFNetworking.h in Headers */,
 				83D3ED4A1C4DC85300BFDA93 /* AFNetworkActivityIndicatorManager.h in Headers */,
 				83D3ED4C1C4DC85300BFDA93 /* UIActivityIndicatorView+AFNetworking.h in Headers */,
@@ -708,8 +739,10 @@
 				83D3ED551C4DC85300BFDA93 /* UIProgressView+AFNetworking.m in Sources */,
 				83D3EDA51C4DC93900BFDA93 /* LogFile.m in Sources */,
 				83D3ED691C4DC89200BFDA93 /* SMPersistVars.swift in Sources */,
+				83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */,
 				83D3ED2B1C4DC84500BFDA93 /* AFSecurityPolicy.m in Sources */,
 				83D3ED571C4DC85300BFDA93 /* UIRefreshControl+AFNetworking.m in Sources */,
+				83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */,
 				83D3ED521C4DC85300BFDA93 /* UIImageView+AFNetworking.m in Sources */,
 				83D3EDB11C4DC94800BFDA93 /* CoreData.m in Sources */,
 				835D80191C6423BF004DBF79 /* SMAppearance.m in Sources */,

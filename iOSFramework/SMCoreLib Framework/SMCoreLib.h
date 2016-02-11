@@ -43,4 +43,7 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/UIDevice+Extras.h>
 #import <SMCoreLib/SMModal.h>
 #import <SMCoreLib/ChangeFrameTransitioningDelegate.h>
+#import <SMCoreLib/UIViewController+Extras.h>
+#import <SMCoreLib/NSDate+Extras.h>
+#import <SMCoreLib/SMEdgeInsetLabel.h>
 

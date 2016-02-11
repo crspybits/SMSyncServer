@@ -54,6 +54,23 @@
 			name = "Persistent Storage";
 			sourceTree = "<group>";
 		};
+		83A4F1D11C683AB30086B22F /* Cloud Storage */ = {
+			isa = PBXGroup;
+			children = (
+				83A4F1D21C683B0F0086B22F /* Google Drive */,
+			);
+			name = "Cloud Storage";
+			sourceTree = "<group>";
+		};
+		83A4F1D21C683B0F0086B22F /* Google Drive */ = {
+			isa = PBXGroup;
+			children = (
+				83B0BEBE1C114935002B5735 /* CloudStorage.sjs */,
+				83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */,
+			);
+			name = "Google Drive";
+			sourceTree = "<group>";
+		};
 		83EBF72E1C0A3B5B009F9796 = {
 			isa = PBXGroup;
 			children = (
@@ -71,12 +88,11 @@
 				836F28761C12D9E700385636 /* Server.sjs */,
 				83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */,
 				836F287D1C166CE500385636 /* Persistent Storage */,
+				83A4F1D11C683AB30086B22F /* Cloud Storage */,
 				836F28751C128D1D00385636 /* FileTransfers.sjs */,
 				83EBF7661C0E890A009F9796 /* Operation.sjs */,
 				836F28781C13758900385636 /* File.sjs */,
 				838607841C459D7300EB2FAD /* ClientFile.sjs */,
-				83B0BEBE1C114935002B5735 /* CloudStorage.sjs */,
-				83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */,
 				83EBF73C1C0A3BBE009F9796 /* Mongo.js */,
 				83EBF73B1C0A3BBE009F9796 /* JSON.js */,
 				836F28791C13CCE300385636 /* Logger.js */,

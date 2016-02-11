@@ -29,6 +29,9 @@ class MainPageVC : UIViewController {
         let settingsButton = UIBarButtonItem(title: "Settings", style: .Plain, target: self, action: "settingsButtonAction")
         let addButton = UIBarButtonItem(title: "Add", style: .Plain, target: self, action: "addButtonAction")
         self.navigationItem.rightBarButtonItems = [settingsButton, addButton]
+
+        let testsButton = UIBarButtonItem(title: "Tests", style: .Plain, target: self, action: "testsButtonAction")
+        self.navigationItem.leftBarButtonItems = [testsButton]
         
         self.tableView.frame = self.view.frame
         self.view.addSubview(self.tableView)
@@ -36,12 +39,20 @@ class MainPageVC : UIViewController {
         self.tableView.dataSource = self
         self.tableView.delegate = self
     }
-        
+    
+    // PRIVATE
+    func testsButtonAction() {
+        let twoDeviceTests = TwoDeviceTests()
+        self.navigationController!.pushViewController(twoDeviceTests, animated: true)
+    }
+
+    // PRIVATE
     func settingsButtonAction() {
         let settings = Settings()
         self.navigationController!.pushViewController(settings, animated: true)
     }
     
+    // PRIVATE
     func addButtonAction() {
         self.makeNewFile()
     }

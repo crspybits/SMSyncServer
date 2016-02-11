@@ -14,6 +14,8 @@
 		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
 		839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
+		83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */; };
+		83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1D31C6854C60086B22F /* TestBasics.swift */; };
 		83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */; };
 		83D3E89F1C4C03F500BFDA93 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83D3E89E1C4C03F500BFDA93 /* Assets.xcassets */; };
 		83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8B31C4C072800BFDA93 /* FileViewerVC.swift */; };
@@ -85,6 +87,8 @@
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
+		83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwoDeviceTests.swift; sourceTree = "<group>"; };
+		83A4F1D31C6854C60086B22F /* TestBasics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestBasics.swift; sourceTree = "<group>"; };
 		83D3E8751C4C01E800BFDA93 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83D3E88C1C4C01E800BFDA93 /* XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -183,6 +187,8 @@
 				83D3E8B31C4C072800BFDA93 /* FileViewerVC.swift */,
 				83D3E8B41C4C072800BFDA93 /* MainPageVC.swift */,
 				83D3E8B51C4C072800BFDA93 /* Settings.swift */,
+				83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */,
+				83A4F1D31C6854C60086B22F /* TestBasics.swift */,
 				83D3E9381C4C803400BFDA93 /* Cloud Storage User Credentials */,
 			);
 			path = Code;
@@ -514,8 +520,10 @@
 				83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */,
 				83D3E93C1C4C80AB00BFDA93 /* SMGoogleSignInController.swift in Sources */,
 				83D3E93B1C4C80AB00BFDA93 /* SMGoogleCredentials.swift in Sources */,
+				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
+				83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */,
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -710,7 +718,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = XCTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				OTHER_SWIFT_FLAGS = "-D DEBUG";
+				OTHER_SWIFT_FLAGS = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.TestsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";

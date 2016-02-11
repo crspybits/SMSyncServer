@@ -381,10 +381,10 @@ public class SMSyncServer : NSObject {
     }
     
     // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
-    public func resetMetaData(forUUIDString uuidString:String?=nil) {
+    public func resetMetaData(forUUID uuid:NSUUID?=nil) {
         Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
         
-        if uuidString == nil {
+        if uuid == nil {
             if let metaDataArray = SMLocalFile.fetchAllObjects() {
                 for localFile in metaDataArray {
                     CoreData.sessionNamed(SMCoreData.name).removeObject(localFile as! NSManagedObject)
@@ -392,7 +392,7 @@ public class SMSyncServer : NSObject {
             }
         }
         else {
-            if let localFile = SMLocalFile.fetchObjectWithUUID(uuidString!) {
+            if let localFile = SMLocalFile.fetchObjectWithUUID(uuid!.UUIDString) {
                 CoreData.sessionNamed(SMCoreData.name).removeObject(localFile)
             }
         }
