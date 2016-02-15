@@ -37,13 +37,6 @@
 			remoteGlobalIDString = 83D3ECE51C4DBFCF00BFDA93;
 			remoteInfo = SMCoreLib;
 		};
-		83D3EDD81C4DD2C300BFDA93 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 83D3ECEF1C4DBFD000BFDA93;
-			remoteInfo = SMCoreLibTests;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -179,7 +172,6 @@
 			isa = PBXGroup;
 			children = (
 				83D3EDD71C4DD2C300BFDA93 /* SMCoreLib.framework */,
-				83D3EDD91C4DD2C300BFDA93 /* SMCoreLibTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -259,13 +251,6 @@
 			fileType = wrapper.framework;
 			path = SMCoreLib.framework;
 			remoteRef = 83D3EDD61C4DD2C300BFDA93 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		83D3EDD91C4DD2C300BFDA93 /* SMCoreLibTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = SMCoreLibTests.xctest;
-			remoteRef = 83D3EDD81C4DD2C300BFDA93 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -415,7 +400,7 @@
 					"-D",
 					SMSYNCSERVER,
 				);
-				OTHER_SWIFT_FLAGS = "-D DEBUG";
+				OTHER_SWIFT_FLAGS = "-DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SMSyncServer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

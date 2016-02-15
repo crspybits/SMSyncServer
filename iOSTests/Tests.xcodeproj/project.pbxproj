@@ -164,6 +164,18 @@
 				8322EB8A1C7004FC00DF418C /* TwoDeviceBasics.swift */,
 			);
 			name = "Two Device Tests";
+			path = ..;
+			sourceTree = "<group>";
+		};
+		8333C4E51C71B95B00A0A57A /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				83A4F1D31C6854C60086B22F /* TestBasics.swift */,
+				83D3E88F1C4C01E800BFDA93 /* XCTests */,
+				8322EB871C70041F00DF418C /* Two Device Tests */,
+			);
+			name = Testing;
+			path = Code;
 			sourceTree = "<group>";
 		};
 		839A06701C4F0CA40037AD9A /* Products */ = {
@@ -178,10 +190,9 @@
 			isa = PBXGroup;
 			children = (
 				83D3E8771C4C01E800BFDA93 /* Code */,
+				8333C4E51C71B95B00A0A57A /* Testing */,
 				83D3E89C1C4C031E00BFDA93 /* Supporting Files */,
 				83D3E89B1C4C030700BFDA93 /* Resources */,
-				83D3E88F1C4C01E800BFDA93 /* XCTests */,
-				8322EB871C70041F00DF418C /* Two Device Tests */,
 				83D3E8CB1C4C07C200BFDA93 /* Frameworks */,
 				83D3E8761C4C01E800BFDA93 /* Products */,
 				E4A031897A56B46569FB9E41 /* Pods */,
@@ -207,7 +218,6 @@
 				83D3E8B41C4C072800BFDA93 /* MainPageVC.swift */,
 				83D3E8B51C4C072800BFDA93 /* Settings.swift */,
 				83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */,
-				83A4F1D31C6854C60086B22F /* TestBasics.swift */,
 				83D3E9381C4C803400BFDA93 /* Cloud Storage User Credentials */,
 			);
 			path = Code;
@@ -226,7 +236,7 @@
 				83D3E8C11C4C079900BFDA93 /* Upload.swift */,
 			);
 			name = XCTests;
-			path = TestsTests;
+			path = ../TestsTests;
 			sourceTree = "<group>";
 		};
 		83D3E89B1C4C030700BFDA93 /* Resources */ = {

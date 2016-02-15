@@ -82,29 +82,38 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     override func slave() {
         super.slave()
         
-        Log.msg("Slave: Starting test: Receive new file.")
-        
-        self.checkForDownloads()
-        
-        // Starting the timer now because we don't have a specific delegate callback that reports that that the download check didn't find any files to download-- perhaps we should have that, at least for debugging/testing.
+        // The timer will not be running when created.
         self.timer = RepeatingTimer(interval: 10.0, selector: "checkForDownloads", andTarget: self)
-        self.timer!.start()
+        self.checkForDownloads()
     }
     
     // PRIVATE
     // I'm not sure why but despite the fact that this class inherits from NSObject, I still have to mark this as @objc or I get a crash on the RepeatingTimer init method.
     // See also http://stackoverflow.com/questions/27911479/nstimer-doesnt-find-selector
     @objc func checkForDownloads() {
-        Log.msg("checkForDownloads")
+        Log.msg("Slave: checkForDownloads")
+        
+        // We'll start it again if we don't get downloads.
+        self.timer!.cancel()
+
         self.device2Checks += 1
         
         if self.device2Checks > 10 {
             failTest("Too many checks")
-            self.timer!.cancel()
             return
         }
         
         SMDownloadFiles.session.checkForDownloads()
+    }
+    
+    // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
+    override func syncServerNoFilesToDownload() {
+        if self.isMaster {
+            self.failTest()
+        }
+        
+        // No downloads ready yet. Start the timer to check for downloads in a while.
+        self.timer!.start()
     }
     
     override func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
@@ -116,6 +125,20 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.numberDownloads += 1
         
         self.assertIf(self.numberDownloads > 1, thenFailAndGiveMessage: "More than one download")
+        
+        // Create AppFile so it shows up in the local app.
+        
+        let newFile = AppFile.newObjectAndMakeUUID(true)
+        newFile.fileName = attr.remoteFileName
+        CoreData.sessionNamed(CoreDataTests.name).saveContext()
+
+        let newURL = FileStorage.urlOfItem(newFile.fileName)
+
+        do {
+            try NSFileManager.defaultManager().moveItemAtURL(temporaryLocalFile, toURL: newURL)
+        } catch let error {
+            self.failTest("Could not move file to \(newURL); error was: \(error)")
+        }
     }
 
     override func syncServerAllDownloadsComplete() {
@@ -124,21 +147,17 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
             return
         }
         
-        self.assertIf(self.numberDownloads != 1, thenFailAndGiveMessage: "Didn't get only one download")
-        
-        self.passTest()
+        if self.numberDownloads == 1 {
+            self.passTest()
+        }
+        else {
+            self.failTest("Didn't get exactly one download; got: \(self.numberDownloads)")
+        }
         
         self.timer!.cancel()
     }
     
-    // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
-    override func syncServerNoFilesToDownload() {
-        if self.isMaster {
-            self.failTest()
-        }
-    }
-    
-    // If the slave has the lock while we're trying to upload, we'll get this called.
+    // If the slave has the lock while we're trying to upload, the master will get this called.
     override func syncServerRecovery(progress:SMSyncServerRecovery) {
         if self.isSlave {
             self.failTest()

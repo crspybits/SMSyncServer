@@ -14,10 +14,10 @@
 import Foundation
 import SMCoreLib
 
-public class SMServerNetworking {
+internal class SMServerNetworking {
     private let manager: AFHTTPSessionManager!
 
-    public static let session = SMServerNetworking()
+    internal static let session = SMServerNetworking()
     
     private init() {
         self.manager = AFHTTPSessionManager()
@@ -34,14 +34,14 @@ public class SMServerNetworking {
     //private var downloadTask:NSURLSessionDownloadTask?
     //private var dataTask:NSURLSessionDataTask?
     
-    public func appLaunchSetup() {
+    internal func appLaunchSetup() {
         // To get "spinner" in status bar when ever we have network activity.
         // See http://cocoadocs.org/docsets/AFNetworking/2.0.0/Classes/AFNetworkActivityIndicatorManager.html
         AFNetworkActivityIndicatorManager.sharedManager().enabled = true
     }
     
     // In the completion hanlder, if error != nil, there will be a non-nil serverResponse.
-    public func sendServerRequestTo(toURL serverURL: NSURL, withParameters parameters:[String:AnyObject],
+    internal func sendServerRequestTo(toURL serverURL: NSURL, withParameters parameters:[String:AnyObject],
         completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
         /*  
         1) The http address here must *not* be localhost as we're addressing my Mac Laptop, where the Node.js server is running, and this app is running on my iPhone, a separate device.
@@ -123,7 +123,7 @@ public class SMServerNetworking {
     }
     
     // withParameters must have a non-nil key SMServerConstants.fileMIMEtypeKey
-    public func uploadFileTo(serverURL: NSURL, fileToUpload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
+    internal func uploadFileTo(serverURL: NSURL, fileToUpload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
         
         Log.special("serverURL: \(serverURL)")
         Log.special("fileToUpload: \(fileToUpload)")
@@ -304,7 +304,7 @@ public class SMServerNetworking {
             */
     }
     
-    public func downloadFileFrom(serverURL: NSURL, fileToDownload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
+    internal func downloadFileFrom(serverURL: NSURL, fileToDownload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {
         
         Log.special("serverURL: \(serverURL)")
         Log.special("fileToDownload: \(fileToDownload)")
@@ -614,4 +614,14 @@ NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:reques
 */
     
     
+}
+
+extension SMServerNetworking /* Extras */ {
+    // I'm making this available from SMServerNetworking because the concept of exponential fallback is at the networking level.
+    // Returns a duration in seconds.
+    internal class func exponentialFallbackDuration(forAttempt numberTimesTried:Int) -> Float {
+        let duration:Float = pow(Float(numberTimesTried), 2.0)
+        Log.msg("Will try operation again in \(duration) seconds")
+        return duration
+    }
 }

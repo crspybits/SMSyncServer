@@ -96,8 +96,20 @@ public class TestBasics {
         return result
     }
     
+    // It's possible we'll check and another device with our same userId (same cloud storage creds) will have a lock-- so be willing to try this a number of times.
+    private let maxNumberCheckFileSizeAttempts = 10
+    
     // Make sure the file size we got on cloud storage was what we expected.
     public func checkFileSize(uuid:String, size:Int, finish:()->()) {
+        self.checkFileSizeAux(1, uuid: uuid, size: size, finish: finish)
+    }
+    
+    private func checkFileSizeAux(attemptNumber:Int, uuid:String, size:Int, finish:()->()) {
+        if attemptNumber > maxNumberCheckFileSizeAttempts {
+            self.failure!()
+            return
+        }
+        
         SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
             if apiResult.error == nil {
                 let result = fileIndex!.filter({
@@ -109,6 +121,14 @@ public class TestBasics {
                 else {
                     Log.error("Did not find expected \(size) bytes for uuid \(uuid)")
                     self.failure!()
+                }
+            }
+            else if apiResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
+                let attempt = attemptNumber+1
+                let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: attempt)
+
+                TimedCallback.withDuration(duration) {
+                    self.checkFileSizeAux(attempt, uuid: uuid, size: size, finish: finish)
                 }
             }
             else {

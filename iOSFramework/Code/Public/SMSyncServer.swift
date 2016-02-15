@@ -23,7 +23,7 @@ public class SMSyncAttributes {
     // The identifier for the file/data item.
     public var uuid:NSUUID!
     
-    // Must be provided when uploading for a new uuid. (If you give a remoteFileName for an existing uuid it *must* match that already present in cloud storage).
+    // Must be provided when uploading for a new uuid. (If you give a remoteFileName for an existing uuid it *must* match that already present in cloud storage). Will be provided when a file is downloaded from the server.
     public var remoteFileName:String?
     
     // Must be provided when uploading for a new uuid; optional after that.

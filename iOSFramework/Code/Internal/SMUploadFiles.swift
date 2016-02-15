@@ -435,12 +435,6 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         return numberUpdates + numberNewFiles + numberDeletions
     }
     
-    private func exponentialFallbackDuration(numberTimesTried:Int) -> Float {
-        let duration:Float = pow(Float(numberTimesTried), 2.0)
-        Log.msg("Failed recovery: But will try again in \(duration) seconds")
-        return duration
-    }
-    
     // TODO: Create test case [3] in Upload tests.
     // We know that we are recovering from an error that occurred sometime between lock (inclusive) and commit (exclusive).
     private func uploadRecovery() {
@@ -472,7 +466,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                     
                         // Error, but try again later.
                     
-                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedUploadRecovery)
+                        let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMUploadFiles.numberTimesTriedUploadRecovery)
 
                         TimedCallback.withDuration(duration) {
                             self.uploadRecovery()
@@ -516,7 +510,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 
                     // Error, but try again later.
                 
-                    let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedOutboundTransferRecovery)
+                    let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMUploadFiles.numberTimesTriedOutboundTransferRecovery)
 
                     TimedCallback.withDuration(duration) {
                         self.outboundTransferRecovery()
@@ -566,7 +560,8 @@ extension SMUploadFiles {
     
     private func delayAndCheckMayHaveCommitedAgain() {
         if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
-            let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
+            let duration = SMServerNetworking.exponentialFallbackDuration(
+                forAttempt: SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
 
             TimedCallback.withDuration(duration) {
                 self.mayHaveCommittedRecovery()
@@ -617,7 +612,7 @@ extension SMUploadFiles {
                     What can we do to resolve this? What if we poll for this to change for a certain period of time?
                     */
                     if SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery < SMUploadFiles.maxTimesToTryRecovery {
-                        let duration = self.exponentialFallbackDuration(SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
+                        let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMUploadFiles.numberTimesTriedMayHaveCommittedRecovery)
 
                         TimedCallback.withDuration(duration) {
                             self.mayHaveCommittedRecovery()
