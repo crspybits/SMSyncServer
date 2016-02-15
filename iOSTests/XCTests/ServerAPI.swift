@@ -29,11 +29,11 @@ class ServerAPI: BaseClass {
         let noServerFiles = [SMServerFile]()
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, returnCode, error)  in
+            SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, apiResult)  in
             
                 XCTAssert(serverOperationId == nil)
-                XCTAssert(error != nil)
-                XCTAssert(returnCode! == SMServerConstants.rcServerAPIError)
+                XCTAssert(apiResult.error != nil)
+                XCTAssert(apiResult.returnCode == SMServerConstants.rcServerAPIError)
                 afterStartExpectation.fulfill()
             }
         }
@@ -47,18 +47,18 @@ class ServerAPI: BaseClass {
         let noServerFiles = [SMServerFile]()
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { error in
-                XCTAssert(error == nil)
+            SMServerAPI.session.lock() { lockResult in
+                XCTAssert(lockResult.error == nil)
                 
-                SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, returnCode, error)  in
+                SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, sitResult)  in
                 
-                    XCTAssert(error != nil)
+                    XCTAssert(sitResult.error != nil)
                     XCTAssert(serverOperationId == nil)
-                    XCTAssert(returnCode! == SMServerConstants.rcServerAPIError)
+                    XCTAssert(sitResult.returnCode == SMServerConstants.rcServerAPIError)
                     
                     // Get rid of the lock.
-                    SMServerAPI.session.cleanup(){ error in
-                        XCTAssert(error == nil)
+                    SMServerAPI.session.cleanup(){ cleanupResult in
+                        XCTAssert(cleanupResult.error == nil)
                         
                         afterStartExpectation.fulfill()
                     }
@@ -78,14 +78,14 @@ class ServerAPI: BaseClass {
         serverFiles.append(file)
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { error in
-                XCTAssert(error == nil)
+            SMServerAPI.session.lock() { lockResult in
+                XCTAssert(lockResult.error == nil)
                 
-                SMServerAPI.session.startInboundTransfer(serverFiles) { (serverOperationId, returnCode, error)  in
+                SMServerAPI.session.startInboundTransfer(serverFiles) { (serverOperationId, sitResult)  in
                 
-                    XCTAssert(error == nil)
+                    XCTAssert(sitResult.error == nil)
                     XCTAssert(serverOperationId != nil)
-                    XCTAssert(returnCode! == SMServerConstants.rcOK)
+                    XCTAssert(sitResult.returnCode == SMServerConstants.rcOK)
                     
                     afterStartExpectation.fulfill()
                 }
@@ -105,8 +105,8 @@ class ServerAPI: BaseClass {
             let serverFile = SMServerFile(uuid: NSUUID())
             serverFile.localURL = downloadFileURL
             
-            SMServerAPI.session.downloadFile(serverFile) { error in
-                XCTAssert(error != nil)
+            SMServerAPI.session.downloadFile(serverFile) { apiResult in
+                XCTAssert(apiResult.error != nil)
                 expectation.fulfill()
             }
         }
@@ -120,19 +120,19 @@ class ServerAPI: BaseClass {
 
         self.waitUntilSyncServerUserSignin() {
 
-            SMServerAPI.session.lock() { error in
-                XCTAssert(error == nil)
+            SMServerAPI.session.lock() { lockResult in
+                XCTAssert(lockResult.error == nil)
 
                 let downloadFileURL = FileStorage.urlOfItem("download1")
                 let serverFile = SMServerFile(uuid: NSUUID())
                 serverFile.localURL = downloadFileURL
             
-                SMServerAPI.session.downloadFile(serverFile) { error in
+                SMServerAPI.session.downloadFile(serverFile) { downloadResult in
                     // Should get an error here.
-                    XCTAssert(error != nil)
+                    XCTAssert(downloadResult.error != nil)
                     
-                    SMServerAPI.session.unlock() { error in
-                        XCTAssert(error == nil)
+                    SMServerAPI.session.unlock() { unlockResult in
+                        XCTAssert(unlockResult.error == nil)
                         expectation.fulfill()
                     }
                 }

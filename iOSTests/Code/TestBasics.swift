@@ -98,8 +98,8 @@ public class TestBasics {
     
     // Make sure the file size we got on cloud storage was what we expected.
     public func checkFileSize(uuid:String, size:Int, finish:()->()) {
-        SMServerAPI.session.getFileIndex() { (fileIndex, error) in
-            if error == nil {
+        SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
+            if apiResult.error == nil {
                 let result = fileIndex!.filter({
                     $0.uuid.UUIDString == uuid && $0.sizeBytes == Int32(size)
                 })
@@ -107,11 +107,12 @@ public class TestBasics {
                     finish()
                 }
                 else {
-                    Log.msg("Did not find expected \(size) bytes for uuid \(uuid)")
+                    Log.error("Did not find expected \(size) bytes for uuid \(uuid)")
                     self.failure!()
                 }
             }
             else {
+                Log.error("checkFileSize: Got an error: \(apiResult.error)")
                 self.failure!()
             }
         }

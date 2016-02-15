@@ -376,6 +376,62 @@ public class SMPersistItemDict : SMPersistItem, SMMutableDictionaryDelegate {
     }
 }
 
+public class SMPersistItemArray : SMPersistItem {
+    
+    // The sets you give here should have elements abiding by NSCoding. 
+    public init(name:String!, initialArrayValue:NSMutableArray!, persistType:SMPersistVarType) {
+        super.init(name: name, initialValue:initialArrayValue, persistType:persistType)
+        self.isMutable = true
+    }
+    
+    // Note that each time this is called/used, it retrieves the value from NSUserDefaults or the KeyChain
+    private var theArrayValue:NSMutableArray {
+        return self.cachedOrArchivedValue as! NSMutableArray
+    }
+    
+    //MARK: Start proxy methods
+    
+    // Note that these methods *cannot* be private!!! If they are, the runtime system doesn't find them.
+    func countOfArrayValueWrapper() -> UInt {
+        return UInt(theArrayValue.count)
+    }
+    
+    func objectInArrayValueWrapperAtIndex(index:UInt) -> AnyObject {
+        return theArrayValue.objectAtIndex(Int(index))
+    }
+    
+    // -insertObject:in<Key>AtIndex:
+    func insertObject(object: AnyObject, inArrayValueWrapperAtIndex index:UInt) {
+        let array = theArrayValue
+        array.insertObject(object, atIndex: Int(index))
+        self.savePersistentValue(array)
+    }
+    
+    // -removeObjectFrom<Key>AtIndex:
+    func removeObjectFromArrayValueWrapperAtIndex(index:UInt) {
+        let array = theArrayValue
+        array.removeObjectAtIndex(Int(index))
+        self.savePersistentValue(array)
+    }
+    
+    //MARK: End proxy methods
+    
+    public var arrayValue:NSMutableArray {
+        get {
+            // Return the proxy object. The proxy methods are named as, for example, add<Key>Object where key is SetValueWrapper, which is the key below, but with the first letter capitalized.
+            return self.mutableArrayValueForKey("arrayValueWrapper")
+        }
+        
+        set {
+            self.cachedOrArchivedValue = newValue
+        }
+    }
+    
+    public var arrayDefault:NSMutableArray {
+        return self.initialValue.mutableCopy() as! NSMutableArray
+    }
+}
+
 @objc public class SMPersistVars : NSObject {
     // Singleton class.
     private static let theSession = SMPersistVars()

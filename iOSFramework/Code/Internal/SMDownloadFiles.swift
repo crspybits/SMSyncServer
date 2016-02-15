@@ -45,10 +45,10 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func checkForDownloadsAux() {
-        SMServerAPI.session.lock() { (error) in
-            if error == nil {
-                SMServerAPI.session.getFileIndex() { (fileIndex, error) in
-                    if error == nil {
+        SMServerAPI.session.lock() { lockResult in
+            if lockResult.error == nil {
+                SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
+                    if gfiResult.error == nil {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
                         // TODO: There is also the possiblity of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
                         let fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
@@ -59,8 +59,8 @@ internal class SMDownloadFiles : NSObject {
                         }
                         else {
                             // No files to download. Release the lock.
-                            SMServerAPI.session.unlock() { error in
-                                if error == nil {
+                            SMServerAPI.session.unlock() { unlockResult in
+                                if unlockResult.error == nil {
                                     self.callSyncServerNoFilesToDownload()
                                 }
                                 else {
@@ -88,8 +88,8 @@ internal class SMDownloadFiles : NSObject {
     private func doInboundTransfers() {
         self.numberInboundTransfersExpected = self.filesToDownload!.count
         
-        SMServerAPI.session.startInboundTransfer(self.filesToDownload!) { (theServerOperationId, returnCode, error) in
-            if error == nil {
+        SMServerAPI.session.startInboundTransfer(self.filesToDownload!) { (theServerOperationId, sitResult) in
+            if sitResult.error == nil {
                 self.serverOperationId = theServerOperationId
                 self.startToPollForOperationFinish()
             }
@@ -115,10 +115,10 @@ internal class SMDownloadFiles : NSObject {
         Log.msg("checkIfFileOperationFinished")
         self.checkIfInboundTransferOperationFinishedTimer!.cancel()
         
-        SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, error in
-            if (error != nil) {
+        SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, cosResult in
+            if (cosResult.error != nil) {
                 // TODO: How many times to check/recheck and still get an error?
-                Log.error("Yikes: Error checking operation status: \(error)")
+                Log.error("Yikes: Error checking operation status: \(cosResult.error)")
                 self.checkIfInboundTransferOperationFinishedTimer!.start()
             }
             else {
@@ -162,18 +162,18 @@ internal class SMDownloadFiles : NSObject {
         
         //SMUploadFiles.setMode(.Normal)
         
-        SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { error in
+        SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { roiResult in
         
             self.serverOperationId = nil
 
-            if error != nil {
+            if roiResult.error != nil {
                 // Not much of an error, but log it.
-                Log.file("Failed removing OperationId from server: \(error)")
+                Log.file("Failed removing OperationId from server: \(roiResult.error)")
             }
             
             // Files were transferred from cloud storage to sync server. Download them from the sync server.
-            SMServerAPI.session.downloadFiles(self.filesToDownload!) { error in
-                if error == nil {
+            SMServerAPI.session.downloadFiles(self.filesToDownload!) { dfResult in
+                if dfResult.error == nil {
                     // Done!
                     self.callSyncServerAllDownloadsComplete()
                 }

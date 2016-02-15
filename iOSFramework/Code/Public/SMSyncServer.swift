@@ -429,12 +429,12 @@ public class SMSyncServer : NSObject {
 
 #if DEBUG
     public func getFileIndex() {
-        SMServerAPI.session.getFileIndex() { fileIndex, error in
-            if (nil == error) {
+        SMServerAPI.session.getFileIndex() { fileIndex, apiResult in
+            if (nil == apiResult.error) {
                 Log.msg("Success!")
             }
             else {
-                Log.msg("Error: \(error)")
+                Log.msg("Error: \(apiResult.error)")
             }
         }
     }

@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
+		8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 8322EBDE1C71577300DF418C /* NSThread+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8322EBE11C71577300DF418C /* NSThread+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EBDF1C71577300DF418C /* NSThread+Extras.m */; };
+		8346BC051C6EE28200AC657D /* SMMultiPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346BC041C6EE28200AC657D /* SMMultiPeer.swift */; };
 		835D800E1C6422F9004DBF79 /* SMModal.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D800C1C6422F9004DBF79 /* SMModal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D800F1C6422F9004DBF79 /* SMModal.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D800D1C6422F9004DBF79 /* SMModal.m */; };
 		835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80161C6423BF004DBF79 /* SMAppearance.h */; };
@@ -25,8 +28,6 @@
 		83A4F1E41C692E820086B22F /* NSDate+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1E21C692E820086B22F /* NSDate+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A4F1F01C6977370086B22F /* SMEdgeInsetLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */; };
-		83D3ECF01C4DBFD000BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
-		83D3ECF51C4DBFD000BFDA93 /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED121C4DC81000BFDA93 /* UserMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED101C4DC81000BFDA93 /* UserMessage.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED111C4DC81000BFDA93 /* UserMessage.m */; };
@@ -115,19 +116,12 @@
 		83D3EDBF1C4DCC5C00BFDA93 /* SMDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDBE1C4DCC5C00BFDA93 /* SMDefs.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		83D3ECF11C4DBFD000BFDA93 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83D3ECDC1C4DBFCF00BFDA93 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 83D3ECE41C4DBFCF00BFDA93;
-			remoteInfo = SMCoreLib;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
 		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
+		8322EBDE1C71577300DF418C /* NSThread+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSThread+Extras.h"; path = "Code/Categories/v1/NSThread+Extras.h"; sourceTree = "<group>"; };
+		8322EBDF1C71577300DF418C /* NSThread+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSThread+Extras.m"; path = "Code/Categories/v1/NSThread+Extras.m"; sourceTree = "<group>"; };
+		8346BC041C6EE28200AC657D /* SMMultiPeer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMMultiPeer.swift; path = Code/Network/v1/SMMultiPeer.swift; sourceTree = "<group>"; };
 		835D800C1C6422F9004DBF79 /* SMModal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMModal.h; sourceTree = "<group>"; };
 		835D800D1C6422F9004DBF79 /* SMModal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMModal.m; sourceTree = "<group>"; };
 		835D80161C6423BF004DBF79 /* SMAppearance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMAppearance.h; sourceTree = "<group>"; };
@@ -145,9 +139,6 @@
 		83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMEdgeInsetLabel.h; sourceTree = "<group>"; };
 		83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMEdgeInsetLabel.m; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
-		83D3ECF61C4DBFD000BFDA93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		83D3ED031C4DC0C300BFDA93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMCoreLib.h; sourceTree = "<group>"; };
 		83D3ED101C4DC81000BFDA93 /* UserMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UserMessage.h; path = Code/Views/v1/UserMessage.h; sourceTree = "<group>"; };
@@ -245,14 +236,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		83D3ECEC1C4DBFD000BFDA93 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				83D3ECF01C4DBFD000BFDA93 /* SMCoreLib.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -331,7 +314,6 @@
 				83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */,
 				83D3ED001C4DC09800BFDA93 /* Code */,
 				83D3ECFF1C4DC08100BFDA93 /* Supporting Files */,
-				83D3ECF31C4DBFD000BFDA93 /* SMCoreLibTests */,
 				83D3ECE61C4DBFCF00BFDA93 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -340,18 +322,8 @@
 			isa = PBXGroup;
 			children = (
 				83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */,
-				83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		83D3ECF31C4DBFD000BFDA93 /* SMCoreLibTests */ = {
-			isa = PBXGroup;
-			children = (
-				83D3ECF41C4DBFD000BFDA93 /* SMCoreLibTests.swift */,
-				83D3ECF61C4DBFD000BFDA93 /* Info.plist */,
-			);
-			path = SMCoreLibTests;
 			sourceTree = "<group>";
 		};
 		83D3ECFF1C4DC08100BFDA93 /* Supporting Files */ = {
@@ -416,6 +388,7 @@
 			children = (
 				83D3ED6A1C4DC8CE00BFDA93 /* Network.h */,
 				83D3ED6B1C4DC8CE00BFDA93 /* Network.m */,
+				8346BC041C6EE28200AC657D /* SMMultiPeer.swift */,
 			);
 			name = Network;
 			sourceTree = "<group>";
@@ -507,6 +480,8 @@
 				55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */,
 				835D80231C64243E004DBF79 /* UINavigationController+Extras.h */,
 				835D80241C64243E004DBF79 /* UINavigationController+Extras.m */,
+				8322EBDE1C71577300DF418C /* NSThread+Extras.h */,
+				8322EBDF1C71577300DF418C /* NSThread+Extras.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -613,6 +588,7 @@
 				83D3EDA61C4DC93900BFDA93 /* SMAssert.h in Headers */,
 				83D3ED8D1C4DC92800BFDA93 /* SMIdentifiers2.h in Headers */,
 				83D3ED511C4DC85300BFDA93 /* UIImageView+AFNetworking.h in Headers */,
+				8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */,
 				83D3ED961C4DC92800BFDA93 /* WeakRef.h in Headers */,
 				835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */,
 				83D3EDB41C4DC96400BFDA93 /* UIView+Extras.h in Headers */,
@@ -658,24 +634,6 @@
 			productReference = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		83D3ECEE1C4DBFD000BFDA93 /* SMCoreLibTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 83D3ECFC1C4DBFD000BFDA93 /* Build configuration list for PBXNativeTarget "SMCoreLibTests" */;
-			buildPhases = (
-				83D3ECEB1C4DBFD000BFDA93 /* Sources */,
-				83D3ECEC1C4DBFD000BFDA93 /* Frameworks */,
-				83D3ECED1C4DBFD000BFDA93 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				83D3ECF21C4DBFD000BFDA93 /* PBXTargetDependency */,
-			);
-			name = SMCoreLibTests;
-			productName = SMCoreLibTests;
-			productReference = 83D3ECEF1C4DBFD000BFDA93 /* SMCoreLibTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -687,9 +645,6 @@
 				ORGANIZATIONNAME = "Spastic Muffin, LLC";
 				TargetAttributes = {
 					83D3ECE41C4DBFCF00BFDA93 = {
-						CreatedOnToolsVersion = 7.2;
-					};
-					83D3ECEE1C4DBFD000BFDA93 = {
 						CreatedOnToolsVersion = 7.2;
 					};
 				};
@@ -707,20 +662,12 @@
 			projectRoot = "";
 			targets = (
 				83D3ECE41C4DBFCF00BFDA93 /* SMCoreLib */,
-				83D3ECEE1C4DBFD000BFDA93 /* SMCoreLibTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		83D3ECE31C4DBFCF00BFDA93 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		83D3ECED1C4DBFD000BFDA93 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -754,6 +701,7 @@
 				83D3EDB51C4DC96400BFDA93 /* UIView+Extras.m in Sources */,
 				835D800F1C6422F9004DBF79 /* SMModal.m in Sources */,
 				83D3ED971C4DC92800BFDA93 /* WeakRef.m in Sources */,
+				8322EBE11C71577300DF418C /* NSThread+Extras.m in Sources */,
 				83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */,
 				83D3EDA81C4DC93900BFDA93 /* SMDebug.swift in Sources */,
 				83D3EDA11C4DC93900BFDA93 /* Assert.swift in Sources */,
@@ -765,6 +713,7 @@
 				83D3ED4D1C4DC85300BFDA93 /* UIActivityIndicatorView+AFNetworking.m in Sources */,
 				83D3ED2D1C4DC84500BFDA93 /* AFURLRequestSerialization.m in Sources */,
 				83D3EDBB1C4DC97400BFDA93 /* NSObject+Extras.m in Sources */,
+				8346BC051C6EE28200AC657D /* SMMultiPeer.swift in Sources */,
 				83D3ED4B1C4DC85300BFDA93 /* AFNetworkActivityIndicatorManager.m in Sources */,
 				835D80221C64242E004DBF79 /* UIViewController+Extras.m in Sources */,
 				83D3ED311C4DC84500BFDA93 /* AFURLSessionManager.m in Sources */,
@@ -790,23 +739,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		83D3ECEB1C4DBFD000BFDA93 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				83D3ECF51C4DBFD000BFDA93 /* SMCoreLibTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		83D3ECF21C4DBFD000BFDA93 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 83D3ECE41C4DBFCF00BFDA93 /* SMCoreLib */;
-			targetProxy = 83D3ECF11C4DBFD000BFDA93 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		83D3ECF71C4DBFD000BFDA93 /* Debug */ = {
@@ -947,26 +880,6 @@
 			};
 			name = Release;
 		};
-		83D3ECFD1C4DBFD000BFDA93 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = SMCoreLibTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SMCoreLibTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		83D3ECFE1C4DBFD000BFDA93 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = SMCoreLibTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SMCoreLibTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -984,15 +897,6 @@
 			buildConfigurations = (
 				83D3ECFA1C4DBFD000BFDA93 /* Debug */,
 				83D3ECFB1C4DBFD000BFDA93 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		83D3ECFC1C4DBFD000BFDA93 /* Build configuration list for PBXNativeTarget "SMCoreLibTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				83D3ECFD1C4DBFD000BFDA93 /* Debug */,
-				83D3ECFE1C4DBFD000BFDA93 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

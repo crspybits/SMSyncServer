@@ -941,7 +941,8 @@ app.post('/' + ServerConstants.operationUploadRecovery, function (request, respo
         if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
             logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            // 2/13/16; Not returning this as rcServerAPIError because this doesn't necessarily represent an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
+            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
         }
         else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
             // This is really an error. We should never have an in-progress operation for UploadRecovery because we should only ever be doing a UploadRecovery prior to a successful commit.

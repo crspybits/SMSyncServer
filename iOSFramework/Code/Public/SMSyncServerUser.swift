@@ -91,9 +91,9 @@ public class SMSyncServerUser {
     public func checkForExistingUser(userCreds:SMCloudStorageUser, completion:((error: NSError?)->())?) {
     
         SMServerAPI.session.checkForExistingUser(
-            self.serverParameters(userCreds)) { (returnCode, error) in
+            self.serverParameters(userCreds)) { cfeuResult in
         
-            let returnError = self.processSignInResult(forExistingUser: true, returnCode: returnCode, error: error)
+            let returnError = self.processSignInResult(forExistingUser: true, apiResult: cfeuResult)
             self.callSignInCompletion(withError: returnError)
             completion?(error: returnError)
         }
@@ -107,9 +107,9 @@ public class SMSyncServerUser {
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
         }
         
-        SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { (returnCode, error) in
+        SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { cnuResult in
         
-            let returnError = self.processSignInResult(forExistingUser: false, returnCode: returnCode, error: error)
+            let returnError = self.processSignInResult(forExistingUser: false, apiResult: cnuResult)
             self.callSignInCompletion(withError: returnError)
             completion?(error: returnError)
         }
@@ -159,12 +159,12 @@ public class SMSyncServerUser {
         return serverParameters
     }
     
-    private func processSignInResult(forExistingUser existingUser:Bool, returnCode:Int?, error:NSError?) -> NSError? {
+    private func processSignInResult(forExistingUser existingUser:Bool, apiResult:SMServerAPIResult) -> NSError? {
         // Not all non-nil "errors" actually indicate an error in our context. Check the return code first.
-        var returnError = error
+        var returnError = apiResult.error
         
-        if returnCode != nil {
-            switch (returnCode!) {
+        if apiResult.returnCode != nil {
+            switch (apiResult.returnCode!) {
             case SMServerConstants.rcOK:
                 returnError = nil
                 
@@ -177,7 +177,7 @@ public class SMSyncServerUser {
                 }
                 
             default:
-                returnError = Error.Create("An error occured when trying to sign in (return code: \(returnCode))")
+                returnError = Error.Create("An error occured when trying to sign in (return code: \(apiResult.returnCode))")
             }
         }
         

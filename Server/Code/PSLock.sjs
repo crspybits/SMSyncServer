@@ -98,8 +98,10 @@ PSLock.prototype.attemptToLock = function (callback) {
     });
 }
 
-// Check to see if we (userId) have a lock.
-/* Callback has two parameters: 
+/* 
+Check to see if we (userId/deviceId) have a lock. 
+It is not an error (we just don't have the lock) if the same userId with a different deviceId has the lock. In this case the callback response is (null, null)
+Callback has two parameters:
     1) error, 
     2) if error is null,
         Either null which indicates we didn't have the lock, or
@@ -108,7 +110,8 @@ PSLock.prototype.attemptToLock = function (callback) {
 // TODO: When this succeeds, update lastLockActivity with the current date/time.
 PSLock.checkForOurLock = function (userId, deviceId, callback) {
     var query = {
-        _id: userId
+        _id: userId,
+        deviceId: deviceId
     };
 	
 	var cursor = Mongo.db().collection(collectionName).find(query);
@@ -147,19 +150,16 @@ PSLock.checkForOurLock = function (userId, deviceId, callback) {
                     logger.error(msg);
 					callback(new Error(msg), null);
 				}
-                else if (deviceId == doc.deviceId) {
+                else {
                     // We have the lock.
                     callback(null, new PSLock(doc));
-                }
-                else {
-                    callback(new Error("User held lock, but not our device!"), null);
                 }
 			});
 		}
 	});
 }
 
-// Checks to make sure we have the lock before attempting to remove.
+// Checks to make sure we (userId/deviceId) have the lock before attempting to remove.
 // Callback: Error parameter.
 PSLock.prototype.removeLock = function (callback) {
     var self = this;

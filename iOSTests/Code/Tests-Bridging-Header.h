@@ -4,3 +4,4 @@
 
 #import "AppFile.h"
 #import "AppFile+CoreDataProperties.h"
+#import "ClassExtras.h"

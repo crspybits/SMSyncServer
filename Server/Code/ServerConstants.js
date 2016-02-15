@@ -212,6 +212,9 @@ function define(name, value) {
 	define("rcUserOnSystem", 51);
 	define("rcUserNotOnSystem", 52);
     
+    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
+	define("rcLockNotHeld", 53);
+    
     // rc's for serverOperationCheckForExistingUser
     // rcUserOnSystem
     // rcUserNotOnSystem

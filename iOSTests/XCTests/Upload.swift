@@ -528,8 +528,8 @@ class Upload: BaseClass {
                 SMSyncServer.session.resetFromError()
                 
                 // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { error in
-                    XCTAssert(error == nil)
+                SMServerAPI.session.cleanup() { apiResult in
+                    XCTAssert(apiResult.error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }
@@ -580,8 +580,8 @@ class Upload: BaseClass {
                 SMSyncServer.session.resetFromError()
                 
                 // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { error in
-                    XCTAssert(error == nil)
+                SMServerAPI.session.cleanup() { apiResult in
+                    XCTAssert(apiResult.error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }
@@ -694,8 +694,8 @@ class Upload: BaseClass {
                 SMSyncServer.session.resetFromError()
                 
                 // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { error in
-                    XCTAssert(error == nil)
+                SMServerAPI.session.cleanup() { apiResult in
+                    XCTAssert(apiResult.error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }

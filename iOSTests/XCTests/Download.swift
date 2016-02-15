@@ -157,19 +157,19 @@ class Download: BaseClass {
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
 
-                    SMServerAPI.session.lock() { error in
-                        XCTAssert(error == nil)
+                    SMServerAPI.session.lock() { lockResult in
+                        XCTAssert(lockResult.error == nil)
 
                         let downloadFileURL = FileStorage.urlOfItem("download1")
                         let serverFile = SMServerFile(uuid: testFile.uuid)
                         serverFile.localURL = downloadFileURL
                     
-                        SMServerAPI.session.downloadFile(serverFile) { error in
+                        SMServerAPI.session.downloadFile(serverFile) { downloadResult in
                             // Should get an error here: Because we're trying to download a file that's not in the PSInboundFiles and marked as received. I.e., it hasn't been transferred from the server.
-                            XCTAssert(error != nil)
+                            XCTAssert(downloadResult.error != nil)
                             
-                            SMServerAPI.session.unlock() { error in
-                                XCTAssert(error == nil)
+                            SMServerAPI.session.unlock() { unlockResult in
+                                XCTAssert(unlockResult.error == nil)
                                 unlockExpectation.fulfill()
                             }
                         }
