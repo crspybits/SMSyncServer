@@ -160,8 +160,13 @@ app.post('/' + ServerConstants.operationLock, function (request, response) {
 
                     lock.attemptToLock(function (error, lockAlreadyHeld) {
                         if (error) {
-                            // Failure mode analysis: Lock may have been created (seems unlikely, but still possible).
-                            op.endWithErrorDetails(error);
+                            // Failure mode analysis: Lock may have been created (seems unlikely, but still possible). What is more likely is that the lock could have been created and held by another device with the same userId.
+                            if (lockAlreadyHeld) {
+                                op.endWithRCAndErrorDetails(ServerConstants.rcLockAlreadyHeld, error);
+                            }
+                            else {
+                                op.endWithErrorDetails(error);
+                            }
                         }
                         else {
                             op.endWithRC(ServerConstants.rcOK);

@@ -221,7 +221,7 @@ public class SMSyncServer : NSObject {
     }
     
     // Returns a SMSyncAttributes object iff the file is locally known (on the device) to the SMSyncServer. Nil could be returned if the file was uploaded by another app/client to the server recently, but not downloaded to the current device (app/client) yet.
-    public func fileStatus(uuid: NSUUID) -> SMSyncAttributes? {
+    public func localFileStatus(uuid: NSUUID) -> SMSyncAttributes? {
         var fileAttr:SMSyncAttributes?
         if let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString) {
             fileAttr = SMSyncAttributes(withUUID: uuid)

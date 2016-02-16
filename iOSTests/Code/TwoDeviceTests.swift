@@ -65,7 +65,10 @@ class TwoDeviceTests : UIViewController {
         }
         
         self.testResults.arrayValue[testNumber] = color
-        self.tableView.reloadData()
+        
+        NSThread.runSyncOnMainThread() {
+            self.tableView.reloadData()
+        }
     }
 
     func createViews() {
@@ -134,7 +137,8 @@ extension TwoDeviceTests : UITableViewDelegate, UITableViewDataSource {
         rowData.delegate = self
         self.currentTest = indexPath.row
         if self.weAreMaster {
-            if self.sendTestNumberToSlave(self.currentTest) {
+            let slaveData = rowData.createDataForSlave()
+            if self.sendTestDataToSlave(slaveData) {
                 self.setTest(self.currentTest, testResult: .Running)
                 rowData.master()
             }
@@ -142,21 +146,53 @@ extension TwoDeviceTests : UITableViewDelegate, UITableViewDataSource {
     }
 }
 
-extension TwoDeviceTests : SMMultiPeerDelegate {
-    func didReceive(string string:String, fromPeer peer:String) {
-        Log.msg("didReceive: " + string + " from peer: " + peer)
-        let testNumber = Int(string)
-        Assert.If(self.weAreMaster, thenPrintThisString: "Yikes: We are the master!")
-        let rowData = self.tableRowData[testNumber!]
-        rowData.delegate = self
-        self.currentTest = testNumber!
-        self.setTest(self.currentTest, testResult: .Running)
-        rowData.slave()
+internal class DataToSendToSlave : NSObject, NSCoding {
+    var testNumber: Int32
+    var dataForSlave:NSData?
+    
+    internal init(testNumber:Int32) {
+        self.testNumber = testNumber
+        super.init()
     }
     
-    // Sending a single integer to the slave device, the row number of the data in self.tableRowData, encoded as a string. i.e., the test number.
-    func sendTestNumberToSlave(testNumber:Int) -> Bool {
-        return self.multiPeer.sendString(String(testNumber))
+    internal required init?(coder aDecoder: NSCoder) {
+        self.testNumber = aDecoder.decodeInt32ForKey("testNumber")
+        self.dataForSlave = aDecoder.decodeObjectForKey("dataForSlave") as? NSData
+    }
+    
+    internal func encodeWithCoder(aCoder: NSCoder) {
+        aCoder.encodeInt32(self.testNumber, forKey: "testNumber")
+        aCoder.encodeObject(self.dataForSlave, forKey: "dataForSlave")
+    }
+}
+
+// Sending a single integer to the slave device, the row number of the data in self.tableRowData, encoded as a string. i.e., the test number.
+extension TwoDeviceTests {
+    // Sending from master
+    func sendTestDataToSlave(testData: NSData?) -> Bool {
+        let objToSend = DataToSendToSlave(testNumber: Int32(self.currentTest))
+        objToSend.dataForSlave = testData
+        let data = NSKeyedArchiver.archivedDataWithRootObject(objToSend)
+        return self.multiPeer.sendData(data)
+    }
+}
+
+extension TwoDeviceTests : SMMultiPeerDelegate {
+    // Receiving on slave
+    func didReceive(data data:NSData, fromPeer peer:String) {
+        Log.msg("didReceive: data from peer: " + peer)
+        Assert.If(self.weAreMaster, thenPrintThisString: "Yikes: We are the master!")
+
+        let receivedObject = NSKeyedUnarchiver.unarchiveObjectWithData(data) as? DataToSendToSlave
+        Assert.If(receivedObject == nil, thenPrintThisString: "No object received from master!")
+        
+        self.currentTest = Int(receivedObject!.testNumber)
+
+        let rowData = self.tableRowData[self.currentTest]
+        
+        rowData.delegate = self
+        self.setTest(self.currentTest, testResult: .Running)
+        rowData.slave(dataForSlave: receivedObject!.dataForSlave)
     }
 }
 

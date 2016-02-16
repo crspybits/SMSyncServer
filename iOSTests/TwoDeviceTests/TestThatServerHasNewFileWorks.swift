@@ -1,5 +1,5 @@
 //
-//  TwoDeviceBasics.swift
+//  TwoDeviceTestThatServerHasNewFileWorks.swift
 //  Tests
 //
 //  Created by Christopher Prince on 2/13/16.
@@ -9,10 +9,6 @@
 import Foundation
 @testable import SMSyncServer
 import SMCoreLib
-
-// TODO: Two clients signed on to the server, with different Google Drive Id's.
-
-// TODO: Master: takes out lock, waits for while, releases lock. Client: Tries to do some server operation, with the same Google Drive Id, while the lock is held by the master.
 
 // Same Google Drive Id's. Server has a file which doesn't yet exist on app/client.
 class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
@@ -24,31 +20,29 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         }
     }
     
-    var createFile:(file:AppFile, fileSizeInBytes:Int)!
-    var uuidString:String! {
-        return self.createFile.file.uuid!
-    }
-    var fileUUID: NSUUID {
-        return NSUUID(UUIDString: self.uuidString)!
-    }
-    
+    // Master
+    var testFile:TestFile!
     var numberUploads:Int = 0
-    var numberDownloads:Int = 0
-    var device2Checks:Int = 0
     
     // Slave
     var timer:RepeatingTimer?
-
+    var numberDownloads:Int = 0
+    var numberDownloadChecks:Int = 0
+    
+    override func createDataForSlave() -> NSData? {
+        let fileName = "ServerHasNewFile"
+        self.testFile = TestBasics.session.createTestFile(fileName)
+        
+        let slaveData = SlaveData()
+        slaveData.sizeInBytes = Int32(self.testFile.sizeInBytes)
+        return NSKeyedArchiver.archivedDataWithRootObject(slaveData)
+    }
+    
     // Upload file to server.
     override func master() {
         super.master()
-        
-        let fileName = "ServerHasNewFile"
-        self.createFile = TestBasics.session.createFile(withName: fileName)
-
-        let fileAttributes = SMSyncAttributes(withUUID: self.fileUUID, mimeType: "text/plain", andRemoteFileName: fileName)
     
-        SMSyncServer.session.uploadImmutableFile(self.createFile.file.url(), withFileAttributes: fileAttributes)
+        SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
         SMSyncServer.session.commit()
     }
     
@@ -60,7 +54,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.numberUploads += 1
         
         self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
-        self.assertIf(uuid.UUIDString != self.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
+        self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
     }
     
     override func syncServerCommitComplete(numberOperations numberOperations: Int?) {
@@ -69,8 +63,8 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         }
         
         Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
-        TestBasics.session.checkFileSize(self.uuidString, size: self.createFile.fileSizeInBytes) {
-            let fileAttr = SMSyncServer.session.fileStatus(self.fileUUID)
+        TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
+            let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
             self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "No file attr")
             self.assertIf(fileAttr!.deleted!, thenFailAndGiveMessage: "File was deleted")
             
@@ -78,9 +72,16 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         }
     }
     
+    var slaveData: SlaveData?
+    
     // Receive new file.
-    override func slave() {
-        super.slave()
+    override func slave(dataForSlave dataForSlave:NSData?) {
+        super.slave(dataForSlave: dataForSlave)
+        
+        Log.msg("slave: dataForSlave: \(dataForSlave)")
+        
+        self.slaveData = NSKeyedUnarchiver.unarchiveObjectWithData(dataForSlave!) as? SlaveData
+        self.assertIf(self.slaveData == nil, thenFailAndGiveMessage: "Got nil data on slave!")
         
         // The timer will not be running when created.
         self.timer = RepeatingTimer(interval: 10.0, selector: "checkForDownloads", andTarget: self)
@@ -96,9 +97,9 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         // We'll start it again if we don't get downloads.
         self.timer!.cancel()
 
-        self.device2Checks += 1
+        self.numberDownloadChecks += 1
         
-        if self.device2Checks > 10 {
+        if self.numberDownloadChecks > 10 {
             failTest("Too many checks")
             return
         }
@@ -139,6 +140,10 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         } catch let error {
             self.failTest("Could not move file to \(newURL); error was: \(error)")
         }
+        
+        let path = FileStorage.pathToItem(newFile.fileName)
+        let sizeInBytes = FileStorage.fileSize(path)
+        self.assertIf(UInt(self.slaveData!.sizeInBytes) != sizeInBytes, thenFailAndGiveMessage: "File size was not that expected")
     }
 
     override func syncServerAllDownloadsComplete() {
@@ -164,8 +169,6 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         }
     }
 }
-
-// TODO: Server has a single file which is an updated version of that on app/client.
 
 
 

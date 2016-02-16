@@ -84,7 +84,7 @@ extension MainPageVC : UITableViewDelegate, UITableViewDataSource {
         let file = self.coreDataSource.objectAtIndexPath(indexPath) as! AppFile
         cell.textLabel!.text = file.fileName
         
-        if let _ = SMSyncServer.session.fileStatus(NSUUID(UUIDString: file.uuid!)!) {
+        if let _ = SMSyncServer.session.localFileStatus(NSUUID(UUIDString: file.uuid!)!) {
             cell.accessoryType = .Checkmark
         }
         else {

@@ -79,8 +79,8 @@ internal class SMDownloadFiles : NSObject {
             }
             else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
                 Log.error("Lock already held")
-                // We're not reporting any error here or giving any other delegate callback. This in some sense is expected, or normal operation. We haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
-                SMSync.session.stop()
+                // We're calling the "NoFilesToDownload" delegate callback.In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held. However, for debugging purposes, we effectively have no files to download, so report that back.
+                self.callSyncServerNoFilesToDownload()
             }
             else {
                 // No need to do recovery since we just started. It is also possible that the lock is held at this point.

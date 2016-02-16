@@ -10,8 +10,11 @@
 		25A15FE102572BB137CB1ABB /* Pods_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */; };
 		4AF31FA272CAB9B43640F522 /* Pods_XCTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */; };
 		8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */; };
-		8322EB8B1C7004FC00DF418C /* TwoDeviceBasics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB8A1C7004FC00DF418C /* TwoDeviceBasics.swift */; };
+		8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */; };
 		8322EB921C700F1700DF418C /* ClassExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB911C700F1700DF418C /* ClassExtras.m */; };
+		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
+		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFail.swift */; };
+		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
@@ -88,9 +91,12 @@
 /* Begin PBXFileReference section */
 		588A96CF00CEB88911F3F4B4 /* Pods-Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-Tests/Pods-Tests.release.xcconfig"; sourceTree = "<group>"; };
 		8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TwoDeviceTestCase.swift; path = TwoDeviceTests/TwoDeviceTestCase.swift; sourceTree = "<group>"; };
-		8322EB8A1C7004FC00DF418C /* TwoDeviceBasics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TwoDeviceBasics.swift; path = TwoDeviceTests/TwoDeviceBasics.swift; sourceTree = "<group>"; };
-		8322EB901C700F1700DF418C /* ClassExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClassExtras.h; path = Code/ClassExtras.h; sourceTree = "<group>"; };
-		8322EB911C700F1700DF418C /* ClassExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ClassExtras.m; path = Code/ClassExtras.m; sourceTree = "<group>"; };
+		8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatServerHasNewFileWorks.swift; path = TwoDeviceTests/TestThatServerHasNewFileWorks.swift; sourceTree = "<group>"; };
+		8322EB901C700F1700DF418C /* ClassExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClassExtras.h; sourceTree = "<group>"; };
+		8322EB911C700F1700DF418C /* ClassExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClassExtras.m; sourceTree = "<group>"; };
+		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
+		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFail.swift; path = TwoDeviceTests/TestThatOperationWithLockFail.swift; sourceTree = "<group>"; };
+		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
@@ -159,9 +165,8 @@
 			isa = PBXGroup;
 			children = (
 				8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */,
-				8322EB901C700F1700DF418C /* ClassExtras.h */,
-				8322EB911C700F1700DF418C /* ClassExtras.m */,
-				8322EB8A1C7004FC00DF418C /* TwoDeviceBasics.swift */,
+				8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */,
+				8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */,
 			);
 			name = "Two Device Tests";
 			path = ..;
@@ -171,11 +176,31 @@
 			isa = PBXGroup;
 			children = (
 				83A4F1D31C6854C60086B22F /* TestBasics.swift */,
+				8322EB901C700F1700DF418C /* ClassExtras.h */,
+				8322EB911C700F1700DF418C /* ClassExtras.m */,
 				83D3E88F1C4C01E800BFDA93 /* XCTests */,
 				8322EB871C70041F00DF418C /* Two Device Tests */,
 			);
 			name = Testing;
 			path = Code;
+			sourceTree = "<group>";
+		};
+		8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */ = {
+			isa = PBXGroup;
+			children = (
+				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
+			);
+			name = "Diff Cloud Creds";
+			sourceTree = "<group>";
+		};
+		8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */ = {
+			isa = PBXGroup;
+			children = (
+				8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */,
+				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFail.swift */,
+				8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */,
+			);
+			name = "Same Cloud Creds";
 			sourceTree = "<group>";
 		};
 		839A06701C4F0CA40037AD9A /* Products */ = {
@@ -552,11 +577,14 @@
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
+				8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFail.swift in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
+				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,
 				83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */,
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
-				8322EB8B1C7004FC00DF418C /* TwoDeviceBasics.swift in Sources */,
+				8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */,
+				8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

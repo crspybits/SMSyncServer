@@ -67,7 +67,7 @@ class Upload: BaseClass {
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
-                    let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                    let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                     XCTAssert(fileAttr != nil)
                     XCTAssert(!fileAttr!.deleted!)
                 
@@ -105,7 +105,7 @@ class Upload: BaseClass {
                 // File should have been deleted by now.
                 XCTAssert(!FileStorage.itemExists(testFile.fileName))
                 
-                let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(!fileAttr!.deleted!)
                 
@@ -158,7 +158,7 @@ class Upload: BaseClass {
                 TestBasics.session.checkFileSize(fileUUIDString!, size: strData.length) {
                     uploadCompleteCallbackExpectation.fulfill()
                     
-                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    let fileAttr = SMSyncServer.session.localFileStatus(fileUUID)
                     XCTAssert(fileAttr != nil)
                     XCTAssert(!fileAttr!.deleted!)
                 }
@@ -209,7 +209,7 @@ class Upload: BaseClass {
                 TestBasics.session.checkFileSize(file.uuid!, size: sizeInBytesExpectedOnServer) {
                     uploadCompleteCallbackExpectation.fulfill()
                     
-                    let fileAttr = SMSyncServer.session.fileStatus(fileUUID)
+                    let fileAttr = SMSyncServer.session.localFileStatus(fileUUID)
                     XCTAssert(fileAttr != nil)
                     XCTAssert(!fileAttr!.deleted!)
                 }
@@ -251,11 +251,11 @@ class Upload: BaseClass {
                 TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
                     TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
                     
-                        let fileAttr1 = SMSyncServer.session.fileStatus(testFile1.uuid)
+                        let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                         XCTAssert(fileAttr1 != nil)
                         XCTAssert(!fileAttr1!.deleted!)
                         
-                        let fileAttr2 = SMSyncServer.session.fileStatus(testFile2.uuid)
+                        let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                         XCTAssert(fileAttr2 != nil)
                         XCTAssert(!fileAttr2!.deleted!)
                     
@@ -303,7 +303,7 @@ class Upload: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: fileSizeBytes) {
 
-                    let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                    let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                     XCTAssert(fileAttr != nil)
                     XCTAssert(!fileAttr!.deleted!)
 

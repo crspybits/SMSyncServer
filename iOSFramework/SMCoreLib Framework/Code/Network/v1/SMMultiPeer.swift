@@ -9,7 +9,7 @@ import Foundation
 import MultipeerConnectivity
 
 public protocol SMMultiPeerDelegate : class {
-    func didReceive(string string:String, fromPeer:String)
+    func didReceive(data data:NSData, fromPeer:String)
 }
 
 public class SMMultiPeer : NSObject {
@@ -44,16 +44,16 @@ public class SMMultiPeer : NSObject {
     }()
 
     // returns true iff there was no error sending.
-    public func sendString(string : String) -> Bool {
+    public func sendData(data:NSData) -> Bool {
         var result:Bool = true
         
         if session.connectedPeers.count > 0 {
             var error : NSError?
             do {
-                try self.session.sendData(string.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, toPeers: self.session.connectedPeers, withMode: MCSessionSendDataMode.Reliable)
+                try self.session.sendData(data, toPeers: self.session.connectedPeers, withMode: MCSessionSendDataMode.Reliable)
             } catch let error1 as NSError {
                 error = error1
-                NSLog("%@", "\(error)")
+                Log.error("\(error)")
                 result = false
             }
         }
@@ -62,6 +62,11 @@ public class SMMultiPeer : NSObject {
         }
         
         return result
+    }
+    
+    // returns true iff there was no error sending.
+    public func sendString(string : String) -> Bool {
+        return self.sendData(string.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!)
     }
 }
 
@@ -113,8 +118,8 @@ extension SMMultiPeer : MCSessionDelegate {
     
     public func session(session: MCSession, didReceiveData data: NSData, fromPeer peerID: MCPeerID) {
         NSLog("%@", "didReceiveData: \(data.length) bytes")
-        let str = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
-        self.delegate?.didReceive(string: str, fromPeer: peerID.displayName)
+        //let str = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        self.delegate?.didReceive(data: data, fromPeer: peerID.displayName)
     }
     
     public func session(session: MCSession, didReceiveStream stream: NSInputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

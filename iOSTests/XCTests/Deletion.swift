@@ -67,7 +67,7 @@ class Deletion: BaseClass {
                 XCTAssert(numberDeletions == 1)
                 XCTAssert(!SMSyncServer.session.isOperating)
                 
-                let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
@@ -149,11 +149,11 @@ class Deletion: BaseClass {
                 XCTAssert(numberDeletions == 2)
                 XCTAssert(!SMSyncServer.session.isOperating)
                 
-                let fileAttr1 = SMSyncServer.session.fileStatus(testFile1.uuid)
+                let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
                 XCTAssert(fileAttr1!.deleted!)
 
-                let fileAttr2 = SMSyncServer.session.fileStatus(testFile2.uuid)
+                let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                 XCTAssert(fileAttr2 != nil)
                 XCTAssert(fileAttr2!.deleted!)
                 
@@ -209,7 +209,7 @@ class Deletion: BaseClass {
                 XCTAssert(numberDeletions == 1)
                 commitCompleteCallbackExpectation2.fulfill()
                 
-                let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
@@ -273,7 +273,7 @@ class Deletion: BaseClass {
             self.commitCompleteCallbacks.append() { numberDeletions in
                 XCTAssert(numberDeletions == 1)
                 
-                let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
@@ -303,7 +303,7 @@ class Deletion: BaseClass {
             let testFile = TestBasics.session.createTestFile("UnknownFile")
 
             self.errorCallbacks.append() {
-                let fileAttr = SMSyncServer.session.fileStatus(testFile.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr == nil)
                 
                 errorExpectation.fulfill()
@@ -366,11 +366,11 @@ class Deletion: BaseClass {
                 TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
                     XCTAssert(!SMSyncServer.session.isOperating)
                     
-                    let fileAttr1 = SMSyncServer.session.fileStatus(testFile1.uuid)
+                    let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                     XCTAssert(fileAttr1 != nil)
                     XCTAssert(fileAttr1!.deleted!)
                     
-                    let fileAttr2 = SMSyncServer.session.fileStatus(testFile2.uuid)
+                    let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                     XCTAssert(fileAttr2 != nil)
                     XCTAssert(!fileAttr2!.deleted!)
                 
@@ -429,7 +429,7 @@ class Deletion: BaseClass {
                 XCTAssert(numberOperations == 1)
                 XCTAssert(!SMSyncServer.session.isOperating)
                 
-                let fileAttr = SMSyncServer.session.fileStatus(testFile1.uuid)
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 

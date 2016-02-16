@@ -10,6 +10,22 @@ import Foundation
 @testable import SMSyncServer
 import SMCoreLib
 
+internal class SlaveData : NSObject, NSCoding {
+    var sizeInBytes:Int32 = 0
+    
+    override init() {
+        super.init()
+    }
+    
+    internal required init?(coder aDecoder: NSCoder) {
+        self.sizeInBytes = aDecoder.decodeInt32ForKey("sizeInBytes")
+    }
+    
+    internal func encodeWithCoder(aCoder: NSCoder) {
+        aCoder.encodeInt32(self.sizeInBytes, forKey: "sizeInBytes")
+    }
+}
+
 // Must derive from NSObject because subclasses use RepeatingTimer
 class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
     var testLabel:String!
@@ -41,12 +57,17 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
     
     weak var delegate:TestResultDelegate?
     
+    // This is called exactly once.
+    func createDataForSlave() -> NSData? {
+        return nil
+    }
+    
     func master() {
         SMSyncServer.session.delegate = self
         self.isMaster = true
     }
     
-    func slave() {
+    func slave(dataForSlave dataForSlave:NSData?) {
         SMSyncServer.session.delegate = self
         self.isMaster = false
     }
