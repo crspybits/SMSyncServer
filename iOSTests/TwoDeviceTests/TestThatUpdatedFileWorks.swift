@@ -16,7 +16,7 @@ import SMCoreLib
 class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
     
     init() {
-        super.init(withTestLabel: "S: Server has updated file")
+        super.init(withTestLabel: "S: 2) Server has updated file")
         TestBasics.session.failure = {
             self.failTest("TestBasics.session.failure")
         }
@@ -61,6 +61,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
     }
     
+    let masterWaitTime:Float = 30.0
+    
     override func syncServerCommitComplete(numberOperations numberOperations: Int?) {
         if self.isSlave {
             self.failTest()
@@ -80,8 +82,11 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
                     self.failTest()
                 }
             
-                SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-                SMSyncServer.session.commit()
+                // Give the slave time to download the first file version.
+                TimedCallback.withDuration(self.masterWaitTime) {
+                    SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+                    SMSyncServer.session.commit()
+                }
             }
         }
         else {
@@ -107,8 +112,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         self.slaveData = NSKeyedUnarchiver.unarchiveObjectWithData(dataForSlave!) as? SlaveData
         self.assertIf(self.slaveData == nil, thenFailAndGiveMessage: "Got nil data on slave!")
         
-        // The timer will not be running when created.
-        self.timer = RepeatingTimer(interval: 10.0, selector: "checkForDownloads", andTarget: self)
+        // The timer will not be running when created. The divided by factor is just to ensure the timer interval for the slave is quite a bit smaller than the waiting interval of the master.
+        self.timer = RepeatingTimer(interval: self.masterWaitTime/10.0, selector: "checkForDownloads", andTarget: self)
         self.checkForDownloads()
     }
     
@@ -157,17 +162,19 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         var expectedFileSize:Int32!
         
         if 1 == self.numberDownloads {
-            // Create AppFile so it shows up in the local app.
+            // First download. Create AppFile so it shows up in the local app.
         
-            appFile = AppFile.newObjectAndMakeUUID(true)
+            appFile = AppFile.newObjectAndMakeUUID(false)
+            appFile.uuid = attr.uuid.UUIDString
             appFile.fileName = attr.remoteFileName
             CoreData.sessionNamed(CoreDataTests.name).saveContext()
             
             expectedFileSize = self.slaveData!.sizeInBytes
         }
         else {
+            // Second download. We should have already created the AppFile.
             appFile = AppFile.fetchObjectWithUUID(attr.uuid!.UUIDString)
-            self.assertIf(nil == appFile, thenFailAndGiveMessage: "Could not find AppFile")
+            self.assertIf(nil == appFile, thenFailAndGiveMessage: "Could not find AppFile: uuid: \(attr.uuid!.UUIDString)")
             
             do {
                 try NSFileManager.defaultManager().removeItemAtURL(fileURL)
@@ -186,7 +193,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         
         let path = FileStorage.pathToItem(appFile.fileName)
         let sizeInBytes = FileStorage.fileSize(path)
-        self.assertIf(UInt(expectedFileSize) != sizeInBytes, thenFailAndGiveMessage: "File size was not that expected")
+        self.assertIf(UInt(expectedFileSize) != sizeInBytes, thenFailAndGiveMessage: "File size: \(sizeInBytes) was not that expected: \(expectedFileSize); self.numberDownloads= \(self.numberDownloads)")
     }
 
     override func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
@@ -199,14 +206,18 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             self.singleFileDownloadComplete(url, withFileAttributes: attr)
         }
         
-        if self.numberDownloads == 2 {
+        if self.numberDownloads == 1 {
+            // We are expecting one more download.
+            self.timer!.start()
+        }
+        else if self.numberDownloads == 2 {
+            // On the slave, we'll get one file downloaded each time.
             self.passTest()
+            self.timer!.cancel()
         }
-        else {
-            self.failTest("Didn't get exactly two downloads; got: \(self.numberDownloads)")
+        else if self.numberDownloads > 2 {
+            self.failTest("Got more than two downloads: \(self.numberDownloads)")
         }
-        
-        self.timer!.cancel()
     }
     
     // If the slave has the lock while we're trying to upload, the master will get this called.

@@ -77,6 +77,7 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
     }
     
     func failTest(message:String? = __FUNCTION__) {
+        Log.error("failTest: \(message)")
         let alert = UIAlertView(title: "Test Failed", message: message, delegate: nil, cancelButtonTitle: "OK")
         UserMessage.session().showAlert(alert, ofType: .Error)
         self.delegate?.running(self, gaveResult: .Failed)

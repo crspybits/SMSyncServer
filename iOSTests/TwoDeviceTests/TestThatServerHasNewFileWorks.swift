@@ -14,7 +14,7 @@ import SMCoreLib
 class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     
     init() {
-        super.init(withTestLabel: "S: Server has new file")
+        super.init(withTestLabel: "S: 1) Server has new file")
         TestBasics.session.failure = {
             self.failTest("TestBasics.session.failure")
         }

@@ -202,8 +202,8 @@
 			isa = PBXGroup;
 			children = (
 				8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */,
-				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */,
 				8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */,
+				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */,
 			);
 			name = "Same Cloud Creds";
 			sourceTree = "<group>";
