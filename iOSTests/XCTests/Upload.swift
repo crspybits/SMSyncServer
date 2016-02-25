@@ -737,7 +737,7 @@ class Upload: BaseClass {
                     singleUploadExpectation.fulfill()
                 }
             
-                self.progressCallbacks.append() { progress in
+                self.singleProgressCallback = { progress in
                     // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                     progressCallbackExpected.fulfill()
 
@@ -752,7 +752,7 @@ class Upload: BaseClass {
         else {
             // 2nd run of test.
             
-            self.progressCallbacks.append() { progress in
+            self.singleProgressCallback = { progress in
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 progressCallbackExpected.fulfill()
             }
@@ -796,9 +796,11 @@ class Upload: BaseClass {
             
             // I'm not putting a recovery expectation in here because internally this recovery goes through a number of steps -- it waits to try to make sure the operation doesn't switch from Not Started to In Progress.
             self.singleProgressCallback =  { progress in
+                self.numberOfRecoverySteps += 1
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
@@ -836,7 +838,7 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
-            self.progressCallbacks.append() { progress in
+            self.singleProgressCallback = { progress in
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 XCTAssertTrue(!self.doneRecovery)
                 self.doneRecovery = true
@@ -885,15 +887,10 @@ class Upload: BaseClass {
     
     // Server-side detailed testing following from CommitChanges
     func testThatServerCommitChangesTestCaseWorks() {
-        // The client goes through two calls to the progress delegate method in the recovery process for SMSyncServerConstants.dbTcCommitChanges.
-        
         let context = SMTestContext.OutboundTransfer
         let serverTestCase = SMServerConstants.dbTcCommitChanges
         let fileName = context.rawValue + String(serverTestCase)
-        var numberRecoverySteps = 0
-        
-        let progressCallbackExpectation1 = self.expectationWithDescription("Progress Callback1")
-        let progressCallbackExpectation2 = self.expectationWithDescription("Progress Callback2")
+
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
 
@@ -906,21 +903,12 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
-            self.progressCallbacks.append() { progress in
+            self.singleProgressCallback = { progress in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 1)
-                progressCallbackExpectation1.fulfill()
-            }
-            
-            self.progressCallbacks.append() { progress in
-                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 2)
-                progressCallbackExpectation2.fulfill()
+                self.numberOfRecoverySteps += 1
             }
             
             self.singleUploadCallbacks.append() { uuid in
@@ -929,7 +917,7 @@ class Upload: BaseClass {
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssertEqual(numberRecoverySteps, 2)
+                XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
@@ -951,10 +939,6 @@ class Upload: BaseClass {
         
         let context = SMTestContext.OutboundTransfer
         let fileName = context.rawValue + String(serverTestCase)
-        var numberRecoverySteps = 0
-        
-        let progressCallbackExpectation1 = self.expectationWithDescription("Progress Callback1")
-        let progressCallbackExpectation2 = self.expectationWithDescription("Progress Callback2")
 
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
@@ -968,21 +952,13 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
 
-            self.progressCallbacks.append() { progress in
+            self.singleProgressCallback = { progress in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 1)
-                progressCallbackExpectation1.fulfill()
-            }
-            
-            self.progressCallbacks.append() { progress in
-                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 2)
-                progressCallbackExpectation2.fulfill()
+                // Also not going to worry about exact number of recovery steps. For the same reason.
+                self.numberOfRecoverySteps += 1
             }
             
             self.singleUploadCallbacks.append() { uuid in
@@ -991,7 +967,7 @@ class Upload: BaseClass {
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssertEqual(numberRecoverySteps, 2)
+                XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
@@ -1023,11 +999,9 @@ class Upload: BaseClass {
         let context = SMTestContext.OutboundTransfer
         let fileName1 = context.rawValue + String(serverTestCase) + "A"
         let fileName2 = context.rawValue + String(serverTestCase) + "B"
-
-        var numberRecoverySteps = 0
         
-        let progressCallbackExpectation1 = self.expectationWithDescription("Progress Callback1")
-        let progressCallbackExpectation2 = self.expectationWithDescription("Progress Callback2")
+        //let progressCallbackExpectation1 = self.expectationWithDescription("Progress Callback1")
+        //let progressCallbackExpectation2 = self.expectationWithDescription("Progress Callback2")
 
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
@@ -1046,21 +1020,12 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
 
-            self.progressCallbacks.append() { progress in
+            self.singleProgressCallback = { progress in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 1)
-                progressCallbackExpectation1.fulfill()
-            }
-            
-            self.progressCallbacks.append() { progress in
-                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                numberRecoverySteps++
-                XCTAssertEqual(numberRecoverySteps, 2)
-                progressCallbackExpectation2.fulfill()
+                self.numberOfRecoverySteps += 1
             }
             
             self.singleUploadCallbacks.append() { uuid in
@@ -1074,7 +1039,7 @@ class Upload: BaseClass {
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssertEqual(numberRecoverySteps, 2)
+                XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberUploads == 2)
                 TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
                     TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {

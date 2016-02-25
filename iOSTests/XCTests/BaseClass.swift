@@ -25,8 +25,8 @@ class BaseClass: XCTestCase {
     typealias progressCallback = (progress:SMClientMode)->()
     // If you give this, then progressCallbacks is not used.
     var singleProgressCallback:progressCallback?
-    var progressSequenceNumber = 0
-    var progressCallbacks:[progressCallback]!
+    //var progressSequenceNumber = 0
+    //var progressCallbacks:[progressCallback]!
     
     typealias commitCompleteCallback = (numberUploads:Int?)->()
     var commitCompleteSequenceNumber = 0
@@ -56,6 +56,8 @@ class BaseClass: XCTestCase {
     var errorSequenceNumber = 0
     var errorCallbacks:[errorCallback]!
     
+    var numberOfRecoverySteps = 0
+    
     override func setUp() {
         super.setUp()
 
@@ -66,13 +68,14 @@ class BaseClass: XCTestCase {
         self.commitCompleteSequenceNumber = 0
         self.commitCompleteCallbacks = [commitCompleteCallback]()
         self.errorCallbacks = [errorCallback]()
-        self.progressCallbacks = [progressCallback]()
+        //self.progressCallbacks = [progressCallback]()
         self.singleUploadCallbacks = [singleUploadCallback]()
         self.deletionCallbacks = [deletionCallback]()
         self.singleDownload = [singleDownloadType]()
         self.downloadsCompleteCallbacks = [downloadsCompletedCallback]()
         self.noDownloadsCallbacks = [noDownloadsCallback]()
         self.singleProgressCallback = nil
+        self.numberOfRecoverySteps = 0
         
         TestBasics.session.failure = {
             XCTFail()
@@ -100,13 +103,14 @@ class BaseClass: XCTestCase {
 extension BaseClass : SMSyncServerDelegate {
     // Expect this to be called first for the recovery tests.
     func syncServerRecovery(progress:SMClientMode) {
-        if nil == self.singleProgressCallback {
-            self.progressCallbacks[self.progressSequenceNumber](progress: progress)
-            self.progressSequenceNumber += 1
-        }
-        else {
+        if nil != self.singleProgressCallback {
+        //    self.progressCallbacks[self.progressSequenceNumber](progress: progress)
+        //    self.progressSequenceNumber += 1
+        //}
+        //else {
             self.singleProgressCallback!(progress: progress)
         }
+        self.numberOfRecoverySteps += 1
     }
     
     func syncServerDeletionsSent(uuids: [NSUUID]) {
