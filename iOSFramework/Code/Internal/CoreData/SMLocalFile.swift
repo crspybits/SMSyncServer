@@ -55,40 +55,8 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
     }
     
     class func fetchObjectWithUUID(uuid:String) -> SMLocalFile? {
-        var localFiles:[SMLocalFile]?
-        
-        Log.msg("Looking for UUID: \(uuid)");
-
-        do {
-            let result = try CoreData.sessionNamed(SMCoreData.name).fetchObjectsWithEntityName(SMLocalFile.entityName()) { (request: NSFetchRequest!) in
-                // This doesn't seem to work
-                //NSString *predicateFormat = [NSString stringWithFormat:@"(%@ == %%s)", UUID_KEY];
-                // See https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/Predicates/Articles/pSyntax.html
-                // And http://stackoverflow.com/questions/15505208/creating-nspredicate-dynamically-by-setting-the-key-programmatically
-            
-                request.predicate = NSPredicate(format: "(%K == %@)", UUID_KEY, uuid)
-            }
-            
-            localFiles = result as? [SMLocalFile]
-            
-        } catch (let error) {
-            Log.msg("\(error)")
-        }
-        
-        var localFile:SMLocalFile?
-        
-        if nil != localFiles {
-            if localFiles!.count > 1 {
-                Log.error("There is more than one object with that UUID: \(uuid)");
-            }
-            else if localFiles!.count == 1 {
-                localFile = localFiles![0]
-            }
-            
-            // Could still have 0 localFiles-- returning nil in that case.
-        }
-        
-        return localFile
+        let managedObject = CoreData.fetchObjectWithUUID(uuid, usingUUIDKey: UUID_KEY, fromEntityName: SMLocalFile.entityName(), coreDataSession: CoreData.sessionNamed(SMCoreData.name))
+        return managedObject as? SMLocalFile
     }
     
     var locallyChanged:Bool {

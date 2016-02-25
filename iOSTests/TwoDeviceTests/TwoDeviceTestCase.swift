@@ -52,6 +52,10 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
             }
         }
         
+        result.sortInPlace { (testCase1, testCase2) -> Bool in
+            testCase1.testLabel < testCase2.testLabel
+        }
+        
         return result
     }
     
@@ -88,13 +92,7 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         }
     }
     
-    // The callee owns the localFile after this call completes. The file is temporary in the sense that it will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location.
-    func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
-        failTest()
-    }
-    
-    // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
-    func syncServerAllDownloadsComplete() {
+    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
         failTest()
     }
     
@@ -119,7 +117,7 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
     }
     
     // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-    func syncServerRecovery(progress:SMSyncServerRecovery) {
+    func syncServerRecovery(progress:SMClientMode) {
         failTest()
     }
     

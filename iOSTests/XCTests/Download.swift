@@ -98,7 +98,7 @@ class Download: BaseClass {
                 }
             }
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -106,7 +106,7 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.allDownloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() {
                 XCTAssert(numberDownloads == 1)
                 allDownloadsCompleteExpectation.fulfill()
             }
@@ -240,7 +240,7 @@ class Download: BaseClass {
             
             // The ordering of the following two downloads isn't really well specified, but guessing it'll be in the same order as uploaded. Could make the check for download more complicated and order invariant...
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -248,7 +248,7 @@ class Download: BaseClass {
                 singleDownloadExpectation1.fulfill()
             }
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile2.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -256,7 +256,7 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.allDownloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() {
                 XCTAssert(numberDownloads == 2)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
@@ -346,7 +346,7 @@ class Download: BaseClass {
                 }
             }
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -354,7 +354,7 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.allDownloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() {
                 XCTAssert(numberDownloads == 1)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
@@ -437,7 +437,7 @@ class Download: BaseClass {
             
             // The ordering of the following two downloads isn't really well specified, but guessing it'll be in the same order as uploaded. Could make the check for download more complicated and order invariant...
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -445,7 +445,7 @@ class Download: BaseClass {
                 singleDownloadExpectation1.fulfill()
             }
             
-            self.downloadCallbacks.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile2.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
@@ -453,7 +453,7 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.allDownloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() {
                 XCTAssert(numberDownloads == 2)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
@@ -497,4 +497,7 @@ class Download: BaseClass {
     // TODO: Server file has been deleted, so download causes deletion of file on app/client. NOTE: This isn't yet handled by SMFileDiffs.
     
     // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts. NOTE: This isn't yet handled by SMFileDiffs.
+    
+    // TODO: Test download recovery where there are no files remaining to be downloaded.
+    
 }

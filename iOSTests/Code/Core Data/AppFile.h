@@ -17,6 +17,8 @@
 
 - (NSURL *) url;
 
++ (NSString *) entityName;
+
 + (AppFile *) newObject;
 + (AppFile *) newObjectAndMakeUUID: (BOOL) makeUUID;
 

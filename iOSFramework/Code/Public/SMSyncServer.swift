@@ -13,12 +13,6 @@
 import Foundation
 import SMCoreLib
 
-public enum SMSyncServerRecovery {
-    case Upload
-    case MayHaveCommitted
-    case OutboundTransfer
-}
-
 public class SMSyncAttributes {
     // The identifier for the file/data item.
     public var uuid:NSUUID!
@@ -65,15 +59,40 @@ public class SMSyncConflicts : SMSyncAttributes {
 }
 */
 
+// This mode spans both upload and download operations. I'm doing it this way for three reasons: (a) SMSync enforces a rule where we only do operations sequentially (e.g., we can't have an upload and a download happening at the same time), (b) so that the syncServerRecovery delegate method can report using a single enum type, and (c) there are some shared modes across upload and download (i.e., Normal, and NonRecoverableError).
+
+public enum SMClientMode : Int {
+    // Non-error, non-recovery operating condition
+    case Normal
+    
+    // We've reported an error that we couldn't recover from. Keep a persistent record of that error until we're assured of externally provided recovery.
+    case NonRecoverableError
+
+    // MARK: Upload recovery modes
+    
+    // We're going to categorize errors on the server into a few main types for the purpose of recovery:
+    
+    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between lock and the commit, prior to a successful commit. (By successful commit, I mean that the commit successfully started asynchronous operation of the file transfer on the server).
+    case UploadRecovery
+    
+    // 2) An edge recovery case that needs more execution-time evaluation to determine whether to categorize it as UploadRecovery or OutboundTransferRecovery.
+    case MayHaveCommittedRecovery
+    
+    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the UploadRecovery mode. i.e., the commit *was* successful.
+    case OutboundTransferRecovery
+    
+    // MARK: Download recovery modes
+    
+    case InboundTransferRecovery
+    case DownloadRecovery
+}
+
 // "class" to make the delegate weak.
 // TODO: These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
-    
-    // The callee owns the localFile after this call completes. The file is temporary in the sense that it will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location.
-    func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes)
-    
-    // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
-    func syncServerAllDownloadsComplete()
+    // Called at the end of all downloads, on non-error conditions.
+    // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note on ths delegate method.
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
     
     // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
     func syncServerDeletionReceived(uuid uuid:NSUUID)
@@ -87,8 +106,8 @@ public protocol SMSyncServerDelegate : class {
     // This is called after the server has finished performing the transfers of files to cloud storage/deletions in cloud storage. numberOperations includes upload and deletion operations.
     func syncServerCommitComplete(numberOperations numberOperations:Int?)
     
-    // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-    func syncServerRecovery(progress:SMSyncServerRecovery)
+    // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging. The value of the SMClientMode will only be one of the upload or download recovery modes.
+    func syncServerRecovery(progress:SMClientMode)
     
     // TODO: Reports conflicting file versions when uploading or downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
     // TODO: Can these occur both on upload and download?
@@ -152,7 +171,7 @@ public class SMSyncServer : NSObject {
     public var autoCommit:Bool {
         set {
             _autoCommit = newValue
-            if .Normal == SMUploadFiles.mode {
+            if .Normal == SMSyncServer.mode {
                 self.startNormalTimer()
             }
         }
@@ -162,7 +181,7 @@ public class SMSyncServer : NSObject {
     }
     
     private func startNormalTimer() {
-        if .Normal == SMUploadFiles.mode {
+        if .Normal == SMSyncServer.mode {
             return
         }
         
@@ -172,6 +191,18 @@ public class SMSyncServer : NSObject {
             self.normalTimer = TimedCallback(duration: _autoCommitIntervalSeconds) {
                 self.commit()
             }
+        }
+    }
+    
+    // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
+    private static let _mode = SMPersistItemInt(name: "SMSyncServer.Mode", initialIntValue: SMClientMode.Normal.rawValue, persistType: .UserDefaults)
+    
+    internal class var mode:SMClientMode {
+        get {
+            return SMClientMode(rawValue: _mode.intValue)!
+        }
+        set {
+            _mode.intValue = newValue.rawValue
         }
     }
     
@@ -207,6 +238,7 @@ public class SMSyncServer : NSObject {
         Log.msg("signInCompletedAction")
         
         // This will start a delayed upload, if there was one, so leave this until after user is signed in.
+        // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
         SMUploadFiles.session.appLaunchSetup()
         
         // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
@@ -458,3 +490,6 @@ public class SMSyncServer : NSObject {
         SMUploadFiles.session.resetFromError()
     }
 }
+
+/* [1]. 2/24/16; Up until today, the design for the download delegate provided a callback to the app/client for each single file downloaded. However, that doesn't seem to be the right way to go because of the possibility that downloads will fail part way through. E.g., there could be two files to download and only one gets downloaded successfully at this point in time. This partial download scenario doesn't fit with the atomic/transactional character of the operations we are trying to provide. So I've switched the delegates over to a single callback indicating to the app/client that all downloads have completed.
+*/

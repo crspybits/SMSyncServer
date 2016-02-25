@@ -24,6 +24,7 @@
 		835D80261C64243E004DBF79 /* UINavigationController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80241C64243E004DBF79 /* UINavigationController+Extras.m */; };
 		835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */; };
+		837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06331C7C0C8F000695F2 /* CoreData.swift */; };
 		83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1E11C692E820086B22F /* NSDate+Extras.m */; };
 		83A4F1E41C692E820086B22F /* NSDate+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1E21C692E820086B22F /* NSDate+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A4F1F01C6977370086B22F /* SMEdgeInsetLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -134,6 +135,7 @@
 		835D80241C64243E004DBF79 /* UINavigationController+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UINavigationController+Extras.m"; path = "Code/Categories/v1/UINavigationController+Extras.m"; sourceTree = "<group>"; };
 		835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ChangeFrameTransitioningDelegate.h; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.h; sourceTree = SOURCE_ROOT; };
 		835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ChangeFrameTransitioningDelegate.m; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.m; sourceTree = SOURCE_ROOT; };
+		837E06331C7C0C8F000695F2 /* CoreData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreData.swift; path = Code/CoreData/v2/CoreData.swift; sourceTree = "<group>"; };
 		83A4F1E11C692E820086B22F /* NSDate+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSDate+Extras.m"; path = "Code/Categories/v1/NSDate+Extras.m"; sourceTree = "<group>"; };
 		83A4F1E21C692E820086B22F /* NSDate+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSDate+Extras.h"; path = "Code/Categories/v1/NSDate+Extras.h"; sourceTree = "<group>"; };
 		83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMEdgeInsetLabel.h; sourceTree = "<group>"; };
@@ -459,6 +461,7 @@
 				83D3EDAB1C4DC94800BFDA93 /* CoreDataSource.m */,
 				83D3EDAC1C4DC94800BFDA93 /* CoreData.h */,
 				83D3EDAD1C4DC94800BFDA93 /* CoreData.m */,
+				837E06331C7C0C8F000695F2 /* CoreData.swift */,
 			);
 			name = CoreData;
 			sourceTree = "<group>";
@@ -685,6 +688,7 @@
 				83D3ED711C4DC8F300BFDA93 /* SMMutableDictionary.m in Sources */,
 				83D3ED551C4DC85300BFDA93 /* UIProgressView+AFNetworking.m in Sources */,
 				83D3EDA51C4DC93900BFDA93 /* LogFile.m in Sources */,
+				837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */,
 				83D3ED691C4DC89200BFDA93 /* SMPersistVars.swift in Sources */,
 				83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */,
 				83D3ED2B1C4DC84500BFDA93 /* AFSecurityPolicy.m in Sources */,

@@ -621,11 +621,13 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
                 var message = "Error: Have lock, but operation is already in progress!";
                 logger.error(message);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            } else if (psOperationId.operationType != "Outbound") {
+            }
+            else if (psOperationId.operationType != "Outbound") {
                 var message = "Error: Not doing outbound operation!";
                 logger.error(message);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            } else {
+            }
+            else {
                 // Already have operation Id.
                 startOutboundTransfer(op, psLock, psOperationId);
             }
@@ -688,7 +690,7 @@ function startOutboundTransfer(op, psLock, psOperationId) {
                     });
                 }
                 else {
-                    startOutboundTransferOfFiles(op, psLock, psOperationId);
+                    startTransferOfFiles(op, psLock, psOperationId, "sendFiles");
                 }
             });
         }
@@ -700,7 +702,8 @@ function startOutboundTransfer(op, psLock, psOperationId) {
 // It seems this untethered operation is a characteristic of Node.js: http://stackoverflow.com/questions/16180502/node-express-why-can-i-execute-code-after-res-send
 // We'll have to do something separate to deal with (A) reporting/logging errors post-connection termation, (B) handling errors, and (C) ensuring termination (i.e., ensuring we don't run for too long).
 // If we were using websockets, could we inform the app of an error in the file transfer? Presumably if the app was in the background, not launched, or not on the network, no.
-function startOutboundTransferOfFiles(op, psLock, psOperationId) {
+// transferMethodName can be "sendFiles" or "receiveFiles"
+function startTransferOfFiles(op, psLock, psOperationId, transferMethodName) {
     // Change PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
     psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
     psOperationId.error = null;
@@ -714,8 +717,8 @@ function startOutboundTransferOfFiles(op, psLock, psOperationId) {
             // 2) Tell the user we're off to the races, and end the connection.
             op.endWithRC(ServerConstants.rcOK);
             
-            // 3) Do the file transfer to the cloud storage system.
-            cloudStorageTransfer(op, psLock, psOperationId, "sendFiles")
+            // 3) Do the file transfer between the cloud storage system and the sync server.
+            cloudStorageTransfer(op, psLock, psOperationId, transferMethodName)
         }
     });
 }
@@ -1148,10 +1151,10 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
                     op.endWithErrorDetails(error);
                 }
                 else {
-                    // Originally I was thinking of this as now being in the same kind of situation as file changes recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like file changes recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
-                    // startOutboundTransferOfFiles calls cloudStorageTransfer, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
+                    // Originally I was thinking of this as now being in the same kind of situation as upload recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like upload recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
+                    // startTransferOfFiles calls cloudStorageTransfer, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
                     // In fact, this will act in the same manner as the end part of CommitFileChanges-- it will let the file transfer run asynchronously and "return" to the server REST API caller.
-                    startOutboundTransferOfFiles(op, psLock, psOperationId);
+                    startTransferOfFiles(op, psLock, psOperationId, "sendFiles");
                 }
             });
         }
@@ -1294,7 +1297,7 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                                     op.endWithRC(ServerConstants.rcOK);
                                     
                                     // Do the asynchronous file transfer from the cloud storage system.
-                                    cloudStorageTransfer(op, psLock, psOperationId, "receiveFiles")
+                                    cloudStorageTransfer(op, psLock, psOperationId, "receiveFiles");
                                 }
                             });
                         }
@@ -1305,7 +1308,8 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
     });
 });
 
-// transferMethod is given by a string.
+// transferMethod is given by a string-- this is a method of the FileTransfers.sjs class. "receiveFiles" or "sendFiles"
+// This function operates in asynchronous mode, i.e., with the connection to the client terminated already.
 function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
 
     function updateOperationId(psOperationId, rc, errorMessage) {
@@ -1337,7 +1341,7 @@ function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
                     var errorMessage = "Error transferring files: " + JSON.stringify(error);
                     updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
                     
-                    // I'm not going to remove the lock here to give the app a chance to recover from this error in a locked condition.
+                    // I'm not going to remove the lock here, in order to give the app a chance to recover from this error in a locked condition.
                     return;
                 }
 
@@ -1512,6 +1516,44 @@ function getDownloadFileInfo(request, op, callback) {
         }
     });
 }
+
+app.post('/' + ServerConstants.operationInboundTransferRecovery, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+                    
+        if (!isDefined(psLock)) {
+            // Not considering this to be an API error (i.e., rcServerAPIError) because one of our app/client use cases is to call this when we don't hold the lock.
+            var message = "We don't have the lock!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
+        }
+        else if (!isDefined(psOperationId)) {
+            // Similarly, a use case in our app/client is when we've failed in the inbound transfer prior to establishing an operationId.
+            var message = "There is no operationId!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcNoOperationId, message);
+        }
+        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+            // If the operation is InProgress, we'll consider this not be an error and not something we have to recover from.
+            var message = "Operation was InProgress-- Not doing transfer recovery.";
+            logger.debug(message);
+            op.endWithRC(ServerConstants.rcOK);
+        }
+        else if (psOperationId.operationType != "Inbound") {
+            var message = "Error: Not doing inbound transfer operation!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            startTransferOfFiles(op, psLock, psOperationId, "receiveFiles");
+        }
+    });
+});
 
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");

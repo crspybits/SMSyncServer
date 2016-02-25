@@ -35,6 +35,12 @@ internal func ==(a: InitType, b: InitType) -> Bool {
 }
 
 internal class SMFileDiffs {
+    // Making this a 1 member enum to distinguish between the case of (a) a nil collection of files to download versus (b) not having computed the collection of files to download.
+    private enum FilesToDownload {
+        case Files([SMServerFile]?)
+    }
+
+    private var _filesToDownload:FilesToDownload? // nil means not yet computed.
     private let initType:InitType?
     
     // 1/5/16; We're just going to keep references to the SMFileChange objects. Since these refer back to the SMLocalFile, we'll be OK that way. Up until this date, this array was of type SMLocalFile, but we could run into situations where, if we did an upload, commit, quickly followed by an upload and commit on the same file, we'd not get the upload of the first file. Another way of saying this is that we need to call getMostRecentChangeAndFlush at the very beginning of the commit process. See test testThatUpdateAfterUploadWorks().
@@ -192,9 +198,32 @@ internal class SMFileDiffs {
     */
     // This handles cases 1) and 2) from above.
     // TODO: Handle update and deletion conflicts.
-    // Returns nil if there are no files to download.
-    internal func filesToDownload() -> [SMServerFile]? {
-        var result = [SMServerFile]()
+    // Returns nil if there are no files to download. A new array is returned on each access to this var, but the objects in the array are the same from access to access. It's assumed that you are not modifying the objects contained in the array.
+    internal var filesToDownload:[SMServerFile]? {
+        
+        var current:[SMServerFile]?
+        
+        switch (self._filesToDownload) {
+        case .None:
+            current = self.determineFilesToDownload()
+            self._filesToDownload = .Files(current)
+        
+        case .Some(.Files (let filesToDownload)):
+            current = filesToDownload
+        }
+        
+        if current == nil {
+            return nil
+        }
+        else {
+            var copyOfCurrent = [SMServerFile]()
+            copyOfCurrent.appendContentsOf(current!)
+            return copyOfCurrent
+        }
+    }
+    
+    private func determineFilesToDownload() -> [SMServerFile]? {
+        var result:[SMServerFile]? = [SMServerFile]()
     
         // Awwww. Can't directly compare .RemoteChanges even though I did the Equatable above... :(.
         switch self.initType! {
@@ -218,7 +247,7 @@ internal class SMFileDiffs {
                     let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
                     if localFile == nil {
                         // Case 1) Server file doesn't yet exist on the app/client.
-                        result.append(serverFile)
+                        result!.append(serverFile)
                     }
                     else {
                         Assert.If(nil == serverFile.version, thenPrintThisString: "No version on server file.")
@@ -237,7 +266,7 @@ internal class SMFileDiffs {
                         else if serverVersion > localVersion {
                             // Case 2) Server file is updated version of that on app/client.
                             // Server version is greater. Need to download.
-                            result.append(serverFile)
+                            result!.append(serverFile)
                         } else { // serverVersion < localVersion
                             Assert.badMojo(alwaysPrintThisString: "This should never happen.")
                         }
@@ -245,20 +274,20 @@ internal class SMFileDiffs {
                 }
         }
         
-        if result.count == 0 {
-            return nil
+        if result!.count == 0 {
+            result = nil
         }
         else {
             // Need to give each of these file descriptions a localURL property. We'll need that when doing the download.
             
-            for serverFile in result {
+            for serverFile in result! {
                 let localFile = SMFiles.createTemporaryFile()
                 Assert.If(localFile == nil, thenPrintThisString: "Could not create temporary file")
                 serverFile.localURL = localFile
             }
-            
-            return result
         }
+        
+        return result
     }
     
     private func getFile(fromFiles files:[SMServerFile]?, withUUID uuid: NSUUID) -> SMServerFile? {

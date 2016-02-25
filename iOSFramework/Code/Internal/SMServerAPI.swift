@@ -643,6 +643,23 @@ internal class SMServerAPI {
         }
     }
     
+    internal func inboundTransferRecovery(
+        completion:((apiResult:SMServerAPIResult)->(Void))?) {
+
+        let userParams = self.userDelegate.serverParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+        
+        Log.msg("parameters: \(userParams)")
+        
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationInboundTransferRecovery)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+            let result = self.initialServerResponseProcessing(serverResponse, error: error)
+            completion?(apiResult: result)
+        }
+    }
+    
     // Aside from testing, we're only using this method inside of this class. Use downloadFiles() for non-testing.
     // File will be downloaded to fileToDownload.localURL (which is required). (No other SMServerFile attributes are required, except, of course for the uuid).
     internal func downloadFile(fileToDownload: SMServerFile, completion:((apiResult:SMServerAPIResult)->(Void))?) {

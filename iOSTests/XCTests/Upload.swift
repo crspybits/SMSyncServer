@@ -738,7 +738,7 @@ class Upload: BaseClass {
                 }
             
                 self.progressCallbacks.append() { progress in
-                    XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
+                    XCTAssertEqual(progress, SMClientMode.UploadRecovery)
                     progressCallbackExpected.fulfill()
 
                     SMTest.session.crash()
@@ -753,7 +753,7 @@ class Upload: BaseClass {
             // 2nd run of test.
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
+                XCTAssertEqual(progress, SMClientMode.UploadRecovery)
                 progressCallbackExpected.fulfill()
             }
             
@@ -836,14 +836,14 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
 
-            var progressExpected:SMSyncServerRecovery!
+            var progressExpected:SMClientMode!
             
             switch (context) {
             case .Lock, .GetFileIndex, .UploadFiles:
-                progressExpected = .Upload
+                progressExpected = .UploadRecovery
                 
             case .OutboundTransfer:
-                progressExpected = .MayHaveCommitted
+                progressExpected = .MayHaveCommittedRecovery
             }
             
             self.progressCallbacks.append() { progress in
@@ -920,14 +920,14 @@ class Upload: BaseClass {
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
-                XCTAssertEqual(progress, SMSyncServerRecovery.MayHaveCommitted)
+                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.Upload)
+                XCTAssertEqual(progress, SMClientMode.UploadRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -983,14 +983,14 @@ class Upload: BaseClass {
                 SMTest.session.serverDebugTest = nil
         
                 // Due to the way the recovery works internally, it will go through a .MayHaveCommitted progress state first.
-                XCTAssertEqual(progress, SMSyncServerRecovery.MayHaveCommitted)
+                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.OutboundTransfer)
+                XCTAssertEqual(progress, SMClientMode.OutboundTransferRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -1062,14 +1062,14 @@ class Upload: BaseClass {
                 SMTest.session.serverDebugTest = nil
         
                 // Due to the way the recovery works internally, it will go through a .MayHaveCommitted progress state first.
-                XCTAssertEqual(progress, SMSyncServerRecovery.MayHaveCommitted)
+                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMSyncServerRecovery.OutboundTransfer)
+                XCTAssertEqual(progress, SMClientMode.OutboundTransferRecovery)
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()

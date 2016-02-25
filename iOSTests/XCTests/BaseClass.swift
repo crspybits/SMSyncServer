@@ -22,7 +22,7 @@ class BaseClass: XCTestCase {
     var extraServerResponseTime:Double = 0
     
     // I have sometimes been getting test failures where it looks like the callback is not defined. i.e., there are no entries in the particular callbacks array. However, the callback was defined. This takes the form of an array index out-of-bounds crash. What was happening is that the timeout was exceeded on the prior test, and so XCTests moved on to the next test, but the prior test was actually still running-- interacting with the server. And when it finished, it tried doing the callbacks, which were no longer defined as the setup had been done for the next test. The cure was to extend the duration of the timeouts.
-    typealias progressCallback = (progress:SMSyncServerRecovery)->()
+    typealias progressCallback = (progress:SMClientMode)->()
     // If you give this, then progressCallbacks is not used.
     var singleProgressCallback:progressCallback?
     var progressSequenceNumber = 0
@@ -40,17 +40,17 @@ class BaseClass: XCTestCase {
     var deletionSequenceNumber = 0
     var deletionCallbacks:[deletionCallback]!
 
-    typealias downloadCallback = (localFile:NSURL, attr: SMSyncAttributes)->()
-    var downloadSequenceNumber = 0
-    var downloadCallbacks:[downloadCallback]!
+    typealias singleDownloadType = (localFile:NSURL, attr: SMSyncAttributes)->()
+    var singleDownloadSequenceNumber = 0
+    var singleDownload:[singleDownloadType]!
 
     typealias noDownloadsCallback = ()->()
     var noDownloadsSequenceNumber = 0
     var noDownloadsCallbacks:[noDownloadsCallback]!
     
-    typealias allDownloadsCompleteCallback = ()->()
-    var allDownloadsCompleteSequenceNumber = 0
-    var allDownloadsCompleteCallbacks:[allDownloadsCompleteCallback]!
+    typealias downloadsCompletedCallback = ()->()
+    var downloadsCompleteSequenceNumber = 0
+    var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
     typealias errorCallback = ()->()
     var errorSequenceNumber = 0
@@ -69,8 +69,8 @@ class BaseClass: XCTestCase {
         self.progressCallbacks = [progressCallback]()
         self.singleUploadCallbacks = [singleUploadCallback]()
         self.deletionCallbacks = [deletionCallback]()
-        self.downloadCallbacks = [downloadCallback]()
-        self.allDownloadsCompleteCallbacks = [allDownloadsCompleteCallback]()
+        self.singleDownload = [singleDownloadType]()
+        self.downloadsCompleteCallbacks = [downloadsCompletedCallback]()
         self.noDownloadsCallbacks = [noDownloadsCallback]()
         self.singleProgressCallback = nil
         
@@ -99,7 +99,7 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
     // Expect this to be called first for the recovery tests.
-    func syncServerRecovery(progress:SMSyncServerRecovery) {
+    func syncServerRecovery(progress:SMClientMode) {
         if nil == self.singleProgressCallback {
             self.progressCallbacks[self.progressSequenceNumber](progress: progress)
             self.progressSequenceNumber += 1
@@ -125,16 +125,15 @@ extension BaseClass : SMSyncServerDelegate {
         self.commitCompleteSequenceNumber += 1
     }
     
-    // The callee owns the localFile after this call completes.
-    func syncServerSingleFileDownloadComplete(localFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
-        self.downloadCallbacks[self.downloadSequenceNumber](localFile: localFile, attr: attr)
-        self.downloadSequenceNumber += 1
-    }
-    
-    // Called at the end of all downloads, on a non-error condition, if at least one download carried out.
-    func syncServerAllDownloadsComplete() {
-        self.allDownloadsCompleteCallbacks[self.allDownloadsCompleteSequenceNumber]()
-        self.allDownloadsCompleteSequenceNumber += 1
+    // Called at the end of all downloads, on a non-error condition.
+    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
+        for (url, attr) in downloadedFiles {
+            self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
+            self.singleDownloadSequenceNumber += 1
+        }
+        
+        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber]()
+        self.downloadsCompleteSequenceNumber += 1
     }
     
     func syncServerDeletionReceived(uuid uuid: NSUUID) {

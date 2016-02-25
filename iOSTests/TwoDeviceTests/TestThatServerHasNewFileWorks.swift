@@ -14,7 +14,7 @@ import SMCoreLib
 class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     
     init() {
-        super.init(withTestLabel: "Server has new file")
+        super.init(withTestLabel: "S: Server has new file")
         TestBasics.session.failure = {
             self.failTest("TestBasics.session.failure")
         }
@@ -117,7 +117,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.timer!.start()
     }
     
-    override func syncServerSingleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
+    func singleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
         if self.isMaster {
             failTest()
             return
@@ -146,10 +146,14 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.assertIf(UInt(self.slaveData!.sizeInBytes) != sizeInBytes, thenFailAndGiveMessage: "File size was not that expected")
     }
 
-    override func syncServerAllDownloadsComplete() {
+    override func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
         if self.isMaster {
             self.failTest()
             return
+        }
+        
+        for (url, attr) in downloadedFiles {
+            self.singleFileDownloadComplete(url, withFileAttributes: attr)
         }
         
         if self.numberDownloads == 1 {
@@ -163,7 +167,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     }
     
     // If the slave has the lock while we're trying to upload, the master will get this called.
-    override func syncServerRecovery(progress:SMSyncServerRecovery) {
+    override func syncServerRecovery(progress:SMClientMode) {
         if self.isSlave {
             self.failTest()
         }

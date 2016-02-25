@@ -58,6 +58,12 @@ public class SMServerConstants {
 
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
     public static let operationOutboundTransferRecovery = "OutboundTransferRecovery"
+    
+    // Recover from errors that occur after starting to transfer files from cloud storage.
+    public static let operationInboundTransferRecovery = "InboundTransferRecovery"
+
+    // Recovery from errors during the download process (i.e., after transferring files from cloud storage).
+    public static let operationDownloadRecovery = "DownloadRecovery"
 
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
     public static let operationCleanup = "Cleanup"
@@ -223,6 +229,8 @@ public class SMServerConstants {
     
     // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
     public static let rcLockNotHeld = 53
+    
+    public static let rcNoOperationId = 54
     
     // rc's for serverOperationCheckForExistingUser
     // rcUserOnSystem
