@@ -738,7 +738,7 @@ class Upload: BaseClass {
                 }
             
                 self.progressCallbacks.append() { progress in
-                    XCTAssertEqual(progress, SMClientMode.UploadRecovery)
+                    // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                     progressCallbackExpected.fulfill()
 
                     SMTest.session.crash()
@@ -753,7 +753,7 @@ class Upload: BaseClass {
             // 2nd run of test.
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMClientMode.UploadRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 progressCallbackExpected.fulfill()
             }
             
@@ -835,19 +835,9 @@ class Upload: BaseClass {
             let testFile = TestBasics.session.createTestFile(fileName)
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
-
-            var progressExpected:SMClientMode!
-            
-            switch (context) {
-            case .Lock, .GetFileIndex, .UploadFiles:
-                progressExpected = .UploadRecovery
-                
-            case .OutboundTransfer:
-                progressExpected = .MayHaveCommittedRecovery
-            }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, progressExpected)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 XCTAssertTrue(!self.doneRecovery)
                 self.doneRecovery = true
                 progressCallbackExpectation.fulfill()
@@ -920,14 +910,14 @@ class Upload: BaseClass {
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
-                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMClientMode.UploadRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -982,15 +972,14 @@ class Upload: BaseClass {
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
-                // Due to the way the recovery works internally, it will go through a .MayHaveCommitted progress state first.
-                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMClientMode.OutboundTransferRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()
@@ -1061,15 +1050,14 @@ class Upload: BaseClass {
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
-                // Due to the way the recovery works internally, it will go through a .MayHaveCommitted progress state first.
-                XCTAssertEqual(progress, SMClientMode.MayHaveCommittedRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 1)
                 progressCallbackExpectation1.fulfill()
             }
             
             self.progressCallbacks.append() { progress in
-                XCTAssertEqual(progress, SMClientMode.OutboundTransferRecovery)
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 numberRecoverySteps++
                 XCTAssertEqual(numberRecoverySteps, 2)
                 progressCallbackExpectation2.fulfill()

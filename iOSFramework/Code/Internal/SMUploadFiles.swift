@@ -101,19 +101,9 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
             case .Normal:
                 SMSync.session.startDelayed(currentlyOperating:currentlyOperatingExpected)
 
-            case .UploadRecovery:
+            case .UploadRecovery, .MayHaveCommittedRecovery, .OutboundTransferRecovery:
                 SMSync.session.start() {
-                    self.uploadRecovery()
-                }
-            
-            case .MayHaveCommittedRecovery:
-                SMSync.session.start() {
-                    self.mayHaveCommittedRecovery()
-                }
-            
-            case .OutboundTransferRecovery:
-                SMSync.session.start() {
-                    self.outboundTransferRecovery()
+                    self.recovery()
                 }
             
             case .NonRecoverableError:
@@ -203,7 +193,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                     }
                     else {
                         // Error with SMSyncServer.session.getFileIndex; do recovery.
-                        self.uploadRecovery()
+                        self.recovery()
                     }
                 }
             }
@@ -211,7 +201,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 // Error with SMSyncServer.session.lock
                 // Cleaning up may not be needed as we may not hold the lock, but do it anyways to be safe.
                 // TODO: Possible that we don't have a network connection at this point, and we actually hold the lock. I.e., the problem was that the server just didn't return the right return code to us. Seems this will have to be solved later by a lock breaking strategy.
-                self.uploadRecovery()
+                self.recovery()
             }
         }
     }
@@ -254,7 +244,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 self.doUpload(withFilesToUpload: filesToUpload!)
             }
             else {
-                self.uploadRecovery()
+                self.recovery()
             }
         }
     }
@@ -283,8 +273,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                         self.startToPollForOperationFinish()
                     }
                     else {
-                        // Failed on commitChanges
-                        self.mayHaveCommittedRecovery()
+                        self.recovery()
                     }
                 }
             }
@@ -295,7 +284,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 }
                 else {
                     // Failed on uploadFiles-- Attempt recovery.
-                    self.uploadRecovery()
+                    self.recovery()
                 }
             }
         }
@@ -335,7 +324,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 
                 case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
                     // This will do more work than necessary (e.g., checking with the server again for operation status), but it handles these three cases.
-                    self.mayHaveCommittedRecovery()
+                    self.recovery()
                     
                 default:
                     let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
