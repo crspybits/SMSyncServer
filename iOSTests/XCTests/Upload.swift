@@ -957,7 +957,7 @@ class Upload: BaseClass {
     // Server-side detailed testing of Transfer Recovery.
     func transferRecovery(transferTestCase serverTestCase:Int) {
         
-        self.extraServerResponseTime = 30
+        self.extraServerResponseTime = 60
         
         let context = SMTestContext.OutboundTransfer
         let fileName = context.rawValue + String(serverTestCase)
@@ -1028,7 +1028,7 @@ class Upload: BaseClass {
     // Same as previous, but with two files. This test will cause a failure immediately after the first file is transferred to cloud storage.
     func testThatServerSendFilesUpdateTwoFilesTestCaseWorks() {
         
-        self.extraServerResponseTime = 30
+        self.extraServerResponseTime = 60
         
         let serverTestCase = SMServerConstants.dbTcSendFilesUpdate
         let context = SMTestContext.OutboundTransfer

@@ -49,6 +49,12 @@ function define(name, value) {
 
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
 	define("operationOutboundTransferRecovery", "OutboundTransferRecovery");
+    
+    // Recover from errors that occur after starting to transfer files from cloud storage.
+	define("operationInboundTransferRecovery", "InboundTransferRecovery");
+
+    // Recovery from errors during the download process (i.e., after transferring files from cloud storage).
+	define("operationDownloadRecovery", "DownloadRecovery");
 
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
 	define("operationCleanup", "Cleanup");
@@ -214,6 +220,8 @@ function define(name, value) {
     
     // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
 	define("rcLockNotHeld", 53);
+    
+	define("rcNoOperationId", 54);
     
     // rc's for serverOperationCheckForExistingUser
     // rcUserOnSystem
