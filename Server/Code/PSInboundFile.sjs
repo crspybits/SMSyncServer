@@ -41,12 +41,17 @@ const props = ["_id", "fileId", "userId", "deviceId", "cloudFileName", "mimeType
 // Constructor
 /* fileData should be a JSON object with all of the properties in the data model above, with the following exceptions:
     For a PSInboundFile object that doesn't exist yet in persistent storage, don't supply the _id key in the fileData.
+    The optional mustHaveReceivedProperty parameter is a bool (true, false), which defaults to true. If mustHaveReceivedProperty is true, then if the received property is not provided, then it is given a default value (of false). If mustHaveReceivedProperty is false, no default value will be provided for received.
 */
 // Throws an exception in the case of an error.
-function PSInboundFile(fileData) {
+function PSInboundFile(fileData, mustHaveReceivedProperty) {
     var self = this;
     
-    if (!isDefined(fileData.received)) {
+    if (!isDefined(mustHaveReceivedProperty)) {
+        mustHaveReceivedProperty = true;
+    }
+    
+    if (mustHaveReceivedProperty && !isDefined(fileData.received)) {
         fileData.received = false;
     }
 
@@ -87,11 +92,13 @@ PSInboundFile.prototype.lookup = function (callback) {
     Common.lookup(this, props, collectionName, callback);
 }
 
+// Get inbound files that are *not* already marked as received.
 // Callback parameters: 1) error, 2) if error not null, an array of PSInboundFile objects describing the inbound files pending for this userId/deviceId. This array is zero length if no PSInboundFile objects were found.
 PSInboundFile.getAllFor = function (userId, deviceId, callback) {
     var query = {
         userId: userId,
-        deviceId: deviceId
+        deviceId: deviceId,
+        received: false
     };
 	
 	var cursor = Mongo.db().collection(collectionName).find(query);
@@ -114,7 +121,15 @@ PSInboundFile.getAllFor = function (userId, deviceId, callback) {
         }
         
         // make a new PSInboundFile for the doc
-        var inboundFile = new PSInboundFile(doc);
+        var inboundFile = null;
+        
+        try {
+            inboundFile = new PSInboundFile(doc);
+        } catch (error) {
+            callback(error, null);
+            return;
+        }
+        
         result.push(inboundFile);
     });
 }

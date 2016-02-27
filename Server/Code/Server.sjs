@@ -1217,14 +1217,20 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     deviceId: op.deviceId()
                 };
                 
+                // We want to generally lookup the inbound file at [4] below, so don't provide a .received property. But, we'll provide it, later, at [5] below if the lookup doesn't find the inbound file.
+                const mustHaveReceivedProperty = false;
+                
                 try {
-                    inboundFile = new PSInboundFile(fileMetaData);
+                    inboundFile = new PSInboundFile(fileMetaData, mustHaveReceivedProperty);
                 } catch (error) {
                     op.endWithErrorDetails(error);
                     return;
                 }
 
-                // Add cloudFileName and mimeType to the PSInboundFile object.
+                /* Look up the corresponding PSFileIndex object for two reasons:
+                    1) To add cloudFileName and mimeType to the PSInboundFile object.
+                    2) To make sure we actually have this file in our file index. It wouldn't make sense to try to do an inbound file transfer with a file not in our file index.
+                */
                 var fileIndexData = {
                     fileId: inboundFile.fileId,
                     userId: inboundFile.userId,
@@ -1250,11 +1256,30 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                         callback(new Error("File marked as deleted: %j", fileIndexObj));
                     }
                     else {
-                        inboundFile.cloudFileName = fileIndexObj.cloudFileName;
-                        inboundFile.mimeType = fileIndexObj.mimeType;
-
-                        inboundFile.storeNew(function (error) {
-                            callback(error);
+                        // [4]. SO, we *do* have this file in our file index. Let's make sure it's not already in our PSInboundFile files. This check is both an error check and a recovery check. In some recovery situations (e.g., when we try to do two inbound transfers back to back), without this check, we'll get double entries in the PSInboundFile collection.
+                        
+                        inboundFile.lookup(function (error, inboundFileAlreadyExists) {
+                            if (error) {
+                                callback(error);
+                            }
+                            else if (inboundFileAlreadyExists) {
+                                logger.trace("File is already inbound: %j", inboundFile);
+                                callback(null);
+                            }
+                            else {
+                                // This is a new inbound file! Store it in the PSInboundFile's.
+                                logger.trace("New inbound file: %j", inboundFile);
+                                
+                                inboundFile.cloudFileName = fileIndexObj.cloudFileName;
+                                inboundFile.mimeType = fileIndexObj.mimeType;
+                                
+                                // [5]. We didn't provide the .received property on the inbound file when we created the object. Provide it on now.
+                                inboundFile.received = false;
+                                
+                                inboundFile.storeNew(function (error) {
+                                    callback(error);
+                                });
+                            }
                         });
                     }
                 });
@@ -1265,6 +1290,8 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     op.endWithErrorDetails(error);
                 }
                 else {
+                    // In some recovery situations, we'll actually not do anything additional in the following. That is, the inbound transfers will have already been done. While that amounts to a little extra work, I'm not creating a special case for that recovery situation just to simplify the code.
+                    
                     var psOperationId = null;
                     
                     // Set PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
@@ -1389,7 +1416,7 @@ app.post('/' + ServerConstants.operationDownloadFile, function (request, respons
     op.validateUser(function (psLock, psOperationId) {
         if (isDefined(psLock)) {
             // Should not have the lock to download files.
-            var message = "Error: Have the lock!";
+            var message = "Error: Have the lock-- should not have lock to download files!";
             logger.error(message);
             endDownloadWithError(op, ServerConstants.rcServerAPIError, message);
         }

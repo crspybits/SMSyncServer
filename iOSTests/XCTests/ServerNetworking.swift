@@ -10,30 +10,6 @@ import XCTest
 @testable import SMSyncServer
 import SMCoreLib
 
-/* With an empty server database and no files in the Google Drive folder:
-
-0) Try to do an upload files when no files have changed. Should not send any request to the server. Should just indicate that no files have changed.
-
-1a) Get a file index: Should be empty.
-1b) Do an upload changed files: Should show no files have changed.
-
-2a) Add a (new) single local file with some content.
-2b) Upload changed files.
-2c) Get a file index: Should have one file.
-2d) Look at files in Google Drive: Should have the file uploaded, with the content as uploaded.
-2e) Upload changed files: Should show no files have changed.
-
-3a) Change that single local file.
-Same remaining as 2.
-
-4a) Change that single local file again.
-Same remaining as 2.
-
-5a) Add another local file with some content.
-Same remaining as 2.
-
-*/
-
 // Unit tests for SMServerNetworking
 class ServerNetworking: XCTestCase {
     let minServerResponseTime:NSTimeInterval = 10

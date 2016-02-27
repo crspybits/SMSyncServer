@@ -15,6 +15,8 @@
 		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
 		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */; };
 		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
+		83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */; };
+		83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C511C817C2B005F0C40 /* DownloadRecovery.swift */; };
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
 		837E06361C7C108D000695F2 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06351C7C108D000695F2 /* AppFile.swift */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
@@ -99,6 +101,8 @@
 		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
 		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFails.swift; path = TwoDeviceTests/TestThatOperationWithLockFails.swift; sourceTree = "<group>"; };
 		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
+		83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatRecoveryAfterBackgroundWorks.swift; path = TwoDeviceTests/TestThatRecoveryAfterBackgroundWorks.swift; sourceTree = "<group>"; };
+		83554C511C817C2B005F0C40 /* DownloadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadRecovery.swift; path = XCTests/DownloadRecovery.swift; sourceTree = SOURCE_ROOT; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		837E06351C7C108D000695F2 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = "Core Data/AppFile.swift"; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
@@ -204,6 +208,7 @@
 				8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */,
 				8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */,
 				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */,
+				83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */,
 			);
 			name = "Same Cloud Creds";
 			sourceTree = "<group>";
@@ -268,6 +273,7 @@
 				83D3E8BA1C4C079900BFDA93 /* BaseClass.swift */,
 				83D3E8BB1C4C079900BFDA93 /* Deletion.swift */,
 				83D3E8BC1C4C079900BFDA93 /* Download.swift */,
+				83554C511C817C2B005F0C40 /* DownloadRecovery.swift */,
 				83D3E8BE1C4C079900BFDA93 /* ServerAPI.swift */,
 				83D3E8BF1C4C079900BFDA93 /* ServerCredentials.swift */,
 				83D3E8C01C4C079900BFDA93 /* ServerNetworking.swift */,
@@ -589,6 +595,7 @@
 				83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */,
 				83D3E93C1C4C80AB00BFDA93 /* SMGoogleSignInController.swift in Sources */,
 				83D3E93B1C4C80AB00BFDA93 /* SMGoogleCredentials.swift in Sources */,
+				83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */,
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
@@ -611,6 +618,7 @@
 				83D3E8C91C4C079900BFDA93 /* ServerNetworking.swift in Sources */,
 				83D3E8C21C4C079900BFDA93 /* AutoCommit.swift in Sources */,
 				83D3E8C81C4C079900BFDA93 /* ServerCredentials.swift in Sources */,
+				83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */,
 				83D3E8C51C4C079900BFDA93 /* Download.swift in Sources */,
 				83D3E8CA1C4C079900BFDA93 /* Upload.swift in Sources */,
 				83D3E8C71C4C079900BFDA93 /* ServerAPI.swift in Sources */,

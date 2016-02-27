@@ -67,7 +67,8 @@ public enum SMClientEvent {
     // A single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
     case SingleUploadComplete(uuid:NSUUID)
     
-    case SingleDownloadComplete(uuid:NSUUID)
+    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method.
+    case SingleDownloadComplete(url:NSURL, attr:SMSyncAttributes)
     
     // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
     case OutboundTransferComplete(numberOperations:Int?)
@@ -193,6 +194,7 @@ public class SMSyncServer : NSObject {
         Network.session().appStartup()
         SMServerNetworking.session.appLaunchSetup()
         SMServerAPI.session.serverURL = serverURL
+        SMUploadFiles.session.appLaunchSetup()
         SMDownloadFiles.session.appLaunchSetup()
 
         // This seems a little hacky, but can't find a better way to get the bundle of the framework containing our model. I.e., "this" framework. Just using a Core Data object contained in this framework to track it down.
@@ -220,7 +222,7 @@ public class SMSyncServer : NSObject {
         
         // This will start a delayed upload, if there was one, so leave this until after user is signed in.
         // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
-        SMUploadFiles.session.appLaunchSetup()
+        self.start(when: .AppLaunched)
         
         // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
         Network.session().connectionStateCallbacks.addTarget!(self, withSelector: "networkConnectionStateChangeAction")
@@ -229,7 +231,48 @@ public class SMSyncServer : NSObject {
     // PRIVATE
     internal func networkConnectionStateChangeAction() {
         if Network.session().connected() {
-            SMUploadFiles.session.networkOnline()
+            self.start(when: .NetworkBackOnline)
+        }
+    }
+    
+    private enum StartWhen {
+        case AppLaunched
+        case NetworkBackOnline
+        // TODO: It seems we really need a 3rd case here: Starting when the user signs in, but the app wasn't just launched. E.g., this could happen when the user signs out and signs back in again.
+    }
+    
+    private func start(when startedWhen:StartWhen) {
+        var currentlyOperating:Bool?
+        
+        switch startedWhen {
+        case .AppLaunched:
+            // We're never operating when the app is first launched.
+            currentlyOperating = false
+            
+        case .NetworkBackOnline:
+            // currentlyOperating can be false when the network comes back online (the typical case because an operation likely failed), or possibly true if there was a quick bump in the network online/offline state.
+            currentlyOperating = nil
+        }
+        
+        switch (self.mode) {
+            case .Idle:
+                SMSync.session.startDelayed(currentlyOperating: currentlyOperating)
+
+            case .Running(.Upload, _),
+                .Running(.BetweenUploadAndOutBoundTransfer, _),
+                .Running(.OutboundTransfer, _):
+                SMSync.session.start() {
+                    SMUploadFiles.session.recovery()
+                }
+            
+            case .Running(.InboundTransfer, _),
+                .Running(.Download, _):
+                SMSync.session.start() {
+                    SMDownloadFiles.session.recovery()
+                }
+            
+            case .NonRecoverableError:
+                Assert.badMojo(alwaysPrintThisString: "Yikes: Client app should have handled this!!")
         }
     }
     

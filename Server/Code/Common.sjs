@@ -74,7 +74,9 @@ Common.lookup = function (self, props, mongoCollectionName, callback) {
 			callback(err, null);
 		}
 		else if (count > 1) {
-			callback(new Error("More than one object with those instance values!"), null);
+            var err = new Error("More than one object with those instance values!");
+            logger.error(err);
+			callback(err, null);
 		}
 		else if (0 == count) {
 			callback(null, false);

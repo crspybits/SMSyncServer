@@ -34,6 +34,9 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private var serverOperationId:String?
+    
+    // Total number of operations across recovery steps. I introduced this *persistent* variable because [2] is not necessarily an error otherwise.
+    private static var totalNumberOperations = SMPersistItemInt(name: "SMDownloadFiles.totalNumberOperations", initialIntValue: 0, persistType: .UserDefaults)
 
     private class var mode:SMClientMode {
         set {
@@ -43,6 +46,7 @@ internal class SMDownloadFiles : NSObject {
             switch (newValue) {
             case .Running(.InboundTransfer, _), .Running(.Download, _):
                 break
+        
             case .Idle, .NonRecoverableError:
                 break
                 
@@ -66,6 +70,7 @@ internal class SMDownloadFiles : NSObject {
         SMSync.session.startIf({
             return Network.session().connected()
         }, then: {
+            SMDownloadFiles.totalNumberOperations.intValue = 0
             self.checkForDownloadsAux()
         })
     }
@@ -176,17 +181,21 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func doDownloads(operationResult: SMOperationResult) {
-        Log.msg("Operation succeeded: \(operationResult.count) cloud storage operations performed")
+        SMDownloadFiles.totalNumberOperations.intValue += operationResult.count
+        
+        Log.msg("Operation succeeded: \(operationResult.count) cloud storage operations performed (total is \(SMDownloadFiles.totalNumberOperations.intValue)")
         
         // This is actually not an error-- it can just reflect a retry of a transfer that failed the first time.
-        if operationResult.count == self.numberInboundTransfersExpected {
+        if SMDownloadFiles.totalNumberOperations.intValue == self.numberInboundTransfersExpected {
             Log.msg("Number of inbound transfers: \(operationResult.count)")
         }
-        else if (operationResult.count > self.numberInboundTransfersExpected) {
+        else if (SMDownloadFiles.totalNumberOperations.intValue > self.numberInboundTransfersExpected) {
             Log.warning("Number of inbound transfers (\(operationResult.count)) was greater than expected: \(self.numberInboundTransfersExpected)-- server may be doing retries")
         }
         else {
-            self.callSyncServerError(Error.Create("Something bad is going on: number inbound transfers expected \(self.numberInboundTransfersExpected) was greater than operation count \(operationResult.count)"))
+            // [2]. When I wasn't tracking totalNumberOperations in a persistent manner, just got this in a case of recovery. On the second attempt at inbound transfer, no inbound transfers actually had to be done-- they already had been done. In this case, 0 cloud storage operations had been done, but at least one was expected.
+            let error = Error.Create("Something bad is going on: number inbound transfers expected \(self.numberInboundTransfersExpected) was greater than operation count \(SMDownloadFiles.totalNumberOperations.intValue)")
+            self.callSyncServerError(error)
             return
         }
         
@@ -194,13 +203,15 @@ internal class SMDownloadFiles : NSObject {
         
             self.serverOperationId = nil
 
-            if roiResult.error != nil {
-                // Not much of an error, but log it.
-                Log.error("Failed removing OperationId from server: \(roiResult.error)")
+            if roiResult.error == nil {
+                // Files were transferred from cloud storage to sync server. Download them from the sync server.
+                self.doDownloadsAux()
             }
-
-            // Files were transferred from cloud storage to sync server. Download them from the sync server.
-            self.doDownloadsAux()
+            else {
+                // While this may not seem like much of an error, treat it seriously becuase it could be indicating a network error. If I don't treat it seriously, I can proceed forward which could leave the download in the wrong recovery mode.
+                Log.error("Failed removing OperationId from server: \(roiResult.error)")
+                self.recovery()
+            }
         }
     }
     
@@ -263,14 +274,14 @@ internal class SMDownloadFiles : NSObject {
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
         
+        SMDownloadFiles.mode = .Idle
         self.delegate?.syncServerDownloadsComplete(downloaded)
-        
         SMSync.session.startDelayed(currentlyOperating: true)
     }
 
     private func callSyncServerNoFilesToDownload() {
-        SMSync.session.startDelayed(currentlyOperating: true)
         self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+        SMSync.session.startDelayed(currentlyOperating: true)
     }
     
     private func callSyncServerError(error:NSError) {
@@ -278,8 +289,8 @@ internal class SMDownloadFiles : NSObject {
         
         // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
         
-        SMSync.session.stop()
         SMDownloadFiles.mode = .NonRecoverableError(error)
+        SMSync.session.stop()
     }
     
     // MARK: End: Methods that call delegate methods
@@ -297,13 +308,19 @@ extension SMDownloadFiles : SMServerAPIDownloadDelegate {
         Assert.If(elementIndexToRemove == nil, thenPrintThisString: "Didn't find file in self.filesToDownload")
         self.filesToDownload!.removeAtIndex(elementIndexToRemove!)
         
-        self.delegate?.syncServerEventOccurred(.SingleDownloadComplete(uuid:file.uuid))
+        let attr = SMSyncAttributes(withUUID: file.uuid)
+        attr.appFileType = file.appFileType
+        attr.mimeType = file.mimeType
+        attr.remoteFileName = file.remoteFileName
+        
+        self.delegate?.syncServerEventOccurred(.SingleDownloadComplete(url:file.localURL!, attr:attr))
     }
 }
 
 // MARK: Recovery methods.
 extension SMDownloadFiles {
-    private func recovery() {
+    // Making this internal (and not private) so that SMSyncServer.swift can access it.
+    internal func recovery() {
         if SMDownloadFiles.numberTimesTriedRecovery > SMDownloadFiles.maxTimesToTryRecovery {
             Log.error("Failed recovery: Already tried \(SMDownloadFiles.numberTimesTriedRecovery) times, and can't get it to work")
             

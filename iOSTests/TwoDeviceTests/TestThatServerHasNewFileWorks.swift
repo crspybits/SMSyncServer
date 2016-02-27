@@ -67,9 +67,21 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     }
     
     override func syncServerModeChange(newMode:SMClientMode) {
-        // If the slave has the lock while we're trying to upload, the master will get this called.
-        if self.isSlave {
-            self.failTest()
+        switch newMode {
+        case .Idle:
+            break
+            
+        case .NonRecoverableError(let error):
+            self.failTest("We got a non-recoverable error: \(error)")
+            
+        case .Running(_, .Recovery):
+            if self.isSlave {
+                // On the slave, we shouldn't get a recovery mode-change. It's OK on the master as the slave could hold the lock.
+                self.failTest("Slave got a .Recovery mode")
+            }
+            
+        case .Running(_, .Operating):
+            break
         }
     }
     

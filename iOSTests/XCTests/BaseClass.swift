@@ -23,10 +23,10 @@ class BaseClass: XCTestCase {
     
     // I have sometimes been getting test failures where it looks like the callback is not defined. i.e., there are no entries in the particular callbacks array. However, the callback was defined. This takes the form of an array index out-of-bounds crash. What was happening is that the timeout was exceeded on the prior test, and so XCTests moved on to the next test, but the prior test was actually still running-- interacting with the server. And when it finished, it tried doing the callbacks, which were no longer defined as the setup had been done for the next test. The cure was to extend the duration of the timeouts.
     typealias recoveryCallback = (mode:SMClientMode)->()
-    // If you give this, then progressCallbacks is not used.
     var singleRecoveryCallback:recoveryCallback?
-    //var progressSequenceNumber = 0
-    //var progressCallbacks:[progressCallback]!
+    
+    typealias inboundTransferCallback = (numberOperations:Int)->()
+    var singleInboundTransferCallback:inboundTransferCallback?
     
     typealias commitCompleteCallback = (numberUploads:Int?)->()
     var commitCompleteSequenceNumber = 0
@@ -103,10 +103,12 @@ class BaseClass: XCTestCase {
 extension BaseClass : SMSyncServerDelegate {
 
     func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+        /*
         for (url, attr) in downloadedFiles {
             self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
             self.singleDownloadSequenceNumber += 1
         }
+        */
         
         self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber]()
         self.downloadsCompleteSequenceNumber += 1
@@ -158,9 +160,15 @@ extension BaseClass : SMSyncServerDelegate {
         case .NoFilesToDownload:
             self.noDownloadsCallbacks[self.noDownloadsSequenceNumber]()
             self.noDownloadsSequenceNumber += 1
-        
-        default:
-            Log.special("event: \(event)")
+            
+        case .SingleDownloadComplete(url: let url, attr: let attr):
+            self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
+            self.singleDownloadSequenceNumber += 1
+            
+        case .InboundTransferComplete(numberOperations: let numberOperations):
+            if self.singleInboundTransferCallback != nil {
+                self.singleInboundTransferCallback!(numberOperations: numberOperations!)
+            }
         }
     }
 }

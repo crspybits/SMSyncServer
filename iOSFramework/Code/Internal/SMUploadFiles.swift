@@ -89,33 +89,6 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
     internal func appLaunchSetup() {
         SMSync.session.delayDelegate = self
         SMServerAPI.session.uploadDelegate = self
-        self.start(withCurrentlyOperatingExpected: false)
-    }
-    
-    internal func networkOnline() {
-        // currentlyOperating can be false when the network comes back online (the typical case because an operation likely failed), or possibly true if there was a quick bump in the network online/offline state.
-        self.start(withCurrentlyOperatingExpected: nil)
-    }
-    
-    // Call this when the app starts or the network comes back online. When called because the network came back online, and recovery is already in process, the .Do cases will have no effect. If we come back online in .Normal mode, and we are currentlyOperating, we'll just do nothing. 'Cause not quite sure what to do there. ALSO: This should prevent us from doing anything if we get multiple consecutive calls indicating the network is online.
-    private func start(withCurrentlyOperatingExpected currentlyOperatingExpected:Bool?) {
-        switch (SMUploadFiles.mode) {
-            case .Idle:
-                SMSync.session.startDelayed(currentlyOperating:currentlyOperatingExpected)
-
-            case .Running(.Upload, _),
-                .Running(.BetweenUploadAndOutBoundTransfer, _),
-                .Running(.OutboundTransfer, _):
-                SMSync.session.start() {
-                    self.recovery()
-                }
-            
-            case .NonRecoverableError:
-                Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
-            
-            default:
-                Assert.badMojo(alwaysPrintThisString: "Bad mode for SMUploadFiles")
-        }
     }
     
     // If an upload is currently in progress, an upload will be done as soon as the current one is completed.
@@ -346,12 +319,14 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         
             self.serverOperationId = nil // [4]
 
-            if (apiResult.error != nil) {
-                // Not much of an error, but log it.
-                Log.file("Failed removing OperationId from server: \(apiResult.error)")
+            if (apiResult.error == nil) {
+                self.callSyncServerCommitComplete(numberOperations: numberUploads)
             }
-            
-            self.callSyncServerCommitComplete(numberOperations: numberUploads)
+            else {
+                // While this may not seem like much of an error, treat it seriously because it could be indicating a network error. If I don't treat it seriously, I can proceed forward which could leave the upload in the wrong recovery mode.
+                Log.file("Failed removing OperationId from server: \(apiResult.error)")
+                self.recovery()
+            }
         }
     }
 
@@ -413,7 +388,8 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
 
 // MARK: Recovery methods.
 extension SMUploadFiles {
-    private func recovery(forceModeChangeReport forceModeChangeReport:Bool=true) {
+    // `internal` and not `private` so that we can use this from SMSyncServer.swift.
+    internal func recovery(forceModeChangeReport forceModeChangeReport:Bool=true) {
         if SMUploadFiles.numberTimesTriedRecovery > SMUploadFiles.maxTimesToTryRecovery {
             Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedRecovery) times, and can't get it to work")
             
