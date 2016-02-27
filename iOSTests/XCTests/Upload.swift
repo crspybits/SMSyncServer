@@ -737,7 +737,7 @@ class Upload: BaseClass {
                     singleUploadExpectation.fulfill()
                 }
             
-                self.singleProgressCallback = { progress in
+                self.singleRecoveryCallback = { mode in
                     // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                     progressCallbackExpected.fulfill()
 
@@ -752,7 +752,7 @@ class Upload: BaseClass {
         else {
             // 2nd run of test.
             
-            self.singleProgressCallback = { progress in
+            self.singleRecoveryCallback = { mode in
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 progressCallbackExpected.fulfill()
             }
@@ -795,7 +795,7 @@ class Upload: BaseClass {
             Network.session().connectionStateCallbacks.addTarget!(self, withSelector: "recoveryFromNetworkLossAction")
             
             // I'm not putting a recovery expectation in here because internally this recovery goes through a number of steps -- it waits to try to make sure the operation doesn't switch from Not Started to In Progress.
-            self.singleProgressCallback =  { progress in
+            self.singleRecoveryCallback =  { mode in
                 self.numberOfRecoverySteps += 1
             }
             
@@ -838,7 +838,7 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
-            self.singleProgressCallback = { progress in
+            self.singleRecoveryCallback = { mode in
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 XCTAssertTrue(!self.doneRecovery)
                 self.doneRecovery = true
@@ -903,7 +903,7 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
-            self.singleProgressCallback = { progress in
+            self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
@@ -952,7 +952,7 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
 
-            self.singleProgressCallback = { progress in
+            self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         
@@ -1020,7 +1020,7 @@ class Upload: BaseClass {
 
             SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
 
-            self.singleProgressCallback = { progress in
+            self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
                 SMTest.session.serverDebugTest = nil
         

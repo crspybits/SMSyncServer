@@ -59,69 +59,45 @@ public class SMSyncConflicts : SMSyncAttributes {
 }
 */
 
-// This mode spans both upload and download operations. I'm doing it this way for three reasons: (a) SMSync enforces a rule where we only do operations sequentially (e.g., we can't have an upload and a download happening at the same time), (b) so that the syncServerRecovery delegate method can report using a single enum type, and (c) there are some shared modes across upload and download (i.e., Normal, and NonRecoverableError).
-
-public enum SMClientMode : Int {
-    // Non-error, non-recovery operating condition
-    case Normal
+// Events are momentary occurrences. i.e., occurrences with a short time-frame.
+public enum SMClientEvent {
+    // Deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
+    case DeletionsSent(uuids:[NSUUID])
     
-    // We've reported an error that we couldn't recover from. Keep a persistent record of that error until we're assured of externally provided recovery.
-    case NonRecoverableError
-
-    // MARK: Upload recovery modes
+    // A single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
+    case SingleUploadComplete(uuid:NSUUID)
     
-    // We're going to categorize errors on the server into a few main types for the purpose of recovery:
+    case SingleDownloadComplete(uuid:NSUUID)
     
-    // 1) An error occurred *prior* to any files being transferred to cloud storage. i.e., an error occured between lock and the commit, prior to a successful commit. (By successful commit, I mean that the commit successfully started asynchronous operation of the file transfer on the server).
-    case UploadRecovery
+    // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
+    case OutboundTransferComplete(numberOperations:Int?)
     
-    // 2) An edge recovery case that needs more execution-time evaluation to determine whether to categorize it as UploadRecovery or OutboundTransferRecovery.
-    case MayHaveCommittedRecovery
+    // Similarly, for inbound transfers of files from cloud storage to the sync server. The numberOperations value has the same heuristic meaning.
+    case InboundTransferComplete(numberOperations:Int?)
     
-    // 3) An error occurred and some files (or parts of files) may have been transferred to cloud storage. This occurs strictly after the UploadRecovery mode. i.e., the commit *was* successful.
-    case OutboundTransferRecovery
-    
-    // MARK: Download recovery modes
-    
-    case InboundTransferRecovery
-    case DownloadRecovery
+    // The client polled the server and found that there were no files available to download or files that needed deletion.
+    case NoFilesToDownload
 }
 
 // "class" to make the delegate weak.
 // TODO: These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
     // Called at the end of all downloads, on non-error conditions.
-    // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note on ths delegate method.
+    // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
     func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
     
-    // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
-    func syncServerDeletionReceived(uuid uuid:NSUUID)
-    
-    // Called after a single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
-    func syncServerSingleUploadComplete(uuid uuid:NSUUID)
-    
-    // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
-    func syncServerDeletionsSent(uuids:[NSUUID])
-    
-    // This is called after the server has finished performing the transfers of files to cloud storage/deletions in cloud storage. numberOperations includes upload and deletion operations.
-    func syncServerCommitComplete(numberOperations numberOperations:Int?)
-    
-    // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging. The value of the SMClientMode will only be one of the upload or download recovery modes.
-    func syncServerRecovery(progress:SMClientMode)
+    // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+    func syncServerClientShouldDeleteFiles(uuids:[NSUUID])
     
     // TODO: Reports conflicting file versions when uploading or downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
     // TODO: Can these occur both on upload and download?
     // func syncServerFileConflicts(conflictingFiles:[SMSyncConflicts], resolution:([SMSyncConflicts])->())
-
-    /* This error can occur in one of two types of circumstances:
-    1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-    2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
-    */
-    func syncServerError(error:NSError)
     
-#if DEBUG
-    func syncServerNoFilesToDownload()
-#endif
+    // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+    func syncServerModeChange(newMode:SMClientMode)
+    
+    // Reports events. Useful for testing and debugging.
+    func syncServerEventOccurred(event:SMClientEvent)
 }
 
 // Derived from NSObject because of the use of addTarget from TargetsAndSelectors below.
@@ -146,16 +122,11 @@ public class SMSyncServer : NSObject {
         }
     }
 
-    private func callSyncServerError(error: NSError) {
-        Log.error("syncServerError: \(error)")
-        self.delegate?.syncServerError(error)
-    }
-    
     // If autoCommit is true, then this is the interval that changes are automatically committed. The interval is timed from the last change enqueued with this class. If no changes are queued, then no commit is done.
     public var autoCommitIntervalSeconds:Float {
         set {
             if newValue < 0 {
-                self.callSyncServerError(Error.Create("Yikes: Bad autoCommitIntervalSeconds"))
+                self.mode = .NonRecoverableError(Error.Create("Yikes: Bad autoCommitIntervalSeconds"))
             }
             else {
                 _autoCommitIntervalSeconds = newValue
@@ -171,8 +142,12 @@ public class SMSyncServer : NSObject {
     public var autoCommit:Bool {
         set {
             _autoCommit = newValue
-            if .Normal == SMSyncServer.mode {
+            
+            switch self.mode {
+            case .Idle:
                 self.startNormalTimer()
+            default:
+                break
             }
         }
         get {
@@ -181,8 +156,11 @@ public class SMSyncServer : NSObject {
     }
     
     private func startNormalTimer() {
-        if .Normal == SMSyncServer.mode {
+        switch self.mode {
+        case .Idle:
             return
+        default:
+            break
         }
         
         self.normalTimer?.cancel()
@@ -195,14 +173,17 @@ public class SMSyncServer : NSObject {
     }
     
     // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
-    private static let _mode = SMPersistItemInt(name: "SMSyncServer.Mode", initialIntValue: SMClientMode.Normal.rawValue, persistType: .UserDefaults)
+    private static let _mode = SMPersistItemData(name: "SMSyncServer.Mode", initialDataValue: NSKeyedArchiver.archivedDataWithRootObject(SMClientModeWrapper(withMode: .Idle)), persistType: .UserDefaults)
     
-    internal class var mode:SMClientMode {
+    internal var mode:SMClientMode {
+        // `mode` is an instance variable and not a class variable so I can access self.delegate within it.
         get {
-            return SMClientMode(rawValue: _mode.intValue)!
+            let clientMode = NSKeyedUnarchiver.unarchiveObjectWithData(SMSyncServer._mode.dataValue) as! SMClientModeWrapper
+            return clientMode.mode
         }
         set {
-            _mode.intValue = newValue.rawValue
+            SMSyncServer._mode.dataValue = NSKeyedArchiver.archivedDataWithRootObject(SMClientModeWrapper(withMode: newValue))
+            self.delegate?.syncServerModeChange(newValue)
         }
     }
     
@@ -292,7 +273,7 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
-                self.callSyncServerError(Error.Create("mimeType not given!"))
+                self.mode = .NonRecoverableError(Error.Create("mimeType not given!"))
                 return
             }
             
@@ -301,7 +282,7 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.appFileType = attr.appFileType
             
             if nil == attr.remoteFileName {
-                self.callSyncServerError(Error.Create("remoteFileName not given!"))
+                self.mode = .NonRecoverableError(Error.Create("remoteFileName not given!"))
                 return
             }
             
@@ -313,12 +294,12 @@ public class SMSyncServer : NSObject {
             let alreadyDeleted = localFileMetaData!.deletedOnServer != nil && localFileMetaData!.deletedOnServer!.boolValue
             
             if localFileMetaData!.pendingDeletion || alreadyDeleted {
-                self.callSyncServerError(Error.Create("Attempt to upload a file/item marked for deletion!"))
+                self.mode = .NonRecoverableError(Error.Create("Attempt to upload a file/item marked for deletion!"))
                 return
             }
                         
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
-                self.callSyncServerError(Error.Create("You gave a different remote file name than was present on the server!"))
+                self.mode = .NonRecoverableError(Error.Create("You gave a different remote file name than was present on the server!"))
                 return
             }
         }
@@ -374,19 +355,19 @@ public class SMSyncServer : NSObject {
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
-            self.callSyncServerError(Error.Create("Attempt to delete a file unknown to SMSyncServer!"))
+            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file unknown to SMSyncServer!"))
             return
         }
         
         let alreadyDeleted = localFileMetaData!.deletedOnServer != nil && localFileMetaData!.deletedOnServer!.boolValue
 
         if alreadyDeleted {
-            self.callSyncServerError(Error.Create("Attempt to delete a file that is already deleted!"))
+            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file that is already deleted!"))
             return
         }
         
         if localFileMetaData!.pendingDeletion {
-            self.callSyncServerError(Error.Create("Attempt to delete a file already marked for deletion!"))
+            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file already marked for deletion!"))
             return
         }
         
@@ -452,7 +433,7 @@ public class SMSyncServer : NSObject {
         Log.msg("Attempting to commit")
         
         if !SMSyncServerUser.session.delegate.syncServerUserIsSignedIn {
-            self.callSyncServerError(Error.Create("There is no user signed in"))
+            self.mode = .NonRecoverableError(Error.Create("There is no user signed in"))
             return
         }
         
@@ -486,6 +467,7 @@ public class SMSyncServer : NSObject {
     }
 #endif
 
+    // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
     public func resetFromError() {
         SMUploadFiles.session.resetFromError()
     }

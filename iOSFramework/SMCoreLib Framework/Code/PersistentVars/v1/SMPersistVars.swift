@@ -236,6 +236,27 @@ public class SMPersistItemString : SMPersistItem {
     }
 }
 
+public class SMPersistItemData : SMPersistItem {
+    public init(name:String!, initialDataValue:NSData!,  persistType:SMPersistVarType) {
+        super.init(name: name, initialValue:initialDataValue, persistType:persistType)
+    }
+
+    // Current NSData value
+    public var dataValue:NSData {
+        get {
+            return self.cachedOrArchivedValue as! NSData
+        }
+        
+        set {
+            self.cachedOrArchivedValue = newValue
+        }
+    }
+    
+    public var dataDefault:NSData {
+        return self.initialValue as! NSData
+    }
+}
+
 // I wanted the SMDefaultItemSet class to be a generic class using Swift sets. But, generics in swift don't play well with NSCoding, so I'm just going to use NSMutableSet instead :(.
 // 10/6/15. POSSIBLE ISSUE: I may have an issue here. Suppose you add an object to an SMPersistItemSet which is itself mutable. E.g., an NSMutableDictionary. THEN, you change that object which is already in the mutable set. I am unsure whether or not I will detect this change and flush the change to NSUserDefaults or the KeyChain. It seems unlikely I would detect the change. NEED TO TEST.
 public class SMPersistItemSet : SMPersistItem {

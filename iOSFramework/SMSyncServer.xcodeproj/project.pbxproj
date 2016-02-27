@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E23531C8126AE0054D97C /* SMSyncServerModes.swift */; };
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
 		83D3E97B1C4C84A600BFDA93 /* SMSyncServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3E9781C4C84A600BFDA93 /* SMSyncServer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3E97C1C4C84A600BFDA93 /* SMSyncServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9791C4C84A600BFDA93 /* SMSyncServer.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		830E23531C8126AE0054D97C /* SMSyncServerModes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerModes.swift; path = Code/Public/SMSyncServerModes.swift; sourceTree = "<group>"; };
 		832CD50C1C5DA40C005F99D4 /* SMFiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFiles.swift; path = Code/Internal/SMFiles.swift; sourceTree = "<group>"; };
 		83D3E9681C4C840C00BFDA93 /* SMSyncServer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMSyncServer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3E9781C4C84A600BFDA93 /* SMSyncServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SMSyncServer.h; path = Code/Public/SMSyncServer.h; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				83D3E9791C4C84A600BFDA93 /* SMSyncServer.swift */,
+				830E23531C8126AE0054D97C /* SMSyncServerModes.swift */,
 				83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */,
 			);
 			name = Public;
@@ -279,6 +282,7 @@
 				83D3EDE11C4DD43B00BFDA93 /* SMLocalFile.swift in Sources */,
 				83D3EA2A1C4C870C00BFDA93 /* SMDownloadFiles.swift in Sources */,
 				83D3EA291C4C870C00BFDA93 /* SMFileDiffs.swift in Sources */,
+				830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */,
 				83D3EDD01C4DD0F200BFDA93 /* SMFileChange.swift in Sources */,
 				832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */,
 				83D3E97C1C4C84A600BFDA93 /* SMSyncServer.swift in Sources */,

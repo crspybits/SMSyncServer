@@ -46,29 +46,70 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         SMSyncServer.session.commit()
     }
     
-    override func syncServerSingleUploadComplete(uuid uuid:NSUUID) {
-        if self.isSlave {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+        if self.isMaster {
             self.failTest()
+            return
         }
         
-        self.numberUploads += 1
+        for (url, attr) in downloadedFiles {
+            self.singleFileDownloadComplete(url, withFileAttributes: attr)
+        }
         
-        self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
-        self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
+        if self.numberDownloads == 1 {
+            self.passTest()
+        }
+        else {
+            self.failTest("Didn't get exactly one download; got: \(self.numberDownloads)")
+        }
+        
+        self.timer!.cancel()
     }
     
-    override func syncServerCommitComplete(numberOperations numberOperations: Int?) {
+    override func syncServerModeChange(newMode:SMClientMode) {
+        // If the slave has the lock while we're trying to upload, the master will get this called.
         if self.isSlave {
             self.failTest()
         }
-        
-        Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
-        TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
-            let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
-            self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "No file attr")
-            self.assertIf(fileAttr!.deleted!, thenFailAndGiveMessage: "File was deleted")
+    }
+    
+    override func syncServerEventOccurred(event:SMClientEvent) {
+        switch event {
+        case .SingleUploadComplete(uuid: let uuid):
+            if self.isSlave {
+                self.failTest()
+            }
             
-            self.passTest()
+            self.numberUploads += 1
+            
+            self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
+            self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
+
+        case .OutboundTransferComplete:
+            if self.isSlave {
+                self.failTest()
+            }
+            
+            Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
+            TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
+                let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
+                self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "No file attr")
+                self.assertIf(fileAttr!.deleted!, thenFailAndGiveMessage: "File was deleted")
+                
+                self.passTest()
+            }
+            
+        case .NoFilesToDownload:
+            // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
+            if self.isMaster {
+                self.failTest()
+            }
+            
+            // No downloads ready yet. Start the timer to check for downloads in a while.
+            self.timer!.start()
+            
+        default:
+            Log.special("event: \(event)")
         }
     }
     
@@ -107,16 +148,6 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         SMDownloadFiles.session.checkForDownloads()
     }
     
-    // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
-    override func syncServerNoFilesToDownload() {
-        if self.isMaster {
-            self.failTest()
-        }
-        
-        // No downloads ready yet. Start the timer to check for downloads in a while.
-        self.timer!.start()
-    }
-    
     func singleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
         if self.isMaster {
             failTest()
@@ -144,33 +175,6 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         let path = FileStorage.pathToItem(newFile.fileName)
         let sizeInBytes = FileStorage.fileSize(path)
         self.assertIf(UInt(self.slaveData!.sizeInBytes) != sizeInBytes, thenFailAndGiveMessage: "File size was not that expected")
-    }
-
-    override func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
-        if self.isMaster {
-            self.failTest()
-            return
-        }
-        
-        for (url, attr) in downloadedFiles {
-            self.singleFileDownloadComplete(url, withFileAttributes: attr)
-        }
-        
-        if self.numberDownloads == 1 {
-            self.passTest()
-        }
-        else {
-            self.failTest("Didn't get exactly one download; got: \(self.numberDownloads)")
-        }
-        
-        self.timer!.cancel()
-    }
-    
-    // If the slave has the lock while we're trying to upload, the master will get this called.
-    override func syncServerRecovery(progress:SMClientMode) {
-        if self.isSlave {
-            self.failTest()
-        }
     }
 }
 

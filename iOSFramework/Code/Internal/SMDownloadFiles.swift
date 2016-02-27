@@ -37,13 +37,13 @@ internal class SMDownloadFiles : NSObject {
 
     private class var mode:SMClientMode {
         set {
-            SMSyncServer.mode = newValue
+            SMSyncServer.session.mode = newValue
             self.numberTimesTriedRecovery = 0
 
             switch (newValue) {
-            case .InboundTransferRecovery, .DownloadRecovery:
+            case .Running(.InboundTransfer, _), .Running(.Download, _):
                 break
-            case .Normal, .NonRecoverableError:
+            case .Idle, .NonRecoverableError:
                 break
                 
             default:
@@ -52,7 +52,7 @@ internal class SMDownloadFiles : NSObject {
         }
         
         get {
-            return SMSyncServer.mode
+            return SMSyncServer.session.mode
         }
     }
     
@@ -71,7 +71,7 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func checkForDownloadsAux() {
-        SMDownloadFiles.mode = .InboundTransferRecovery
+        SMDownloadFiles.mode = .Running(.InboundTransfer, .Operating)
         
         SMServerAPI.session.lock() { lockResult in
             if lockResult.error == nil {
@@ -147,7 +147,7 @@ internal class SMDownloadFiles : NSObject {
         
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, cosResult in
             if (cosResult.error != nil) {
-                // TODO: How many times to check/recheck and still get an error?
+                // TODO: How many times to check/recheck and still get an error? An amount of time is difficult to determine given that file sizes and data transfer rates are arbitrary.
                 Log.error("Yikes: Error checking operation status: \(cosResult.error)")
                 self.checkIfInboundTransferOperationFinishedTimer!.start()
             }
@@ -160,6 +160,7 @@ internal class SMDownloadFiles : NSObject {
                     self.checkIfInboundTransferOperationFinishedTimer!.start()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
+                    self.delegate?.syncServerEventOccurred(.InboundTransferComplete(numberOperations:operationResult!.count))
                     self.doDownloads(operationResult!)
                 
                 case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
@@ -198,14 +199,14 @@ internal class SMDownloadFiles : NSObject {
                 Log.error("Failed removing OperationId from server: \(roiResult.error)")
             }
 
-            SMDownloadFiles.mode = .DownloadRecovery
-
             // Files were transferred from cloud storage to sync server. Download them from the sync server.
             self.doDownloadsAux()
         }
     }
     
     private func doDownloadsAux() {
+        SMDownloadFiles.mode = .Running(.Download, .Operating)
+
         // Make a copy of the files to download because in the smServerAPIFileDownloaded delegate method below (see [1]), we're going to remove a file from self.filesToDownload each time a file is downloaded, and we don't want to modify that array while SMServerAPI.session.downloadFiles is using it. We're modifying the self.filesToDownload! each time a file is downloaded to make recovery easier.
         var filesToDownloadCopy = [SMServerFile]()
         filesToDownloadCopy.appendContentsOf(self.filesToDownload!)
@@ -269,9 +270,7 @@ internal class SMDownloadFiles : NSObject {
 
     private func callSyncServerNoFilesToDownload() {
         SMSync.session.startDelayed(currentlyOperating: true)
-#if DEBUG
-        self.delegate?.syncServerNoFilesToDownload()
-#endif
+        self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
     }
     
     private func callSyncServerError(error:NSError) {
@@ -279,22 +278,8 @@ internal class SMDownloadFiles : NSObject {
         
         // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
         
-        SMDownloadFiles.mode = .NonRecoverableError
-        
         SMSync.session.stop()
-        self.delegate?.syncServerError(error)
-    }
-    
-    private func callSyncServerRecovery() {
-        switch (SMSyncServer.mode) {
-        case .InboundTransferRecovery, .DownloadRecovery:
-            break
-            
-        default:
-            Assert.badMojo(alwaysPrintThisString: "Not a recovery mode")
-        }
-        
-        self.delegate?.syncServerRecovery(SMSyncServer.mode)
+        SMDownloadFiles.mode = .NonRecoverableError(error)
     }
     
     // MARK: End: Methods that call delegate methods
@@ -311,6 +296,8 @@ extension SMDownloadFiles : SMServerAPIDownloadDelegate {
 
         Assert.If(elementIndexToRemove == nil, thenPrintThisString: "Didn't find file in self.filesToDownload")
         self.filesToDownload!.removeAtIndex(elementIndexToRemove!)
+        
+        self.delegate?.syncServerEventOccurred(.SingleDownloadComplete(uuid:file.uuid))
     }
 }
 
@@ -326,7 +313,8 @@ extension SMDownloadFiles {
             return
         }
         
-        self.callSyncServerRecovery()
+        // Force a mode change report
+        SMDownloadFiles.mode = SMClientModeWrapper.convertToRecovery(SMDownloadFiles.mode)
         
         SMSync.session.continueIf({
             return Network.session().connected()
@@ -335,10 +323,10 @@ extension SMDownloadFiles {
             SMDownloadFiles.numberTimesTriedRecovery++
             
             switch (SMDownloadFiles.mode) {
-            case .InboundTransferRecovery:
+            case .Running(.InboundTransfer, _):
                 self.inboundTransferRecovery()
                 
-            case .DownloadRecovery:
+            case .Running(.Download, _):
                 self.downloadRecovery()
 
             default:
@@ -347,10 +335,19 @@ extension SMDownloadFiles {
         })
     }
     
+    private func delayedRecovery() {
+        let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMDownloadFiles.numberTimesTriedRecovery)
+
+        TimedCallback.withDuration(duration) {
+            self.recovery()
+        }
+    }
+    
     // Only call this from the recovery method.
     private func inboundTransferRecovery() {
         SMServerAPI.session.inboundTransferRecovery { apiResult in
             if (nil == apiResult.error) {
+                SMDownloadFiles.mode = .Running(.InboundTransfer, .Operating)
                 self.startToPollForOperationFinish()
             }
             else if apiResult.returnCode == SMServerConstants.rcLockNotHeld {
@@ -369,12 +366,7 @@ extension SMDownloadFiles {
                 }
             }
             else {
-                // Error, but try again later.
-                let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMDownloadFiles.numberTimesTriedRecovery)
-
-                TimedCallback.withDuration(duration) {
-                    self.recovery()
-                }
+                self.delayedRecovery()
             }
         }
     }

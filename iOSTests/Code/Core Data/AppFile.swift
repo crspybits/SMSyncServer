@@ -14,7 +14,6 @@ import SMCoreLib
 private let UUID_KEY = "uuid"
 
 extension AppFile {
-
     class func fetchObjectWithUUID(uuid:String) -> AppFile? {
         let managedObject = CoreData.fetchObjectWithUUID(uuid, usingUUIDKey: UUID_KEY, fromEntityName: AppFile.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataTests.name))
         return managedObject as? AppFile

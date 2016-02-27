@@ -93,40 +93,19 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         }
     }
     
-    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
         failTest()
     }
     
-    // Called after a deletion indication has been received from the server. I.e., this file has been deleted on the server.
-    func syncServerDeletionReceived(uuid uuid:NSUUID) {
+    func syncServerModeChange(newMode:SMClientMode) {
         failTest()
     }
     
-    // Called after a single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
-    func syncServerSingleUploadComplete(uuid uuid:NSUUID) {
+    func syncServerEventOccurred(event:SMClientEvent) {
         failTest()
     }
     
-    // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
-    func syncServerDeletionsSent(uuids:[NSUUID]) {
-        failTest()
-    }
-    
-    // This is called after the server has finished performing the transfers of files to cloud storage/deletions in cloud storage. numberOperations includes upload and deletion operations.
-    func syncServerCommitComplete(numberOperations numberOperations:Int?) {
-        failTest()
-    }
-    
-    // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-    func syncServerRecovery(progress:SMClientMode) {
-        failTest()
-    }
-    
-    func syncServerError(error:NSError) {
-        failTest()
-    }
-    
-    func syncServerNoFilesToDownload() {
+    func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
         failTest()
     }
 }

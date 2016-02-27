@@ -36,21 +36,38 @@ class SMTwoDeviceTestThatTwoUploadsWork : TwoDeviceTestCase {
         self.uploadFile()
     }
     
-    override func syncServerSingleUploadComplete(uuid uuid:NSUUID) {
-        self.numberUploads += 1
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
         
-        self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
-        self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
     }
     
-    override func syncServerCommitComplete(numberOperations numberOperations: Int?) {
-        Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
-        TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
-            let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
-            self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "No file attr")
-            self.assertIf(fileAttr!.deleted!, thenFailAndGiveMessage: "File was deleted")
+    override func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
+        
+    }
+    
+    override func syncServerModeChange(newMode:SMClientMode) {
+        
+    }
+    
+    override func syncServerEventOccurred(event:SMClientEvent) {
+        switch event {
+        case .SingleUploadComplete(uuid: let uuid):
+            self.numberUploads += 1
             
-            self.passTest()
+            self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
+            self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
+            
+        case .OutboundTransferComplete:
+            Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
+            TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
+                let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
+                self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "No file attr")
+                self.assertIf(fileAttr!.deleted!, thenFailAndGiveMessage: "File was deleted")
+                
+                self.passTest()
+            }
+            
+        default:
+            Log.special("event: \(event)")
         }
     }
     

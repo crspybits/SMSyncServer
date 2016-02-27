@@ -22,9 +22,9 @@ class BaseClass: XCTestCase {
     var extraServerResponseTime:Double = 0
     
     // I have sometimes been getting test failures where it looks like the callback is not defined. i.e., there are no entries in the particular callbacks array. However, the callback was defined. This takes the form of an array index out-of-bounds crash. What was happening is that the timeout was exceeded on the prior test, and so XCTests moved on to the next test, but the prior test was actually still running-- interacting with the server. And when it finished, it tried doing the callbacks, which were no longer defined as the setup had been done for the next test. The cure was to extend the duration of the timeouts.
-    typealias progressCallback = (progress:SMClientMode)->()
+    typealias recoveryCallback = (mode:SMClientMode)->()
     // If you give this, then progressCallbacks is not used.
-    var singleProgressCallback:progressCallback?
+    var singleRecoveryCallback:recoveryCallback?
     //var progressSequenceNumber = 0
     //var progressCallbacks:[progressCallback]!
     
@@ -74,7 +74,7 @@ class BaseClass: XCTestCase {
         self.singleDownload = [singleDownloadType]()
         self.downloadsCompleteCallbacks = [downloadsCompletedCallback]()
         self.noDownloadsCallbacks = [noDownloadsCallback]()
-        self.singleProgressCallback = nil
+        self.singleRecoveryCallback = nil
         self.numberOfRecoverySteps = 0
         
         TestBasics.session.failure = {
@@ -101,36 +101,8 @@ class BaseClass: XCTestCase {
 }
 
 extension BaseClass : SMSyncServerDelegate {
-    // Expect this to be called first for the recovery tests.
-    func syncServerRecovery(progress:SMClientMode) {
-        if nil != self.singleProgressCallback {
-        //    self.progressCallbacks[self.progressSequenceNumber](progress: progress)
-        //    self.progressSequenceNumber += 1
-        //}
-        //else {
-            self.singleProgressCallback!(progress: progress)
-        }
-        self.numberOfRecoverySteps += 1
-    }
-    
-    func syncServerDeletionsSent(uuids: [NSUUID]) {
-        self.deletionCallbacks[self.deletionSequenceNumber](uuids: uuids)
-        self.deletionSequenceNumber += 1
-    }
-    
-    func syncServerSingleUploadComplete(uuid uuid: NSUUID) {
-        self.singleUploadCallbacks[self.singleUploadSequenceNumber](uuid: uuid)
-        self.singleUploadSequenceNumber += 1
-    }
-    
-    // And this is to be called second (i.e., in the case of the recovery tests).
-    func syncServerCommitComplete(numberOperations numberUploads:Int?) {
-        self.commitCompleteCallbacks[self.commitCompleteSequenceNumber](numberUploads: numberUploads)
-        self.commitCompleteSequenceNumber += 1
-    }
-    
-    // Called at the end of all downloads, on a non-error condition.
-    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)]) {
+
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
         for (url, attr) in downloadedFiles {
             self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
             self.singleDownloadSequenceNumber += 1
@@ -140,18 +112,55 @@ extension BaseClass : SMSyncServerDelegate {
         self.downloadsCompleteSequenceNumber += 1
     }
     
-    func syncServerDeletionReceived(uuid uuid: NSUUID) {
+    // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+    func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
     }
     
-    func syncServerError(error:NSError) {
-        self.errorCallbacks[self.errorSequenceNumber]()
-        self.errorSequenceNumber += 1
+    // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+    func syncServerModeChange(newMode:SMClientMode) {
+        func doCallback(mode:SMClientMode, modeType:SMModeType) {
+            if modeType == .Recovery {
+                if nil != self.singleRecoveryCallback {
+                    self.singleRecoveryCallback!(mode: mode)
+                }
+                self.numberOfRecoverySteps += 1
+            }
+        }
+        
+        switch newMode {
+        case .Idle:
+            break
+        
+        case .NonRecoverableError:
+            self.errorCallbacks[self.errorSequenceNumber]()
+            self.errorSequenceNumber += 1
+    
+        case .Running(_, let modeType):
+            doCallback(newMode, modeType: modeType)
+        }
     }
     
-#if DEBUG
-    func syncServerNoFilesToDownload() {
-        self.noDownloadsCallbacks[self.noDownloadsSequenceNumber]()
-        self.noDownloadsSequenceNumber += 1
+    // Reports events. Useful for testing and debugging.
+    func syncServerEventOccurred(event:SMClientEvent) {
+        switch event {
+        case .DeletionsSent(uuids: let uuids):
+            self.deletionCallbacks[self.deletionSequenceNumber](uuids: uuids)
+            self.deletionSequenceNumber += 1
+        
+        case .SingleUploadComplete(uuid: let uuid):
+            self.singleUploadCallbacks[self.singleUploadSequenceNumber](uuid: uuid)
+            self.singleUploadSequenceNumber += 1
+            
+        case .OutboundTransferComplete(numberOperations: let numberOperations):
+            self.commitCompleteCallbacks[self.commitCompleteSequenceNumber](numberUploads: numberOperations)
+            self.commitCompleteSequenceNumber += 1
+        
+        case .NoFilesToDownload:
+            self.noDownloadsCallbacks[self.noDownloadsSequenceNumber]()
+            self.noDownloadsSequenceNumber += 1
+        
+        default:
+            Log.special("event: \(event)")
+        }
     }
-#endif
 }
