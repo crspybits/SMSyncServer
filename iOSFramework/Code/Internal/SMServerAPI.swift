@@ -595,7 +595,7 @@ internal class SMServerAPI {
     }
     
     internal func outboundTransferRecovery(
-        completion:((apiResult:SMServerAPIResult)->(Void))?) {
+        completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
 
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -605,9 +605,17 @@ internal class SMServerAPI {
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationOutboundTransferRecovery)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
+            
+            var result = self.initialServerResponseProcessing(serverResponse, error: requestError)
+            
+            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
+            if (nil == result.error && nil == serverOperationId) {
+                result.error = Error.Create("No server operationId obtained")
+            }
+            
+            completion?(serverOperationId: serverOperationId, apiResult: result)
         }
     }
     
@@ -644,7 +652,7 @@ internal class SMServerAPI {
     }
     
     internal func inboundTransferRecovery(
-        completion:((apiResult:SMServerAPIResult)->(Void))?) {
+        completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
 
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -655,8 +663,16 @@ internal class SMServerAPI {
                         "/" + SMServerConstants.operationInboundTransferRecovery)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+            
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
+            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
+            if (nil == result.error && nil == serverOperationId) {
+                result.error = Error.Create("No server operationId obtained")
+            }
+            
+            completion?(serverOperationId:serverOperationId, apiResult: result)
         }
     }
     

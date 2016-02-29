@@ -83,7 +83,7 @@ public enum SMClientEvent {
 // "class" to make the delegate weak.
 // TODO: These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
-    // Called at the end of all downloads, on non-error conditions.
+    // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
     func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
     

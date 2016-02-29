@@ -16,6 +16,9 @@ import SMCoreLib
 This class uses RepeatingTimer. It must have NSObject as a base class.
 */
 internal class SMDownloadFiles : NSObject {
+    // For error recovery, it's useful to have the operationId if we have one.
+    private static let _operationId = SMPersistItemString(name: "SMDownloadFiles.OperationId", initialStringValue: "", persistType: .UserDefaults)
+    
     private var checkIfInboundTransferOperationFinishedTimer:RepeatingTimer?
     private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
     private var numberInboundTransfersExpected = 0
@@ -33,7 +36,24 @@ internal class SMDownloadFiles : NSObject {
         super.init()
     }
     
-    private var serverOperationId:String?
+    private var serverOperationId:String? {
+        get {
+            if (SMDownloadFiles._operationId.stringValue == "") {
+                return nil
+            }
+            else {
+                return SMDownloadFiles._operationId.stringValue
+            }
+        }
+        set {
+            if (nil == newValue) {
+                SMDownloadFiles._operationId.stringValue = ""
+            }
+            else {
+                SMDownloadFiles._operationId.stringValue = newValue!
+            }
+        }
+    }
     
     // Total number of operations across recovery steps. I introduced this *persistent* variable because [2] is not necessarily an error otherwise.
     private static var totalNumberOperations = SMPersistItemInt(name: "SMDownloadFiles.totalNumberOperations", initialIntValue: 0, persistType: .UserDefaults)
@@ -79,9 +99,9 @@ internal class SMDownloadFiles : NSObject {
         SMDownloadFiles.mode = .Running(.InboundTransfer, .Operating)
         
         SMServerAPI.session.lock() { lockResult in
-            if lockResult.error == nil {
+            if SMTest.If.success(lockResult.error, context: .Lock) {
                 SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
-                    if gfiResult.error == nil {
+                    if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
                         // TODO: There is also the possibility of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
                         self.fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
@@ -93,7 +113,7 @@ internal class SMDownloadFiles : NSObject {
                         else {
                             // No files to download. Release the lock.
                             SMServerAPI.session.unlock() { unlockResult in
-                                if unlockResult.error == nil {
+                                if SMTest.If.success(unlockResult.error, context: .Unlock) {
                                     self.callSyncServerNoFilesToDownload()
                                 }
                                 else {
@@ -126,7 +146,7 @@ internal class SMDownloadFiles : NSObject {
         self.numberInboundTransfersExpected = self.filesToDownload!.count
         
         SMServerAPI.session.startInboundTransfer(self.filesToDownload!) { (theServerOperationId, sitResult) in
-            if sitResult.error == nil {
+            if SMTest.If.success(sitResult.error, context: .InboundTransfer) {
                 self.serverOperationId = theServerOperationId
                 self.startToPollForOperationFinish()
             }
@@ -151,12 +171,7 @@ internal class SMDownloadFiles : NSObject {
         self.checkIfInboundTransferOperationFinishedTimer!.cancel()
         
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, cosResult in
-            if (cosResult.error != nil) {
-                // TODO: How many times to check/recheck and still get an error? An amount of time is difficult to determine given that file sizes and data transfer rates are arbitrary.
-                Log.error("Yikes: Error checking operation status: \(cosResult.error)")
-                self.checkIfInboundTransferOperationFinishedTimer!.start()
-            }
-            else {
+            if SMTest.If.success(cosResult.error, context: .CheckOperationStatus) {
                 // TODO: Deal with other collection of operation status here.
                 
                 switch (operationResult!.status) {
@@ -176,6 +191,11 @@ internal class SMDownloadFiles : NSObject {
                     Log.msg(msg)
                     self.callSyncServerError(Error.Create(msg))
                 }
+            }
+            else {
+                // TODO: How many times to check/recheck and still get an error? An amount of time is difficult to determine given that file sizes and data transfer rates are arbitrary.
+                Log.error("Yikes: Error checking operation status: \(cosResult.error)")
+                self.checkIfInboundTransferOperationFinishedTimer!.start()
             }
         }
     }
@@ -200,10 +220,8 @@ internal class SMDownloadFiles : NSObject {
         }
         
         SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { roiResult in
-        
-            self.serverOperationId = nil
-
-            if roiResult.error == nil {
+            if SMTest.If.success(roiResult.error, context: .RemoveOperationId) {
+                self.serverOperationId = nil
                 // Files were transferred from cloud storage to sync server. Download them from the sync server.
                 self.doDownloadsAux()
             }
@@ -223,7 +241,7 @@ internal class SMDownloadFiles : NSObject {
         filesToDownloadCopy.appendContentsOf(self.filesToDownload!)
         
         SMServerAPI.session.downloadFiles(filesToDownloadCopy) { dfResult in
-            if dfResult.error == nil {
+            if SMTest.If.success(dfResult.error, context: .DownloadFiles) {
                 // Done!
                 self.callSyncServerDownloadsComplete()
             }
@@ -288,7 +306,7 @@ internal class SMDownloadFiles : NSObject {
         // We've had an API error. Don't try to do any pending next operation.
         
         // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
-        
+        Log.error("error: \(error)")
         SMDownloadFiles.mode = .NonRecoverableError(error)
         SMSync.session.stop()
     }
@@ -362,8 +380,13 @@ extension SMDownloadFiles {
     
     // Only call this from the recovery method.
     private func inboundTransferRecovery() {
-        SMServerAPI.session.inboundTransferRecovery { apiResult in
-            if (nil == apiResult.error) {
+        SMServerAPI.session.inboundTransferRecovery { serverOperationId, apiResult in
+            if SMTest.If.success(apiResult.error, context: .InboundTransferRecovery) {
+                // If the operationId is nil, why replace the existing operationId? E.g., the inbound transfer could have already completed (and we didn't know that, hence the recovery step), but we still want to know about the operation id.
+                if serverOperationId != nil {
+                    self.serverOperationId = serverOperationId
+                }
+                
                 SMDownloadFiles.mode = .Running(.InboundTransfer, .Operating)
                 self.startToPollForOperationFinish()
             }

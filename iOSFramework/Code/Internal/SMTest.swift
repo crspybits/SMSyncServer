@@ -9,22 +9,28 @@
 // Enabling failure testing.
 
 // Context for the failure test.
-public enum SMTestContext: String {
+internal enum SMTestContext: String {
     case Lock
+    case Unlock
     case GetFileIndex
     case UploadFiles
     case OutboundTransfer
+    case InboundTransfer
+    case DownloadFiles
+    case CheckOperationStatus
+    case RemoveOperationId
+    case InboundTransferRecovery
 }
 
 import Foundation
 
-public class SMTest {
+internal class SMTest {
     // Singleton class. Usually named "session", but sometimes it just reads better to have it named "If".
-    public static let If = SMTest()
+    internal static let If = SMTest()
     // In other situations, this is better.
-    public static let session = If
+    internal static let session = If
     
-    private var clientFailureTest = [SMTestContext:Bool]()
+    internal var clientFailureTest = [SMTestContext:Bool]()
     private var _serverDebugTest:Int?
     
     private var _crash:Bool = false
@@ -33,7 +39,7 @@ public class SMTest {
     private init() {
     }
 
-    public var serverDebugTest:Int? {
+    internal var serverDebugTest:Int? {
         get {
 #if DEBUG
             if self._serverDebugTest != nil {
@@ -48,17 +54,17 @@ public class SMTest {
         }
     }
         
-    // These are for injecting client/app side tests.
-    public func doClientFailureTest(context:SMTestContext) {
+    // These are for injecting client/app side tests. They fail once, and then reset back to non-failure operation.
+    internal func doClientFailureTest(context:SMTestContext) {
         self.clientFailureTest[context] = true
     }
     
     // Crash the app.
-    public func crash() {
+    internal func crash() {
         self._crash = self._willCrash!
     }
     
-    public func success(error:NSError?, context:SMTestContext) -> Bool {
+    internal func success(error:NSError?, context:SMTestContext) -> Bool {
 #if DEBUG
         if let doFailureTest = self.clientFailureTest[context] {
             if doFailureTest {

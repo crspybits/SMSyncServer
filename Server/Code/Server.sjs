@@ -715,6 +715,7 @@ function startTransferOfFiles(op, psLock, psOperationId, transferMethodName) {
         }
         else {
             // 2) Tell the user we're off to the races, and end the connection.
+            op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
             op.endWithRC(ServerConstants.rcOK);
             
             // 3) Do the file transfer between the cloud storage system and the sync server.
@@ -1134,6 +1135,9 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
             // If the operation is InProgress, we'll consider this not be an error and not something we have to recover from.
             var message = "Operation was InProgress-- Not doing transfer recovery.";
             logger.debug(message);
+            
+            // Send back the operationId just because we can.
+            op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
             op.endWithRC(ServerConstants.rcOK);
         }
         else if (psOperationId.operationType != "Outbound") {
@@ -1569,6 +1573,9 @@ app.post('/' + ServerConstants.operationInboundTransferRecovery, function (reque
             // If the operation is InProgress, we'll consider this not be an error and not something we have to recover from.
             var message = "Operation was InProgress-- Not doing transfer recovery.";
             logger.debug(message);
+            
+            // Send back the operationId just because we can.
+            op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
             op.endWithRC(ServerConstants.rcOK);
         }
         else if (psOperationId.operationType != "Inbound") {

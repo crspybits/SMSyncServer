@@ -229,7 +229,6 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
             Log.msg("SMSyncServer.session.uploadFiles: \(uploadResult.error)")
             
             if SMTest.If.success(uploadResult.error, context: .UploadFiles) {
-            
                 // Just about to do the commit. If we detect failure of the commit on the client, we'll not be fully sure if the commit succeeded. E.g., we could lose a network connection as the commit is operating making it look as if the commit failed, but it actually succeeded.
                 SMUploadFiles.mode = .Running(.BetweenUploadAndOutBoundTransfer, .Operating)
 
@@ -317,9 +316,8 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         // Now that we know we succeeded, we can remove the Operation Id from the server. In some sense it's not a big deal if this fails. HOWEVER, since we set self.serverOperationId to nil on completion (see [4]), it is a big deal: I just ran into an apparent race condition where in testThatTwoSeriesFileUploadWorks(), I got a crash because self.serverOperationId was nil. Seems like this crash occurred because the removeOperationId completion handler for the first upload was called *after* the second call to startFileChanges completed. To avoid this race condition, I'm going to delay the syncServerCommitComplete callback until removeOperationId completes.
         SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { apiResult in
         
-            self.serverOperationId = nil // [4]
-
-            if (apiResult.error == nil) {
+            if SMTest.If.success(apiResult.error, context: .RemoveOperationId) {
+                self.serverOperationId = nil // [4]
                 self.callSyncServerCommitComplete(numberOperations: numberUploads)
             }
             else {
@@ -414,7 +412,7 @@ extension SMUploadFiles {
                 self.uploadRecovery()
                 
             case .Running(.BetweenUploadAndOutBoundTransfer, _):
-                self.betweenUploadAndOutBoundTransferRecover()
+                self.betweenUploadAndOutBoundTransferRecovery()
                 
             case .Running(.OutboundTransfer, _):
                 self.outboundTransferRecovery()
@@ -461,8 +459,9 @@ extension SMUploadFiles {
         // Since we still hold the lock, we can try to recover using the fileChangesRecovery. Again, it will do a little more work than we want, but it will get to the point of retrying the transfers from the SyncServer to cloud storage again. Will it retry the ones that have already been done? No. For successful transfers, the server will have removed those from the outbound files and added entries into the PSFileIndex. For failure, it is possible that we have some inconsistency in the server tables. E.g., a file was transferred, its entry removed from the outbound file changes, but its entry didn't make it into the file index.
         // It would be good to do a server integrity check based on our current expectations of what should be there.
 
-        SMServerAPI.session.outboundTransferRecovery { apiResult in
+        SMServerAPI.session.outboundTransferRecovery { operationId, apiResult in
             if (nil == apiResult.error) {
+                self.serverOperationId = operationId
                 // OK. Looks like a successful commit. We need to wait for the file transfer to complete.
                 self.startToPollForOperationFinish()
             }
@@ -476,7 +475,7 @@ extension SMUploadFiles {
     // This is an ugly edge case-- falling between the two main recovery cases.
     // Getting to this point, it *seems* like the commitChanges failed. However, it's also possible that something just happened in getting the response back from the server and the commitChanges didn't fail. Need to determine if the commit was successful or not. I.e., if the operation is in progress (or has completed). If the commit was not successful, then we'll do .ChangesRecovery.
 
-    private func betweenUploadAndOutBoundTransferRecover() {
+    private func betweenUploadAndOutBoundTransferRecovery() {
         if (nil == self.serverOperationId) {
             // Need to double check if we actually have an operationId. Server could have generated an operationId, but just failed to get it to us.
             SMServerAPI.session.getOperationId(){ (theServerOperationId, apiResult) in
@@ -487,7 +486,7 @@ extension SMUploadFiles {
                     }
                     else {
                         self.serverOperationId = theServerOperationId
-                        self.betweenUploadAndOutBoundTransferRecoverAux()
+                        self.betweenUploadAndOutBoundTransferRecoveryAux()
                     }
                 }
                 else {
@@ -496,11 +495,11 @@ extension SMUploadFiles {
             }
         }
         else {
-            self.betweenUploadAndOutBoundTransferRecoverAux()
+            self.betweenUploadAndOutBoundTransferRecoveryAux()
         }
     }
     
-    private func betweenUploadAndOutBoundTransferRecoverAux() {
+    private func betweenUploadAndOutBoundTransferRecoveryAux() {
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
             if (apiResult.error != nil) {
                 self.delayedRecovery()
