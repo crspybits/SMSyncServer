@@ -204,9 +204,9 @@ internal class SMDownloadFiles : NSObject {
         SMDownloadFiles.totalNumberOperations.intValue += operationResult.count
         
         Log.msg("Operation succeeded: \(operationResult.count) cloud storage operations performed (total is \(SMDownloadFiles.totalNumberOperations.intValue)")
-        
-        // This is actually not an error-- it can just reflect a retry of a transfer that failed the first time.
+    
         if SMDownloadFiles.totalNumberOperations.intValue == self.numberInboundTransfersExpected {
+            // This is actually not an error-- it can just reflect a retry of a transfer that failed the first time.
             Log.msg("Number of inbound transfers: \(operationResult.count)")
         }
         else if (SMDownloadFiles.totalNumberOperations.intValue > self.numberInboundTransfersExpected) {
@@ -214,9 +214,9 @@ internal class SMDownloadFiles : NSObject {
         }
         else {
             // [2]. When I wasn't tracking totalNumberOperations in a persistent manner, just got this in a case of recovery. On the second attempt at inbound transfer, no inbound transfers actually had to be done-- they already had been done. In this case, 0 cloud storage operations had been done, but at least one was expected.
-            let error = Error.Create("Something bad is going on: number inbound transfers expected \(self.numberInboundTransfersExpected) was greater than operation count \(SMDownloadFiles.totalNumberOperations.intValue)")
-            self.callSyncServerError(error)
-            return
+            // [3]. This isn't always an error.
+            let message = "Number inbound transfers expected \(self.numberInboundTransfersExpected) was greater than operation count \(SMDownloadFiles.totalNumberOperations.intValue)"
+            Log.warning(message)
         }
         
         SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { roiResult in
@@ -391,7 +391,8 @@ extension SMDownloadFiles {
                 self.startToPollForOperationFinish()
             }
             else if apiResult.returnCode == SMServerConstants.rcLockNotHeld {
-                // The server will *not* have initiated the inbound transfer again. We'll do it ourselves.
+                // The server will *not* have initiated the inbound transfer again. We'll do it ourselves. 
+                // [3]. This situation is actually ambiguous. We could have already done the inbound transfers. This can occur if we get a failure indication from the inbound transfers, but the inbound transfer actually succeeded. In this case, it is possible to be in a state where (a) we don't have the lock, but (b) the inbound transfers have completed already. We'll try again, though to make sure.
                 self.checkForDownloadsAux()
             }
             else if apiResult.returnCode == SMServerConstants.rcNoOperationId {
