@@ -189,7 +189,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
 
         self.numberDownloadChecks += 1
         
-        if self.numberDownloadChecks > 10 {
+        if self.numberDownloadChecks > 30 {
             failTest("Too many checks")
             return
         }
