@@ -14,7 +14,7 @@ import SMCoreLib
 class SMTwoDeviceTestThatOperationWithLockWorks : TwoDeviceTestCase {
     
     init() {
-        super.init(withTestLabel: "D: Operation with lock works")
+        super.init(withTestLabel: "D: 1) Operation with lock works")
         TestBasics.session.failure = {
             self.failTest("TestBasics.session.failure")
         }

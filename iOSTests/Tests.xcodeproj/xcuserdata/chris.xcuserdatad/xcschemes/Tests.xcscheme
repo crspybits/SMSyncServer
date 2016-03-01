@@ -39,7 +39,19 @@
             </BuildableReference>
             <SkippedTests>
                <Test
+                  Identifier = "DownloadRecovery/testThatCrash1RecoveryAfterOnSingleFileWorks()">
+               </Test>
+               <Test
+                  Identifier = "DownloadRecovery/testThatCrash1RecoveryAfterSingleFileWorks()">
+               </Test>
+               <Test
+                  Identifier = "DownloadRecovery/testThatCrash2RecoveryAfterSingleFileWorks()">
+               </Test>
+               <Test
                   Identifier = "Upload/testThatRecoveryAfterAppCrashWorks()">
+               </Test>
+               <Test
+                  Identifier = "UploadRecovery/testThatRecoveryAfterAppCrashWorks()">
                </Test>
             </SkippedTests>
          </TestableReference>

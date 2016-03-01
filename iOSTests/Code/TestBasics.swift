@@ -96,6 +96,16 @@ public class TestBasics {
         return result
     }
     
+    public func recreateTestFile(fromUUID uuidString:String) -> TestFile {
+        var testFile = TestFile()
+        testFile.appFile = AppFile.fetchObjectWithUUID(uuidString)
+        testFile.sizeInBytes = Int(FileStorage.fileSize(testFile.appFile.url().path))
+        testFile.mimeType = "text/plain"
+        testFile.fileName = testFile.appFile.fileName
+        testFile.remoteFileName = testFile.appFile.fileName
+        return testFile
+    }
+    
     // It's possible we'll check and another device with our same userId (same cloud storage creds) will have a lock-- so be willing to try this a number of times.
     private let maxNumberCheckFileSizeAttempts = 10
     

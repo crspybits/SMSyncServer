@@ -14,7 +14,7 @@ import SMCoreLib
 class SMTwoDeviceTestThatTwoUploadsWork : TwoDeviceTestCase {
     
     init() {
-        super.init(withTestLabel: "D: Two uploads")
+        super.init(withTestLabel: "D: 2) Two uploads")
         TestBasics.session.failure = {
             self.failTest("TestBasics.session.failure")
         }

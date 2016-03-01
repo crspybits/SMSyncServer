@@ -152,13 +152,30 @@ public class SMServerConstants {
     public static let debugTestCaseKey = "DebugTestCase"
     // Value: An integer number (values given next) indicating a particular test case.
     
-    // Values for debugTestCaseKey
+    // Values for debugTestCaseKey. These trigger simulated failures on the server at various points-- for testing.
+    
+    // Simulated failure when marking all files for user/device in PSOutboundFileChange's as committed. This applies only to file uploads (and upload deletions).
     public static let dbTcCommitChanges = 1
-    public static let dbTcInProgress = 2
-    public static let dbTcSetup = 3
-    public static let dbTcTransferFiles = 4
-    public static let dbTcSendFilesUpdate = 5
-    public static let dbTcRemoveLock = 6
+
+    // Simulated failure when updating the file index on the server. Occurs when finishing sending a file to cloud storage. And when checking the log for consistency when doing outbound transfer recovery. Applies only to uploads (and upload deletions).
+    public static let dbTcSendFilesUpdate = 2
+    
+    // Simulated failure when changing the operation id status to "in progress" when transferring files to/from cloud storage. Applies to both uploads and downloads.
+    public static let dbTcInProgress = 3
+    
+    // Simulated failure when setting up for transferring files to/from cloud storage. This occurrs after changing the operation id status to "in progress" and before the actual transferring of files. Applies to both uploads and downloads.
+    public static let dbTcSetup = 4
+    
+    // Simulated failure when transferring files to/from cloud storage. Occurs after dbTcSetup. Applies to both uploads and downloads.
+    public static let dbTcTransferFiles = 5
+    
+    // Simulated failure when removing the lock after doing cloud storage transfer. Applies to both uploads and downloads.
+    public static let dbTcRemoveLockAfterCloudStorageTransfer = 6
+    
+    public static let dbTcGetLockForDownload = 7
+
+    // Simulated failure in a file download, when getting download file info. Applies to download only.
+    public static let dbTcGetDownloadFileInfo = 8
     
     // MARK: Responses from server
     

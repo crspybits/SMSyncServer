@@ -29,6 +29,9 @@ function FileTransfers(op, psOperationId) {
     this.psOperationId = psOperationId;
 }
 
+FileTransfers.methodNameReceiveFiles = "receiveFiles";
+FileTransfers.methodNameSendFiles = "sendFiles";
+
 // instance methods
 
 // Do post-constructor initialization/setup. It's assumed that this is called prior to any other instance methods.
@@ -42,7 +45,7 @@ FileTransfers.prototype.setup = function (callback) {
     });
 }
 
-// "send" in "sendFiles" includes both uploading and deletion.
+// `send` in `sendFiles` includes both uploading and deletion.
 // The files are specified in the PSOutboundFileChanges for the user/device.
 // This will try each file transfer a specific number of times before giving up.
 // Each time a file is transferred, the specific entry will be removed from PSOutboundFileChange's.

@@ -690,7 +690,7 @@ function startOutboundTransfer(op, psLock, psOperationId) {
                     });
                 }
                 else {
-                    startTransferOfFiles(op, psLock, psOperationId, "sendFiles");
+                    startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameSendFiles);
                 }
             });
         }
@@ -702,26 +702,17 @@ function startOutboundTransfer(op, psLock, psOperationId) {
 // It seems this untethered operation is a characteristic of Node.js: http://stackoverflow.com/questions/16180502/node-express-why-can-i-execute-code-after-res-send
 // We'll have to do something separate to deal with (A) reporting/logging errors post-connection termation, (B) handling errors, and (C) ensuring termination (i.e., ensuring we don't run for too long).
 // If we were using websockets, could we inform the app of an error in the file transfer? Presumably if the app was in the background, not launched, or not on the network, no.
-// transferMethodName can be "sendFiles" or "receiveFiles"
+// transferMethodName can be FileTransfers.methodNameSendFiles or FileTransfers.methodNameReceiveFiles
 function startTransferOfFiles(op, psLock, psOperationId, transferMethodName) {
     // Change PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
-    psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
-    psOperationId.error = null;
+    // It is best to not do this too early. i.e., we should not do this before we actually know that the operation is actually in-progress. If we do this early, then if we get a false negative in setting the in-progress status (we successfully set the status to in-progress, but get a report of failure), we will be in a bad state: We will believe we the operation is in-progress, but we have really not started the transfer operation.
     
-    psOperationId.update(function (updateError) {
-        if (objOrInject(updateError, op, ServerConstants.dbTcInProgress)) {
-            logger.error("Could not update operation to rcOperationStatusInProgress: %s", updateError);
-            op.endWithErrorDetails(updateError);
-        }
-        else {
-            // 2) Tell the user we're off to the races, and end the connection.
-            op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
-            op.endWithRC(ServerConstants.rcOK);
-            
-            // 3) Do the file transfer between the cloud storage system and the sync server.
-            cloudStorageTransfer(op, psLock, psOperationId, transferMethodName)
-        }
-    });
+    // 2) Tell the user we're off to the races, and end the connection.
+    op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
+    op.endWithRC(ServerConstants.rcOK);
+    
+    // 3) Do the file transfer between the cloud storage system and the sync server.
+    cloudStorageTransfer(op, psLock, psOperationId, transferMethodName);
 }
 
 app.post('/' + ServerConstants.operationGetFileIndex, function (request, response) {
@@ -1158,7 +1149,7 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
                     // Originally I was thinking of this as now being in the same kind of situation as upload recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like upload recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
                     // startTransferOfFiles calls cloudStorageTransfer, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
                     // In fact, this will act in the same manner as the end part of CommitFileChanges-- it will let the file transfer run asynchronously and "return" to the server REST API caller.
-                    startTransferOfFiles(op, psLock, psOperationId, "sendFiles");
+                    startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameSendFiles);
                 }
             });
         }
@@ -1298,10 +1289,9 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     
                     var psOperationId = null;
                     
-                    // Set PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
+                    // Default for PSOperationId operationStatus will be rcOperationStatusNotStarted. We'll set the status to InProgress below (see [1]), just before we actually spin off the operation as asynchronous.
                     const operationData = {
-                        operationType: "Inbound",
-                        operationStatus: ServerConstants.rcOperationStatusInProgress
+                        operationType: "Inbound"
                     };
                     
                     try {
@@ -1310,7 +1300,7 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                         op.endWithErrorDetails(error);
                         return;
                     };
-
+                    
                     psOperationId.storeNew(function (error) {
                         if (error) {
                             op.endWithErrorDetails(error);
@@ -1323,12 +1313,8 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                                     op.endWithErrorDetails(error);
                                 }
                                 else {
-                                    // Tell the user we're off to the races, and end the connection.
-                                    op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
-                                    op.endWithRC(ServerConstants.rcOK);
-                                    
-                                    // Do the asynchronous file transfer from the cloud storage system.
-                                    cloudStorageTransfer(op, psLock, psOperationId, "receiveFiles");
+                                    // [1]. Using startTransferOfFiles method so we can use the dbTcInProgress test.
+                                    startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameReceiveFiles);
                                 }
                             });
                         }
@@ -1339,7 +1325,7 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
     });
 });
 
-// transferMethod is given by a string-- this is a method of the FileTransfers.sjs class. "receiveFiles" or "sendFiles"
+// transferMethod is given by a string-- this is a method of the FileTransfers.sjs class. FileTransfers.methodNameReceiveFiles or FileTransfers.methodNameSendFiles
 // This function operates in asynchronous mode, i.e., with the connection to the client terminated already.
 function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
 
@@ -1356,38 +1342,54 @@ function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
         psOperationId.update();
     }
     
-    logger.info("Attempting FileTransfers.setup...");
-    var fileTransfers = new FileTransfers(op, psOperationId);
-
-    fileTransfers.setup(function (error) {
-        if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
-            var errorMessage = "Failed on setup: " + JSON.stringify(error);
+    // We have a choice to make about when we change the operation status to in-progress. For example, could do it (a) here, (b) after setup, (c) or after starting the first transfer. When we do this is somewhat arbitrary. The problem I'm trying to avoid is getting a permanent in-progress status without actually making any progress. I.e., without having continuing operation of the file transfer.
+    // TODO: It would be better if we could get some kind of ongoing feedback (e.g., a callback that occurs periodically on the basis of time or bytes transferred) from the cloud storage file transfer, and when we fail to get that ongoing feedback, we change the operation status to a failure status.
+    psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
+    psOperationId.error = null;
+    
+    // Choosing to do the update to in-progress status before the setup.
+    psOperationId.update(function (updateError) {
+        if (objOrInject(updateError, op, ServerConstants.dbTcInProgress)) {
+            var errorMessage = "Could not update operation to rcOperationStatusInProgress: %s", updateError;
+            logger.error(errorMessage);
             updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
         }
         else {
-            logger.info("Attempting FileTransfers.%s...", transferMethod);
+            logger.info("Attempting FileTransfers.setup...");
+            var fileTransfers = new FileTransfers(op, psOperationId);
 
-            fileTransfers[transferMethod](function (error) {
-                if (objOrInject(error, op, ServerConstants.dbTcTransferFiles)) {
-                    var errorMessage = "Error transferring files: " + JSON.stringify(error);
-                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
-                    
-                    // I'm not going to remove the lock here, in order to give the app a chance to recover from this error in a locked condition.
-                    return;
+            fileTransfers.setup(function (error) {
+                if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
+                    var errorMessage = "Failed on setup: " + JSON.stringify(error);
+                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
                 }
+                else {
+                    logger.info("Attempting FileTransfers.%s...", transferMethod);
 
-                psLock.removeLock(function (error) {
-                    if (objOrInject(error, op, ServerConstants.dbTcRemoveLock)) {
-                        var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
-                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
-                    }
-                    else {
-                        logger.trace("Removed the lock.");
+                    fileTransfers[transferMethod](function (error) {
+                        if (objOrInject(error, op, ServerConstants.dbTcTransferFiles)) {
+                            var errorMessage = "Error transferring files: " + JSON.stringify(error);
+                            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
+                            
+                            // I'm not going to remove the lock here, in order to give the app a chance to recover from this error in a locked condition.
+                            return;
+                        }
 
-                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
-                        logger.trace("Successfully completed operation!");
-                    }
-                });
+                        psLock.removeLock(function (error) {
+                            if (objOrInject(error, op,
+                                ServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)) {
+                                var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
+                                updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
+                            }
+                            else {
+                                logger.trace("Removed the lock.");
+
+                                updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
+                                logger.trace("Successfully completed operation!");
+                            }
+                        });
+                    });
+                }
             });
         }
     });
@@ -1418,15 +1420,17 @@ app.post('/' + ServerConstants.operationDownloadFile, function (request, respons
     }
 
     op.validateUser(function (psLock, psOperationId) {
-        if (isDefined(psLock)) {
-            // Should not have the lock to download files.
+        // Should not have the lock to download files.
+        if (objOrInject(psLock, op, ServerConstants.dbTcGetLockForDownload)) {
+        // Same check as:
+        // if (isDefined(psLock)) {
             var message = "Error: Have the lock-- should not have lock to download files!";
             logger.error(message);
             endDownloadWithError(op, ServerConstants.rcServerAPIError, message);
         }
         else {
             getDownloadFileInfo(request, op, function (error, returnCode, psInboundFile) {
-                if (error) {
+                if (objOrInject(error, op, ServerConstants.dbTcGetDownloadFileInfo)) {
                     endDownloadWithError(op, returnCode, error);
                 }
                 else {
@@ -1570,7 +1574,7 @@ app.post('/' + ServerConstants.operationInboundTransferRecovery, function (reque
             op.endWithRCAndErrorDetails(ServerConstants.rcNoOperationId, message);
         }
         else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-            // If the operation is InProgress, we'll consider this not be an error and not something we have to recover from.
+            // If the operation is InProgress, we'll consider this not to be an error and not something we have to recover from.
             var message = "Operation was InProgress-- Not doing transfer recovery.";
             logger.debug(message);
             
@@ -1584,7 +1588,7 @@ app.post('/' + ServerConstants.operationInboundTransferRecovery, function (reque
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
-            startTransferOfFiles(op, psLock, psOperationId, "receiveFiles");
+            startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameReceiveFiles);
         }
     });
 });
