@@ -16,6 +16,8 @@ class UploadRecovery: BaseClass {
     // Flag so I can get ordering of expectations right.
     var doneRecovery = false
     
+    private static var crashUUIDString1 = SMPersistItemString(name: "SMUploadFiles.crashUUIDString1", initialStringValue: "", persistType: .UserDefaults)
+
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -30,69 +32,6 @@ class UploadRecovery: BaseClass {
     }
     
     //MARK: Recovery tests
-    
-    // App crashes mid-way through the upload operation. This is a relevant test because it seems likely that the network can be lost by the mobile device during an extended upload.
-    // This test will intentionally fail the first time through (due to the app crash), and you have to manually run it a 2nd time to get it to succeed.
-    // I am leaving this test normally disabled in XCTests in Xcode so that I can enable it, manually run it as needed, and then disable it again.
-    func testThatRecoveryAfterAppCrashWorks() {
-        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
-        let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
-
-        // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
-        if Upload.recoveryAfterAppCrash.boolValue {
-            Upload.recoveryAfterAppCrash.boolValue = false
-            
-            let singleUploadExpectation = self.expectationWithDescription("Upload Callback")
-
-            self.waitUntilSyncServerUserSignin() {
-
-                // This will fake a failure on .UploadFiles, but it will have really succeeded on uploading the file.
-                SMTest.session.doClientFailureTest(.UploadFiles)
-                
-                let testFile = TestBasics.session.createTestFile("RecoveryAfterAppCrash")
-
-                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
-                
-                self.singleUploadCallbacks.append() { uuid in
-                    XCTAssert(uuid.UUIDString == testFile.uuidString)
-                    singleUploadExpectation.fulfill()
-                }
-            
-                self.singleRecoveryCallback = { mode in
-                    // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                    progressCallbackExpected.fulfill()
-
-                    SMTest.session.crash()
-                    // NOTE: XCTFail has no actual effect on the running app itself. I.e., it doesn't cause the app to crash or fail. I need the app to crash because otherwise, the recovery process will proceed within fileChangesRecovery() in SMUploadFiles.
-                    // XCTFail(msg)
-                }
-            
-                SMSyncServer.session.commit()
-            }
-        }
-        else {
-            // 2nd run of test.
-            
-            self.singleRecoveryCallback = { mode in
-                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
-                progressCallbackExpected.fulfill()
-            }
-            
-            // 2nd run we don't get an upload because the upload actually happened the first time around.
-            /*
-            self.singleUploadCallbacks.append() { uuid in
-                singleUploadExpectation.fulfill()
-            }*/
-            
-            self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssertEqual(numberUploads, 1)
-                // NOTE: We could do a file size check here, after the commit succeeds, but I'd have to persist the file size across app launches, or go back to the file and see what size it is.
-                uploadCompleteCallbackExpectation.fulfill()
-            }
-        }
-        
-        self.waitForExpectations()
-    }
     
     // When we get network access back, should treat this like an app launch and see if we need to do recovery. To test this: Create a new test case where, when we get network access back, do the same procedure/method as during app launch. The test case will consist of something like testThatRecoveryAfterAppCrashWorks(): Start an upload, cause it to fail because of network loss, then immediately bring the network back online and do the recovery.
     func testThatRecoveryFromNetworkLossWorks() {
@@ -378,5 +317,133 @@ class UploadRecovery: BaseClass {
         
         self.waitForExpectations()
     }
+
+    // App crashes mid-way through the upload operation. This is a relevant test because it seems likely that the network can be lost by the mobile device during an extended upload.
+    // This test will intentionally fail the first time through (due to the app crash), and you have to manually run it a 2nd time to get it to succeed.
+    // I am leaving this test normally disabled in XCTests in Xcode so that I can enable it, manually run it as needed, and then disable it again.
+    func testThatRecoveryAfterAppCrashWorks() {
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
+        let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
+
+        // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
+        if Upload.recoveryAfterAppCrash.boolValue {
+            Upload.recoveryAfterAppCrash.boolValue = false
+            
+            let singleUploadExpectation = self.expectationWithDescription("Upload Callback")
+
+            self.waitUntilSyncServerUserSignin() {
+
+                // This will fake a failure immediately after .UploadFiles, but it will have really succeeded on uploading the file.
+                SMTest.session.doClientFailureTest(.UploadFiles)
+                
+                let testFile = TestBasics.session.createTestFile("RecoveryAfterAppCrash")
+
+                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+                
+                self.singleUploadCallbacks.append() { uuid in
+                    XCTAssert(uuid.UUIDString == testFile.uuidString)
+                    singleUploadExpectation.fulfill()
+                }
+            
+                self.singleRecoveryCallback = { mode in
+                    // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
+                    progressCallbackExpected.fulfill()
+
+                    SMTest.session.crash()
+                    // NOTE: XCTFail has no actual effect on the running app itself. I.e., it doesn't cause the app to crash or fail. I need the app to crash because otherwise, the recovery process will proceed within fileChangesRecovery() in SMUploadFiles.
+                    // XCTFail(msg)
+                }
+            
+                SMSyncServer.session.commit()
+            }
+        }
+        else {
+            // 2nd run of test.
+            
+            self.singleRecoveryCallback = { mode in
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
+                progressCallbackExpected.fulfill()
+            }
+            
+            // 2nd run we don't get an upload because the upload actually happened the first time around.
+            /*
+            self.singleUploadCallbacks.append() { uuid in
+                singleUploadExpectation.fulfill()
+            }*/
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssertEqual(numberUploads, 1)
+                // NOTE: We could do a file size check here, after the commit succeeds, but I'd have to persist the file size across app launches, or go back to the file and see what size it is.
+                uploadCompleteCallbackExpectation.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
+    }
     
+    // App crashes after uploading 1 of 2 files. This is a relevant test because the recovery has to determine that one file has already been uploaded, and only upload the second one.
+    // This test will intentionally fail the first time through (due to the app crash), and you have to manually run it a 2nd time to get it to succeed.
+    // I am leaving this test normally disabled in XCTests in Xcode so that I can enable it, manually run it as needed, and then disable it again.
+    func testThatRecoveryAfter1Of2UploadsAppCrashWorks() {
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
+        let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
+        
+        let testFileNameBase = "RecoveryAfter1Of2UploadsAppCrash"
+        let testFileName1 = testFileNameBase + ".1"
+        let testFileName2 = testFileNameBase + ".2"
+
+        // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
+        if Upload.recoveryAfterAppCrash.boolValue {
+            Upload.recoveryAfterAppCrash.boolValue = false
+
+            self.waitUntilSyncServerUserSignin() {
+                
+                let testFile1 = TestBasics.session.createTestFile(testFileName1)
+                let testFile2 = TestBasics.session.createTestFile(testFileName2)
+                UploadRecovery.crashUUIDString1.stringValue = testFile2.uuidString
+
+                SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+                SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                
+                self.singleUploadCallbacks.append() { uuid in
+                    XCTAssert(uuid.UUIDString == testFile1.uuidString)
+                    TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
+                        SMTest.session.crash()
+                    }
+                }
+            
+                self.singleRecoveryCallback = { mode in
+                    // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
+                    progressCallbackExpected.fulfill()
+                }
+            
+                SMSyncServer.session.commit()
+            }
+        }
+        else {
+            // 2nd run of test.
+            let testFile2 = TestBasics.session.recreateTestFile(fromUUID: UploadRecovery.crashUUIDString1.stringValue)
+            
+            let secondUploadExpectation = self.expectationWithDescription("Upload Callback")
+
+            self.singleRecoveryCallback = { mode in
+                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
+                progressCallbackExpected.fulfill()
+            }
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == testFile2.uuidString)
+                secondUploadExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssertEqual(numberUploads, 2)
+                TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
+                    uploadCompleteCallbackExpectation.fulfill()
+                }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
 }

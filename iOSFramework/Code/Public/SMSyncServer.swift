@@ -67,7 +67,7 @@ public enum SMClientEvent {
     // A single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
     case SingleUploadComplete(uuid:NSUUID)
     
-    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method.
+    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
     case SingleDownloadComplete(url:NSURL, attr:SMSyncAttributes)
     
     // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
@@ -94,7 +94,7 @@ public protocol SMSyncServerDelegate : class {
     // TODO: Can these occur both on upload and download?
     // func syncServerFileConflicts(conflictingFiles:[SMSyncConflicts], resolution:([SMSyncConflicts])->())
     
-    // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+    // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
     func syncServerModeChange(newMode:SMClientMode)
     
     // Reports events. Useful for testing and debugging.

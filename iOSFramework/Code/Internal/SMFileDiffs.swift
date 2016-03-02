@@ -11,6 +11,8 @@
 import Foundation
 import SMCoreLib
 
+// TODO: There is a potential race condition with any code that (a) accesses the collection of meta data, and (b) runs in a different thread than the application code. I.e., what happens if the SMLocalFile meta data gets changed while this class is accessing that meta data? It seems best to provide a level of locking where when this class accesses the SMLocalFile meta data, no other thread can access that meta data. E.g., this could be done by providing a lock specific to the SMLocalFile class which must be obtained prior to creating or altering an SMLocalFile's.
+
 internal enum InitType : Equatable {
     // SMLocalFile meta data is used to see if there are any updates needing to be uploaded.
     case LocalChanges
@@ -82,6 +84,7 @@ internal class SMFileDiffs {
         }
     }
     
+    // Indicates which remote files need to be deleted.
     internal func filesToDelete() -> (files:[SMServerFile]?, error:NSError?) {
         Assert.If(self.initType! != InitType.LocalChanges, thenPrintThisString: "Yikes: Didn't init for .LocalChanges")
         
@@ -216,12 +219,14 @@ internal class SMFileDiffs {
             return nil
         }
         else {
+            // Make a shallow copy of the array of SMServerFile's.
             var copyOfCurrent = [SMServerFile]()
             copyOfCurrent.appendContentsOf(current!)
             return copyOfCurrent
         }
     }
     
+    // This computation depends on the state of SMLocalFile meta data on the local device. Thus, you should *not* rely on this to return the same value from call to call. The application code could have queued files for upload/deletion which would change the meta data which would changed the returned value.
     private func determineFilesToDownload() -> [SMServerFile]? {
         var result:[SMServerFile]? = [SMServerFile]()
     

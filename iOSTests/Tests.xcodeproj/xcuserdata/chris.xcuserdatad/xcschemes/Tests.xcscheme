@@ -48,7 +48,16 @@
                   Identifier = "DownloadRecovery/testThatCrash2RecoveryAfterSingleFileWorks()">
                </Test>
                <Test
+                  Identifier = "DownloadRecovery/testThatCrash3RecoveryAfterTwoFileWorks()">
+               </Test>
+               <Test
+                  Identifier = "DownloadRecovery/testThatCrash4RecoveryAfterTwoFileWorks()">
+               </Test>
+               <Test
                   Identifier = "Upload/testThatRecoveryAfterAppCrashWorks()">
+               </Test>
+               <Test
+                  Identifier = "UploadRecovery/testThatRecoveryAfter1Of2UploadsAppCrashWorks()">
                </Test>
                <Test
                   Identifier = "UploadRecovery/testThatRecoveryAfterAppCrashWorks()">

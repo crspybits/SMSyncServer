@@ -24,64 +24,13 @@ internal class SMDownloadFiles : NSObject {
     private var numberInboundTransfersExpected = 0
     
     // In my first cut at the recovery implementation, I was not persisting the filesToDownload. But, on a recovery in the .Download mode, a persisted value for filesToDownload is needed. I could regenerate it using SMFileDiffs, but that depends on the file index from the server. I'd not want to regenerate it by again retrieving the server file index, because that could change over time. What I'm going to do instead is persist the originally obtained server file index.
+    // Upon even further testing and thought, I've realized that there is a problem with that idea. Each time you regenerate the value using SMFileDiffs, the local meta data could have changed, hence the value produced by SMFileDiffs could change. So, I'm going to instead persist the results produced by SMFileDiffs.
     
-    private static var _serverFileIndex = SMPersistItemArray(name: "SMDownloadFiles.serverFileIndex", initialArrayValue: [], persistType: .UserDefaults)
-    private var _fileDiffs:SMFileDiffs?
-    private var _filesToDownload:[SMServerFile]?
+    // The collection of all files to download, as originally computed by SMFileDiffs.
+    private static var allFilesToDownload = PersistedServerFileIndex(withUserDefaultsName: "SMDownloadFiles.allFilesToDownload")
     
-    // You need to set this before accessing fileDiffs or filesToDownload.
-    private var serverFileIndex:[SMServerFile]? {
-        set {
-            // Lovely lovely conversion from a Swift array to an NSMutableArray. See also http://stackoverflow.com/questions/25837539/how-can-i-cast-an-nsmutablearray-to-a-swift-array-of-a-specific-type
-            // This fails
-            /*
-            if let mutableArray = newValue! as NSArray as? NSMutableArray {
-                SMDownloadFiles._serverFileIndex.arrayValue = mutableArray
-            }
-            else {
-                Assert.badMojo(alwaysPrintThisString: "Could not convert!")
-            }
-            */
-            
-            // This is pretty crude. But it works.
-            let mutableArray = NSMutableArray()
-            for serverFile in newValue! {
-                mutableArray.addObject(serverFile)
-            }
-            SMDownloadFiles._serverFileIndex.arrayValue = mutableArray
-        }
-        
-        get {
-            // Interestingly, though-- in contrast to the above setter, the following does work:
-            if let serverFiles = SMDownloadFiles._serverFileIndex.arrayValue as NSArray as? [SMServerFile] {
-                return serverFiles
-            }
-            else {
-                Assert.badMojo(alwaysPrintThisString: "Could not convert!")
-                return nil
-            }
-        }
-    }
-    
-    private var fileDiffs:SMFileDiffs? {
-        if nil == _fileDiffs {
-            _fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: self.serverFileIndex!))
-        }
-        
-        return _fileDiffs
-    }
-    
-    private var filesToDownload:[SMServerFile]? {
-        set {
-            _filesToDownload = newValue
-        }
-        get {
-            if nil == _filesToDownload {
-                _filesToDownload = self.fileDiffs!.filesToDownload
-            }
-            return _filesToDownload
-        }
-    }
+    // The current collection of files to download, modified after each file is downloaded.
+    private static var currentFilesToDownload = PersistedServerFileIndex(withUserDefaultsName: "SMDownloadFiles.currentFilesToDownload")
     
     static private let maxTimesToTryRecovery = 3
     static private var numberTimesTriedRecovery:Int = 0
@@ -162,11 +111,11 @@ internal class SMDownloadFiles : NSObject {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
                         // TODO: There is also the possibility of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
 
-                        self.serverFileIndex = fileIndex!
+                        let fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
+                        SMDownloadFiles.allFilesToDownload.value = fileDiffs.filesToDownload
+                        SMDownloadFiles.currentFilesToDownload.value = fileDiffs.filesToDownload
                         
-                        // self.filesToDownload is created, indirectly, based on self.serverFileIndex.
-                        
-                        if self.filesToDownload != nil {
+                        if SMDownloadFiles.allFilesToDownload.value != nil {
                             // There were some files to download. Do the transfer(s) from cloud storage in to the sync server.
                             self.doInboundTransfers()
                         }
@@ -203,9 +152,9 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func doInboundTransfers() {
-        self.numberInboundTransfersExpected = self.filesToDownload!.count
+        self.numberInboundTransfersExpected = SMDownloadFiles.currentFilesToDownload.value!.count
         
-        SMServerAPI.session.startInboundTransfer(self.filesToDownload!) { (theServerOperationId, sitResult) in
+        SMServerAPI.session.startInboundTransfer(SMDownloadFiles.currentFilesToDownload.value!) { (theServerOperationId, sitResult) in
             if SMTest.If.success(sitResult.error, context: .InboundTransfer) {
                 self.serverOperationId = theServerOperationId
                 self.startToPollForOperationFinish()
@@ -298,7 +247,8 @@ internal class SMDownloadFiles : NSObject {
 
         // Make a copy of the files to download because in the smServerAPIFileDownloaded delegate method below (see [1]), we're going to remove a file from self.filesToDownload each time a file is downloaded, and we don't want to modify that array while SMServerAPI.session.downloadFiles is using it. We're modifying the self.filesToDownload! each time a file is downloaded to make recovery easier.
         var filesToDownloadCopy = [SMServerFile]()
-        filesToDownloadCopy.appendContentsOf(self.filesToDownload!)
+        filesToDownloadCopy.appendContentsOf(
+            SMDownloadFiles.currentFilesToDownload.value!)
         
         SMServerAPI.session.downloadFiles(filesToDownloadCopy) { dfResult in
             if SMTest.If.success(dfResult.error, context: .DownloadFiles) {
@@ -316,11 +266,11 @@ internal class SMDownloadFiles : NSObject {
     // Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
 
     private func callSyncServerDownloadsComplete() {
-        Log.msg("Finished downloading files: \(self.fileDiffs!.filesToDownload)")
+        Log.msg("Finished downloading files: \(SMDownloadFiles.allFilesToDownload.value!)")
         
         var downloaded = [(NSURL, SMSyncAttributes)]()
         
-        for file in self.fileDiffs!.filesToDownload! {
+        for file in SMDownloadFiles.allFilesToDownload.value! {
             // SMServerFile parameter used in call must include mimeType, remoteFileName, version and appFileType if on server.
             Assert.If(nil == file.mimeType, thenPrintThisString: "mimeType not given by server!")
             Assert.If(nil == file.remoteFileName, thenPrintThisString: "remoteFileName not given by server!")
@@ -379,12 +329,12 @@ internal class SMDownloadFiles : NSObject {
 extension SMDownloadFiles : SMServerAPIDownloadDelegate {
     // [1]. We're modifying the self.filesToDownload array here.
     internal func smServerAPIFileDownloaded(file: SMServerFile) {
-        let elementIndexToRemove = self.filesToDownload!.indexOf({
+        let elementIndexToRemove = SMDownloadFiles.currentFilesToDownload.value!.indexOf({
             $0.uuid.UUIDString == file.uuid.UUIDString
         })
 
         Assert.If(elementIndexToRemove == nil, thenPrintThisString: "Didn't find file in self.filesToDownload")
-        self.filesToDownload!.removeAtIndex(elementIndexToRemove!)
+        SMDownloadFiles.currentFilesToDownload.value!.removeAtIndex(elementIndexToRemove!)
         
         let attr = SMSyncAttributes(withUUID: file.uuid)
         attr.appFileType = file.appFileType
