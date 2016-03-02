@@ -48,7 +48,7 @@ class BaseClass: XCTestCase {
     var noDownloadsSequenceNumber = 0
     var noDownloadsCallbacks:[noDownloadsCallback]!
     
-    typealias downloadsCompletedCallback = ()->()
+    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes)])->()
     var downloadsCompleteSequenceNumber = 0
     var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
@@ -102,15 +102,8 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
-        /*
-        for (url, attr) in downloadedFiles {
-            self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
-            self.singleDownloadSequenceNumber += 1
-        }
-        */
-        
-        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber]()
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {        
+        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloadedFiles)
         self.downloadsCompleteSequenceNumber += 1
     }
     

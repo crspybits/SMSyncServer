@@ -123,7 +123,7 @@ public class TestBasics {
         SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
             if apiResult.error == nil {
                 let result = fileIndex!.filter({
-                    $0.uuid.UUIDString == uuid && $0.sizeBytes == Int32(size)
+                    $0.uuid.UUIDString == uuid && $0.sizeBytes == size
                 })
                 if result.count == 1 {
                     finish()

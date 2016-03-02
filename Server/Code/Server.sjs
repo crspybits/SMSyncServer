@@ -1462,7 +1462,7 @@ app.post('/' + ServerConstants.operationDownloadFile, function (request, respons
     });
 });
 
-// Enable the client to remove a downloaded file from the PSInboundFile's, and from local storage on the sync server.
+// Enable the client to remove a downloaded file from the PSInboundFile's, and from local storage on the sync server. Making this a separate operation from the download itself to ensure that the download is successful-- and to enable retries of the download.
 app.post('/' + ServerConstants.operationRemoveDownloadFile, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
@@ -1479,6 +1479,7 @@ app.post('/' + ServerConstants.operationRemoveDownloadFile, function (request, r
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
+            // TODO: It seems odd here to be removing PSInboundFile information without any sort of a lock. In principle there is a race condition between getting the info on the inbound file, and removing that entry from Mongo (the race will be between the device/app instance and itself, however). The worst case situation would seem to be that we get stuck in a cycle of trying to remove the file info from the collection but it's not there, so we fail and try again. It seems we could handle this in one of two ways: (1) use some other kind of lock, perhaps specific to PSInboundFile's. Or (2) not consider it to be an error if we try to remove the entry from PSInboundFile and don't find the entry there.
             getDownloadFileInfo(request, op, function (error, returnCode, psInboundFile) {
                 if (error) {
                     op.endWithRCAndErrorDetails(ServerConstants.rcOperationFailed, message);
@@ -1498,7 +1499,7 @@ app.post('/' + ServerConstants.operationRemoveDownloadFile, function (request, r
     });
 });
 
-// Pull info for file to be downloaded from HTTP request.
+// Pull info for a single file to be downloaded from HTTP request.
 /* Callback has parameters:
     1) error
     2) if error, return code
@@ -1546,7 +1547,7 @@ function getDownloadFileInfo(request, op, callback) {
             callback("File wasn't in PSInboundFile and marked as received!", ServerConstants.rcServerAPIError, null);
         }
         else {
-            // Can download the file, or delete the file info.
+            // Info for the file to be downloaded or deleted.
             callback(null, null, psInboundFile);
         }
     });

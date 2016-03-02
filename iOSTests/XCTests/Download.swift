@@ -106,7 +106,7 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 1)
                 allDownloadsCompleteExpectation.fulfill()
             }
@@ -256,7 +256,7 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 2)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
@@ -354,7 +354,7 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 1)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
@@ -453,7 +453,7 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() {
+            self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 2)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)

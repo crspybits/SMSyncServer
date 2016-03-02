@@ -23,8 +23,65 @@ internal class SMDownloadFiles : NSObject {
     private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
     private var numberInboundTransfersExpected = 0
     
-    private var fileDiffs:SMFileDiffs?
-    private var filesToDownload:[SMServerFile]?
+    // In my first cut at the recovery implementation, I was not persisting the filesToDownload. But, on a recovery in the .Download mode, a persisted value for filesToDownload is needed. I could regenerate it using SMFileDiffs, but that depends on the file index from the server. I'd not want to regenerate it by again retrieving the server file index, because that could change over time. What I'm going to do instead is persist the originally obtained server file index.
+    
+    private static var _serverFileIndex = SMPersistItemArray(name: "SMDownloadFiles.serverFileIndex", initialArrayValue: [], persistType: .UserDefaults)
+    private var _fileDiffs:SMFileDiffs?
+    private var _filesToDownload:[SMServerFile]?
+    
+    // You need to set this before accessing fileDiffs or filesToDownload.
+    private var serverFileIndex:[SMServerFile]? {
+        set {
+            // Lovely lovely conversion from a Swift array to an NSMutableArray. See also http://stackoverflow.com/questions/25837539/how-can-i-cast-an-nsmutablearray-to-a-swift-array-of-a-specific-type
+            // This fails
+            /*
+            if let mutableArray = newValue! as NSArray as? NSMutableArray {
+                SMDownloadFiles._serverFileIndex.arrayValue = mutableArray
+            }
+            else {
+                Assert.badMojo(alwaysPrintThisString: "Could not convert!")
+            }
+            */
+            
+            // This is pretty crude. But it works.
+            let mutableArray = NSMutableArray()
+            for serverFile in newValue! {
+                mutableArray.addObject(serverFile)
+            }
+            SMDownloadFiles._serverFileIndex.arrayValue = mutableArray
+        }
+        
+        get {
+            // Interestingly, though-- in contrast to the above setter, the following does work:
+            if let serverFiles = SMDownloadFiles._serverFileIndex.arrayValue as NSArray as? [SMServerFile] {
+                return serverFiles
+            }
+            else {
+                Assert.badMojo(alwaysPrintThisString: "Could not convert!")
+                return nil
+            }
+        }
+    }
+    
+    private var fileDiffs:SMFileDiffs? {
+        if nil == _fileDiffs {
+            _fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: self.serverFileIndex!))
+        }
+        
+        return _fileDiffs
+    }
+    
+    private var filesToDownload:[SMServerFile]? {
+        set {
+            _filesToDownload = newValue
+        }
+        get {
+            if nil == _filesToDownload {
+                _filesToDownload = self.fileDiffs!.filesToDownload
+            }
+            return _filesToDownload
+        }
+    }
     
     static private let maxTimesToTryRecovery = 3
     static private var numberTimesTriedRecovery:Int = 0
@@ -104,8 +161,11 @@ internal class SMDownloadFiles : NSObject {
                     if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                         // Need to compare server files against our local meta data and see which if any files need to be downloaded.
                         // TODO: There is also the possibility of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
-                        self.fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
-                        self.filesToDownload = self.fileDiffs!.filesToDownload
+
+                        self.serverFileIndex = fileIndex!
+                        
+                        // self.filesToDownload is created, indirectly, based on self.serverFileIndex.
+                        
                         if self.filesToDownload != nil {
                             // There were some files to download. Do the transfer(s) from cloud storage in to the sync server.
                             self.doInboundTransfers()

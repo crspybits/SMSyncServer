@@ -34,7 +34,7 @@ public struct SMServerAPIResult {
 
 // Describes a file that is present on the local and/or remote systems.
 // This inherits from NSObject so I can use the .copy() method.
-internal class SMServerFile : NSObject, NSCopying {
+internal class SMServerFile : NSObject, NSCopying, NSCoding {
     
     // The permanent identifier for the file on the app and SyncServer.
     internal var uuid: NSUUID!
@@ -61,7 +61,7 @@ internal class SMServerFile : NSObject, NSCopying {
     internal var localFile:SMLocalFile?
     
     // Used in a file index reply from the server to indicate the size of the file stored in cloud storage. (Will not be present in all replies, e.g., in a fileChangesRecovery).
-    internal var sizeBytes:Int32?
+    internal var sizeBytes:Int?
     
     // Indicates whether or not the file has been deleted on the server.
     internal var deleted:Bool?
@@ -69,13 +69,35 @@ internal class SMServerFile : NSObject, NSCopying {
     private override init() {
     }
     
-    internal init(uuid fileUUID:NSUUID, localURL url:NSURL?=nil, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil,  version fileVersion:Int?=nil) {
+    internal init(uuid fileUUID:NSUUID, localURL url:NSURL?=nil, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil, version fileVersion:Int?=nil) {
         self.localURL = url
         self.remoteFileName = fileName
         self.uuid = fileUUID
         self.version = fileVersion
         self.mimeType = fileMIMEType
         self.appFileType = fileType
+    }
+    
+    func encodeWithCoder(aCoder: NSCoder) {
+        aCoder.encodeObject(self.uuid, forKey: "uuid")
+        aCoder.encodeObject(self.localURL, forKey: "localURL")
+        aCoder.encodeObject(self.remoteFileName, forKey: "remoteFileName")
+        aCoder.encodeObject(self.mimeType, forKey: "mimeType")
+        aCoder.encodeObject(self.appFileType, forKey: "appFileType")
+        aCoder.encodeObject(self.version, forKey: "version")
+        aCoder.encodeObject(self.sizeBytes, forKey: "sizeBytes")
+        aCoder.encodeObject(self.deleted, forKey: "deleted")
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        self.uuid = aDecoder.decodeObjectForKey("uuid") as? NSUUID
+        self.localURL = aDecoder.decodeObjectForKey("localURL") as? NSURL
+        self.remoteFileName = aDecoder.decodeObjectForKey("remoteFileName") as? String
+        self.mimeType = aDecoder.decodeObjectForKey("mimeType") as? String
+        self.appFileType = aDecoder.decodeObjectForKey("appFileType") as? String
+        self.version = aDecoder.decodeObjectForKey("version") as? Int
+        self.sizeBytes = aDecoder.decodeObjectForKey("sizeBytes") as? Int
+        self.deleted = aDecoder.decodeObjectForKey("deleted") as? Bool
     }
     
     @objc internal func copyWithZone(zone: NSZone) -> AnyObject {
@@ -165,7 +187,7 @@ internal class SMServerFile : NSObject, NSCopying {
             Log.msg("Didn't get an Int for sizeInBytes: \(dict[SMServerConstants.fileSizeBytes].dynamicType)")
         }
         else {
-            newObj.sizeBytes = Int32(sizeBytes!)
+            newObj.sizeBytes = sizeBytes!
         }
         
         return newObj
@@ -722,7 +744,7 @@ internal class SMServerAPI {
                 if (nil == downloadResult.error) {
                     self.downloadDelegate?.smServerAPIFileDownloaded(serverFile)
 
-                    // I'm going to remove the downloaded file from the server immediately after the download. Partly, this is so I don't have to push the call to this SMServerAPI method higher up; partly this is an optimization-- so that we can release temporary file storage on the server more quickly.
+                    // I'm going to remove the downloaded file from the server immediately after a successful download. Partly, this is so I don't have to push the call to this SMServerAPI method higher up; partly this is an optimization-- so that we can release temporary file storage on the server more quickly.
                     
                     self.removeDownloadFile(serverFile) { removeResult in
                         if removeResult.error == nil {
