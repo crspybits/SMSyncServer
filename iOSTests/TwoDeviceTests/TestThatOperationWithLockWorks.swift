@@ -31,7 +31,13 @@ class SMTwoDeviceTestThatOperationWithLockWorks : TwoDeviceTestCase {
             self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error obtaining lock on master.")
             TimedCallback.withDuration(SMTwoDeviceTestThatOperationWithLockWorks.longWait) {
                 SMServerAPI.session.unlock(){ apiResult in
-                    self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error releasing lock on master.")
+                    if apiResult.error == nil {
+                        self.passTest()
+                    }
+                    else {
+                        Log.error("Error releasing lock on master.")
+                        self.failTest()
+                    }
                 }
             }
         }
@@ -46,7 +52,13 @@ class SMTwoDeviceTestThatOperationWithLockWorks : TwoDeviceTestCase {
             SMServerAPI.session.lock() { apiResult in
                 self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error obtaining lock on slave.")
                 SMServerAPI.session.unlock(){ apiResult in
-                    self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error releasing lock on slave.")
+                    if apiResult.error == nil {
+                        self.passTest()
+                    }
+                    else {
+                        Log.error("Error releasing lock on slave.")
+                        self.failTest()
+                    }
                 }
             }
         }
