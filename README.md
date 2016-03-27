@@ -104,9 +104,9 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 * The `SMSyncServer.session.delegate` provides information about the completion of server operations, errors etc.
 
-* Files are referenced by UUID's. Typically this occurs via SMSyncAttributes objects. Example:
+* Files are referenced by UUID's. Typically this occurs via `SMSyncAttributes` objects. Example:
 
-	SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
+	`SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)`
 
 ## 1) Uploading: Immutable Files
 
