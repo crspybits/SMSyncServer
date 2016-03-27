@@ -98,7 +98,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 * Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems necessary to build).
 
 # Usage Examples
-* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using @testable). The following examples are extracted from those XCTests.
+* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.
 
 * In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted after upload.
 
