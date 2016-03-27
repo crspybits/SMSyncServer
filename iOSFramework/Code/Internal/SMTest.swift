@@ -23,6 +23,7 @@ internal enum SMTestContext: String {
 }
 
 import Foundation
+import SMCoreLib
 
 internal class SMTest {
     // Singleton class. Usually named "session", but sometimes it just reads better to have it named "If".
@@ -61,6 +62,7 @@ internal class SMTest {
     
     // Crash the app.
     internal func crash() {
+        Log.warning("Just about to crash...")
         self._crash = self._willCrash!
     }
     

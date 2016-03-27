@@ -38,7 +38,7 @@ class DownloadRecovery: BaseClass {
         let singleDownloadExpectation = self.expectationWithDescription("Single Download or No Download Complete")
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
 
-        self.extraServerResponseTime = 30
+        self.extraServerResponseTime = 60
         var numberInboundTransfers = 0
         var noDownloads = false
         
@@ -154,13 +154,13 @@ class DownloadRecovery: BaseClass {
     }
     
     // Not using an integer directly here because an integer would imply generality.
-    enum NumbrerOfFilesToDownload {
+    enum NumberOfFilesToDownload : String {
         case One
         case Two
     }
     
     // MARK: Download recovery after server failure when transferring/downloading 1 file.
-    func serverDownloadFailureRecovery(serverTestCase:Int, numberOfFilesToDownload:NumbrerOfFilesToDownload = .One) {
+    func serverDownloadFailureRecovery(serverTestCase:Int, numberOfFilesToDownload:NumberOfFilesToDownload = .One) {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
         var singleUploadExpectation2:XCTestExpectation?
@@ -178,7 +178,7 @@ class DownloadRecovery: BaseClass {
         
         self.waitUntilSyncServerUserSignin() {
             
-            let testFile = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".1")
+            let testFile = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".1" + "." + numberOfFilesToDownload.rawValue)
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
@@ -188,7 +188,7 @@ class DownloadRecovery: BaseClass {
             
             var testFile2:TestFile?
             if numberOfFilesToDownload == .Two {
-                testFile2 = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".2")
+                testFile2 = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".2" + "." + numberOfFilesToDownload.rawValue)
                 SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
@@ -561,7 +561,7 @@ class DownloadRecovery: BaseClass {
         var uploadCompleteCallbackExpectation:XCTestExpectation?
         var singleUploadExpectation1:XCTestExpectation?
         var singleUploadExpectation2:XCTestExpectation?
-        var singleDownloadExpectation1:XCTestExpectation?
+        //var singleDownloadExpectation1:XCTestExpectation?
         var singleDownloadExpectation2:XCTestExpectation?
         var allDownloadsCompleteExpectation:XCTestExpectation?
         
@@ -572,7 +572,7 @@ class DownloadRecovery: BaseClass {
         }
         
         // These expectations will *not* be fulfilled the first time through. We'll get the crash instead. They will be fulfilled on the restart after the crash. Creating them now, for crash case so we don't
-        singleDownloadExpectation1 = self.expectationWithDescription("Single Download1 Complete")
+        //singleDownloadExpectation1 = self.expectationWithDescription("Single Download1 Complete")
         singleDownloadExpectation2 = self.expectationWithDescription("Single Download2 Complete")
         allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
         
@@ -641,21 +641,23 @@ class DownloadRecovery: BaseClass {
         else {
             // Restart after crash.
             
-            testFile1 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
+            //testFile1 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
             testFile2 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString2.stringValue)
             
             self.singleRecoveryCallback =  { mode in
                 self.numberOfRecoverySteps += 1
             }
 
-            // The first download will be repeated because the singleDownload callback (i.e., before the crash) is an event that is reported *prior* to the PSInboundFile info being deleted from the server (i.e., with the operationRemoveDownloadFile server operation).
+            // The first download will *not* be repeated because the singleDownload callback (i.e., before the crash) is an event that is reported *after* the PSInboundFile info being deleted from the server (i.e., with the operationRemoveDownloadFile server operation).
+            /*
             self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1!.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1!.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
                 singleDownloadExpectation1!.fulfill()
             }
-
+            */
+            
             self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2!.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile2!.url, file2: downloadedFile)
@@ -672,15 +674,17 @@ class DownloadRecovery: BaseClass {
         self.waitForExpectations()
     }
     
-    // TODO: Crash/recovery test where the crash occurs after 1 of 2 downloads and the 1st download info was actually removed from the server.
+    // TODO: Crash/recovery test where the crash occurs after 2 of 2 downloads.
     func testThatCrash4RecoveryAfterTwoFileWorks() {
         var uploadCompleteCallbackExpectation:XCTestExpectation?
         var singleUploadExpectation1:XCTestExpectation?
         var singleUploadExpectation2:XCTestExpectation?
         //var singleDownloadExpectation1:XCTestExpectation?
-        var singleDownloadExpectation2:XCTestExpectation?
-        var allDownloadsCompleteExpectation:XCTestExpectation?
+        var downloadsComplete:XCTestExpectation?
         
+        // Creating this for both the crash and not-crash cases so that in the crash case, we'll have an unfulfilled expectation-- so the test doesn't just finish before the crash.
+        downloadsComplete = self.expectationWithDescription("All Downloads Complete")
+
         if DownloadRecovery.crash4.boolValue {
             uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
             singleUploadExpectation1 = self.expectationWithDescription("Single Upload1 Complete")
@@ -689,8 +693,6 @@ class DownloadRecovery: BaseClass {
         
         // These expectations will *not* be fulfilled the first time through. We'll get the crash instead. They will be fulfilled on the restart after the crash. Creating them now, for crash case so we don't
         //singleDownloadExpectation1 = self.expectationWithDescription("Single Download1 Complete")
-        singleDownloadExpectation2 = self.expectationWithDescription("Single Download2 Complete")
-        allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
         
         self.extraServerResponseTime = 30
         
@@ -770,18 +772,8 @@ class DownloadRecovery: BaseClass {
                 self.numberOfRecoverySteps += 1
             }
 
-            // The first download will not be repeated because the singleDownload callback (i.e., before the crash) is an event that is reported *prior* to the PSInboundFile info being deleted from the server (i.e., with the operationRemoveDownloadFile server operation).
-
-            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
-                XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2!.uuidString)
-                let filesAreTheSame = SMFiles.compareFiles(file1: testFile2!.url, file2: downloadedFile)
-                XCTAssert(filesAreTheSame)
-                singleDownloadExpectation2!.fulfill()
-            }
-            
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
-                XCTAssert(self.numberOfRecoverySteps >= 1)
-                allDownloadsCompleteExpectation!.fulfill()
+                downloadsComplete!.fulfill()
             }
         }
         

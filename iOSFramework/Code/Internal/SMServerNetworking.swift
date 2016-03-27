@@ -390,8 +390,8 @@ internal class SMServerNetworking {
                             // Make sure destination file (fileToDownload) isn't there first. Get an error with moveItemAtURL if it is.
                             
                             let mgr = NSFileManager.defaultManager()
-
-                            // I don't really care about an error here, attempting to removeItemAtURL.
+                            
+                            // I don't really care about an error here, attempting to removeItemAtURL. i.e., it could be an error just because the file isn't there-- which would be the usual case.
                             do {
                                 try mgr.removeItemAtURL(fileToDownload)
                             } catch (let err) {

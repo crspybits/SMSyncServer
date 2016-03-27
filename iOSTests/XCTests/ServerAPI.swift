@@ -97,17 +97,25 @@ class ServerAPI: BaseClass {
     
     // Test downloading of a random UUID from the server. Should fail because that file is not on the server/ready to download.
     func testThatDownloadOfRandomUUIDFails() {
-        let expectation = self.expectationWithDescription("Handler called")
+        let downloadExpectation = self.expectationWithDescription("Handler called")
+        //let noDownloads = self.expectationWithDescription("Handler called")
 
         self.waitUntilSyncServerUserSignin() {
 
-            let downloadFileURL = FileStorage.urlOfItem("download1")
+            let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1A", toBaseURLType: .DocumentsDirectory)
+            
             let serverFile = SMServerFile(uuid: NSUUID())
             serverFile.localURL = downloadFileURL
             
+            /*
+            self.noDownloadsCallbacks.append() {
+                noDownloads.fulfill()
+            }
+            */
+            
             SMServerAPI.session.downloadFile(serverFile) { apiResult in
                 XCTAssert(apiResult.error != nil)
-                expectation.fulfill()
+                downloadExpectation.fulfill()
             }
         }
         
@@ -123,7 +131,8 @@ class ServerAPI: BaseClass {
             SMServerAPI.session.lock() { lockResult in
                 XCTAssert(lockResult.error == nil)
 
-                let downloadFileURL = FileStorage.urlOfItem("download1")
+                let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1B", toBaseURLType: .DocumentsDirectory)
+                
                 let serverFile = SMServerFile(uuid: NSUUID())
                 serverFile.localURL = downloadFileURL
             

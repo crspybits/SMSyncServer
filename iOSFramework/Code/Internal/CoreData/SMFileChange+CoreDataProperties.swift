@@ -2,7 +2,7 @@
 //  SMFileChange+CoreDataProperties.swift
 //  
 //
-//  Created by Christopher Prince on 1/18/16.
+//  Created by Christopher Prince on 3/26/16.
 //
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu
@@ -16,7 +16,8 @@ extension SMFileChange {
 
     @NSManaged var deleteLocalFileAfterUpload: NSNumber?
     @NSManaged var deletion: NSNumber?
-    @NSManaged var localFileNameWithPath: String?
+    @NSManaged var filePath: String?
+    @NSManaged var filePathBaseURLType: NSNumber?
     @NSManaged var changedFile: SMLocalFile?
 
 }

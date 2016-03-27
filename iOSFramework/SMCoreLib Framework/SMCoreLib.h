@@ -47,5 +47,8 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/NSDate+Extras.h>
 #import <SMCoreLib/SMEdgeInsetLabel.h>
 #import <SMCoreLib/NSThread+Extras.h>
+#import <SMCoreLib/UITableViewCell+Extras.h>
+#import <SMCoreLib/UITableView+Extras.h>
+
 
 

@@ -8,7 +8,7 @@
 
 #import "UITableView+Extras.h"
 #import "TimedCallback.h"
-#import "Utilities.h"
+#import "UIView+Extras.h"
 
 @implementation UITableView (Extras)
 

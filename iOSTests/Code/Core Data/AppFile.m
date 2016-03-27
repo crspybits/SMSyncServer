@@ -11,13 +11,11 @@
 #import "AppFile.h"
 #import "App-Swift.h"
 
-@import SMCoreLib;
-
 @implementation AppFile
 
-- (NSURL *) url;
+- (SMRelativeLocalURL *) url;
 {
-    return [FileStorage urlOfItem:self.fileName];
+    return [[SMRelativeLocalURL alloc] initWithRelativePath:self.fileName toBaseURLType:BaseURLTypeDocumentsDirectory];
 }
 
 + (NSString *) entityName;

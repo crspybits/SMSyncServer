@@ -2,7 +2,7 @@
 //  SMLocalFile+CoreDataProperties.swift
 //  
 //
-//  Created by Christopher Prince on 1/18/16.
+//  Created by Christopher Prince on 3/26/16.
 //
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu

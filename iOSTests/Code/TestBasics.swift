@@ -11,7 +11,7 @@ import SMCoreLib
 @testable import SMSyncServer
 
 public struct TestFile {
-    private var _url:NSURL?
+    private var _url:SMRelativeLocalURL?
     
     public var appFile:AppFile!
     public var sizeInBytes:Int!
@@ -36,7 +36,7 @@ public struct TestFile {
         return SMSyncAttributes(withUUID: self.uuid, mimeType: self.mimeType, andRemoteFileName: remoteFile)
     }
     
-    public var url:NSURL {
+    public var url:SMRelativeLocalURL {
         get {
             if nil == self._url {
                 return self.appFile.url()
@@ -123,13 +123,19 @@ public class TestBasics {
         SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
             if apiResult.error == nil {
                 let result = fileIndex!.filter({
-                    $0.uuid.UUIDString == uuid && $0.sizeBytes == size
+                    $0.uuid.UUIDString == uuid
                 })
                 if result.count == 1 {
-                    finish()
+                    if result[0].sizeBytes == size {
+                        finish()
+                    }
+                    else {
+                        Log.error("Did not find expected \(size) bytes for uuid \(uuid) but found \(result[0].sizeBytes) bytes")
+                        self.failure!()
+                    }
                 }
                 else {
-                    Log.error("Did not find expected \(size) bytes for uuid \(uuid)")
+                    Log.error("Found \(result.count) files")
                     self.failure!()
                 }
             }

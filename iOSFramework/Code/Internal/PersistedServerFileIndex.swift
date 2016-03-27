@@ -18,6 +18,7 @@ internal class PersistedServerFileIndex {
         self._serverFileIndex = SMPersistItemArray(name: userDefaultsName, initialArrayValue: [], persistType: .UserDefaults)
     }
     
+    // If there are no files, returns nil.
     internal var value:[SMServerFile]? {
         set {
             // Lovely lovely conversion from a Swift array to an NSMutableArray. See also http://stackoverflow.com/questions/25837539/how-can-i-cast-an-nsmutablearray-to-a-swift-array-of-a-specific-type
@@ -33,8 +34,10 @@ internal class PersistedServerFileIndex {
             
             // This is pretty crude. But it works.
             let mutableArray = NSMutableArray()
-            for serverFile in newValue! {
-                mutableArray.addObject(serverFile)
+            if nil != newValue {
+                for serverFile in newValue! {
+                    mutableArray.addObject(serverFile)
+                }
             }
             self._serverFileIndex.arrayValue = mutableArray
         }
@@ -42,7 +45,12 @@ internal class PersistedServerFileIndex {
         get {
             // Interestingly, though-- in contrast to the above setter, the following does work:
             if let serverFiles = self._serverFileIndex.arrayValue as NSArray as? [SMServerFile] {
-                return serverFiles
+                if serverFiles.count == 0 {
+                    return nil
+                }
+                else {
+                    return serverFiles
+                }
             }
             else {
                 Assert.badMojo(alwaysPrintThisString: "Could not convert!")

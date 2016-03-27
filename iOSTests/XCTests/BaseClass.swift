@@ -40,7 +40,7 @@ class BaseClass: XCTestCase {
     var deletionSequenceNumber = 0
     var deletionCallbacks:[deletionCallback]!
 
-    typealias singleDownloadType = (localFile:NSURL, attr: SMSyncAttributes)->()
+    typealias singleDownloadType = (localFile:SMRelativeLocalURL, attr: SMSyncAttributes)->()
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
 

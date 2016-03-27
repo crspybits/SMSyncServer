@@ -10,5 +10,5 @@ import Foundation
 
 internal class SMAppConstants {
     // Subdirectory of the app /Documents directory.
-    internal static let tempDirectory = "/Temporary"
+    internal static let tempDirectory = "Temporary"
 }

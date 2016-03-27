@@ -76,7 +76,7 @@ class Download: BaseClass {
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
         var numberDownloads = 0
         
-        self.extraServerResponseTime = 60
+        self.extraServerResponseTime = 360
         
         self.waitUntilSyncServerUserSignin() {
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
@@ -128,7 +128,7 @@ class Download: BaseClass {
         testFile.sizeInBytes = 917630
         testFile.mimeType = "image/png"
         testFile.fileName = file.fileName
-        testFile.url = NSBundle.mainBundle().URLForResource("Kitty", withExtension: "png")!
+        testFile.url = SMRelativeLocalURL(withRelativePath: "Kitty.png", toBaseURLType: .MainBundle)!
 
         self.downloadOneFile(testFile)
     }
@@ -160,7 +160,7 @@ class Download: BaseClass {
                     SMServerAPI.session.lock() { lockResult in
                         XCTAssert(lockResult.error == nil)
 
-                        let downloadFileURL = FileStorage.urlOfItem("download1")
+                        let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1", toBaseURLType: .DocumentsDirectory)
                         let serverFile = SMServerFile(uuid: testFile.uuid)
                         serverFile.localURL = downloadFileURL
                     
@@ -296,7 +296,7 @@ class Download: BaseClass {
         var numberDownloads = 0
         var expectSecondUpload = false
         
-        self.extraServerResponseTime = 60
+        self.extraServerResponseTime = 120
         
         self.waitUntilSyncServerUserSignin() {
             SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)

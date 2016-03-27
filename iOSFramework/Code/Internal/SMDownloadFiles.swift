@@ -28,10 +28,14 @@ internal class SMDownloadFiles : NSObject {
     
     // The collection of all files to download, as originally computed by SMFileDiffs.
     private static var allFilesToDownload = PersistedServerFileIndex(withUserDefaultsName: "SMDownloadFiles.allFilesToDownload")
-    
+
     // The current collection of files to download, modified after each file is downloaded.
+    // The .value property will be nil if there are no files to download.
     private static var currentFilesToDownload = PersistedServerFileIndex(withUserDefaultsName: "SMDownloadFiles.currentFilesToDownload")
     
+    // Files to delete locally.
+    private static var filesToDelete = PersistedServerFileIndex(withUserDefaultsName: "SMDownloadFiles.filesToDelete")
+
     static private let maxTimesToTryRecovery = 3
     static private var numberTimesTriedRecovery:Int = 0
     
@@ -112,17 +116,33 @@ internal class SMDownloadFiles : NSObject {
                         // TODO: There is also the possibility of conflicts: I.e., the same file needing to be downloaded also need to be uploaded.
 
                         let fileDiffs = SMFileDiffs(type: .RemoteChanges(serverFileIndex: fileIndex!))
-                        SMDownloadFiles.allFilesToDownload.value = fileDiffs.filesToDownload
-                        SMDownloadFiles.currentFilesToDownload.value = fileDiffs.filesToDownload
                         
-                        if SMDownloadFiles.allFilesToDownload.value != nil {
-                            // There were some files to download. Do the transfer(s) from cloud storage in to the sync server.
-                            self.doInboundTransfers()
+                        var downloadFiles:[SMServerFile]?
+                        var deleteFiles:[SMServerFile]?
+                        (download: downloadFiles, delete: deleteFiles) = fileDiffs.filesToDownloadAndDelete()
+                        
+                        SMDownloadFiles.allFilesToDownload.value = downloadFiles
+                        
+                        // Make a shallow copy of the downloadFiles.
+                        var copyOfDownloadFiles:[SMServerFile]?
+                        if nil != downloadFiles {
+                            copyOfDownloadFiles = [SMServerFile]()
+                            copyOfDownloadFiles!.appendContentsOf(downloadFiles!)
+                        }
+                        
+                        SMDownloadFiles.currentFilesToDownload.value = copyOfDownloadFiles
+            
+                        SMDownloadFiles.filesToDelete.value = deleteFiles
+                        
+                        if SMDownloadFiles.currentFilesToDownload.value != nil {
+                            // There were some files to download. First, do the transfer(s) from cloud storage in to the sync server.
+                            self.doInboundTransfers(filesToTransfer: SMDownloadFiles.currentFilesToDownload.value!)
                         }
                         else {
                             // No files to download. Release the lock.
                             SMServerAPI.session.unlock() { unlockResult in
                                 if SMTest.If.success(unlockResult.error, context: .Unlock) {
+                                    self.callSyncServerSyncServerClientShouldDeleteFiles()
                                     self.callSyncServerNoFilesToDownload()
                                 }
                                 else {
@@ -151,10 +171,10 @@ internal class SMDownloadFiles : NSObject {
         }
     }
     
-    private func doInboundTransfers() {
-        self.numberInboundTransfersExpected = SMDownloadFiles.currentFilesToDownload.value!.count
+    private func doInboundTransfers(filesToTransfer inboundTransferFiles:[SMServerFile]) {
+        self.numberInboundTransfersExpected = inboundTransferFiles.count
         
-        SMServerAPI.session.startInboundTransfer(SMDownloadFiles.currentFilesToDownload.value!) { (theServerOperationId, sitResult) in
+        SMServerAPI.session.startInboundTransfer(inboundTransferFiles) { (theServerOperationId, sitResult) in
             if SMTest.If.success(sitResult.error, context: .InboundTransfer) {
                 self.serverOperationId = theServerOperationId
                 self.startToPollForOperationFinish()
@@ -247,13 +267,21 @@ internal class SMDownloadFiles : NSObject {
 
         // Make a copy of the files to download because in the smServerAPIFileDownloaded delegate method below (see [1]), we're going to remove a file from self.filesToDownload each time a file is downloaded, and we don't want to modify that array while SMServerAPI.session.downloadFiles is using it. We're modifying the self.filesToDownload! each time a file is downloaded to make recovery easier.
         var filesToDownloadCopy = [SMServerFile]()
-        filesToDownloadCopy.appendContentsOf(
-            SMDownloadFiles.currentFilesToDownload.value!)
+        if SMDownloadFiles.currentFilesToDownload.value != nil {
+            filesToDownloadCopy.appendContentsOf(
+                SMDownloadFiles.currentFilesToDownload.value!)
+        }
         
         SMServerAPI.session.downloadFiles(filesToDownloadCopy) { dfResult in
             if SMTest.If.success(dfResult.error, context: .DownloadFiles) {
-                // Done!
-                self.callSyncServerDownloadsComplete()
+                // The immediate number of files downloaded with the .downloadFiles method is not what is important here-- a recovery process might have had the files downloaded in parts, so this immediate call might have not downloaded any files.
+                if SMDownloadFiles.allFilesToDownload.value == nil || SMDownloadFiles.allFilesToDownload.value!.count == 0 {
+                    self.callSyncServerSyncServerClientShouldDeleteFiles()
+                    self.callSyncServerNoFilesToDownload()
+                }
+                else {
+                    self.callSyncServerDownloadsComplete()
+                }
             }
             else {
                 Log.error("Failed on downloadFiles: \(dfResult.error)")
@@ -270,6 +298,7 @@ internal class SMDownloadFiles : NSObject {
         
         var downloaded = [(NSURL, SMSyncAttributes)]()
         
+        // We wouldn't get here unless there was at least one file to download, so safe to unwrap allFilesToDownload.
         for file in SMDownloadFiles.allFilesToDownload.value! {
             // SMServerFile parameter used in call must include mimeType, remoteFileName, version and appFileType if on server.
             Assert.If(nil == file.mimeType, thenPrintThisString: "mimeType not given by server!")
@@ -303,6 +332,9 @@ internal class SMDownloadFiles : NSObject {
         }
         
         SMDownloadFiles.mode = .Idle
+        
+        self.callSyncServerSyncServerClientShouldDeleteFiles()
+        
         self.delegate?.syncServerDownloadsComplete(downloaded)
         SMSync.session.startDelayed(currentlyOperating: true)
     }
@@ -310,6 +342,30 @@ internal class SMDownloadFiles : NSObject {
     private func callSyncServerNoFilesToDownload() {
         self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
         SMSync.session.startDelayed(currentlyOperating: true)
+    }
+    
+    private func callSyncServerSyncServerClientShouldDeleteFiles() {
+        if SMDownloadFiles.filesToDelete.value != nil {
+            
+            var uuids = [NSUUID]()
+            
+            for fileToDelete in SMDownloadFiles.filesToDelete.value! {
+                uuids.append(fileToDelete.uuid)
+                
+                let localFileMetaData:SMLocalFile? = SMLocalFile.fetchObjectWithUUID(fileToDelete.uuid!.UUIDString)
+            
+                if nil == localFileMetaData {
+                    Assert.badMojo(alwaysPrintThisString: "This shouldn't happen!!")
+                }
+                else {
+                    localFileMetaData!.deletedOnServer = true
+                }
+            }
+            
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+            
+            self.delegate?.syncServerClientShouldDeleteFiles(uuids)
+        }
     }
     
     private func callSyncServerError(error:NSError) {
@@ -327,7 +383,7 @@ internal class SMDownloadFiles : NSObject {
 // MARK: SMServerAPIDownloadDelegate methods
 
 extension SMDownloadFiles : SMServerAPIDownloadDelegate {
-    // [1]. We're modifying the self.filesToDownload array here.
+    // [1]. We're modifying the SMDownloadFiles.currentFilesToDownload array here.
     internal func smServerAPIFileDownloaded(file: SMServerFile) {
         let elementIndexToRemove = SMDownloadFiles.currentFilesToDownload.value!.indexOf({
             $0.uuid.UUIDString == file.uuid.UUIDString

@@ -48,9 +48,20 @@
     return weeks * 7.0 * 24.0 * 60.0 * 60.0;
 }
 
++ (NSTimeInterval) timeIntervalForDays: (double) days;
+{
+    return days * 24.0 * 60.0 * 60.0;
+}
+
 - (NSDate *) plusWeeks: (double) weeks;
 {
     NSTimeInterval interval = [NSDate timeIntervalForWeeks:weeks];
+    return [[NSDate alloc] initWithTimeInterval:interval sinceDate:self];
+}
+
+- (NSDate *) plusDays: (double) days;
+{
+    NSTimeInterval interval = [NSDate timeIntervalForDays:days];
     return [[NSDate alloc] initWithTimeInterval:interval sinceDate:self];
 }
 
@@ -58,6 +69,8 @@
 {
     return [[NSDate alloc] initWithTimeInterval:minutes*60 sinceDate:self];
 }
+
+// See also http://stackoverflow.com/questions/5965044/how-to-compare-two-nsdates-which-is-more-recent
 
 - (BOOL) withinRange: (NSDate *) startDate endDate:(NSDate *) endDate;
 {

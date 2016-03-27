@@ -25,6 +25,7 @@
 		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
 		839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
+		839EC7AB1C894A0B00F9E988 /* DownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */; };
 		83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */; };
 		83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1D31C6854C60086B22F /* TestBasics.swift */; };
 		83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */; };
@@ -110,6 +111,7 @@
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
+		839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletion.swift; path = XCTests/DownloadDeletion.swift; sourceTree = SOURCE_ROOT; };
 		83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwoDeviceTests.swift; sourceTree = "<group>"; };
 		83A4F1D31C6854C60086B22F /* TestBasics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestBasics.swift; sourceTree = "<group>"; };
 		83D3E8751C4C01E800BFDA93 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -271,6 +273,7 @@
 		83D3E88F1C4C01E800BFDA93 /* XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */,
 				83D3E8B91C4C079900BFDA93 /* AutoCommit.swift */,
 				83D3E8BA1C4C079900BFDA93 /* BaseClass.swift */,
 				83D3E8BB1C4C079900BFDA93 /* Deletion.swift */,
@@ -620,6 +623,7 @@
 			files = (
 				83D3E8C91C4C079900BFDA93 /* ServerNetworking.swift in Sources */,
 				83D3E8C21C4C079900BFDA93 /* AutoCommit.swift in Sources */,
+				839EC7AB1C894A0B00F9E988 /* DownloadDeletion.swift in Sources */,
 				83D3E8C81C4C079900BFDA93 /* ServerCredentials.swift in Sources */,
 				83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */,
 				83D3E8C51C4C079900BFDA93 /* Download.swift in Sources */,

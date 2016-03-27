@@ -68,7 +68,7 @@ public enum SMClientEvent {
     case SingleUploadComplete(uuid:NSUUID)
     
     // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
-    case SingleDownloadComplete(url:NSURL, attr:SMSyncAttributes)
+    case SingleDownloadComplete(url:SMRelativeLocalURL, attr:SMSyncAttributes)
     
     // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
     case OutboundTransferComplete(numberOperations:Int?)
@@ -260,7 +260,8 @@ public class SMSyncServer : NSObject {
 
             case .Running(.Upload, _),
                 .Running(.BetweenUploadAndOutBoundTransfer, _),
-                .Running(.OutboundTransfer, _):
+                .Running(.OutboundTransfer, _),
+                .Running(.AfterOutboundTransfer, _):
                 SMSync.session.start() {
                     SMUploadFiles.session.recovery()
                 }
@@ -295,7 +296,7 @@ public class SMSyncServer : NSObject {
     
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
     // This operation persists across app launches, as long as the the call itself completes. If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. This operation does not access the server, and thus runs quickly and synchronously.
-    public func uploadImmutableFile(localFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
+    public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
     }
     
@@ -304,7 +305,7 @@ public class SMSyncServer : NSObject {
         case Temporary
     }
     
-    private func uploadFile(localFile:NSURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
+    private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
         // Check to see if we already know about this file in our SMLocalFile meta data.
         var localFileMetaData:SMLocalFile?
         localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
@@ -350,8 +351,9 @@ public class SMSyncServer : NSObject {
         // TODO: Compute an MD5 hash of the file and store that in the meta data. This needs to be shipped up to the server too so that when the file is downloaded the receiving client can verify the hash. 
         
         let change = SMFileChange.newObject() as! SMFileChange
-        // .path is the right NSURL property, not .absoluteString or .relativeString; with both of those you get file:// prepended to the string and I just want the path starting with "/" here.
-        change.localFileNameWithPath = localFile.path
+        
+        change.filePathBaseURLType = localFileURL.baseURLType.rawValue
+        change.filePath = localFileURL.relativePath
         
         switch (typeOfUpload) {
         case .Immutable:
@@ -370,7 +372,7 @@ public class SMSyncServer : NSObject {
     }
     
     // The same as above, but ownership of the file referenced is passed to this class, and once the upload operation succeeds, the file will be deleted.
-    public func uploadTemporaryFile(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {
+    public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
     }
 
@@ -378,7 +380,7 @@ public class SMSyncServer : NSObject {
     public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
-        let localFile = SMFiles.createTemporaryFile()
+        let localFile = SMFiles.createTemporaryRelativeFile()
         Assert.If(localFile == nil, thenPrintThisString: "Yikes: Could not create file!")
         
         if !data.writeToURL(localFile!, atomically: true) {

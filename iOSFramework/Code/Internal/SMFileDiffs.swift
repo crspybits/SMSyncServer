@@ -37,12 +37,6 @@ internal func ==(a: InitType, b: InitType) -> Bool {
 }
 
 internal class SMFileDiffs {
-    // Making this a 1 member enum to distinguish between the case of (a) a nil collection of files to download versus (b) not having computed the collection of files to download.
-    private enum FilesToDownload {
-        case Files([SMServerFile]?)
-    }
-
-    private var _filesToDownload:FilesToDownload? // nil means not yet computed.
     private let initType:InitType?
     
     // 1/5/16; We're just going to keep references to the SMFileChange objects. Since these refer back to the SMLocalFile, we'll be OK that way. Up until this date, this array was of type SMLocalFile, but we could run into situations where, if we did an upload, commit, quickly followed by an upload and commit on the same file, we'd not get the upload of the first file. Another way of saying this is that we need to call getMostRecentChangeAndFlush at the very beginning of the commit process. See test testThatUpdateAfterUploadWorks().
@@ -59,7 +53,7 @@ internal class SMFileDiffs {
                     if localFile.locallyChanged {
                         let fileChange = localFile.getMostRecentChangeAndFlush()
                         fileChanges.append(fileChange!)
-                        Log.msg("local file has changed: \(fileChange!.localFileNameWithPath)")
+                        Log.msg("local file has changed: \(fileChange!.fileURL)")
                     }
                 }
             }
@@ -158,7 +152,7 @@ internal class SMFileDiffs {
             
             if nil == serverFile {
                 // No file with this UUID on the server. This must be a new file.
-                serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!,localURL: nil, remoteFileName: localFile.remoteFileName! as String, mimeType: localFile.mimeType!, appFileType:localFile.appFileType, version: Int(localFile.localVersion!.intValue))
+                serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!,remoteFileName: localFile.remoteFileName! as String, mimeType: localFile.mimeType!, appFileType:localFile.appFileType, version: Int(localFile.localVersion!.intValue))
                 
                 Assert.If(0 != localFile.localVersion, thenPrintThisString: "Yikes: The first version of the file was not 0")
             }
@@ -177,14 +171,14 @@ internal class SMFileDiffs {
             }
             
             serverFile!.localFile = localFile
-            serverFile!.localURL = NSURL(fileURLWithPath: fileChange.localFileNameWithPath!)
+            serverFile!.localURL = fileChange.fileURL
             result += [serverFile!]
         }
         
         return (files: result, error:nil)
     }
     
-    /* Need to compare our local files against the server files to see which we need to download. Cases:
+    /* Need to compare our local files against the server files to see which we need to download and locally delete. Cases:
     1) Server files which don't yet exist on the app/client.
         i.e., the UUID isn't on the client.
     2) Server files which are updated versions of those on app/client.
@@ -201,58 +195,39 @@ internal class SMFileDiffs {
     */
     // This handles cases 1) and 2) from above.
     // TODO: Handle update and deletion conflicts.
-    // Returns nil if there are no files to download. A new array is returned on each access to this var, but the objects in the array are the same from access to access. It's assumed that you are not modifying the objects contained in the array.
-    internal var filesToDownload:[SMServerFile]? {
-        
-        var current:[SMServerFile]?
-        
-        switch (self._filesToDownload) {
-        case .None:
-            current = self.determineFilesToDownload()
-            self._filesToDownload = .Files(current)
-        
-        case .Some(.Files (let filesToDownload)):
-            current = filesToDownload
-        }
-        
-        if current == nil {
-            return nil
-        }
-        else {
-            // Make a shallow copy of the array of SMServerFile's.
-            var copyOfCurrent = [SMServerFile]()
-            copyOfCurrent.appendContentsOf(current!)
-            return copyOfCurrent
-        }
-    }
-    
     // This computation depends on the state of SMLocalFile meta data on the local device. Thus, you should *not* rely on this to return the same value from call to call. The application code could have queued files for upload/deletion which would change the meta data which would changed the returned value.
-    private func determineFilesToDownload() -> [SMServerFile]? {
-        var result:[SMServerFile]? = [SMServerFile]()
-    
+    internal func filesToDownloadAndDelete() -> (download:[SMServerFile]?, delete:[SMServerFile]?) {
+        var downloadFiles:[SMServerFile]? = [SMServerFile]()
+        var deleteFiles:[SMServerFile]? = [SMServerFile]()
+
         // Awwww. Can't directly compare .RemoteChanges even though I did the Equatable above... :(.
         switch self.initType! {
         case .LocalChanges:
             Assert.badMojo(alwaysPrintThisString: "Yikes: Must use .RemoteChanges")
             
         case .RemoteChanges (let serverFileIndex):
-            
-                result = [SMServerFile]()
+            for serverFile in serverFileIndex {
+                let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
                 
-                for serverFile in serverFileIndex {
-                    if serverFile.deleted! {
-                        // File was deleted on the server.
-                        // TODO: We need to check to see if this file is marked as deleted in the local meta data, if we know about its UUID. If we know about its UUID, but it's not marked as deleted, we can mark it as deleted. 
-                        // TODO: WE ALSO need to give a delegate callback for this to tell the SMSyncServer Framework client that the file was deleted.
-                        // I.e., call syncServerDeletionReceived
-                        // TODO: Consider synchronization issues here. Want to make sure these deletion operations are carried out in an atomic-like manner.
-                        continue
+                if serverFile.deleted! {
+                    // File was deleted on the server.
+                    if localFile != nil  {
+                        // Record this as a file to be deleted locally, only if we haven't already done so.
+                        if !localFile!.deletedOnServer!.boolValue {
+                            deleteFiles!.append(serverFile)
+                            // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The the caller do it at a time that will preserve the atomic nature of the operation.
+                        }
                     }
-                    
-                    let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
+                    /* else:
+                        Don't have meta data for this file locally. File must have been uploaded, and deleted by other device(s) all without syncing with this device. I don't see any point in creating local meta data for the file given that I'd just need to mark it as deleted.
+                    */
+                }
+                else {
+                    // File not deleted on the server.
+
                     if localFile == nil {
                         // Case 1) Server file doesn't yet exist on the app/client.
-                        result!.append(serverFile)
+                        downloadFiles!.append(serverFile)
                     }
                     else {
                         Assert.If(nil == serverFile.version, thenPrintThisString: "No version on server file.")
@@ -271,28 +246,34 @@ internal class SMFileDiffs {
                         else if serverVersion > localVersion {
                             // Case 2) Server file is updated version of that on app/client.
                             // Server version is greater. Need to download.
-                            result!.append(serverFile)
+                            downloadFiles!.append(serverFile)
                         } else { // serverVersion < localVersion
                             Assert.badMojo(alwaysPrintThisString: "This should never happen.")
                         }
                     }
                 }
+            }
         }
         
-        if result!.count == 0 {
-            result = nil
+        if downloadFiles!.count == 0 {
+            downloadFiles = nil
         }
         else {
             // Need to give each of these file descriptions a localURL property. We'll need that when doing the download.
             
-            for serverFile in result! {
-                let localFile = SMFiles.createTemporaryFile()
+            for serverFile in downloadFiles! {
+                
+                let localFile = SMFiles.createTemporaryRelativeFile()
                 Assert.If(localFile == nil, thenPrintThisString: "Could not create temporary file")
                 serverFile.localURL = localFile
             }
         }
         
-        return result
+        if deleteFiles!.count == 0 {
+            deleteFiles = nil
+        }
+        
+        return (download:downloadFiles, delete:deleteFiles)
     }
     
     private func getFile(fromFiles files:[SMServerFile]?, withUUID uuid: NSUUID) -> SMServerFile? {

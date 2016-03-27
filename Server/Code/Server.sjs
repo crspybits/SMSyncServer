@@ -1110,11 +1110,12 @@ app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (requ
     }
     
     op.validateUser(function (psLock, psOperationId) {
-                    
         if (!isDefined(psLock)) {
             var message = "We don't have the lock!";
             logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            
+            // Returning rcLockNotHeld (and not rcServerAPIError) because in some cases of errors, we can have the lock not held and it's not incorrect API usage-- e.g., if there was a certain kind of failure at the end of outbound transfer.
+            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
         }
         else if (!isDefined(psOperationId)) {
             // Should not be doing a transfer recovery without an operationId.

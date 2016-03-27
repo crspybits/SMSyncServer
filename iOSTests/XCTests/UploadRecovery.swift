@@ -326,8 +326,8 @@ class UploadRecovery: BaseClass {
         let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
-        if Upload.recoveryAfterAppCrash.boolValue {
-            Upload.recoveryAfterAppCrash.boolValue = false
+        if Upload.recoveryAfterAppCrash1.boolValue {
+            Upload.recoveryAfterAppCrash1.boolValue = false
             
             let singleUploadExpectation = self.expectationWithDescription("Upload Callback")
 
@@ -393,8 +393,8 @@ class UploadRecovery: BaseClass {
         let testFileName2 = testFileNameBase + ".2"
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
-        if Upload.recoveryAfterAppCrash.boolValue {
-            Upload.recoveryAfterAppCrash.boolValue = false
+        if Upload.recoveryAfterAppCrash2.boolValue {
+            Upload.recoveryAfterAppCrash2.boolValue = false
 
             self.waitUntilSyncServerUserSignin() {
                 
@@ -407,9 +407,9 @@ class UploadRecovery: BaseClass {
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile1.uuidString)
-                    TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
-                        SMTest.session.crash()
-                    }
+                    
+                    // Can't check file size -- while the upload has finished, the outbound transfer may not yet have.
+                    SMTest.session.crash()
                 }
             
                 self.singleRecoveryCallback = { mode in

@@ -7,6 +7,7 @@
 //
 
 #import "UITableViewCell+Extras.h"
+#import "SPASLog.h"
 
 @implementation UITableViewCell (Extras)
 

@@ -10,12 +10,13 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
+@import SMCoreLib;
 
 //NS_ASSUME_NONNULL_BEGIN
 
 @interface AppFile : NSManagedObject
 
-- (NSURL *) url;
+- (SMRelativeLocalURL *) url;
 
 + (NSString *) entityName;
 

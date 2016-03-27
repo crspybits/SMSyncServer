@@ -39,16 +39,19 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
             switch (newValue) {
             case .Running(.Upload, _),
                 .Running(.BetweenUploadAndOutBoundTransfer, _),
-                .Running(.OutboundTransfer, _):
+                .Running(.OutboundTransfer, _),
+                .Running(.AfterOutboundTransfer, _):
                 break
+        
             case .Idle, .NonRecoverableError:
                 break
-                
-            default:
+        
+            case .Running(.InboundTransfer, _),
+                .Running(.Download, _):
                 Assert.badMojo(alwaysPrintThisString: "Yikes: Bad mode value for SMUploadFiles!")
             }
         }
-        
+    
         get {
             return SMSyncServer.session.mode
         }
@@ -273,6 +276,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         Log.msg("checkIfFileOperationFinished")
         self.checkIfUploadOperationFinishedTimer!.cancel()
         
+        // TODO: Should fallback exponentially in our checks-- sometimes cloud storage can take a while. Either because it's just slow, or because the file is large.
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
             if (apiResult.error != nil) {
                 // TODO: How many times to check/recheck and still get an error?
@@ -292,6 +296,11 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                     self.wrapUpOperation(operationResult!)
                 
                 case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
+                
+                    if SMServerConstants.rcOperationStatusFailedAfterTransfer == operationResult!.status {
+                        SMUploadFiles.mode = .Running(.AfterOutboundTransfer, .Recovery)
+                    }
+                    
                     // This will do more work than necessary (e.g., checking with the server again for operation status), but it handles these three cases.
                     self.recovery()
                     
@@ -304,12 +313,17 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
         }
     }
     
-    private func wrapUpOperation(operationResult: SMOperationResult) {
-        Log.msg("Operation succeeded: \(operationResult.count) cloud storage operations performed")
-        
+    private func wrapUpOperation(operationResult: SMOperationResult?) {
+
         // TODO: We need to persist the data needed for this meta data sync because we may not have it in all cases otherwise. E.g., in the MayHaveCommittedRecovery case.
         let numberUploads = self.syncLocalMetaData()
-        Assert.If(numberUploads != operationResult.count, thenPrintThisString: "Something bad is going on: numberUploads \(numberUploads) was not the same as the operation count")
+        
+        if operationResult != nil {
+            Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
+            
+            // 3/15/16; Because of a server error, operation count could be greater than the number uploads. Just ran into this.
+            Assert.If(numberUploads > operationResult!.count, thenPrintThisString: "Something bad is going on: numberUploads \(numberUploads) > operation count \(operationResult!.count)")
+        }
         
         SMUploadFiles.mode = .Idle
         
@@ -355,8 +369,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 Assert.If(nil == fileChange, thenPrintThisString: "Yikes: No SMFileChange!")
                 
                 if fileChange!.deleteLocalFileAfterUpload!.boolValue {
-                    let url = NSURL(fileURLWithPath: fileChange!.localFileNameWithPath!)
-                    let fileWasDeleted = FileStorage.deleteFileWithPath(url)
+                    let fileWasDeleted = FileStorage.deleteFileWithPath(fileChange!.fileURL)
                     Assert.If(!fileWasDeleted, thenPrintThisString: "File could not be deleted")
                 }
                 
@@ -414,7 +427,8 @@ extension SMUploadFiles {
             case .Running(.BetweenUploadAndOutBoundTransfer, _):
                 self.betweenUploadAndOutBoundTransferRecovery()
                 
-            case .Running(.OutboundTransfer, _):
+            case .Running(.OutboundTransfer, _),
+                .Running(.AfterOutboundTransfer, _):
                 self.outboundTransferRecovery()
 
             default:
@@ -453,17 +467,28 @@ extension SMUploadFiles {
         }
     }
     
-    // It appears that some files were transferred to cloud storage, but we got an error part way through. With our assumptions so far, we'll still hold a lock.
+    // It appears that some files were transferred to cloud storage, but we got an error part way through.
     private func outboundTransferRecovery() {
 
-        // Since we still hold the lock, we can try to recover using the fileChangesRecovery. Again, it will do a little more work than we want, but it will get to the point of retrying the transfers from the SyncServer to cloud storage again. Will it retry the ones that have already been done? No. For successful transfers, the server will have removed those from the outbound files and added entries into the PSFileIndex. For failure, it is possible that we have some inconsistency in the server tables. E.g., a file was transferred, its entry removed from the outbound file changes, but its entry didn't make it into the file index.
-        // It would be good to do a server integrity check based on our current expectations of what should be there.
-
         SMServerAPI.session.outboundTransferRecovery { operationId, apiResult in
+            var afterOutboundTransfer = false
+            
+            switch SMUploadFiles.mode {
+            case .Running(.AfterOutboundTransfer, .Recovery):
+                afterOutboundTransfer = true
+                
+            default:
+                break
+            }
+            
             if (nil == apiResult.error) {
                 self.serverOperationId = operationId
                 // OK. Looks like a successful commit. We need to wait for the file transfer to complete.
                 self.startToPollForOperationFinish()
+            }
+            else if SMServerConstants.rcLockNotHeld == apiResult.returnCode && afterOutboundTransfer {
+                // Don't really need further recovery. The lock isn't held. And it's after the transfer.
+                self.wrapUpOperation(nil)
             }
             else {
                 // Error, but try again later.
@@ -506,7 +531,7 @@ extension SMUploadFiles {
             }
             else {
                 // TODO: How do we ensure that the set of cases in mayHaveCommittedRecovery() matches those that can actually be returned?
-                switch (operationResult!.status) {
+                switch operationResult!.status {
                 case SMServerConstants.rcOperationStatusNotStarted:
                     Log.msg("rcOperationStatusNotStarted")
                     /* 
@@ -537,8 +562,14 @@ extension SMUploadFiles {
                         SMUploadFiles.mode = .Running(.Upload, .Recovery)
                     }
                     else {
+                        var recoveryMode:SMRunningMode = .OutboundTransfer
+                        
+                        if SMServerConstants.rcOperationStatusFailedAfterTransfer == operationResult!.status {
+                            recoveryMode = .AfterOutboundTransfer
+                        }
+                        
                         // This is a more difficult case. What do we do?
-                        SMUploadFiles.mode = .Running(.OutboundTransfer, .Recovery)
+                        SMUploadFiles.mode = .Running(recoveryMode, .Recovery)
                     }
                     
                     self.recovery(forceModeChangeReport: false)

@@ -19,8 +19,9 @@
 // Get date formatted in short format, e.g., D/M/Y. Doesn't give time.
 - (NSString *) shortFormat;
 
-// Returns self plus a given number of weeks or minutes. Give weeks as a negative to subtract.
+// Returns self plus a given number of weeks, days, or minutes. Give weeks/days/minutes as a negative to subtract.
 - (NSDate *) plusWeeks: (double) weeks;
+- (NSDate *) plusDays: (double) days;
 - (NSDate *) plusMinutes: (double) minutes;
 
 // Returns true iff (startDate <= self and self <= endDate)

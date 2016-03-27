@@ -13,8 +13,9 @@ import SMCoreLib
 
 class SMFiles {
 
-    // File will have been created, and zero length upon return.
-    class func createTemporaryFile() -> NSURL? {
+    // Creates a file within the Documents/<SMAppConstants.tempDirectory> directory. If the URL returned is non-nil, the file will have been created, and zero length upon return.
+    class func createTemporaryRelativeFile() -> SMRelativeLocalURL? {
+        
         // I'm going to use a directory within /Documents and not the NSTemporaryDirectory because I want control over when these files are deleted. It is possible that it will take any number of days for these files to be uploaded. I don't want to take the chance that they will be deleted before I'm done with them.
         
         let tempDirectory = FileStorage.pathToItem(SMAppConstants.tempDirectory)
@@ -30,10 +31,10 @@ class SMFiles {
         let fileNameWithPath = tempDirectory + "/" + tempFileName
         Log.msg(fileNameWithPath);
         
-        let localFile:NSURL = NSURL(fileURLWithPath: fileNameWithPath)
-        
-        if NSFileManager.defaultManager().createFileAtPath(fileNameWithPath, contents: nil, attributes: nil) {
-            return localFile
+        let relativeLocalFile = SMRelativeLocalURL(withRelativePath: SMAppConstants.tempDirectory + "/" + tempFileName, toBaseURLType: .DocumentsDirectory)
+
+        if NSFileManager.defaultManager().createFileAtPath(relativeLocalFile!.path!, contents: nil, attributes: nil) {
+            return relativeLocalFile
         }
         else {
             Log.error("Could not create file: \(fileNameWithPath)")

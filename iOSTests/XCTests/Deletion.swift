@@ -11,7 +11,7 @@ import XCTest
 @testable import SMSyncServer
 @testable import Tests
 
-class Deletion: BaseClass {
+class UploadDeletion: BaseClass {
     
     override func setUp() {
         super.setUp()

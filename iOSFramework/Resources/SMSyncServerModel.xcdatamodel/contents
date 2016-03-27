@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="9525" systemVersion="15C50" minimumToolsVersion="Xcode 7.0">
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="9525" systemVersion="15D21" minimumToolsVersion="Xcode 7.0">
     <entity name="SMFileChange" representedClassName="SMFileChange" syncable="YES">
         <attribute name="deleteLocalFileAfterUpload" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="deletion" optional="YES" attributeType="Boolean" syncable="YES"/>
-        <attribute name="localFileNameWithPath" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="filePath" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="filePathBaseURLType" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
         <relationship name="changedFile" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMLocalFile" inverseName="pendingLocalChanges" inverseEntity="SMLocalFile" syncable="YES"/>
     </entity>
     <entity name="SMLocalFile" representedClassName="SMLocalFile" syncable="YES">
@@ -16,7 +17,7 @@
         <relationship name="pendingLocalChanges" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMFileChange" inverseName="changedFile" inverseEntity="SMFileChange" syncable="YES"/>
     </entity>
     <elements>
-        <element name="SMFileChange" positionX="-18" positionY="135" width="128" height="105"/>
+        <element name="SMFileChange" positionX="-18" positionY="135" width="128" height="120"/>
         <element name="SMLocalFile" positionX="-9" positionY="126" width="128" height="150"/>
     </elements>
 </model>

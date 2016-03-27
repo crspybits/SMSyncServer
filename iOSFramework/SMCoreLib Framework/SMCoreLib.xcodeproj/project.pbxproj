@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
+		831594F11C9B46D100D55E3A /* NSDate+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F01C9B46D100D55E3A /* NSDate+Extras.swift */; };
+		831594F91C9B4BCB00D55E3A /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */; };
+		831594FB1C9B4BCB00D55E3A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
+		831595241CA0E3B600D55E3A /* SMRelativeLocalURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */; };
 		8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 8322EBDE1C71577300DF418C /* NSThread+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8322EBE11C71577300DF418C /* NSThread+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EBDF1C71577300DF418C /* NSThread+Extras.m */; };
 		8346BC051C6EE28200AC657D /* SMMultiPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346BC041C6EE28200AC657D /* SMMultiPeer.swift */; };
@@ -29,6 +33,10 @@
 		83A4F1E41C692E820086B22F /* NSDate+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1E21C692E820086B22F /* NSDate+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A4F1F01C6977370086B22F /* SMEdgeInsetLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */; };
+		83A71EAC1C8E3A6000701BCB /* UITableView+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A71EA81C8E3A6000701BCB /* UITableView+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		83A71EAD1C8E3A6000701BCB /* UITableView+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */; };
+		83A71EAE1C8E3A6000701BCB /* UITableViewCell+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED121C4DC81000BFDA93 /* UserMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED101C4DC81000BFDA93 /* UserMessage.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED111C4DC81000BFDA93 /* UserMessage.m */; };
@@ -117,9 +125,24 @@
 		83D3EDBF1C4DCC5C00BFDA93 /* SMDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDBE1C4DCC5C00BFDA93 /* SMDefs.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		831594FC1C9B4BCB00D55E3A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83D3ECDC1C4DBFCF00BFDA93 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 83D3ECE41C4DBFCF00BFDA93;
+			remoteInfo = SMCoreLib;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
 		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
+		831594F01C9B46D100D55E3A /* NSDate+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "NSDate+Extras.swift"; path = "Code/Categories/v1/NSDate+Extras.swift"; sourceTree = "<group>"; };
+		831594F61C9B4BCB00D55E3A /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
+		831594FA1C9B4BCB00D55E3A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMRelativeLocalURL.swift; path = Code/General/v1/SMRelativeLocalURL.swift; sourceTree = "<group>"; };
 		8322EBDE1C71577300DF418C /* NSThread+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSThread+Extras.h"; path = "Code/Categories/v1/NSThread+Extras.h"; sourceTree = "<group>"; };
 		8322EBDF1C71577300DF418C /* NSThread+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSThread+Extras.m"; path = "Code/Categories/v1/NSThread+Extras.m"; sourceTree = "<group>"; };
 		8346BC041C6EE28200AC657D /* SMMultiPeer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMMultiPeer.swift; path = Code/Network/v1/SMMultiPeer.swift; sourceTree = "<group>"; };
@@ -140,6 +163,10 @@
 		83A4F1E21C692E820086B22F /* NSDate+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSDate+Extras.h"; path = "Code/Categories/v1/NSDate+Extras.h"; sourceTree = "<group>"; };
 		83A4F1EE1C6977370086B22F /* SMEdgeInsetLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMEdgeInsetLabel.h; sourceTree = "<group>"; };
 		83A4F1EF1C6977370086B22F /* SMEdgeInsetLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMEdgeInsetLabel.m; sourceTree = "<group>"; };
+		83A71EA81C8E3A6000701BCB /* UITableView+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UITableView+Extras.h"; path = "Code/Categories/v1/UITableView+Extras.h"; sourceTree = "<group>"; };
+		83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableView+Extras.m"; path = "Code/Categories/v1/UITableView+Extras.m"; sourceTree = "<group>"; };
+		83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UITableViewCell+Extras.h"; path = "Code/Categories/v1/UITableViewCell+Extras.h"; sourceTree = "<group>"; };
+		83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableViewCell+Extras.m"; path = "Code/Categories/v1/UITableViewCell+Extras.m"; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ED031C4DC0C300BFDA93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMCoreLib.h; sourceTree = "<group>"; };
@@ -231,6 +258,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		831594F31C9B4BCB00D55E3A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				831594FB1C9B4BCB00D55E3A /* SMCoreLib.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		83D3ECE11C4DBFCF00BFDA93 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -241,6 +276,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		831594F71C9B4BCB00D55E3A /* SMCoreLibTests */ = {
+			isa = PBXGroup;
+			children = (
+				831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */,
+				831594FA1C9B4BCB00D55E3A /* Info.plist */,
+			);
+			path = SMCoreLibTests;
+			sourceTree = "<group>";
+		};
 		835D800A1C6422CE004DBF79 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
@@ -316,6 +360,7 @@
 				83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */,
 				83D3ED001C4DC09800BFDA93 /* Code */,
 				83D3ECFF1C4DC08100BFDA93 /* Supporting Files */,
+				831594F71C9B4BCB00D55E3A /* SMCoreLibTests */,
 				83D3ECE61C4DBFCF00BFDA93 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -324,6 +369,7 @@
 			isa = PBXGroup;
 			children = (
 				83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */,
+				831594F61C9B4BCB00D55E3A /* SMCoreLibTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -434,6 +480,7 @@
 				83D3ED841C4DC92800BFDA93 /* UUID.m */,
 				83D3ED851C4DC92800BFDA93 /* WeakRef.h */,
 				83D3ED861C4DC92800BFDA93 /* WeakRef.m */,
+				831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */,
 			);
 			name = General;
 			sourceTree = "<group>";
@@ -471,6 +518,7 @@
 			children = (
 				83A4F1E21C692E820086B22F /* NSDate+Extras.h */,
 				83A4F1E11C692E820086B22F /* NSDate+Extras.m */,
+				831594F01C9B46D100D55E3A /* NSDate+Extras.swift */,
 				835D801F1C64242E004DBF79 /* UIViewController+Extras.h */,
 				835D80201C64242E004DBF79 /* UIViewController+Extras.m */,
 				83D3EDB61C4DC97400BFDA93 /* NSObject+Extras.h */,
@@ -485,6 +533,10 @@
 				835D80241C64243E004DBF79 /* UINavigationController+Extras.m */,
 				8322EBDE1C71577300DF418C /* NSThread+Extras.h */,
 				8322EBDF1C71577300DF418C /* NSThread+Extras.m */,
+				83A71EA81C8E3A6000701BCB /* UITableView+Extras.h */,
+				83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */,
+				83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */,
+				83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -572,6 +624,7 @@
 				83D3ED921C4DC92800BFDA93 /* TimedCallback.h in Headers */,
 				83D3ED461C4DC85300BFDA93 /* AFAutoPurgingImageCache.h in Headers */,
 				835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */,
+				83A71EAE1C8E3A6000701BCB /* UITableViewCell+Extras.h in Headers */,
 				83D3ED301C4DC84500BFDA93 /* AFURLSessionManager.h in Headers */,
 				83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */,
 				835D800E1C6422F9004DBF79 /* SMModal.h in Headers */,
@@ -583,6 +636,7 @@
 				83D3ED2E1C4DC84500BFDA93 /* AFURLResponseSerialization.h in Headers */,
 				83D3EDAE1C4DC94800BFDA93 /* CoreDataSource.h in Headers */,
 				83D3ED5C1C4DC86600BFDA93 /* Reachability.h in Headers */,
+				83A71EAC1C8E3A6000701BCB /* UITableView+Extras.h in Headers */,
 				83D3ED901C4DC92800BFDA93 /* RepeatingTimer.h in Headers */,
 				83D3ED121C4DC81000BFDA93 /* UserMessage.h in Headers */,
 				83D3ED581C4DC85300BFDA93 /* UIWebView+AFNetworking.h in Headers */,
@@ -619,6 +673,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		831594F51C9B4BCB00D55E3A /* SMCoreLibTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 831594FE1C9B4BCB00D55E3A /* Build configuration list for PBXNativeTarget "SMCoreLibTests" */;
+			buildPhases = (
+				831594F21C9B4BCB00D55E3A /* Sources */,
+				831594F31C9B4BCB00D55E3A /* Frameworks */,
+				831594F41C9B4BCB00D55E3A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				831594FD1C9B4BCB00D55E3A /* PBXTargetDependency */,
+			);
+			name = SMCoreLibTests;
+			productName = SMCoreLibTests;
+			productReference = 831594F61C9B4BCB00D55E3A /* SMCoreLibTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		83D3ECE41C4DBFCF00BFDA93 /* SMCoreLib */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 83D3ECF91C4DBFD000BFDA93 /* Build configuration list for PBXNativeTarget "SMCoreLib" */;
@@ -647,6 +719,9 @@
 				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = "Spastic Muffin, LLC";
 				TargetAttributes = {
+					831594F51C9B4BCB00D55E3A = {
+						CreatedOnToolsVersion = 7.2.1;
+					};
 					83D3ECE41C4DBFCF00BFDA93 = {
 						CreatedOnToolsVersion = 7.2;
 					};
@@ -665,11 +740,19 @@
 			projectRoot = "";
 			targets = (
 				83D3ECE41C4DBFCF00BFDA93 /* SMCoreLib */,
+				831594F51C9B4BCB00D55E3A /* SMCoreLibTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		831594F41C9B4BCB00D55E3A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		83D3ECE31C4DBFCF00BFDA93 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -680,10 +763,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		831594F21C9B4BCB00D55E3A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				831594F91C9B4BCB00D55E3A /* SMCoreLibTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		83D3ECE01C4DBFCF00BFDA93 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */,
 				83D3EDA71C4DC93900BFDA93 /* SMAssert.m in Sources */,
 				83D3ED711C4DC8F300BFDA93 /* SMMutableDictionary.m in Sources */,
 				83D3ED551C4DC85300BFDA93 /* UIProgressView+AFNetworking.m in Sources */,
@@ -714,6 +806,7 @@
 				83D3EDAF1C4DC94800BFDA93 /* CoreDataSource.m in Sources */,
 				83D3ED4F1C4DC85300BFDA93 /* UIButton+AFNetworking.m in Sources */,
 				83D3ED491C4DC85300BFDA93 /* AFImageDownloader.m in Sources */,
+				831594F11C9B46D100D55E3A /* NSDate+Extras.swift in Sources */,
 				83D3ED4D1C4DC85300BFDA93 /* UIActivityIndicatorView+AFNetworking.m in Sources */,
 				83D3ED2D1C4DC84500BFDA93 /* AFURLRequestSerialization.m in Sources */,
 				83D3EDBB1C4DC97400BFDA93 /* NSObject+Extras.m in Sources */,
@@ -723,12 +816,14 @@
 				83D3ED311C4DC84500BFDA93 /* AFURLSessionManager.m in Sources */,
 				83D3ED291C4DC84500BFDA93 /* AFNetworkReachabilityManager.m in Sources */,
 				83D3ED2F1C4DC84500BFDA93 /* AFURLResponseSerialization.m in Sources */,
+				831595241CA0E3B600D55E3A /* SMRelativeLocalURL.swift in Sources */,
 				83D3EDA31C4DC93900BFDA93 /* Log.swift in Sources */,
 				83D3ED611C4DC87700BFDA93 /* NSArray+Globbing.m in Sources */,
 				83D3ED881C4DC92800BFDA93 /* BiRef.m in Sources */,
 				83D3ED751C4DC90400BFDA93 /* SMUIMessages.m in Sources */,
 				83D3ED931C4DC92800BFDA93 /* TimedCallback.m in Sources */,
 				83D3EDA21C4DC93900BFDA93 /* Error.swift in Sources */,
+				83A71EAD1C8E3A6000701BCB /* UITableView+Extras.m in Sources */,
 				835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */,
 				83D3EDBD1C4DC97400BFDA93 /* NSObject+TargetsAndSelectors.m in Sources */,
 				83D3ED8C1C4DC92800BFDA93 /* FileStorage.m in Sources */,
@@ -745,7 +840,35 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		831594FD1C9B4BCB00D55E3A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 83D3ECE41C4DBFCF00BFDA93 /* SMCoreLib */;
+			targetProxy = 831594FC1C9B4BCB00D55E3A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		831594FF1C9B4BCB00D55E3A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SMCoreLibTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SMCoreLibTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		831595001C9B4BCB00D55E3A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SMCoreLibTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SMCoreLibTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		83D3ECF71C4DBFD000BFDA93 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -887,6 +1010,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		831594FE1C9B4BCB00D55E3A /* Build configuration list for PBXNativeTarget "SMCoreLibTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				831594FF1C9B4BCB00D55E3A /* Debug */,
+				831595001C9B4BCB00D55E3A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		83D3ECDF1C4DBFCF00BFDA93 /* Build configuration list for PBXProject "SMCoreLib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

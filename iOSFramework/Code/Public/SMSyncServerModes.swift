@@ -19,6 +19,9 @@ public enum SMRunningMode : Int {
 
     case OutboundTransfer
     
+    // After outbound transfer completed.
+    case AfterOutboundTransfer
+    
     // MARK: Download modes
     
     case InboundTransfer

@@ -24,7 +24,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading and deletion only. Support for downloading is in progress.
+* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending.
 
 # Installation
 ## 1) Create Google Developer Credentials
@@ -95,85 +95,78 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 * Then, entirely within your Xcode project, drag SMSyncServer.framework to Embedded Binaries in the General tab.
 
-* Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems  necessary to build).
+* Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems necessary to build).
 
 # Usage Examples
-* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app. The following examples are extracted from those XCTests.
+* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using @testable). The following examples are extracted from those XCTests.
 
 * In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted after upload.
 
-* An optional `SMSyncServer.session.delegate` can provide information about the completion of server operations, errors etc.
+* The `SMSyncServer.session.delegate` provides information about the completion of server operations, errors etc.
+
+* Files are referenced by UUID's. Typically this occurs via SMSyncAttributes objects. Example:
+
+	SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
 
 ## 1) Uploading: Immutable Files
 
-        let fileName1 = "TwoFileUpload1"
-    
-        let (file1, fileSizeBytes1) = self.createFile(withName: fileName1)
-        let fileAttributes1 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file1.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName1)
-        
-        SMSyncServer.session.uploadImmutableFile(file1.url(), withFileAttributes: fileAttributes1)
-        
-        let fileName2 = "TwoFileUpload2"
-        let (file2, fileSizeBytes2) = self.createFile(withName: fileName2)
-        let fileAttributes2 = SMSyncAttributes(withUUID: NSUUID(UUIDString: file2.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName2)
-        
-        SMSyncServer.session.uploadImmutableFile(file2.url(), withFileAttributes: fileAttributes2)
-        
-        SMSyncServer.session.commit()
+	let testFile1 = TestBasics.session.createTestFile("TwoFileUpload1")
+	
+	SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+	
+	let testFile2 = TestBasics.session.createTestFile("TwoFileUpload2")
+	
+	SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+	
+	SMSyncServer.session.commit()
     
 ## 2) Uploading: Temporary Files
 
-        let fileName = "SingleTemporaryFileUpload"
-        let (file, fileSizeBytes) = self.createFile(withName: fileName)
-        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: file.uuid!)!, mimeType: "text/plain", andRemoteFileName: fileName)
-        
-        SMSyncServer.session.uploadTemporaryFile(file.url(), withFileAttributes: fileAttributes)
+		let testFile = TestBasics.session.createTestFile("SingleTemporaryFileUpload")
+		
+		SMSyncServer.session.uploadTemporaryFile(testFile.url, withFileAttributes: testFile.attr)
         
         SMSyncServer.session.commit()
 
 ## 3) Uploading: NSData
 
-        let cloudStorageFileName = "SingleDataUpload"
-        let fileUUID = UUID.make()
-        let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
-        
-        let strData: NSString = "SingleDataUpload file contents"
-        let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
-        
-        SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
-        
-        SMSyncServer.session.commit()
+	let cloudStorageFileName = "SingleDataUpload"
+	let fileUUID = UUID.make()
+	let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
+	
+	let strData: NSString = "SingleDataUpload file contents"
+	let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
+	
+	SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
+	
+	SMSyncServer.session.commit()
 
 ## 4) Deletion
 
-        // File referenced by uuid is assumed to exist in cloud storage
-        let uuid = ...
+	// File referenced by uuid is assumed to exist in cloud storage
+	let uuid = ...
+	
+	SMSyncServer.session.deleteFile(uuid)
+	
+	SMSyncServer.session.commit()
         
-        SMSyncServer.session.deleteFile(uuid)
-        
-        SMSyncServer.session.commit()
-    
-## 5) Optional SMSyncServer.session.delegate
+## 5) Download
 
-        public protocol SMSyncServerDelegate : class {
-        
-            // numberOperations includes upload and deletion operations.
-            func syncServerCommitComplete(numberOperations numberOperations:Int?)
-            
-            // Called after a single file/item has been uploaded to the SyncServer.
-            func syncServerSingleUploadComplete(uuid uuid:NSUUID)
-        
-            // Called after deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group.
-            func syncServerDeletionsSent(uuids:[NSUUID])
-        
-            // This reports recovery progress from recoverable errors. Mostly useful for testing and debugging.
-            func syncServerRecovery(progress:SMSyncServerRecovery)
-        
-            /* This error can occur in one of two types of circumstances:
-            1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-            2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
-            */
-            func syncServerError(error:NSError)
-        }
+	// Since downloads are caused by other devices uploading files, these are initiated by the SMSyncServer and reported by the delegate method syncServerDownloadsComplete (see below).
+    
+## 5) SMSyncServer.session.delegate
+
+public protocol SMSyncServerDelegate : class {
+
+    // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
+    // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
+    
+    // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+    func syncServerModeChange(newMode:SMClientMode)
+    
+    // Reports events. Useful for testing and debugging.
+    func syncServerEventOccurred(event:SMClientEvent)
+}
 
 

@@ -39,7 +39,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     // The permanent identifier for the file on the app and SyncServer.
     internal var uuid: NSUUID!
     
-    internal var localURL: NSURL?
+    internal var localURL: SMRelativeLocalURL?
     
     // This must be unique across all remote files for the cloud user. (Because currently all remote files are required to be in a single remote directory).
     // This optional for the case of transfering files from cloud storage where only a UUID is needed.
@@ -69,8 +69,8 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     private override init() {
     }
     
-    internal init(uuid fileUUID:NSUUID, localURL url:NSURL?=nil, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil, version fileVersion:Int?=nil) {
-        self.localURL = url
+    // Does not initialize localURL.
+    internal init(uuid fileUUID:NSUUID, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil, version fileVersion:Int?=nil) {
         self.remoteFileName = fileName
         self.uuid = fileUUID
         self.version = fileVersion
@@ -90,8 +90,10 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     }
     
     required init?(coder aDecoder: NSCoder) {
+        super.init()
+        
         self.uuid = aDecoder.decodeObjectForKey("uuid") as? NSUUID
-        self.localURL = aDecoder.decodeObjectForKey("localURL") as? NSURL
+        self.localURL = aDecoder.decodeObjectForKey("localURL") as? SMRelativeLocalURL
         self.remoteFileName = aDecoder.decodeObjectForKey("remoteFileName") as? String
         self.mimeType = aDecoder.decodeObjectForKey("mimeType") as? String
         self.appFileType = aDecoder.decodeObjectForKey("appFileType") as? String
@@ -312,7 +314,6 @@ internal class SMServerAPI {
         }
     }
     
-    // You must have initiated startFileChanges beforehand.
     // fileToUpload must have a localURL.
     private func uploadFile(fileToUpload: SMServerFile, completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
@@ -723,14 +724,14 @@ internal class SMServerAPI {
         }
     }
     
-    // Recursive multiple file download implementation. If there are no files in the filesToDownload parameter array, this doesn't call the server, and has no effect but calling the completion handler with nil parameters.
+    // Recursive multiple file download implementation. If there are no files in the filesToDownload parameter array, this doesn't call the server, and has no effect but to give a SMServerAPIResult with returnCode as SMServerConstants.rcNoFilesToDownload and nil error.
     internal func downloadFiles(filesToDownload: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
         if filesToDownload.count >= 1 {
             self.downloadFilesAux(filesToDownload, completion: completion)
         }
         else {
             Log.warning("No files to download")
-            completion?(apiResult: SMServerAPIResult(returnCode: nil, error: nil))
+            completion?(apiResult: SMServerAPIResult(returnCode: SMServerConstants.rcNoFilesToDownload, error: nil))
         }
     }
     
@@ -742,12 +743,13 @@ internal class SMServerAPI {
             Log.msg("Downloading file: \(serverFile.localURL)")
             self.downloadFile(serverFile) { downloadResult in
                 if (nil == downloadResult.error) {
-                    self.downloadDelegate?.smServerAPIFileDownloaded(serverFile)
-
                     // I'm going to remove the downloaded file from the server immediately after a successful download. Partly, this is so I don't have to push the call to this SMServerAPI method higher up; partly this is an optimization-- so that we can release temporary file storage on the server more quickly.
                     
                     self.removeDownloadFile(serverFile) { removeResult in
                         if removeResult.error == nil {
+                            // 3/26/16; Wait until after the file is removed before reporting the download event. This is because internally, in smServerAPIFileDownloaded, we're removing the file from our list of files to download-- and we want to make sure the file gets removed from the server.
+                            self.downloadDelegate?.smServerAPIFileDownloaded(serverFile)
+                            
                             let remainingFiles = Array(filesToDownload[1..<filesToDownload.count])
                             self.downloadFilesAux(remainingFiles, completion: completion)
                         }

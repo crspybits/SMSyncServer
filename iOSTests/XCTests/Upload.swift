@@ -17,8 +17,9 @@ import SMCoreLib
 class Upload: BaseClass {
     
     // To enable 2nd part of recovery test after app crash.
-    static let recoveryAfterAppCrash = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash", initialBoolValue: true, persistType: .UserDefaults)
-
+    static let recoveryAfterAppCrash1 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash1", initialBoolValue: true, persistType: .UserDefaults)
+    static let recoveryAfterAppCrash2 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash2", initialBoolValue: true, persistType: .UserDefaults)
+    
     override func setUp() {
         super.setUp()
     }
@@ -180,7 +181,7 @@ class Upload: BaseClass {
             CoreData.sessionNamed(CoreDataTests.name).saveContext()
             
             // Odd that this has to be in app bundle not testing bundle...
-            let url = NSBundle.mainBundle().URLForResource("Kitty", withExtension: "png")
+            let url = SMRelativeLocalURL(withRelativePath: "Kitty.png", toBaseURLType: .MainBundle)!
         
             // 12/31/15; When I use "image/png" as the mime type with Google Drive, I get the file size changing (increasing!) when I upload it. Still does this when I use "application/octet-stream". What about when I use a .bin file extension? Yes. That did it. Not the preferred way for Google Drive to behave though. It is not specific to Google Drive, though. I get the increased file size just on Node.js.
             // See discussion: http://stackoverflow.com/questions/34517582/how-can-i-prevent-modifications-of-a-png-file-uploaded-using-afnetworking-to-a-n
@@ -192,7 +193,7 @@ class Upload: BaseClass {
             let fileUUID = NSUUID(UUIDString: file.uuid!)!
             let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "image/png", andRemoteFileName: remoteFileName)
             
-            SMSyncServer.session.uploadImmutableFile(url!, withFileAttributes: fileAttributes)
+            SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == file.uuid!)
@@ -221,6 +222,8 @@ class Upload: BaseClass {
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
 
+        self.extraServerResponseTime = 30
+        
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("TwoFileUpload1")
             
@@ -278,7 +281,8 @@ class Upload: BaseClass {
             let fileContents:NSString = "TwoFileUpdateUpload2 abcdefg"
             let fileSizeBytes = fileContents.length
             
-            let url = FileStorage.urlOfItem("TwoFileUpdateUpload2")
+            let url = SMRelativeLocalURL(withRelativePath: "TwoFileUpdateUpload2", toBaseURLType: .DocumentsDirectory)!
+            
             do {
                 try fileContents.writeToURL(url, atomically: true, encoding: NSASCIIStringEncoding)
             } catch {
@@ -319,6 +323,8 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
+
+        self.extraServerResponseTime = 30
 
         self.waitUntilSyncServerUserSignin() {
             
@@ -394,7 +400,7 @@ class Upload: BaseClass {
             let fileContents:NSString = "FirstFileUpload.Update smigma"
             let secondFileSize = fileContents.length
             
-            let url = FileStorage.urlOfItem("FirstFileUpload2")
+            let url = SMRelativeLocalURL(withRelativePath: "FirstFileUpload2", toBaseURLType: .DocumentsDirectory)!
             do {
                 try fileContents.writeToURL(url, atomically: true, encoding: NSASCIIStringEncoding)
             } catch {
@@ -440,7 +446,7 @@ class Upload: BaseClass {
                 let fileContents:NSString = "FirstFileUpload2.Update smigma"
                 let secondFileSize = fileContents.length
                 
-                let url = FileStorage.urlOfItem("FirstFileUpload4")
+                let url = SMRelativeLocalURL(withRelativePath: "FirstFileUpload4", toBaseURLType: .DocumentsDirectory)!
                 do {
                     try fileContents.writeToURL(url, atomically: true, encoding: NSASCIIStringEncoding)
                 } catch {
@@ -615,7 +621,8 @@ class Upload: BaseClass {
             let fileContents:NSString = "FirstFileUpload.Update smigma"
             
             let fileName2 = "FirstFileUpload7"
-            let url = FileStorage.urlOfItem(fileName2)
+            let url = SMRelativeLocalURL(withRelativePath: fileName2, toBaseURLType: .DocumentsDirectory)!
+
             do {
                 try fileContents.writeToURL(url, atomically: true, encoding: NSASCIIStringEncoding)
             } catch {
