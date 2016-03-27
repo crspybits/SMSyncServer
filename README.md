@@ -31,7 +31,9 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending. Currently only Google Drive is supported in terms of cloud storage systems.
+* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending.
+* Currently only Google Drive is supported in terms of cloud storage systems.
+* Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
 
 # Installation
 ## 1) Create Google Developer Credentials
@@ -161,7 +163,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 Since downloads are caused by other devices uploading files, these are initiated by the SMSyncServer and reported by the delegate method syncServerDownloadsComplete (see below).
     
-## 5) SMSyncServer.session.delegate
+## 6) SMSyncServer.session.delegate
 
 	public protocol SMSyncServerDelegate : class {
 
