@@ -6,7 +6,7 @@ Contents:
 
 # Introduction
 
-SMSyncServer has the following goals:  
+SMSyncServer has the following general goals:  
 
 1. Giving end-users permanent access to their mobile app data,  
 1. Synchronizing mobile app data across end-user devices,  
@@ -14,6 +14,13 @@ SMSyncServer has the following goals:
 1. Allowing sharing of data with other users. 
 
 SMSyncServer has an iOS client and a server written in Javascript/Node.js.
+
+More detailed characteristics of the SMSyncServer:
+
+1. The large majority of file information (i.e., all of the file content information) is stored in end-user cloud storage accounts. Only meta data for files, locking information, and some user credentials information is stored in the MongoDb database on the server.
+1. Client apps can operate offline. The client API queues operations (e.g., uploads) until network access is available.
+1. Interrupted operations are retried. For example, if network access is lost during a series of file uploads, then those uploads are retried when network access is available.
+1. Uploads (and downloads) are performed in a locked (a.k.a., transactional) manner. For example, if you queue a series uploads using `uploadImmutableFile` followed by a `commit`, those upload operations are carried out in an atomic manner, and are only available for download by other SMSyncServer client apps (using the same cloud storage credentials) when the entire set of files has been uploaded.
 
 See the blog articles:  
 
@@ -24,7 +31,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending.
+* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending. Currently only Google Drive is supported in terms of cloud storage systems.
 
 # Installation
 ## 1) Create Google Developer Credentials
