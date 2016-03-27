@@ -152,21 +152,21 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
         
 ## 5) Download
 
-	// Since downloads are caused by other devices uploading files, these are initiated by the SMSyncServer and reported by the delegate method syncServerDownloadsComplete (see below).
+Since downloads are caused by other devices uploading files, these are initiated by the SMSyncServer and reported by the delegate method syncServerDownloadsComplete (see below).
     
 ## 5) SMSyncServer.session.delegate
 
-public protocol SMSyncServerDelegate : class {
+	public protocol SMSyncServerDelegate : class {
 
-    // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
-    // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
-    
-    // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
-    func syncServerModeChange(newMode:SMClientMode)
-    
-    // Reports events. Useful for testing and debugging.
-    func syncServerEventOccurred(event:SMClientEvent)
-}
+		// Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
+		// The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
+		func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
+	
+		// Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+		func syncServerModeChange(newMode:SMClientMode)
+	
+		// Reports events. Useful for testing and debugging.
+		func syncServerEventOccurred(event:SMClientEvent)
+	}
 
 
