@@ -84,11 +84,13 @@ extension MainPageVC : UITableViewDelegate, UITableViewDataSource {
         let file = self.coreDataSource.objectAtIndexPath(indexPath) as! AppFile
         cell.textLabel!.text = file.fileName
         
-        if let _ = SMSyncServer.session.localFileStatus(NSUUID(UUIDString: file.uuid!)!) {
-            cell.accessoryType = .Checkmark
+        Log.special("file.uuid: \(file.uuid)")
+        let syncAttr = SMSyncServer.session.localFileStatus(NSUUID(UUIDString: file.uuid!)!)
+        if syncAttr == nil {
+            cell.accessoryType = .None
         }
         else {
-            cell.accessoryType = .None
+            cell.accessoryType = .Checkmark
         }
         
         return cell
