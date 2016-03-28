@@ -22,11 +22,12 @@
 
 @required
 
-// This doesn't make assumptions about uuid's.
-+ (NSManagedObject * _Nonnull) newObject;
 + (NSString * _Nonnull) entityName;
 
 @optional
+
+// This doesn't make assumptions about uuid's.
++ (NSManagedObject * _Nonnull) newObject;
 
 // If you give this, the presumption (which is typical) is that there is only a single CoreData session (e.g., a NSManagedObjectContext) for the entity/NSManagedObject sub-type.
 + (CoreData * _Nonnull) sessionForEntity;

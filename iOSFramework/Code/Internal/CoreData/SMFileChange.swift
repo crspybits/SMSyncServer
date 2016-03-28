@@ -32,21 +32,25 @@ class SMFileChange: NSManagedObject, CoreDataModel {
         return fileChange
     }
     
-    // Returns nil if the file change indicates a deletion.
+    // Returns nil if the file change indicates a deletion. Don't use self.internalRelativeLocalURL directly.
     var fileURL: SMRelativeLocalURL? {
-        if nil == self.filePath {
-            return nil
+        get {
+            if nil == self.internalRelativeLocalURL {
+                return nil
+            }
+            
+            let url = NSKeyedUnarchiver.unarchiveObjectWithData(self.internalRelativeLocalURL!) as? SMRelativeLocalURL
+            Assert.If(url == nil, thenPrintThisString: "Yikes: No URL!")
+            return url
         }
         
-        let baseURLType = SMRelativeLocalURL.BaseURLType(rawValue: self.filePathBaseURLType!.integerValue)
-        
-        if baseURLType == .NonLocal {
-            return SMRelativeLocalURL(fileURLWithPath: self.filePath!)
-        }
-        else {
-            Log.msg("self.filePath: \(self.filePath)")
-            Log.msg("baseURLType: \(baseURLType)")
-            return SMRelativeLocalURL(withRelativePath: self.filePath!, toBaseURLType: baseURLType!)!
+        set {
+            if newValue == nil {
+                self.internalRelativeLocalURL = nil
+            }
+            else {
+                self.internalRelativeLocalURL = NSKeyedArchiver.archivedDataWithRootObject(newValue!)
+            }
         }
     }
 }

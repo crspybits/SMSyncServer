@@ -171,6 +171,10 @@ function define(name, value) {
     // MARK: Responses from server
     
     // Key:
+	define("internalUserId", "InternalUserId");
+    // Values: See documentation on internalUserId in SMSyncServerUser
+    
+    // Key:
 	define("resultCodeKey", "ServerResult");
     // Values: Integer values, defined below.
     

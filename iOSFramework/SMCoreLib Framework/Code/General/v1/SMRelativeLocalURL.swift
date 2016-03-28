@@ -15,16 +15,10 @@ public class SMRelativeLocalURL : NSURL {
     @objc public enum BaseURLType : Int {
         case DocumentsDirectory
         case MainBundle
-        
-        // Default, if someone uses superclass init methods.
         case NonLocal
     }
     
     private var _localBaseURLType:BaseURLType = .NonLocal
-    
-    public var baseURLType:BaseURLType {
-        return self._localBaseURLType
-    }
     
     // The file is assumed to be stored in the Documents directory of the app. Upon decoding, the URL is reconsituted based on this assumption. This is because the location of the app in the file system can change with re-installation. See http://stackoverflow.com/questions/9608971/app-updates-nsurl-and-documents-directory
 

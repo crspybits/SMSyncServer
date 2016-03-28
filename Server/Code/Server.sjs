@@ -55,6 +55,7 @@ app.post("/" + ServerConstants.operationCheckForExistingUser, function(request, 
 
     op.validateUser(false, function () {
         if (op.psUserCreds.stored) {
+            op.result[ServerConstants.internalUserId] = psUserCreds._id;
             op.endWithRC(ServerConstants.rcUserOnSystem);
         }
         else {
@@ -92,6 +93,7 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
                         op.endWithErrorDetails(error);
                     }
                     else {
+                        op.result[ServerConstants.internalUserId] = psUserCreds._id;
                         op.endWithRC(ServerConstants.rcOK);
                     }
                 });

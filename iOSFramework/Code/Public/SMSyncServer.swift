@@ -280,12 +280,17 @@ public class SMSyncServer : NSObject {
     // Returns a SMSyncAttributes object iff the file is locally known (on the device) to the SMSyncServer. Nil could be returned if the file was uploaded by another app/client to the server recently, but not downloaded to the current device (app/client) yet.
     public func localFileStatus(uuid: NSUUID) -> SMSyncAttributes? {
         var fileAttr:SMSyncAttributes?
-        if let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString) {
+        
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+        
+        if let localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: uuid.UUIDString) {
             fileAttr = SMSyncAttributes(withUUID: uuid)
             fileAttr!.mimeType = localFileMetaData.mimeType
             fileAttr!.remoteFileName = localFileMetaData.remoteFileName
             fileAttr!.appFileType = localFileMetaData.appFileType
             fileAttr!.deleted = false
+            
             if localFileMetaData.deletedOnServer != nil {
                 fileAttr!.deleted = localFileMetaData.deletedOnServer!.boolValue
             }
@@ -307,13 +312,17 @@ public class SMSyncServer : NSObject {
     
     private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
         // Check to see if we already know about this file in our SMLocalFile meta data.
-        var localFileMetaData:SMLocalFile?
-        localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
+        
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+        
+        var localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: attr.uuid.UUIDString)
         
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
-            localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
+            
+            localFileMetaData = SMLocalFile.newObject(withInternalUserId: internalUserId!)
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
@@ -352,8 +361,7 @@ public class SMSyncServer : NSObject {
         
         let change = SMFileChange.newObject() as! SMFileChange
         
-        change.filePathBaseURLType = localFileURL.baseURLType.rawValue
-        change.filePath = localFileURL.relativePath
+        change.fileURL = localFileURL
         
         switch (typeOfUpload) {
         case .Immutable:
@@ -394,8 +402,10 @@ public class SMSyncServer : NSObject {
     // Enqueue a deletion operation. The operation persists across app launches. It is an error to try again later to upload, download, or delete the data/file referenced by this UUID. You can only delete files that are already known to the SMSyncServer (e.g., that you've uploaded). Any previous queued uploads for this uuid are expunged-- only the delete is carried out.
     public func deleteFile(uuid:NSUUID) {
         // We must already know about this file in our SMLocalFile meta data.
-        var localFileMetaData:SMLocalFile?
-        localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+        
+        let localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: uuid.UUIDString)
         
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
@@ -432,7 +442,11 @@ public class SMSyncServer : NSObject {
 #if DEBUG
     // For Debugging/Development. Removes the local meta data for the item insofar as the SMSyncServer is concerned. Doesn't contact the server.
     public func cleanupFile(uuid:NSUUID) {
-        let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+        
+        let localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: uuid.UUIDString)
+        
         Assert.If(localFileMetaData == nil, thenPrintThisString: "Yikes: Couldn't find uuid: \(uuid)")
         CoreData.sessionNamed(SMCoreData.name).removeObject(localFileMetaData!)
         CoreData.sessionNamed(SMCoreData.name).saveContext()
@@ -441,16 +455,19 @@ public class SMSyncServer : NSObject {
     // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
     public func resetMetaData(forUUID uuid:NSUUID?=nil) {
         Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
-        
+
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+
         if uuid == nil {
-            if let metaDataArray = SMLocalFile.fetchAllObjects() {
+            if let metaDataArray = SMLocalFile.fetchObjects(withInternalUserId: internalUserId!) {
                 for localFile in metaDataArray {
-                    CoreData.sessionNamed(SMCoreData.name).removeObject(localFile as! NSManagedObject)
+                    CoreData.sessionNamed(SMCoreData.name).removeObject(localFile)
                 }
             }
         }
         else {
-            if let localFile = SMLocalFile.fetchObjectWithUUID(uuid!.UUIDString) {
+            if let localFile = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: uuid!.UUIDString) {
                 CoreData.sessionNamed(SMCoreData.name).removeObject(localFile)
             }
         }
@@ -500,8 +517,11 @@ public class SMSyncServer : NSObject {
 
 #if DEBUG
     public func showLocalFiles() {
+        let internalUserId = SMSyncServerUser.session.internalUserId
+        Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+        
         var numberOfFiles = 0
-        if let fileArray = SMLocalFile.fetchAllObjects() as? [SMLocalFile] {
+        if let fileArray = SMLocalFile.fetchObjects(withInternalUserId: internalUserId!) {
             for localFile:SMLocalFile in fileArray {
                 Log.msg("localFile: \(localFile.localVersion); \(localFile)")
                 numberOfFiles++

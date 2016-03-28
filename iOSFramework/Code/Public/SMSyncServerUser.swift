@@ -13,13 +13,13 @@ import SMCoreLib
 
 // "class" so its delegate var can be weak.
 public protocol SMCloudStorageUserDelegate : class {
-    
     // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed to sign in the user.
     func syncServerAppLaunchSetup()
     
     // Is a user currently signed in?
     var syncServerUserIsSignedIn: Bool {get}
     
+    // Credentials specific to the cloud storage system being used.
     // Returns non-nil value iff syncServerUserSignedIn is true.
     var syncServerSignedInUser:SMCloudStorageUser? {get}
 }
@@ -39,7 +39,8 @@ public enum SMCloudStorageUser {
 }
 
 public class SMSyncServerUser {
-
+    private var _internalUserId:String?
+    
     // A distinct UUID for this user mobile device.
     // I'm going to persist this in the keychain not so much because it needs to be secure, but rather because it will survive app deletions/reinstallations.
     private static let MobileDeviceUUID = SMPersistItemString(name: "SMSyncServerUser.MobileDeviceUUID", initialStringValue: "", persistType: .KeyChain)
@@ -87,12 +88,26 @@ public class SMSyncServerUser {
         }
     }
     
+    // A string giving the identifier used internally on the SMSyncServer server to refer to a users cloud storage account. Has no meaning with respect to any specific cloud storage system (e.g., Google Drive).
+    // Returns non-nil value iff signedIn is true.
+    public var internalUserId:String? {
+        get {
+            if self.signedIn {
+                Assert.If(self._internalUserId == nil, thenPrintThisString: "Yikes: Nil internal user id")
+                return self._internalUserId
+            }
+            else {
+                return nil
+            }
+        }
+    }
+    
     // This method doesn't keep a reference to userCreds; it just allows the caller to check for an existing user on the server.
     public func checkForExistingUser(userCreds:SMCloudStorageUser, completion:((error: NSError?)->())?) {
     
         SMServerAPI.session.checkForExistingUser(
-            self.serverParameters(userCreds)) { cfeuResult in
-        
+            self.serverParameters(userCreds)) { internalUserId, cfeuResult in
+            self._internalUserId = internalUserId
             let returnError = self.processSignInResult(forExistingUser: true, apiResult: cfeuResult)
             self.callSignInCompletion(withError: returnError)
             completion?(error: returnError)
@@ -107,8 +122,8 @@ public class SMSyncServerUser {
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
         }
         
-        SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { cnuResult in
-        
+        SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { internalUserId, cnuResult in
+            self._internalUserId = internalUserId
             let returnError = self.processSignInResult(forExistingUser: false, apiResult: cnuResult)
             self.callSignInCompletion(withError: returnError)
             completion?(error: returnError)

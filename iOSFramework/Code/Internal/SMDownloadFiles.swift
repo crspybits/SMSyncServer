@@ -314,11 +314,15 @@ internal class SMDownloadFiles : NSObject {
             // Hold off on updating the SMLocalFile meta data until we have all of the files downloaded-- to preserve the atomic nature of the transaction.
             
             // Check to see if we already know about this file
-            var localFileMetaData:SMLocalFile? = SMLocalFile.fetchObjectWithUUID(file.uuid!.UUIDString)
+            let internalUserId = SMSyncServerUser.session.internalUserId
+            Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
+            
+            var localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: file.uuid!.UUIDString)
             
             if nil == localFileMetaData {
                 // We need to create meta data to represent the downloaded file locally to the SMSyncServer.
-                localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
+                
+                localFileMetaData = SMLocalFile.newObject(withInternalUserId: internalUserId!)
                 localFileMetaData!.uuid = file.uuid.UUIDString
                 localFileMetaData!.mimeType = file.mimeType
                 localFileMetaData!.appFileType = file.appFileType
@@ -346,13 +350,15 @@ internal class SMDownloadFiles : NSObject {
     
     private func callSyncServerSyncServerClientShouldDeleteFiles() {
         if SMDownloadFiles.filesToDelete.value != nil {
+            let internalUserId = SMSyncServerUser.session.internalUserId
+            Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
             
             var uuids = [NSUUID]()
             
             for fileToDelete in SMDownloadFiles.filesToDelete.value! {
                 uuids.append(fileToDelete.uuid)
-                
-                let localFileMetaData:SMLocalFile? = SMLocalFile.fetchObjectWithUUID(fileToDelete.uuid!.UUIDString)
+
+                let localFileMetaData = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: fileToDelete.uuid!.UUIDString)
             
                 if nil == localFileMetaData {
                     Assert.badMojo(alwaysPrintThisString: "This shouldn't happen!!")

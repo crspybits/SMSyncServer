@@ -180,6 +180,10 @@ public class SMServerConstants {
     // MARK: Responses from server
     
     // Key:
+    public static let internalUserId = "InternalUserId"
+    // Values: See documentation on internalUserId in SMSyncServerUser
+    
+    // Key:
     public static let resultCodeKey = "ServerResult"
     // Values: Integer values, defined below.
     

@@ -259,28 +259,46 @@ internal class SMServerAPI {
     //MARK: Authentication/user-sign in
     
     // All credentials parameters must be provided by serverCredentialParams.
-    internal func createNewUser(serverCredentialParams:[String:AnyObject], completion:((apiResult:SMServerAPIResult)->(Void))?) {
+    internal func createNewUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:String?, apiResult:SMServerAPIResult)->(Void))?) {
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCreateNewUser)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
-        
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+            
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            var internalUserId:String?
+            if nil == result.error {
+                internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
+                if nil == internalUserId {
+                    result.error = Error.Create("Didn't get InternalUserId back from server")
+                }
+            }
+            
+            completion?(internalUserId: internalUserId, apiResult: result)
         }
     }
     
     // All credentials parameters must be provided by serverCredentialParams.
-    internal func checkForExistingUser(serverCredentialParams:[String:AnyObject], completion:((apiResult:SMServerAPIResult)->(Void))?) {
+    internal func checkForExistingUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:String?, apiResult:SMServerAPIResult)->(Void))?) {
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationCheckForExistingUser)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            var internalUserId:String?
+            if nil == result.error {
+                internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
+                if nil == internalUserId && SMServerConstants.rcUserOnSystem == result.returnCode {
+                    result.error = Error.Create("Didn't get InternalUserId back from server")
+                }
+            }
+            
+            completion?(internalUserId: internalUserId, apiResult: result)
         }
     }
 
