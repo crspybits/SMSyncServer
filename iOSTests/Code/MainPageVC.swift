@@ -26,11 +26,11 @@ class MainPageVC : UIViewController {
         self.coreDataSource = CoreDataSource(delegate: self)
         self.coreDataSource.fetchData()
         
-        let settingsButton = UIBarButtonItem(title: "Settings", style: .Plain, target: self, action: "settingsButtonAction")
-        let addButton = UIBarButtonItem(title: "Add", style: .Plain, target: self, action: "addButtonAction")
+        let settingsButton = UIBarButtonItem(title: "Settings", style: .Plain, target: self, action: #selector(MainPageVC.settingsButtonAction))
+        let addButton = UIBarButtonItem(title: "Add", style: .Plain, target: self, action: #selector(MainPageVC.addButtonAction))
         self.navigationItem.rightBarButtonItems = [settingsButton, addButton]
 
-        let testsButton = UIBarButtonItem(title: "Tests", style: .Plain, target: self, action: "testsButtonAction")
+        let testsButton = UIBarButtonItem(title: "Tests", style: .Plain, target: self, action: #selector(MainPageVC.testsButtonAction))
         self.navigationItem.leftBarButtonItems = [testsButton]
         
         self.tableView.frame = self.view.frame
@@ -62,7 +62,7 @@ class MainPageVC : UIViewController {
         let file = AppFile.newObjectAndMakeUUID(true)
         
         let fileIndex = MainPageVC.FileNameIndex.intValue
-        MainPageVC.FileNameIndex.intValue++
+        MainPageVC.FileNameIndex.intValue += 1
         file.fileName = "file\(fileIndex)"
         
         let path = FileStorage.pathToItem(file.fileName)

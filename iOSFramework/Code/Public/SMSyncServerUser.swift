@@ -131,13 +131,18 @@ public class SMSyncServerUser {
     }
     
     private func callSignInCompletion(withError error:NSError?) {
-        self._signInCallback.forEachTargetInCallbacksDo() { (obj:AnyObject?, sel:Selector, dict:NSMutableDictionary!) in
-            if let nsObject = obj as? NSObject {
-                nsObject.performSelector(sel)
+        if error == nil {
+            self._signInCallback.forEachTargetInCallbacksDo() { (obj:AnyObject?, sel:Selector, dict:NSMutableDictionary!) in
+                if let nsObject = obj as? NSObject {
+                    nsObject.performSelector(sel)
+                }
+                else {
+                    Assert.badMojo(alwaysPrintThisString: "Objects should be NSObject's")
+                }
             }
-            else {
-                Assert.badMojo(alwaysPrintThisString: "Objects should be NSObject's")
-            }
+        }
+        else {
+            Log.error("Could not sign in: \(error)")
         }
     }
     

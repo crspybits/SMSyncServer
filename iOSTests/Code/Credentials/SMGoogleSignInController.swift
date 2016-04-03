@@ -33,7 +33,7 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
 
         self.view.addSubview(self.signOutButton)
         
-        self.signOutButton.addTarget(self, action: "signOutButtonAction", forControlEvents: .TouchUpInside)
+        self.signOutButton.addTarget(self, action: #selector(SMGoogleSignInController.signOutButtonAction), forControlEvents: .TouchUpInside)
         
         GIDSignIn.sharedInstance().uiDelegate = self
         

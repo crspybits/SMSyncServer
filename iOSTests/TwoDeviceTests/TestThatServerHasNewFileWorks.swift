@@ -137,7 +137,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.assertIf(self.slaveData == nil, thenFailAndGiveMessage: "Got nil data on slave!")
         
         // The timer will not be running when created.
-        self.timer = RepeatingTimer(interval: 10.0, selector: "checkForDownloads", andTarget: self)
+        self.timer = RepeatingTimer(interval: 10.0, selector: #selector(SMTwoDeviceTestThatServerHasNewFileWorks.checkForDownloads), andTarget: self)
         self.checkForDownloads()
     }
     

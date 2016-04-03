@@ -48,11 +48,7 @@ internal class SMFileDiffs {
         switch self.initType! {
         case .LocalChanges:
             // Figure out the collection of changed local files.
-            
-            let internalUserId = SMSyncServerUser.session.internalUserId
-            Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
-            
-            if let fileArray = SMLocalFile.fetchObjects(withInternalUserId: internalUserId!) {
+            if let fileArray = SMLocalFile.fetchAllObjects() as? [SMLocalFile] {
                 for localFile:SMLocalFile in fileArray {
                     if localFile.locallyChanged {
                         let fileChange = localFile.getMostRecentChangeAndFlush()
@@ -210,12 +206,8 @@ internal class SMFileDiffs {
             Assert.badMojo(alwaysPrintThisString: "Yikes: Must use .RemoteChanges")
             
         case .RemoteChanges (let serverFileIndex):
-            let internalUserId = SMSyncServerUser.session.internalUserId
-            Assert.If(internalUserId == nil, thenPrintThisString: "No internal user id!")
-                
             for serverFile in serverFileIndex {
-                
-                let localFile = SMLocalFile.fetchObject(withInternalUserId: internalUserId!, andUuid: serverFile.uuid!.UUIDString)
+                let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
                 
                 if serverFile.deleted! {
                     // File was deleted on the server.

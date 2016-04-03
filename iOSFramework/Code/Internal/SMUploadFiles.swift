@@ -266,7 +266,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
     private func startToPollForOperationFinish() {
         SMUploadFiles.mode = .Running(.OutboundTransfer, .Operating)
 
-        self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMUploadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: "pollIfFileOperationFinished", andTarget: self)
+        self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMUploadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: #selector(SMUploadFiles.pollIfFileOperationFinished), andTarget: self)
         self.checkIfUploadOperationFinishedTimer!.start()
     }
     
@@ -356,7 +356,7 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 deletedLocalFile.deletedOnServer = true
                 deletedLocalFile.pendingLocalChanges = nil
                 
-                numberDeletions++
+                numberDeletions += 1
             }
         }
         
@@ -374,12 +374,12 @@ internal class SMUploadFiles : NSObject, SMSyncDelayedOperationDelegate {
                 }
                 
                 if 0 == serverFile.version {
-                    numberNewFiles++
+                    numberNewFiles += 1
                 }
                 else {
                     localFile.localVersion = localFile.localVersion!.integerValue + 1
                     Log.msg("New local file version: \(localFile.localVersion)")
-                    numberUpdates++
+                    numberUpdates += 1
                 }
             }
         }
@@ -418,7 +418,7 @@ extension SMUploadFiles {
             return Network.session().connected()
         }, then: {
             // This gets executed if we have network access.
-            SMUploadFiles.numberTimesTriedRecovery++
+            SMUploadFiles.numberTimesTriedRecovery += 1
             
             switch (SMUploadFiles.mode) {
             case .Running(.Upload, _):

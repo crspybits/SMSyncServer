@@ -15,6 +15,7 @@
 		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
 		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */; };
 		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
+		834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834B166E1CA9FC9500D816EE /* SignInSignOut.swift */; };
 		83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */; };
 		83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C511C817C2B005F0C40 /* DownloadRecovery.swift */; };
 		83554C541C84AB88005F0C40 /* UploadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C531C84AB88005F0C40 /* UploadRecovery.swift */; };
@@ -104,6 +105,7 @@
 		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
 		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFails.swift; path = TwoDeviceTests/TestThatOperationWithLockFails.swift; sourceTree = "<group>"; };
 		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
+		834B166E1CA9FC9500D816EE /* SignInSignOut.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SignInSignOut.swift; path = TwoDeviceTests/SignInSignOut.swift; sourceTree = "<group>"; };
 		83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatRecoveryAfterBackgroundWorks.swift; path = TwoDeviceTests/TestThatRecoveryAfterBackgroundWorks.swift; sourceTree = "<group>"; };
 		83554C511C817C2B005F0C40 /* DownloadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadRecovery.swift; path = XCTests/DownloadRecovery.swift; sourceTree = SOURCE_ROOT; };
 		83554C531C84AB88005F0C40 /* UploadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = UploadRecovery.swift; path = XCTests/UploadRecovery.swift; sourceTree = SOURCE_ROOT; };
@@ -175,14 +177,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		8322EB871C70041F00DF418C /* Two Device Tests */ = {
+		8322EB871C70041F00DF418C /* Manually Initiated Tests */ = {
 			isa = PBXGroup;
 			children = (
 				8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */,
-				8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */,
-				8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */,
+				834B166C1CA9FC4100D816EE /* One Device Tests */,
+				834B166D1CA9FC5E00D816EE /* Two Device Tests */,
 			);
-			name = "Two Device Tests";
+			name = "Manually Initiated Tests";
 			path = ..;
 			sourceTree = "<group>";
 		};
@@ -193,7 +195,7 @@
 				8322EB901C700F1700DF418C /* ClassExtras.h */,
 				8322EB911C700F1700DF418C /* ClassExtras.m */,
 				83D3E88F1C4C01E800BFDA93 /* XCTests */,
-				8322EB871C70041F00DF418C /* Two Device Tests */,
+				8322EB871C70041F00DF418C /* Manually Initiated Tests */,
 			);
 			name = Testing;
 			path = Code;
@@ -202,9 +204,6 @@
 		8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */ = {
 			isa = PBXGroup;
 			children = (
-				837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */,
-				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
-				83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */,
 			);
 			name = "Diff Cloud Creds";
 			sourceTree = "<group>";
@@ -229,6 +228,26 @@
 				83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */,
 			);
 			name = "View Controllers";
+			sourceTree = "<group>";
+		};
+		834B166C1CA9FC4100D816EE /* One Device Tests */ = {
+			isa = PBXGroup;
+			children = (
+				834B166E1CA9FC9500D816EE /* SignInSignOut.swift */,
+			);
+			name = "One Device Tests";
+			sourceTree = "<group>";
+		};
+		834B166D1CA9FC5E00D816EE /* Two Device Tests */ = {
+			isa = PBXGroup;
+			children = (
+				8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */,
+				837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */,
+				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
+				83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */,
+				8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */,
+			);
+			name = "Two Device Tests";
 			sourceTree = "<group>";
 		};
 		839A06701C4F0CA40037AD9A /* Products */ = {
@@ -610,6 +629,7 @@
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
 				8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */,
+				834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
 				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,

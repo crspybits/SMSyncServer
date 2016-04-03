@@ -174,7 +174,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         self.assertIf(self.slaveData == nil, thenFailAndGiveMessage: "Got nil data on slave!")
         
         // The timer will not be running when created. The divided by factor is just to ensure the timer interval for the slave is quite a bit smaller than the waiting interval of the master.
-        self.timer = RepeatingTimer(interval: self.masterWaitTime/10.0, selector: "checkForDownloads", andTarget: self)
+        self.timer = RepeatingTimer(interval: self.masterWaitTime/10.0, selector: #selector(SMTwoDeviceTestThatUpdatedFileWorks.checkForDownloads), andTarget: self)
         self.checkForDownloads()
     }
     
