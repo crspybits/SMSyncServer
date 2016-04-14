@@ -145,7 +145,7 @@
 		83D3ECCB1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		83D3ECCD1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = ClientAppModel.xcdatamodel; path = Resources/ClientAppModel.xcdatamodel; sourceTree = SOURCE_ROOT; };
-		83D3ECD21C4D927D00BFDA93 /* Kitty.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Kitty.png; path = Resources/Kitty.png; sourceTree = "<group>"; };
+		83D3ECD21C4D927D00BFDA93 /* Kitty.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = Kitty.png; path = Resources/Kitty.png; sourceTree = "<group>"; };
 		83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Supporting Files/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataTests.swift; path = "Core Data/CoreDataTests.swift"; sourceTree = "<group>"; };
 		8F4C25D6AF6E58593D7A1C98 /* Pods-XCTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XCTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-XCTests/Pods-XCTests.release.xcconfig"; sourceTree = "<group>"; };

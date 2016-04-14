@@ -48,7 +48,8 @@ class Download: BaseClass {
                     uploadCompleteCallbackExpectation.fulfill()
                     
                     // Should detect no files available/needed for download.
-                    SMDownloadFiles.session.checkForDownloads()
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -94,7 +95,8 @@ class Download: BaseClass {
                     // Now, forget locally about that uploaded file so we can download it.
                     SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
                     
-                    SMDownloadFiles.session.checkForDownloads()
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -102,7 +104,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation.fulfill()
             }
             
@@ -233,7 +235,8 @@ class Download: BaseClass {
                         SMSyncServer.session.resetMetaData(forUUID:testFile1.uuid)
                         SMSyncServer.session.resetMetaData(forUUID:testFile2.uuid)
                         
-                        SMDownloadFiles.session.checkForDownloads()
+                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                        //SMDownloadFiles.session.checkForDownloads()
                     }
                 }
             }
@@ -244,7 +247,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation1.fulfill()
             }
             
@@ -252,7 +255,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile2.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation2.fulfill()
             }
             
@@ -319,7 +322,8 @@ class Download: BaseClass {
                     // Now, forget locally about the uploaded file so we can download it.
                     SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
                     
-                    SMDownloadFiles.session.checkForDownloads()
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                     
                     SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
                     
@@ -350,7 +354,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation.fulfill()
             }
             
@@ -427,7 +431,8 @@ class Download: BaseClass {
                         SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
                         SMSyncServer.session.resetMetaData(forUUID: testFile2.uuid)
                         
-                        SMDownloadFiles.session.checkForDownloads()
+                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                        //SMDownloadFiles.session.checkForDownloads()
                         
                         SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
                         SMSyncServer.session.commit()
@@ -441,7 +446,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile1.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile1.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation1.fulfill()
             }
             
@@ -449,7 +454,7 @@ class Download: BaseClass {
                 XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile2.uuidString)
                 let filesAreTheSame = SMFiles.compareFiles(file1: testFile2.url, file2: downloadedFile)
                 XCTAssert(filesAreTheSame)
-                numberDownloads++
+                numberDownloads += 1
                 singleDownloadExpectation2.fulfill()
             }
             

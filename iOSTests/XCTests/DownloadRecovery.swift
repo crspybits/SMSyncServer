@@ -74,7 +74,8 @@ class DownloadRecovery: BaseClass {
                         SMTest.session.doClientFailureTest(.InboundTransfer)
                     }
                     
-                    SMDownloadFiles.session.checkForDownloads()
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -208,7 +209,9 @@ class DownloadRecovery: BaseClass {
                 func finish() {
                     uploadCompleteCallbackExpectation.fulfill()
                     SMTest.session.serverDebugTest =  serverTestCase
-                    SMDownloadFiles.session.checkForDownloads()
+                    
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                 }
                 
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
@@ -354,7 +357,8 @@ class DownloadRecovery: BaseClass {
                     // Now, forget locally about that uploaded file so we can download it.
                     SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
                     
-                    SMDownloadFiles.session.checkForDownloads()
+                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -434,7 +438,8 @@ class DownloadRecovery: BaseClass {
                         // Now, forget locally about that uploaded file so we can download it.
                         SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
                         
-                        SMDownloadFiles.session.checkForDownloads()
+                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                        //SMDownloadFiles.session.checkForDownloads()
                         
                         SMTest.session.crash()
                         
@@ -520,7 +525,8 @@ class DownloadRecovery: BaseClass {
                         // Now, forget locally about that uploaded file so we can download it.
                         SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
                         
-                        SMDownloadFiles.session.checkForDownloads()
+                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                        //SMDownloadFiles.session.checkForDownloads()
                     }
                 }
                 
@@ -619,7 +625,8 @@ class DownloadRecovery: BaseClass {
                             SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
                             SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
                             
-                            SMDownloadFiles.session.checkForDownloads()
+                            Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                            //SMDownloadFiles.session.checkForDownloads()
                         }
                     }
                 }
@@ -737,7 +744,8 @@ class DownloadRecovery: BaseClass {
                             SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
                             SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
                             
-                            SMDownloadFiles.session.checkForDownloads()
+                            Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
+                            //SMDownloadFiles.session.checkForDownloads()
                         }
                     }
                 }

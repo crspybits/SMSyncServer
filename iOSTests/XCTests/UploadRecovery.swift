@@ -52,7 +52,7 @@ class UploadRecovery: BaseClass {
                 singleUploadExpectation.fulfill()
             }
             
-            Network.session().connectionStateCallbacks.addTarget!(self, withSelector: "recoveryFromNetworkLossAction")
+            Network.session().connectionStateCallbacks.addTarget!(self, withSelector: #selector(UploadRecovery.recoveryFromNetworkLossAction))
             
             // I'm not putting a recovery expectation in here because internally this recovery goes through a number of steps -- it waits to try to make sure the operation doesn't switch from Not Started to In Progress.
             self.singleRecoveryCallback =  { mode in

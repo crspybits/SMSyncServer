@@ -221,10 +221,24 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
             return result
         }
     }
+    
+    class func getFile(fromFiles files:[SMServerFile]?, withUUID uuid: NSUUID) -> SMServerFile? {
+        if nil == files || files?.count == 0  {
+            return nil
+        }
+        
+        let result = files?.filter({$0.uuid.isEqual(uuid)})
+        if result!.count > 0 {
+            return result![0]
+        }
+        else {
+            return nil
+        }
+    }
 }
 
 internal protocol SMServerAPIUploadDelegate : class {
-    func smServerAPIFileUploaded(file: NSUUID)
+    func smServerAPIFileUploaded(serverFile: SMServerFile)
 }
 
 internal protocol SMServerAPIDownloadDelegate : class {
@@ -350,9 +364,9 @@ internal class SMServerAPI {
     }
     
     // Recursive multiple file upload implementation. If there are no files in the filesToUpload parameter array, this doesn't call the server, and has no effect but calling the completion handler with nil parameters.
-    internal func uploadFiles(filesToUpload: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
-        if filesToUpload.count >= 1 {
-            self.uploadFilesAux(filesToUpload, completion: completion)
+    internal func uploadFiles(filesToUpload: [SMServerFile]?, completion:((apiResult:SMServerAPIResult)->(Void))?) {
+        if filesToUpload != nil && filesToUpload!.count >= 1 {
+            self.uploadFilesAux(filesToUpload!, completion: completion)
         }
         else {
             Log.warning("No files to upload")
@@ -368,7 +382,7 @@ internal class SMServerAPI {
             Log.msg("Uploading file: \(serverFile.localURL)")
             self.uploadFile(serverFile) { apiResult in
                 if (nil == apiResult.error) {
-                    self.uploadDelegate?.smServerAPIFileUploaded(serverFile.uuid)
+                    self.uploadDelegate?.smServerAPIFileUploaded(serverFile)
                     let remainingFiles = Array(filesToUpload[1..<filesToUpload.count])
                     self.uploadFilesAux(remainingFiles, completion: completion)
                 }

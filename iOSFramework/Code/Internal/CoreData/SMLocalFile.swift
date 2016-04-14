@@ -22,14 +22,13 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         let localFile = CoreData.sessionNamed(SMCoreData.name).newObjectWithEntityName(self.entityName()) as! SMLocalFile
         
         if makeUUID {
-            Assert.If(!localFile.respondsToSelector(Selector("setUuid:")), thenPrintThisString: "Yikes: No uuid property on managed object")
             localFile.uuid = UUID.make()
         }
         
-        // First version of a file *must* be 0. See SMFileChange.swift.
+        // First version of a file *must* be 0.
         localFile.localVersion = 0
         
-        localFile.pendingLocalChanges = NSOrderedSet()
+        localFile.pendingUploads = NSOrderedSet()
         CoreData.sessionNamed(SMCoreData.name).saveContext()
 
         return localFile
@@ -59,31 +58,17 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         return managedObject as? SMLocalFile
     }
     
-    var locallyChanged:Bool {
-        return self.pendingLocalChanges!.count > 0;
+    func locallyChanged() -> Bool {
+        return self.pendingUploads!.count > 0;
     }
     
-    func getMostRecentChangeAndFlush() -> SMFileChange? {
-        var result:SMFileChange?
-        
-        if self.locallyChanged {
-            result = self.pendingLocalChanges!.lastObject as? SMFileChange
-            if self.pendingLocalChanges != nil && self.pendingLocalChanges!.count > 1 {
-                self.pendingLocalChanges = NSOrderedSet(object: result!)
-            }
-        }
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
-        
-        return result
-    }
-    
-    var pendingDeletion:Bool {
+    // Returns true if any of the .pendingUploads are SMUploadFile's
+    func pendingUpload() -> Bool {
         var result:Bool = false
         
-        if self.pendingLocalChanges != nil {
-            for fileChange in self.pendingLocalChanges! {
-                if (fileChange as! SMFileChange).deletion!.boolValue {
+        if self.pendingUploads != nil {
+            for fileChange in self.pendingUploads! {
+                if let _ = fileChange as? SMUploadFile {
                     result = true
                     break
                 }
@@ -92,27 +77,18 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         
         return result
     }
-
-    //Because Apple's built in implementation still doesn't work :(.
-    //2015-12-13 23:09:24.836 NetDb[2050:1314449] *** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[NSSet intersectsSet:]: set argument is not an NSSet'
-    //See http://stackoverflow.com/questions/7385439/exception-thrown-in-nsorderedset-generated-accessors
-
-    func addPendingLocalChangesObject(value:SMFileChange) {
-        let tempSet = NSMutableOrderedSet(orderedSet: self.pendingLocalChanges!)
-        tempSet.addObject(value)
-        self.pendingLocalChanges = tempSet
-    }
     
-    func removeOldestChange() -> SMFileChange? {
-        var result:SMFileChange?
+    // There is a pending upload-deletion if *any* of the SMUploadFileChange's in the .pendingUploads is an SMUploadDeletion.
+    func pendingUploadDeletion() -> Bool {
+        var result:Bool = false
         
-        if self.locallyChanged {
-            let changes = NSMutableOrderedSet(orderedSet: self.pendingLocalChanges!)
-            result = changes[0] as? SMFileChange
-            changes.removeObjectAtIndex(0)
-            self.pendingLocalChanges = changes
-            
-            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        if self.pendingUploads != nil {
+            for fileChange in self.pendingUploads! {
+                if let _ = fileChange as? SMUploadDeletion {
+                    result = true
+                    break
+                }
+            }
         }
         
         return result

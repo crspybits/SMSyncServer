@@ -88,7 +88,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
                 self.failTest("Slave got a .Recovery mode")
             }
             
-        case .Running(_, .Operating):
+        case .Running(_, .Operating), .Operating:
             break
         }
     }
@@ -194,7 +194,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             return
         }
         
-        SMDownloadFiles.session.checkForDownloads()
+        Assert.badMojo(alwaysPrintThisString: "Need to put this next line back!")
+        // SMDownloadFiles.session.checkForDownloads()
     }
     
     func singleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {

@@ -12,6 +12,8 @@
 import Foundation
 import SMCoreLib
 
+#if false
+
 /* 
 This class uses RepeatingTimer. It must have NSObject as a base class.
 */
@@ -484,3 +486,5 @@ extension SMDownloadFiles {
         self.doDownloadsAux()
     }
 }
+
+#endif

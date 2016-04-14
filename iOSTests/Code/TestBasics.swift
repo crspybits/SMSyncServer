@@ -115,6 +115,8 @@ public class TestBasics {
     }
     
     private func checkFileSizeAux(attemptNumber:Int, uuid:String, size:Int, finish:()->()) {
+        Log.msg("getFileIndex from checkFileSizeAux")
+        
         if attemptNumber > maxNumberCheckFileSizeAttempts {
             self.failure!()
             return

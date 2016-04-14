@@ -9,15 +9,19 @@
 import Foundation
 import SMCoreLib
 
+#if false
+
 // A "Hoare Monitor" to serialize access to SMUploadFiles and SMDownloadFiles so we don't get multiple operations being executed concurrently. This is especially relevant to concurrent operations within uploading or within downloading. However, I am disallowing concurrent operations across downloads and uploads because, on the server, the same directory is used for both uploads and downloads.
 
 // This monitor provides a delegate-callback form of delayed operations. No representation is provided for queue of operations (a stronger form of delay), which would entail being able to persistently store closures. ACTUALLY, we could use NSCoding to encode parameters, and operations (aka. method selectors), and provide an actual persistent queue of operations.
 
 // Generally executes operations outside of conditional blocks to abide by the philosophy that the least done inside of a synchronized block, the better.
 
+/*
 protocol SMSyncDelayedOperationDelegate : class {
     func smSyncDelayedOperation()
 }
+*/
 
 /*
 // http://stackoverflow.com/questions/24127587/how-do-i-declare-an-array-of-weak-references-in-swift
@@ -58,7 +62,7 @@ internal class SMSync {
     }
     
     // We're assuming that there will be only one possible delayed operation.
-    internal weak var delayDelegate:SMSyncDelayedOperationDelegate?
+    // internal weak var delayDelegate:SMSyncDelayedOperationDelegate?
 
     /*
     // Add delegates to be called when a delayed operation is to be executed.
@@ -189,3 +193,6 @@ internal class SMSync {
         }
     }
 }
+
+#endif
+

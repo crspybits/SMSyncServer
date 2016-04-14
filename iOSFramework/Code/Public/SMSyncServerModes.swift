@@ -40,6 +40,9 @@ public enum SMClientMode {
     // Non-error, non-recovery operating condition, not currently downloading or uploading.
     case Idle
 
+    // Generic non-Idle mode. Probably replace this when we've got the new version of recovery working.
+    case Operating
+    
     case Running(SMRunningMode, SMModeType)
     
     /* An error that SMSyncServer couldn't recover from. It's up to the client app to deal with this.
@@ -64,7 +67,10 @@ internal class SMClientModeWrapper : NSObject, NSCoding
         switch name {
         case "Idle":
             self.mode = .Idle
-
+            
+        case "Operating":
+            self.mode = .Operating
+            
         case "NonRecoverableError":
             let error = aDecoder.decodeObjectForKey("error") as! NSError
             self.mode = .NonRecoverableError(error)
@@ -100,6 +106,9 @@ internal class SMClientModeWrapper : NSObject, NSCoding
             name = "Running"
             runningMode = runMode
             modeType = type
+        
+        case .Operating:
+            name = "Operating"
         }
         
         aCoder.encodeObject(name, forKey: "name")

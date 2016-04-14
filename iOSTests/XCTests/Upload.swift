@@ -47,6 +47,7 @@ class Upload: BaseClass {
     func testThatSingleFileUploadWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.extraServerResponseTime = 30
         
@@ -71,6 +72,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -80,7 +86,8 @@ class Upload: BaseClass {
     func testThatSingleTemporaryFileUploadWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
-        
+        let idleExpectation = self.expectationWithDescription("Idle")
+
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("SingleTemporaryFileUpload")
             
@@ -110,6 +117,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -119,6 +131,7 @@ class Upload: BaseClass {
     func testThatSingleDataUploadWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.waitUntilSyncServerUserSignin() {
             
@@ -160,6 +173,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -169,6 +187,7 @@ class Upload: BaseClass {
     func testThatPNGFileUploadWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 60
         let sizeInBytesExpectedOnServer = 917630
@@ -189,6 +208,7 @@ class Upload: BaseClass {
             // And see https://github.com/AFNetworking/AFNetworking/issues/3252
             // Updating to AFNetworking 3...
             // RESOLUTION: I have now set the COMPRESS_PNG_FILES Build Setting to NO to deal with this.
+            // 4/13/16; This lovely issue has raised its head again with Xcode 7.3. Changing the type of file to Data has resolved it again. See https://forums.developer.apple.com/thread/43372
             
             let fileUUID = NSUUID(UUIDString: file.uuid!)!
             let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "image/png", andRemoteFileName: remoteFileName)
@@ -211,6 +231,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -221,7 +246,8 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
-
+        let idleExpectation = self.expectationWithDescription("Idle")
+        
         self.extraServerResponseTime = 30
         
         self.waitUntilSyncServerUserSignin() {
@@ -262,6 +288,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -272,6 +303,7 @@ class Upload: BaseClass {
     func testThatOneFileWithUpdateUploadWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("TwoFileUpdateUpload1")
@@ -310,6 +342,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -323,6 +360,7 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
 
@@ -362,6 +400,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -374,6 +417,7 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
         
@@ -421,6 +465,11 @@ class Upload: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -433,6 +482,7 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 60
 
@@ -465,6 +515,11 @@ class Upload: BaseClass {
                     TestBasics.session.checkFileSize(testFile.uuidString, size: secondFileSize) {
                         uploadCompleteCallbackExpectation2.fulfill()
                     }
+                }
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation.fulfill()
                 }
                 
                 SMSyncServer.session.commit()
@@ -596,6 +651,7 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let errorCallbackExpectation = self.expectationWithDescription("Error callback")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
         
@@ -648,6 +704,11 @@ class Upload: BaseClass {
             }
             
             SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes2)
+                        
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
 
             // This won't do anything as there are no additional files needing to be uploaded given the error.
             SMSyncServer.session.commit()
@@ -661,6 +722,7 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let errorCallbackExpectation = self.expectationWithDescription("Error callback")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
         
@@ -703,6 +765,11 @@ class Upload: BaseClass {
             }
             
             SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
 
             SMSyncServer.session.commit()
         }

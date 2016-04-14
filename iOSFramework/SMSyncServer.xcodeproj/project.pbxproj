@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E23531C8126AE0054D97C /* SMSyncServerModes.swift */; };
+		832ADADC1CB10D7300FFDD4C /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 832ADADB1CB10D7300FFDD4C /* README.txt */; };
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
 		83D0A8D01C877E170096132E /* PersistedServerFileIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D0A8CF1C877E170096132E /* PersistedServerFileIndex.swift */; };
 		83D3E97B1C4C84A600BFDA93 /* SMSyncServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3E9781C4C84A600BFDA93 /* SMSyncServer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -21,17 +22,55 @@
 		83D3EA2E1C4C870C00BFDA93 /* SMTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EA251C4C870C00BFDA93 /* SMTest.swift */; };
 		83D3EA2F1C4C870C00BFDA93 /* SMUploadFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EA261C4C870C00BFDA93 /* SMUploadFiles.swift */; };
 		83D3ECC11C4D597500BFDA93 /* SMSyncServerUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */; };
-		83D3EDCF1C4DD0F200BFDA93 /* SMFileChange+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDCD1C4DD0F200BFDA93 /* SMFileChange+CoreDataProperties.swift */; };
-		83D3EDD01C4DD0F200BFDA93 /* SMFileChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDCE1C4DD0F200BFDA93 /* SMFileChange.swift */; };
+		83D3EDD01C4DD0F200BFDA93 /* SMUploadFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDCE1C4DD0F200BFDA93 /* SMUploadFile.swift */; };
 		83D3EDDA1C4DD2D600BFDA93 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3EDD71C4DD2C300BFDA93 /* SMCoreLib.framework */; };
-		83D3EDE01C4DD43B00BFDA93 /* SMLocalFile+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDDE1C4DD43B00BFDA93 /* SMLocalFile+CoreDataProperties.swift */; };
 		83D3EDE11C4DD43B00BFDA93 /* SMLocalFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDDF1C4DD43B00BFDA93 /* SMLocalFile.swift */; };
 		83D3EDE81C4E127600BFDA93 /* SMSyncServerModel.xcdatamodel in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECC81C4D90E100BFDA93 /* SMSyncServerModel.xcdatamodel */; };
 		83D3EDEE1C4E2FB900BFDA93 /* SMCoreData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDED1C4E2FB900BFDA93 /* SMCoreData.swift */; };
+		83D7328E1CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D732811CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift */; };
+		83D732901CB366BA00B2BFD3 /* SMDownloadBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D732831CB366BA00B2BFD3 /* SMDownloadBlock.swift */; };
+		83D732921CB366BA00B2BFD3 /* SMDownloadFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D732851CB366BA00B2BFD3 /* SMDownloadFile.swift */; };
+		83D732951CB366BA00B2BFD3 /* SMUploadQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D732881CB366BA00B2BFD3 /* SMUploadQueue.swift */; };
+		83D732961CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D732891CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift */; };
+		83D732971CB366BA00B2BFD3 /* SMQueues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7328A1CB366BA00B2BFD3 /* SMQueues.swift */; };
+		83D732981CB366BA00B2BFD3 /* SMDownloadQueue+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7328B1CB366BA00B2BFD3 /* SMDownloadQueue+CoreDataProperties.swift */; };
+		83D732991CB366BA00B2BFD3 /* SMDownloadQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7328C1CB366BA00B2BFD3 /* SMDownloadQueue.swift */; };
+		83D7329A1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7328D1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift */; };
+		83D7329B1CB371FB00B2BFD3 /* SMUploadBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */; };
+		83D7331B1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7331A1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift */; };
+		83E55CB31CB7530700F204E0 /* SMSyncControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CB21CB7530700F204E0 /* SMSyncControl.swift */; };
+		83E55CB81CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */; };
+		83E55CBC1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */; };
+		83E55CBD1CB84A4800F204E0 /* SMDownloadConflict.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */; };
+		83E55CE01CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */; };
+		83E55CE11CBA07DB00F204E0 /* SMUploadOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */; };
+		83E55CE31CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */; };
+		83E55CE41CBA07DB00F204E0 /* SMDownloadOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */; };
+		83E55CE61CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CCC1CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift */; };
+		83E55CE71CBA07DB00F204E0 /* SMUploadFileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CCD1CBA07DB00F204E0 /* SMUploadFileOperation.swift */; };
+		83E55CE91CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CCF1CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift */; };
+		83E55CEB1CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD11CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift */; };
+		83E55CEC1CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD21CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift */; };
+		83E55CED1CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD31CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift */; };
+		83E55CEE1CBA07DB00F204E0 /* SMUploadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD41CBA07DB00F204E0 /* SMUploadDeletion.swift */; };
+		83E55CEF1CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD51CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift */; };
+		83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */; };
+		83E55CF11CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD71CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift */; };
+		83E55CF21CBA07DB00F204E0 /* SMDownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */; };
+		83E55CF31CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */; };
+		83E55CF41CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */; };
+		83E55CF51CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CDB1CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift */; };
 		83F3B1AB1C54112A005DA375 /* SMSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F3B1AA1C54112A005DA375 /* SMSync.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		832ADADF1CB10D7400FFDD4C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 831594F61C9B4BCB00D55E3A;
+			remoteInfo = SMCoreLibTests;
+		};
 		83D3EDD61C4DD2C300BFDA93 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
@@ -43,6 +82,8 @@
 
 /* Begin PBXFileReference section */
 		830E23531C8126AE0054D97C /* SMSyncServerModes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerModes.swift; path = Code/Public/SMSyncServerModes.swift; sourceTree = "<group>"; };
+		832ADADB1CB10D7300FFDD4C /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = Code/Internal/CoreData/README.txt; sourceTree = "<group>"; };
+		832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SMUploadBlock.swift; path = Code/Internal/CoreData/SMUploadBlock.swift; sourceTree = "<group>"; };
 		832CD50C1C5DA40C005F99D4 /* SMFiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFiles.swift; path = Code/Internal/SMFiles.swift; sourceTree = "<group>"; };
 		83D0A8CF1C877E170096132E /* PersistedServerFileIndex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PersistedServerFileIndex.swift; path = Code/Internal/PersistedServerFileIndex.swift; sourceTree = "<group>"; };
 		83D3E9681C4C840C00BFDA93 /* SMSyncServer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMSyncServer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -59,12 +100,42 @@
 		83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerUser.swift; path = Code/Public/SMSyncServerUser.swift; sourceTree = "<group>"; };
 		83D3ECC61C4D907100BFDA93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		83D3ECC81C4D90E100BFDA93 /* SMSyncServerModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = SMSyncServerModel.xcdatamodel; path = Resources/SMSyncServerModel.xcdatamodel; sourceTree = "<group>"; };
-		83D3EDCD1C4DD0F200BFDA93 /* SMFileChange+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMFileChange+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMFileChange+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		83D3EDCE1C4DD0F200BFDA93 /* SMFileChange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFileChange.swift; path = Code/Internal/CoreData/SMFileChange.swift; sourceTree = "<group>"; };
+		83D3EDCE1C4DD0F200BFDA93 /* SMUploadFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadFile.swift; path = Code/Internal/CoreData/SMUploadFile.swift; sourceTree = "<group>"; };
 		83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMCoreLib.xcodeproj; path = "../../../Common/SMCoreLib Framework/SMCoreLib.xcodeproj"; sourceTree = "<group>"; };
-		83D3EDDE1C4DD43B00BFDA93 /* SMLocalFile+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMLocalFile+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMLocalFile+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83D3EDDF1C4DD43B00BFDA93 /* SMLocalFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMLocalFile.swift; path = Code/Internal/CoreData/SMLocalFile.swift; sourceTree = "<group>"; };
 		83D3EDED1C4E2FB900BFDA93 /* SMCoreData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMCoreData.swift; path = Code/Internal/CoreData/SMCoreData.swift; sourceTree = "<group>"; };
+		83D732811CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMLocalFile+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMLocalFile+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83D732831CB366BA00B2BFD3 /* SMDownloadBlock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadBlock.swift; path = Code/Internal/CoreData/SMDownloadBlock.swift; sourceTree = "<group>"; };
+		83D732851CB366BA00B2BFD3 /* SMDownloadFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadFile.swift; path = Code/Internal/CoreData/SMDownloadFile.swift; sourceTree = "<group>"; };
+		83D732881CB366BA00B2BFD3 /* SMUploadQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadQueue.swift; path = Code/Internal/CoreData/SMUploadQueue.swift; sourceTree = "<group>"; };
+		83D732891CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMQueues+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMQueues+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83D7328A1CB366BA00B2BFD3 /* SMQueues.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMQueues.swift; path = Code/Internal/CoreData/SMQueues.swift; sourceTree = "<group>"; };
+		83D7328B1CB366BA00B2BFD3 /* SMDownloadQueue+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadQueue+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadQueue+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83D7328C1CB366BA00B2BFD3 /* SMDownloadQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadQueue.swift; path = Code/Internal/CoreData/SMDownloadQueue.swift; sourceTree = "<group>"; };
+		83D7328D1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadBlock+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadBlock+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83D7331A1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadQueue+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadQueue+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CB21CB7530700F204E0 /* SMSyncControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncControl.swift; path = Code/Internal/SMSyncControl.swift; sourceTree = "<group>"; };
+		83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadBlock+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadBlock+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadConflict+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadConflict+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadConflict.swift; path = Code/Internal/CoreData/SMDownloadConflict.swift; sourceTree = "<group>"; };
+		83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadOperation.swift; path = Code/Internal/CoreData/SMUploadOperation.swift; sourceTree = "<group>"; };
+		83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadOperation.swift; path = Code/Internal/CoreData/SMDownloadOperation.swift; sourceTree = "<group>"; };
+		83E55CCC1CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadFileOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadFileOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CCD1CBA07DB00F204E0 /* SMUploadFileOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadFileOperation.swift; path = Code/Internal/CoreData/SMUploadFileOperation.swift; sourceTree = "<group>"; };
+		83E55CCF1CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadFile+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadFile+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CD11CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadInboundTransfer+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadInboundTransfer+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CD21CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadInboundTransfer.swift; path = Code/Internal/CoreData/SMDownloadInboundTransfer.swift; sourceTree = "<group>"; };
+		83E55CD31CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadDeletion+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadDeletion+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CD41CBA07DB00F204E0 /* SMUploadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadDeletion.swift; path = Code/Internal/CoreData/SMUploadDeletion.swift; sourceTree = "<group>"; };
+		83E55CD51CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadFileOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadFileOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadFileOperation.swift; path = Code/Internal/CoreData/SMDownloadFileOperation.swift; sourceTree = "<group>"; };
+		83E55CD71CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadDeletion+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadDeletion+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadDeletion.swift; path = Code/Internal/CoreData/SMDownloadDeletion.swift; sourceTree = "<group>"; };
+		83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadOutboundTransfer+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadOutboundTransfer+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadOutboundTransfer.swift; path = Code/Internal/CoreData/SMUploadOutboundTransfer.swift; sourceTree = "<group>"; };
+		83E55CDB1CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadFile+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadFile+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83F3B1AA1C54112A005DA375 /* SMSync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSync.swift; path = Code/Internal/SMSync.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -80,6 +151,30 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		832ADAEF1CB1176E00FFDD4C /* Generated (don't change by hand) */ = {
+			isa = PBXGroup;
+			children = (
+				83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */,
+				83E55CD31CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift */,
+				83E55CCC1CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift */,
+				83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */,
+				83E55CDB1CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift */,
+				83D7331A1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift */,
+				83D7328D1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift */,
+				83E55CD71CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift */,
+				83E55CD51CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift */,
+				83E55CD11CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift */,
+				83E55CCF1CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift */,
+				83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */,
+				83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */,
+				83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */,
+				83D732891CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift */,
+				83D732811CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift */,
+				83D7328B1CB366BA00B2BFD3 /* SMDownloadQueue+CoreDataProperties.swift */,
+			);
+			name = "Generated (don't change by hand)";
+			sourceTree = "<group>";
+		};
 		83D3E95E1C4C840C00BFDA93 = {
 			isa = PBXGroup;
 			children = (
@@ -138,12 +233,14 @@
 		83D3E97E1C4C84F500BFDA93 /* Core Data */ = {
 			isa = PBXGroup;
 			children = (
+				832ADADB1CB10D7300FFDD4C /* README.txt */,
 				83D3ECC81C4D90E100BFDA93 /* SMSyncServerModel.xcdatamodel */,
-				83D3EDDE1C4DD43B00BFDA93 /* SMLocalFile+CoreDataProperties.swift */,
-				83D3EDCD1C4DD0F200BFDA93 /* SMFileChange+CoreDataProperties.swift */,
 				83D3EDDF1C4DD43B00BFDA93 /* SMLocalFile.swift */,
-				83D3EDCE1C4DD0F200BFDA93 /* SMFileChange.swift */,
+				83D7328A1CB366BA00B2BFD3 /* SMQueues.swift */,
 				83D3EDED1C4E2FB900BFDA93 /* SMCoreData.swift */,
+				83D732791CB1B5D300B2BFD3 /* Download */,
+				83D7327A1CB1B5DC00B2BFD3 /* Upload */,
+				832ADAEF1CB1176E00FFDD4C /* Generated (don't change by hand) */,
 			);
 			name = "Core Data";
 			sourceTree = "<group>";
@@ -151,6 +248,7 @@
 		83D3E97F1C4C850100BFDA93 /* Other */ = {
 			isa = PBXGroup;
 			children = (
+				83E55CB21CB7530700F204E0 /* SMSyncControl.swift */,
 				83D3EA261C4C870C00BFDA93 /* SMUploadFiles.swift */,
 				83D3EA211C4C870C00BFDA93 /* SMDownloadFiles.swift */,
 				83D3EA201C4C870C00BFDA93 /* SMFileDiffs.swift */,
@@ -178,8 +276,38 @@
 			isa = PBXGroup;
 			children = (
 				83D3EDD71C4DD2C300BFDA93 /* SMCoreLib.framework */,
+				832ADAE01CB10D7400FFDD4C /* SMCoreLibTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		83D732791CB1B5D300B2BFD3 /* Download */ = {
+			isa = PBXGroup;
+			children = (
+				83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */,
+				83E55CD21CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift */,
+				83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */,
+				83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */,
+				83D732831CB366BA00B2BFD3 /* SMDownloadBlock.swift */,
+				83D732851CB366BA00B2BFD3 /* SMDownloadFile.swift */,
+				83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */,
+				83D7328C1CB366BA00B2BFD3 /* SMDownloadQueue.swift */,
+			);
+			name = Download;
+			sourceTree = "<group>";
+		};
+		83D7327A1CB1B5DC00B2BFD3 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */,
+				83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */,
+				83E55CCD1CBA07DB00F204E0 /* SMUploadFileOperation.swift */,
+				83E55CD41CBA07DB00F204E0 /* SMUploadDeletion.swift */,
+				83D3EDCE1C4DD0F200BFDA93 /* SMUploadFile.swift */,
+				832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */,
+				83D732881CB366BA00B2BFD3 /* SMUploadQueue.swift */,
+			);
+			name = Upload;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -252,6 +380,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		832ADAE01CB10D7400FFDD4C /* SMCoreLibTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SMCoreLibTests.xctest;
+			remoteRef = 832ADADF1CB10D7400FFDD4C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		83D3EDD71C4DD2C300BFDA93 /* SMCoreLib.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -266,6 +401,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				832ADADC1CB10D7300FFDD4C /* README.txt in Resources */,
 				83D3EDE81C4E127600BFDA93 /* SMSyncServerModel.xcdatamodel in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -278,22 +414,53 @@
 			buildActionMask = 2147483647;
 			files = (
 				83D3EA2B1C4C870C00BFDA93 /* SMServerAPI.swift in Sources */,
-				83D3EDCF1C4DD0F200BFDA93 /* SMFileChange+CoreDataProperties.swift in Sources */,
+				83D732951CB366BA00B2BFD3 /* SMUploadQueue.swift in Sources */,
 				83D3EA2C1C4C870C00BFDA93 /* SMServerConstants.swift in Sources */,
+				83D732991CB366BA00B2BFD3 /* SMDownloadQueue.swift in Sources */,
+				83D7331B1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift in Sources */,
+				83E55CEF1CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift in Sources */,
+				83E55CED1CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift in Sources */,
+				83E55CE71CBA07DB00F204E0 /* SMUploadFileOperation.swift in Sources */,
 				83D3EA281C4C870C00BFDA93 /* SMAppConstants.swift in Sources */,
+				83E55CE61CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift in Sources */,
 				83F3B1AB1C54112A005DA375 /* SMSync.swift in Sources */,
 				83D3EDE11C4DD43B00BFDA93 /* SMLocalFile.swift in Sources */,
 				83D3EA2A1C4C870C00BFDA93 /* SMDownloadFiles.swift in Sources */,
+				83E55CF11CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift in Sources */,
+				83D732981CB366BA00B2BFD3 /* SMDownloadQueue+CoreDataProperties.swift in Sources */,
+				83D732971CB366BA00B2BFD3 /* SMQueues.swift in Sources */,
+				83E55CB31CB7530700F204E0 /* SMSyncControl.swift in Sources */,
+				83D732961CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift in Sources */,
+				83E55CE31CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift in Sources */,
+				83E55CE01CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift in Sources */,
+				83E55CEE1CBA07DB00F204E0 /* SMUploadDeletion.swift in Sources */,
+				83E55CE11CBA07DB00F204E0 /* SMUploadOperation.swift in Sources */,
+				83D732901CB366BA00B2BFD3 /* SMDownloadBlock.swift in Sources */,
+				83E55CE91CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift in Sources */,
+				83E55CBC1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift in Sources */,
 				83D3EA291C4C870C00BFDA93 /* SMFileDiffs.swift in Sources */,
+				83E55CEB1CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift in Sources */,
+				83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */,
 				830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */,
-				83D3EDD01C4DD0F200BFDA93 /* SMFileChange.swift in Sources */,
+				83D3EDD01C4DD0F200BFDA93 /* SMUploadFile.swift in Sources */,
 				832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */,
+				83E55CF31CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift in Sources */,
+				83E55CF21CBA07DB00F204E0 /* SMDownloadDeletion.swift in Sources */,
+				83E55CB81CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift in Sources */,
 				83D3E97C1C4C84A600BFDA93 /* SMSyncServer.swift in Sources */,
-				83D3EDE01C4DD43B00BFDA93 /* SMLocalFile+CoreDataProperties.swift in Sources */,
+				83D7329B1CB371FB00B2BFD3 /* SMUploadBlock.swift in Sources */,
+				83E55CF51CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift in Sources */,
+				83D7328E1CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift in Sources */,
 				83D3EA2F1C4C870C00BFDA93 /* SMUploadFiles.swift in Sources */,
+				83E55CE41CBA07DB00F204E0 /* SMDownloadOperation.swift in Sources */,
+				83E55CF41CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift in Sources */,
+				83E55CBD1CB84A4800F204E0 /* SMDownloadConflict.swift in Sources */,
+				83D7329A1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift in Sources */,
+				83E55CEC1CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift in Sources */,
 				83D3EA2D1C4C870C00BFDA93 /* SMServerNetworking.swift in Sources */,
 				83D0A8D01C877E170096132E /* PersistedServerFileIndex.swift in Sources */,
 				83D3EA2E1C4C870C00BFDA93 /* SMTest.swift in Sources */,
+				83D732921CB366BA00B2BFD3 /* SMDownloadFile.swift in Sources */,
 				83D3EDEE1C4E2FB900BFDA93 /* SMCoreData.swift in Sources */,
 				83D3ECC11C4D597500BFDA93 /* SMSyncServerUser.swift in Sources */,
 			);

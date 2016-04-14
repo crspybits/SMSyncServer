@@ -109,17 +109,21 @@ public class SMSyncServer : NSObject {
     // Timer for .Normal mode when doing autoCommit.
     private var normalTimer:TimedCallback?
     
+    // Maximum amount of data individually uploaded and downloaded
+    internal static let BLOCK_SIZE_BYTES:UInt = 1024 * 100
+    
     // This is a singleton because we need centralized control over the file upload/download operations.
     public static let session = SMSyncServer()
 
     // This delegate is optional because, while usually important for caller operation, the SMSyncServer itself isn't really dependent on the operation of the delegate methods assuming correct operation of the caller.
     public weak var delegate:SMSyncServerDelegate? {
         set {
-            SMUploadFiles.session.delegate = newValue
-            SMDownloadFiles.session.delegate = newValue
+            SMUploadFiles.session.syncServerDelegate = newValue
+            SMSyncControl.session.delegate = newValue
+            //SMDownloadFiles.session.delegate = newValue
         }
         get {
-            return SMUploadFiles.session.delegate
+            return SMUploadFiles.session.syncServerDelegate
         }
     }
 
@@ -195,7 +199,7 @@ public class SMSyncServer : NSObject {
         SMServerNetworking.session.appLaunchSetup()
         SMServerAPI.session.serverURL = serverURL
         SMUploadFiles.session.appLaunchSetup()
-        SMDownloadFiles.session.appLaunchSetup()
+        //SMDownloadFiles.session.appLaunchSetup()
 
         // This seems a little hacky, but can't find a better way to get the bundle of the framework containing our model. I.e., "this" framework. Just using a Core Data object contained in this framework to track it down.
         // Without providing this bundle reference, I wasn't able to dynamically locate the model contained in the framework.
@@ -220,9 +224,8 @@ public class SMSyncServer : NSObject {
     internal func signInCompletedAction() {
         Log.msg("signInCompletedAction")
         
-        // This will start a delayed upload, if there was one, so leave this until after user is signed in.
         // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
-        self.start(when: .AppLaunched)
+        SMSyncControl.session.nextSyncOperation()
         
         // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
         Network.session().connectionStateCallbacks.addTarget!(self, withSelector: #selector(SMSyncServer.networkConnectionStateChangeAction))
@@ -231,10 +234,11 @@ public class SMSyncServer : NSObject {
     // PRIVATE
     internal func networkConnectionStateChangeAction() {
         if Network.session().connected() {
-            self.start(when: .NetworkBackOnline)
+            SMSyncControl.session.nextSyncOperation()
         }
     }
     
+    /*
     private enum StartWhen {
         case AppLaunched
         case NetworkBackOnline
@@ -276,6 +280,7 @@ public class SMSyncServer : NSObject {
                 Assert.badMojo(alwaysPrintThisString: "Yikes: Client app should have handled this!!")
         }
     }
+    */
     
     // Returns a SMSyncAttributes object iff the file is locally known (on the device) to the SMSyncServer. Nil could be returned if the file was uploaded by another app/client to the server recently, but not downloaded to the current device (app/client) yet.
     public func localFileStatus(uuid: NSUUID) -> SMSyncAttributes? {
@@ -307,13 +312,13 @@ public class SMSyncServer : NSObject {
     
     private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
         // Check to see if we already know about this file in our SMLocalFile meta data.
-        var localFileMetaData:SMLocalFile?
-        localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
+        var localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
         
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
             localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
+            localFileMetaData!.newUpload = true
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
@@ -335,13 +340,6 @@ public class SMSyncServer : NSObject {
         else {
             // Existing file
             
-            let alreadyDeleted = localFileMetaData!.deletedOnServer != nil && localFileMetaData!.deletedOnServer!.boolValue
-            
-            if localFileMetaData!.pendingDeletion || alreadyDeleted {
-                self.mode = .NonRecoverableError(Error.Create("Attempt to upload a file/item marked for deletion!"))
-                return
-            }
-                        
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
                 self.mode = .NonRecoverableError(Error.Create("You gave a different remote file name than was present on the server!"))
                 return
@@ -350,8 +348,7 @@ public class SMSyncServer : NSObject {
         
         // TODO: Compute an MD5 hash of the file and store that in the meta data. This needs to be shipped up to the server too so that when the file is downloaded the receiving client can verify the hash. 
         
-        let change = SMFileChange.newObject() as! SMFileChange
-        
+        let change = SMUploadFile.newObject() as! SMUploadFile
         change.fileURL = localFileURL
         
         switch (typeOfUpload) {
@@ -361,11 +358,13 @@ public class SMSyncServer : NSObject {
             change.deleteLocalFileAfterUpload = true
         }
         
-        localFileMetaData!.addPendingLocalChangesObject(change)
+        change.localFile = localFileMetaData!
+        
+        if !SMQueues.current().addToUploadsBeingPrepared(change) {
+            self.mode = .NonRecoverableError(Error.Create("File was already deleted!"))
+        }
         
         // The localVersion property of the SMLocalFile object will get updated, if needed, when we sync this file meta data to the server meta data.
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         self.startNormalTimer()
     }
@@ -393,8 +392,7 @@ public class SMSyncServer : NSObject {
     // Enqueue a deletion operation. The operation persists across app launches. It is an error to try again later to upload, download, or delete the data/file referenced by this UUID. You can only delete files that are already known to the SMSyncServer (e.g., that you've uploaded). Any previous queued uploads for this uuid are expunged-- only the delete is carried out.
     public func deleteFile(uuid:NSUUID) {
         // We must already know about this file in our SMLocalFile meta data.
-        var localFileMetaData:SMLocalFile?
-        localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
+        let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
         
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
@@ -403,27 +401,12 @@ public class SMSyncServer : NSObject {
             return
         }
         
-        let alreadyDeleted = localFileMetaData!.deletedOnServer != nil && localFileMetaData!.deletedOnServer!.boolValue
-
-        if alreadyDeleted {
-            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file that is already deleted!"))
-            return
+        let change = SMUploadDeletion.newObject() as! SMUploadDeletion
+        change.localFile = localFileMetaData!
+        
+        if !SMQueues.current().addToUploadsBeingPrepared(change) {
+            self.mode = .NonRecoverableError(Error.Create("File was already deleted!"))
         }
-        
-        if localFileMetaData!.pendingDeletion {
-            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file already marked for deletion!"))
-            return
-        }
-        
-        let change = SMFileChange.newObject() as! SMFileChange
-        change.deletion = true
-        
-        // Expunge any pending uploads.
-        localFileMetaData!.pendingLocalChanges = nil
-        
-        localFileMetaData!.addPendingLocalChangesObject(change)
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         self.startNormalTimer()
     }
@@ -458,10 +441,10 @@ public class SMSyncServer : NSObject {
     }
 #endif
 
-    // Returns true iff the SMSyncServer is currently in the process of uploading file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging).
+    // Returns true iff the SMSyncServer is currently in the process of upload or download file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging).
     public var isOperating: Bool {
         get {
-            return SMSync.session.isOperating
+            return SMSyncControl.session.operating
         }
     }
     
@@ -470,18 +453,26 @@ public class SMSyncServer : NSObject {
     // If autoCommit is currently true, then this resets the timer interval *after* the commit has completed.
     // If there is currently a commit operation in progress, the commit will be carried out after the current one (unless an error is reported by the syncServerError delegate method).
     // There must be a user signed to the cloud storage system when you call this method.
-    // If you do a commit and no files have changed (i.e., no uploads or deletes have been enqueued), then the commit does nothing. (No delegate methods are called in this case).
-    public func commit() {
+    // If you do a commit and no files have changed (i.e., no uploads or deletes have been enqueued), then the commit does nothing (and false is returned). (No delegate methods are called in this case).
+    public func commit() -> Bool? {
         // Testing for network availability is done by the SMServerNetworking class accessed indirectly through SMUploadFiles, so I'm not going to do that here.
         
         Log.msg("Attempting to commit")
+
+        if SMQueues.current().uploadsBeingPrepared!.operations!.count == 0 {
+            Log.msg("Attempting to commit: But there were no changed files!")
+            return false
+        }
         
         if !SMSyncServerUser.session.delegate.syncServerUserIsSignedIn {
             self.mode = .NonRecoverableError(Error.Create("There is no user signed in"))
-            return
+            return nil
         }
         
-        SMUploadFiles.session.prepareForUpload()
+        SMQueues.current().moveBeingPreparedToCommitted()
+        SMSyncControl.session.nextSyncOperation()
+        
+        return true
     }
 
 #if DEBUG
