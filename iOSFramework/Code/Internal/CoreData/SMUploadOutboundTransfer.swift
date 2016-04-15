@@ -8,10 +8,19 @@
 
 import Foundation
 import CoreData
-
+import SMCoreLib
 
 class SMUploadOutboundTransfer: SMUploadOperation {
 
-// Insert code here to add functionality to your managed object subclass
+    class func entityName() -> String {
+        return "SMUploadOutboundTransfer"
+    }
 
+    class func newObject() -> NSManagedObject {
+        let outboundTransfer = CoreData.sessionNamed(SMCoreData.name).newObjectWithEntityName(self.entityName()) as! SMUploadOutboundTransfer
+                
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+
+        return outboundTransfer
+    }
 }

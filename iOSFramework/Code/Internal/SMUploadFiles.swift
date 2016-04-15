@@ -84,9 +84,8 @@ internal class SMUploadFiles : NSObject {
     private var checkIfUploadOperationFinishedTimer:RepeatingTimer?
     private static let TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S:Float = 5
 
-    // This describes the files that need to be uploaded/deleted on the server. And the set of changes that need to be synced against the local meta data.
-    // private var pendingUploadFiles:[SMServerFile]?
-    // private var pendingDeleteFiles:[SMServerFile]?
+    // The current file index from the server.
+    private var serverFileIndex:[SMServerFile]?
 
     private override init() {
         super.init()
@@ -152,97 +151,82 @@ internal class SMUploadFiles : NSObject {
     }
     
     // MARK: End: Methods that call delegate methods
+    
+    func doUploadOperations(serverFileIndex:[SMServerFile]) {
+        self.serverFileIndex = serverFileIndex
+        self.uploadControl()
+    }
 
-    /*
-    // The alreadyUploadedFiles parameter is for usage of this method in recovery: The parameter gives the collection of files that have already been uploaded to the SyncServer (but not yet transferred to cloud storage).
-    private func prepareForUpload(givenAlreadyUploadedFiles alreadyUploadedFiles:[SMServerFile]?) {
-        
-        let localChanges = SMFileDiffs(type: .LocalChanges)
-        Log.msg("\(localChanges.count) local files have changed")
-        if localChanges.count == 0 {
-            // We are the operation executing, so we're safe to stop.
-            SMSync.session.stop()
+    // Control for 1) upload-deletions, 2) uploads, and 3) outbound transfers. The priority is in that order.
+    // Putting deletions as first priority just because deletions should be fast.
+    // Each call to this control method will do at most one of the three asynchronous operations.
+    private func uploadControl() {
+        let wereUploadDeletions = self.doUploadDeletions()
+        if wereUploadDeletions == nil {
             return
         }
-        
-        // The .UploadRecovery recovery mode will let us know we need to recover if we fail sometime prior to the commmit operation. When the app restarts and/or we regain network access, we'll check this flag and see what we need to do.
-        SMUploadFiles.mode = .Running(.Upload, .Operating)
-        
-        SMServerAPI.session.lock() { lockResult in
-            Log.msg("lock: \(lockResult.error)")
-            
-            if SMTest.If.success(lockResult.error, context: .Lock) {
-                SMServerAPI.session.getFileIndex() { fileIndex, gfiResult in
-                    if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
-                        Log.msg("Success on getFileIndex!")
-                        
-                        self.doDeletionAndUpload(localChanges, serverFileIndex:fileIndex, alreadyUploadedFiles:alreadyUploadedFiles)
-                    }
-                    else {
-                        // Error with SMSyncServer.session.getFileIndex; do recovery.
-                        self.recovery()
-                    }
-                }
+        else if !wereUploadDeletions! {
+            let wereDownloadFiles = self.doUploadFiles()
+            if wereDownloadFiles == nil {
+                return
             }
-            else {
-                // Error with SMSyncServer.session.lock
-                // Cleaning up may not be needed as we may not hold the lock, but do it anyways to be safe.
-                // TODO: Possible that we don't have a network connection at this point, and we actually hold the lock. I.e., the problem was that the server just didn't return the right return code to us. Seems this will have to be solved later by a lock breaking strategy.
-                self.recovery()
+            else if !wereDownloadFiles! {
+                self.doOutboundTransfer()
             }
         }
     }
-    */
     
-    func doUploads(serverFileIndex:[SMServerFile]) {
-        // Do the deletion first, if there are any files to delete, just because the deletion should be fast.
-        
+    // Returns true if there were deletions to do (which will be in process asynchronously), and false if there were no deletions to do. Nil is returned in the case of an error.
+    private func doUploadDeletions() -> Bool? {
         let deletionChanges = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
+        if deletionChanges == nil {
+            return false
+        }
+        
         var serverFileDeletions:[SMServerFile]?
         
-        if deletionChanges != nil {
-            if let error = self.errorCheckingForDeletion(serverFileIndex, deletionChanges: deletionChanges!) {
-                self.callSyncServerError(error)
-                return
-            }
-            
-            serverFileDeletions = SMUploadFileOperation.convertToServerFiles(deletionChanges!)
+        if let error = self.errorCheckingForDeletion(self.serverFileIndex!, deletionChanges: deletionChanges!) {
+            self.callSyncServerError(error)
+            return nil
         }
+        
+        serverFileDeletions = SMUploadFileOperation.convertToServerFiles(deletionChanges!)
+        Assert.If(nil == serverFileDeletions, thenPrintThisString: "Yikes: Nil serverFileDeletions")
         
         SMServerAPI.session.deleteFiles(serverFileDeletions) { dfResult in
             if (nil == dfResult.error) {
-                if serverFileDeletions != nil {
-                    var uuids = [NSUUID]()
-                    for fileToDelete in serverFileDeletions! {
-                        uuids.append(fileToDelete.uuid)
-                    }
-                    
-                    self.syncServerDelegate?.syncServerEventOccurred(.DeletionsSent(uuids: uuids))
-                    
-                    for deletionChange in deletionChanges! {
-                        deletionChange.operationStage = .CloudStorage
-                    }
+                var uuids = [NSUUID]()
+                for fileToDelete in serverFileDeletions! {
+                    uuids.append(fileToDelete.uuid)
                 }
-
-                self.doUpload(serverFileIndex)
+                
+                self.syncServerDelegate?.syncServerEventOccurred(.DeletionsSent(uuids: uuids))
+                
+                for deletionChange in deletionChanges! {
+                    deletionChange.operationStage = .CloudStorage
+                }
+                
+                self.uploadControl()
             }
             else {
                 Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
                 //self.recovery()
             }
         }
+        
+        return true
     }
-    
-    // TODO: What happens to the server side execution when: (1) The app terminates (e.g., crashes, goes into background) while the server is running but the operation hasn't ended, yet, and (2) the app terminates and the operation has ended (as with the end of the commitChanges operation). I've been assuming with (2) at least that the server side execution will *not* be interrupted or otherwise altered.
-    
-    // GOAL: Work on restarting uploads that have been interrupted prior to completion of a commitChanges operation. How do we tell, algorithmically, that this is needed?
 
-    private func doUpload(serverFileIndex:[SMServerFile]) {
-        let (filesToUpload, error) = self.filesToUpload(serverFileIndex)
-
+    private func doUploadFiles() -> Bool? {
+        let (filesToUpload, error) = self.filesToUpload(self.serverFileIndex!)
+        
         if error != nil {
             self.callSyncServerError(error!)
-            return
+            return nil
+        }
+        
+        if filesToUpload == nil {
+            return false
         }
         
         SMServerAPI.session.uploadFiles(filesToUpload) { uploadResult in
@@ -252,22 +236,7 @@ internal class SMUploadFiles : NSObject {
                 // Just about to do the commit. If we detect failure of the commit on the client, we'll not be fully sure if the commit succeeded. E.g., we could lose a network connection as the commit is operating making it look as if the commit failed, but it actually succeeded.
                 SMUploadFiles.mode = .Running(.BetweenUploadAndOutBoundTransfer, .Operating)
 
-                // TODO: PRIORITY: Separate startOutboundTransfer to work from its own entry in the .beingUploaded queue.
-                
-                SMServerAPI.session.startOutboundTransfer() { operationId, sotResult in
-                    Log.msg("SMSyncServer.session.startOutboundTransfer: \(sotResult.error); operationId: \(operationId)")
-                    if SMTest.If.success(sotResult.error, context: .OutboundTransfer) {
-                        self.serverOperationId = operationId
-                        // We *know* we have a successful commit. Change to our last recovery case.
-                        SMUploadFiles.mode = .Running(.OutboundTransfer, .Operating)
-                        
-                        self.startToPollForOperationFinish()
-                    }
-                    else {
-                        Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
-                        //self.recovery()
-                    }
-                }
+                self.uploadControl()
             }
             else {
                 if (uploadResult.returnCode == SMServerConstants.rcServerAPIError) {
@@ -280,6 +249,34 @@ internal class SMUploadFiles : NSObject {
 
                     // self.recovery()
                 }
+            }
+        }
+        
+        return true
+    }
+    
+    private func doOutboundTransfer() {
+        let outboundTransfer = SMQueues.current().beingUploaded!.getChanges(.OutboundTransfer) as?[SMUploadOutboundTransfer]
+        if outboundTransfer == nil {
+            return
+        }
+        
+        Assert.If(outboundTransfer!.count != 1, thenPrintThisString: "Not exactly one outbound transfer")
+        
+        SMServerAPI.session.startOutboundTransfer() { operationId, sotResult in
+            Log.msg("SMSyncServer.session.startOutboundTransfer: \(sotResult.error); operationId: \(operationId)")
+            if SMTest.If.success(sotResult.error, context: .OutboundTransfer) {
+                self.serverOperationId = operationId
+                // We *know* we have a successful commit. Change to our last recovery case.
+                SMUploadFiles.mode = .Running(.OutboundTransfer, .Operating)
+                
+                SMQueues.current().beingUploaded!.removeChanges(.OutboundTransfer)
+                
+                self.startToPollForOperationFinish()
+            }
+            else {
+                Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
+                //self.recovery()
             }
         }
     }
@@ -339,7 +336,7 @@ internal class SMUploadFiles : NSObject {
     
     private func wrapUpOperation(operationResult: SMOperationResult?) {
 
-        let numberUploads = SMQueues.current().completeSuccessfulUploads()
+        let numberUploads = self.updateMetaDataForSuccessfulUploads()
         
         if operationResult != nil {
             Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
@@ -442,6 +439,58 @@ internal class SMUploadFiles : NSObject {
         }
         
         return (filesToUpload:filesToUpload, error:nil)
+    }
+    
+    // Given that the uploads and/or upload-deletions of files was successful (i.e., both server upload and cloud storage operations have been done), update the local meta data to reflect the success.
+    // Returns the number of uploads and upload-deletions that happened.
+    private func updateMetaDataForSuccessfulUploads() -> Int {
+        var numberUpdates = 0
+        var numberNewFiles = 0
+        var numberDeletions = 0
+        
+        if let uploadDeletions = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion) as? [SMUploadDeletion] {
+            for uploadDeletion in uploadDeletions {
+                let deletedLocalFile:SMLocalFile = uploadDeletion.localFile!
+                
+                deletedLocalFile.deletedOnServer = true
+                deletedLocalFile.pendingUploads = nil
+                
+                numberDeletions += 1
+            }
+            
+            SMQueues.current().beingUploaded!.removeChanges(.UploadDeletion)
+        }
+        
+        if let uploadFiles = SMQueues.current().beingUploaded!.getChanges(.UploadFile) as? [SMUploadFile] {
+            for uploadFile in uploadFiles {
+                let localFile:SMLocalFile = uploadFile.localFile!
+                
+                if uploadFile.deleteLocalFileAfterUpload!.boolValue {
+                    let fileWasDeleted = FileStorage.deleteFileWithPath(uploadFile.fileURL)
+                    Assert.If(!fileWasDeleted, thenPrintThisString: "File could not be deleted")
+                }
+                
+                if localFile.newUpload!.boolValue {
+                    localFile.newUpload = false
+                    numberNewFiles += 1
+                }
+                else {
+                    localFile.localVersion = localFile.localVersion!.integerValue + 1
+                    Log.msg("New local file version: \(localFile.localVersion)")
+                    numberUpdates += 1
+                }
+            }
+            
+            SMQueues.current().beingUploaded!.removeChanges(.UploadFile)
+        }
+        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+        
+        Log.msg("Number updates: \(numberUpdates)")
+        Log.msg("Number new files: \(numberNewFiles)")
+        Log.msg("Number deletions: \(numberDeletions)")
+        
+        return numberUpdates + numberNewFiles + numberDeletions
     }
 }
 

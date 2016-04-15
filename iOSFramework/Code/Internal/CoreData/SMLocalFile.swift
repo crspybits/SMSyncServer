@@ -79,14 +79,16 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
     }
     
     // There is a pending upload-deletion if *any* of the SMUploadFileChange's in the .pendingUploads is an SMUploadDeletion.
-    func pendingUploadDeletion() -> Bool {
+    func pendingUploadDeletion(excepting excepting:SMUploadDeletion?=nil) -> Bool {
         var result:Bool = false
         
         if self.pendingUploads != nil {
             for fileChange in self.pendingUploads! {
-                if let _ = fileChange as? SMUploadDeletion {
-                    result = true
-                    break
+                if let deletion = fileChange as? SMUploadDeletion {
+                    if excepting == nil || !excepting!.isEqual(deletion) {
+                        result = true
+                        break
+                    }
                 }
             }
         }

@@ -259,37 +259,42 @@ class SMQueues: NSManagedObject, CoreDataModel {
         CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
     
-    // Adds a change to the uploadsBeingPrepared queue. Also causes any other upload change for the same file in the same queue to be removed. (This occurs both when you are adding uploads and upload-deletions). Uploads in already committed queues are not modified and should never be modified-- e.g., a new upload in the being prepared queue never overrides an already commmitted upload.
-    // Assumes that the .changedFile property of this change has been set.
-    // Returns false iff the file has already been deleted locally, or already marked for deletion. In this case, the change has not been added.
-    func addToUploadsBeingPrepared(change:SMUploadFileOperation) -> Bool {
-        Assert.If(change.localFile == nil, thenPrintThisString: "changedFile property not set!")
-        let localFileMetaData:SMLocalFile = change.localFile!
-        
-        let alreadyDeleted = localFileMetaData.deletedOnServer != nil && localFileMetaData.deletedOnServer!.boolValue
-        
-        if localFileMetaData.pendingUploadDeletion() || alreadyDeleted {
-            return false
-        }
-        
-        // Remove any prior upload changes in the same queue with the same uuid
-        var toBeDeleted = [SMUploadFileOperation]()
-        for elem in self.uploadsBeingPrepared!.operations! {
-            if let uploadFileChange = elem as? SMUploadFile {
-                if uploadFileChange.localFile!.uuid == localFileMetaData.uuid {
-                    toBeDeleted.append(uploadFileChange)
+    // Adds an operation to the uploadsBeingPrepared queue.
+    // For uploads and upload-deletions, also causes any other upload change for the same file in the same queue to be removed. (This occurs both when you are adding uploads and upload-deletions). Uploads in already committed queues are not modified and should never be modified-- e.g., a new upload in the being prepared queue never overrides an already commmitted upload. Assumes that the .changedFile property of this change has been set.
+    // Returns false for uploads and upload-deletions iff the file has already been deleted locally, or already marked for deletion. In this case, the change has not been added.
+    func addToUploadsBeingPrepared(operation:SMUploadOperation) -> Bool {
+        if let change = operation as? SMUploadFileOperation  {
+            Assert.If(change.localFile == nil, thenPrintThisString: "changedFile property not set!")
+            let localFileMetaData:SMLocalFile = change.localFile!
+            
+            let alreadyDeleted = localFileMetaData.deletedOnServer != nil && localFileMetaData.deletedOnServer!.boolValue
+            
+            // Pass the deletion change as a param to pendingUploadDeletion, if it is a deletion change, because we don't want to consider the currently being added operation.
+            let deletionChange = change as? SMUploadDeletion
+            if localFileMetaData.pendingUploadDeletion(excepting: deletionChange) || alreadyDeleted {
+                return false
+            }
+            
+            // Remove any prior upload changes in the same queue with the same uuid
+            var toBeDeleted = [SMUploadFileOperation]()
+            for elem in self.uploadsBeingPrepared!.operations! {
+                if let uploadFileChange = elem as? SMUploadFile {
+                    if uploadFileChange.localFile!.uuid == localFileMetaData.uuid {
+                        toBeDeleted.append(uploadFileChange)
+                    }
                 }
             }
+            
+            // I believe this will remove the uploadFileFile change from self.uploadsBeingPrepared!.changes! as well.
+            for uploadFileChange in toBeDeleted {
+                CoreData.sessionNamed(SMCoreData.name).removeObject(
+                    uploadFileChange)
+            }
         }
-        
-        // I believe this will remove the uploadFileFile change from self.uploadsBeingPrepared!.changes! as well.
-        for uploadFileChange in toBeDeleted {
-            CoreData.sessionNamed(SMCoreData.name).removeObject(uploadFileChange)
-        }
-    
-        let newChanges = NSMutableOrderedSet(orderedSet: self.uploadsBeingPrepared!.operations!)
-        newChanges.addObject(change)
-        self.uploadsBeingPrepared!.operations = newChanges
+
+        let newOperations = NSMutableOrderedSet(orderedSet: self.uploadsBeingPrepared!.operations!)
+        newOperations.addObject(operation)
+        self.uploadsBeingPrepared!.operations = newOperations
 
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
@@ -317,57 +322,5 @@ class SMQueues: NSManagedObject, CoreDataModel {
                 return (result as! [SMDownloadConflict])
             }
         }
-    }
-    
-    // Given that the uploads and/or upload-deletions of files was successful (i.e., both server upload and cloud storage operations have been done), update the local meta data to reflect the success.
-    // Returns the number of uploads and upload-deletions that happened.
-    func completeSuccessfulUploads() -> Int {
-        var numberUpdates = 0
-        var numberNewFiles = 0
-        var numberDeletions = 0
-        
-        if let uploadDeletions = self.beingUploaded!.getChanges(.UploadDeletion) {
-            for uploadDeletion in uploadDeletions {
-                let deletedLocalFile:SMLocalFile = uploadDeletion.localFile!
-                
-                deletedLocalFile.deletedOnServer = true
-                deletedLocalFile.pendingUploads = nil
-                
-                numberDeletions += 1
-            }
-            
-            self.beingUploaded!.removeChanges(.UploadDeletion)
-        }
-        
-        if let uploadFiles = self.beingUploaded!.getChanges(.UploadFile) as? [SMUploadFile] {
-            for uploadFile in uploadFiles {
-                let localFile:SMLocalFile = uploadFile.localFile!
-                
-                if uploadFile.deleteLocalFileAfterUpload!.boolValue {
-                    let fileWasDeleted = FileStorage.deleteFileWithPath(uploadFile.fileURL)
-                    Assert.If(!fileWasDeleted, thenPrintThisString: "File could not be deleted")
-                }
-                
-                if localFile.newUpload!.boolValue {
-                    localFile.newUpload = false
-                    numberNewFiles += 1
-                }
-                else {
-                    localFile.localVersion = localFile.localVersion!.integerValue + 1
-                    Log.msg("New local file version: \(localFile.localVersion)")
-                    numberUpdates += 1
-                }
-            }
-            
-            self.beingUploaded!.removeChanges(.UploadFile)
-        }
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
-        
-        Log.msg("Number updates: \(numberUpdates)")
-        Log.msg("Number new files: \(numberNewFiles)")
-        Log.msg("Number deletions: \(numberDeletions)")
-        
-        return numberUpdates + numberNewFiles + numberDeletions
     }
 }

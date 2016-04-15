@@ -469,6 +469,11 @@ public class SMSyncServer : NSObject {
             return nil
         }
         
+        // Add an outbound transfer to the uploadsBeingPrepared, then we're ready for the commit.
+        let outboundTransfer = SMUploadOutboundTransfer.newObject() as! SMUploadOutboundTransfer
+        let result = SMQueues.current().addToUploadsBeingPrepared(outboundTransfer)
+        Assert.If(!result, thenPrintThisString: "Couldn't add outbound transfer!")
+        
         SMQueues.current().moveBeingPreparedToCommitted()
         SMSyncControl.session.nextSyncOperation()
         

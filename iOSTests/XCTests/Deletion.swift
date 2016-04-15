@@ -30,6 +30,7 @@ class UploadDeletion: BaseClass {
         let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit Complete2")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.extraServerResponseTime = 30
         
@@ -65,13 +66,17 @@ class UploadDeletion: BaseClass {
             
             self.commitCompleteCallbacks.append() { numberDeletions in
                 XCTAssert(numberDeletions == 1)
-                XCTAssert(!SMSyncServer.session.isOperating)
                 
                 let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
                 commitCompleteCallbackExpectation2.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
         }
         

@@ -224,7 +224,7 @@ UserCredentials.prototype.validate = function (callback) {
 				if (err) {
                     var stringMessage = "failed on verifyIdToken: error: "  + err.message;
                     if (stringMessage.indexOf("Token used too late") != -1) {
-                        logger.error("User security token is stale");
+                        logger.error("User security token is stale: %j", err);
                         callback(err, true);
                     }
                     else {

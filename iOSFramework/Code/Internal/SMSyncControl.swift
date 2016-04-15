@@ -146,10 +146,10 @@ internal class SMSyncControl {
     }
     
     private func processPendingUploads() {
-        // Every time we process uploads, we need a fresh server file index. This is because the upload process itself changes the server file index.
+        // Every time we process uploads, we need a fresh server file index. This is because the upload process itself changes the server file index on the server. (I could simulate this server file index change process locally, but since upload is expensive and getting the file index is cheap, it doesn't seem worthwhile).
         
         func doUploads() {
-            SMUploadFiles.session.doUploads(self.serverFileIndex!)
+            SMUploadFiles.session.doUploadOperations(self.serverFileIndex!)
             self.serverFileIndex = nil
         }
         
