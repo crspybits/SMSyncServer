@@ -136,7 +136,7 @@ internal class SMUploadFiles : NSObject {
     private func callSyncServerCommitComplete(numberOperations numberOperations:Int?) {
     
         // The server lock gets released automatically when the transfer to cloud storage completes. I'm doing this automatic releasing of the lock because the cloud storage transfer is a potentially long running operation, and we could lose network connectivity. What's the point of holding the lock if we don't have network connectivity?
-        self.syncControlDelegate?.syncControlFinished(serverLockHeld:false)
+        self.syncControlDelegate?.syncControlUploadsFinished()
         
         self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
     }

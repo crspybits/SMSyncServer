@@ -12,8 +12,9 @@ import Foundation
 import SMCoreLib
 
 internal protocol SMSyncControlDelegate : class {
-    // Indicate the end of a server operation.
-    func syncControlFinished(serverLockHeld serverLockHeld:Bool?)
+    // Indicate the end of a upload or download operations. Separate delegate callbacks for these because we're dealing with these actions differently.
+    func syncControlUploadsFinished()
+    func syncControlDownloadsFinished()
     
     // Indicate an error condition and operation needs to stop.
     func syncControlError()
@@ -68,7 +69,10 @@ internal class SMSyncControl {
             self.delegate?.syncServerModeChange(.Operating)
             self.next()
         }
-        // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation().
+        else {
+            // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation().
+            Log.special("Couldn't get the lock!")
+        }
     }
     
     private func stopOperating() {
@@ -97,6 +101,7 @@ internal class SMSyncControl {
                 self.processPendingDownloads()
             }
             else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
+                // Uploads are really the bottom priority. See [1] also.
                 Log.special("SMSyncControl: Process pending uploads")
                 Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock (uploads)!")
                 self.processPendingUploads()
@@ -240,13 +245,21 @@ internal class SMSyncControl {
 }
 
 extension SMSyncControl : SMSyncControlDelegate {
-    // Indicate the end of a server operation.
-    func syncControlFinished(serverLockHeld serverLockHeld:Bool?) {
-        // If the server lock has been released, we'll set SMSyncControl.haveServerLock.boolValue to false, and when we call .next(), this will again get the lock and check for downloads. 
-        // This will result in overchecking for downloads-- e.g., when an upload has completed, the server lock will not be held, and we'll check again for downloads. I could tweak this to optimize this behavior, but it doesn't seem bad for SMSyncControl to always end on a check for downloads. And this mechanism is relatively simple.
-        if serverLockHeld != nil {
-            SMSyncControl.haveServerLock.boolValue = serverLockHeld!
-        }
+    // After uploads are complete, there will be no server lock held, *and* we'll be at the bottom priority of our list in [1].
+    func syncControlUploadsFinished() {
+        SMSyncControl.haveServerLock.boolValue = false
+        
+        // Because we don't have the lock and we're at the bottom priority, and we just released the lock, don't call self.next(). That would just cause another server check for downloads, and since we just released the lock, and had checked for downloads initially, there can't be downloads straight away.
+        
+        // Instead, stop operating
+        self.stopOperating()
+    }
+    
+    // Again, after downloads are complete, there will be no server lock held. But, we'll not be at the bottom of the priority list.
+    func syncControlDownloadsFinished() {
+        SMSyncControl.haveServerLock.boolValue = false
+
+        // Since we're not at the bottom of the priority list, call next(). This will result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
         self.next()
     }
     
