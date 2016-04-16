@@ -358,7 +358,8 @@ class UploadDeletion: BaseClass {
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
         let uploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
 
         self.extraServerResponseTime = 30
         
@@ -391,7 +392,7 @@ class UploadDeletion: BaseClass {
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
                     
                     SMSyncServer.session.commit()
@@ -411,6 +412,11 @@ class UploadDeletion: BaseClass {
                 
                     commitCompleteCallbackExpectation2.fulfill()
                 }
+            }
+
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -432,7 +438,8 @@ class UploadDeletion: BaseClass {
         let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit Complete2")
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
         let deletionExpectation = self.expectationWithDescription("Deletion Complete")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
 
         self.extraServerResponseTime = 30
         
@@ -459,7 +466,7 @@ class UploadDeletion: BaseClass {
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
  
                     SMSyncServer.session.commit()
@@ -474,6 +481,11 @@ class UploadDeletion: BaseClass {
                 XCTAssert(fileAttr!.deleted!)
                 
                 commitCompleteCallbackExpectation2.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -632,7 +644,9 @@ class UploadDeletion: BaseClass {
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
         let uploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+        let idleExpectation3 = self.expectationWithDescription("Idle3")
         
         self.extraServerResponseTime = 30
         
@@ -656,12 +670,17 @@ class UploadDeletion: BaseClass {
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
                     
                     SMSyncServer.session.deleteFile(testFile1.uuid)
                     SMSyncServer.session.commit()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -676,6 +695,11 @@ class UploadDeletion: BaseClass {
             self.commitCompleteCallbacks.append() { numberDeletions in
                 XCTAssert(numberDeletions == 1)
                 commitCompleteCallbackExpectation2.fulfill()
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation3.fulfill()
+                }
                 
                 SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
                 SMSyncServer.session.commit()

@@ -222,7 +222,7 @@ UserCredentials.prototype.validate = function (callback) {
             function(err, loginTicket) {
                 // console.log('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
 				if (err) {
-                    var stringMessage = "failed on verifyIdToken: error: "  + err.message;
+                    var stringMessage = "failed on verifyIdToken: error: %j"  + err;
                     if (stringMessage.indexOf("Token used too late") != -1) {
                         logger.error("User security token is stale: %j", err);
                         callback(err, true);
