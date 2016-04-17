@@ -102,6 +102,7 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
     });
 });
 
+// You can do multiple successive locks with the same deviceId/userId. Locks after the first have no effect, but also don't fail.
 // Failure mode analysis: On a failure, it is still possible that either one or both of these is true: 1) PSOperationId has been created, and 2) the lock has been created.
 app.post('/' + ServerConstants.operationLock, function (request, response) {
     var op = new Operation(request, response);

@@ -23,6 +23,32 @@ class ServerAPI: BaseClass {
         super.tearDown()
     }
     
+    // We should be able to do a lock followed by a lock, as long as we're using the same deviceId/userId.
+    func testThatLockFollowedByLockWorks() {
+        let firstLock = self.expectationWithDescription("First Lock")
+        let secondLock = self.expectationWithDescription("Second Lock")
+        let unlock = self.expectationWithDescription("Second Lock")
+
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.lock() { lockResult in
+                XCTAssert(lockResult.error == nil)
+                firstLock.fulfill()
+                
+                SMServerAPI.session.lock() { lockResult in
+                    XCTAssert(lockResult.error == nil)
+                    secondLock.fulfill()
+                    
+                    SMServerAPI.session.unlock() { unlockResult in
+                        XCTAssert(unlockResult.error == nil)
+                        unlock.fulfill()
+                    }
+                }
+            }
+        }
+                
+        self.waitForExpectations()
+    }
+    
     func testThatStartInboundTransferWithNoLockFails() {
         let afterStartExpectation = self.expectationWithDescription("After Start")
         

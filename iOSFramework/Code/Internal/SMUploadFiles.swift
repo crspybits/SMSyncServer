@@ -44,7 +44,7 @@ internal class SMUploadFiles : NSObject {
                 .Running(.AfterOutboundTransfer, _):
                 break
         
-            case .Idle, .NonRecoverableError:
+            case .Idle, .NonRecoverableError, .InternalError, .ClientAPIError:
                 break
         
             case .Running(.InboundTransfer, _),
@@ -59,6 +59,21 @@ internal class SMUploadFiles : NSObject {
         get {
             return SMSyncServer.session.mode
         }
+    }
+    
+    // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
+    internal func resetFromError() {
+        // SMSyncControl should be the one that does this resetting. And the one that changes to an .Idle mode.
+        Assert.badMojo(alwaysPrintThisString: "Fix Me")
+        
+        switch SMUploadFiles.mode {
+        case .NonRecoverableError:
+            break
+        default:
+            Assert.badMojo(alwaysPrintThisString: "We're not in .NonRecoverableError mode")
+        }
+        
+        SMUploadFiles.mode = .Idle
     }
     
     // Our strategy is to delay updating local meta data for files until we are completely assured the changes have propagated through to cloud storage.
@@ -86,52 +101,22 @@ internal class SMUploadFiles : NSObject {
 
     // The current file index from the server.
     private var serverFileIndex:[SMServerFile]?
+    
+    private let MAX_NUMBER_ATTEMPTS = 3
+    private var numberDeletionAttempts = 0
+    private var numberUploadAttempts = 0
 
     private override init() {
         super.init()
     }
     
-    // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
     internal func appLaunchSetup() {
         // SMSync.session.delayDelegate = self
         SMServerAPI.session.uploadDelegate = self
     }
     
-    /*
-    // If an upload is currently in progress, an upload will be done as soon as the current one is completed.
-    internal func prepareForUpload() {
-        SMSync.session.startOrDelay()
-    }
-    */
-    
-    // MARK: Start SMSyncDelayedOperationDelegate method
-    
-    /*
-    // I don't think this can actually be private to be called as a delegate method. But conceptually, it's private.
-    internal func smSyncDelayedOperation() {
-        self.prepareForUpload(givenAlreadyUploadedFiles: nil)
-    }
-    */
-    
-    // MARK: End SMSyncDelayedOperationDelegate method
-
-    // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
-    internal func resetFromError() {
-        // SMSyncControl should be the one that does this resetting. And the one that changes to an .Idle mode.
-        Assert.badMojo(alwaysPrintThisString: "Fix Me")
-        
-        switch SMUploadFiles.mode {
-        case .NonRecoverableError:
-            break
-        default:
-            Assert.badMojo(alwaysPrintThisString: "We're not in .NonRecoverableError mode")
-        }
-        
-        SMUploadFiles.mode = .Idle
-    }
-    
     // MARK: Start: Methods that call delegate methods
-    // Don't call the "completion" delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
+    // Don't call the delegate methods directly; call these methods instead-- so that we ensure serialization/sync is maintained correctly.
     
     private func callSyncServerCommitComplete(numberOperations numberOperations:Int?) {
     
@@ -141,23 +126,23 @@ internal class SMUploadFiles : NSObject {
         self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
     }
     
-    private func callSyncServerError(error:NSError) {
-        // We've had an API error or an error we couldn't deal with. Don't try to do any pending next operation.
+    private func callSyncServerError(syncControlError:SMSyncControlError) {
+        // We've had an error we couldn't deal with. Don't try to do any pending next operation.
         
-        // Set the mode to .NonRecoverableError so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
-        
-        self.syncControlDelegate?.syncControlError()
-        SMUploadFiles.mode = .NonRecoverableError(error)
+        self.syncControlDelegate?.syncControlError(syncControlError)
     }
     
     // MARK: End: Methods that call delegate methods
     
     func doUploadOperations(serverFileIndex:[SMServerFile]) {
+        self.numberDeletionAttempts = 0
+        self.numberUploadAttempts = 0
+        
         self.serverFileIndex = serverFileIndex
         self.uploadControl()
     }
 
-    // Control for 1) upload-deletions, 2) uploads, and 3) outbound transfers. The priority is in that order.
+    // Control for operations: 1) upload-deletions, 2) uploads, and 3) outbound transfers. The priority is in that order.
     // Putting deletions as first priority just because deletions should be fast.
     // Each call to this control method will do at most one of the three asynchronous operations.
     private func uploadControl() {
@@ -166,11 +151,11 @@ internal class SMUploadFiles : NSObject {
             return
         }
         else if !wereUploadDeletions! {
-            let wereDownloadFiles = self.doUploadFiles()
-            if wereDownloadFiles == nil {
+            let wereUploadFiles = self.doUploadFiles()
+            if wereUploadFiles == nil {
                 return
             }
-            else if !wereDownloadFiles! {
+            else if !wereUploadFiles! {
                 self.doOutboundTransfer()
             }
         }
@@ -209,12 +194,31 @@ internal class SMUploadFiles : NSObject {
                 self.uploadControl()
             }
             else {
-                Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
-                //self.recovery()
+                self.retryIfNetworkConnected(&self.numberDeletionAttempts, errorSpecifics: "upload-deletion")
             }
         }
         
         return true
+    }
+    
+    private func retryIfNetworkConnected(inout attempts:Int, errorSpecifics:String) {
+        if Network.session().connected() {
+            // Retry up to a max number of times, then fail.
+            if attempts < self.MAX_NUMBER_ATTEMPTS {
+                attempts += 1
+                
+                SMServerNetworking.exponentialFallback(forAttempt: attempts) {
+                    // Using uploadControl instead of more specific retry methods because the more specific methods assume they are being called by uploadControl. Should make reasoning simpler.
+                    self.uploadControl()
+                }
+            }
+            else {
+                self.callSyncServerError(.NonRecoverableError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
+            }
+        }
+        else {
+            self.callSyncServerError(.NetworkNotConnected)
+        }
     }
 
     private func doUploadFiles() -> Bool? {
@@ -240,14 +244,11 @@ internal class SMUploadFiles : NSObject {
             }
             else {
                 if (uploadResult.returnCode == SMServerConstants.rcServerAPIError) {
-                    // Can't recover immediately within the SMSyncServer. This must have been a client error.
-                    self.callSyncServerError(uploadResult.error!)
+                    // Not sure if this was a programming error within the SMSyncServer framework or from usage of the client api by the app.
+                    self.callSyncServerError(.InternalError(uploadResult.error!))
                 }
                 else {
-                    // Failed on uploadFiles-- Attempt recovery.
-                    Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
-
-                    // self.recovery()
+                    self.retryIfNetworkConnected(&self.numberUploadAttempts, errorSpecifics: "upload")
                 }
             }
         }
@@ -275,8 +276,13 @@ internal class SMUploadFiles : NSObject {
                 self.startToPollForOperationFinish()
             }
             else {
-                Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
-                //self.recovery()
+                if Network.session().connected() {
+                    Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
+                    //self.recovery()
+                }
+                else {
+                    self.callSyncServerError(.NetworkNotConnected)
+                }
             }
         }
     }
@@ -328,7 +334,7 @@ internal class SMUploadFiles : NSObject {
                 default:
                     let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
                     Log.msg(msg)
-                    self.callSyncServerError(Error.Create(msg))
+                    self.callSyncServerError(.InternalError(Error.Create(msg)))
                 }
             }
         }
@@ -365,7 +371,7 @@ internal class SMUploadFiles : NSObject {
     }
     
     // Do error checking for the files  to be deleted using.
-    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], deletionChanges:[SMUploadDeletion]) -> NSError? {
+    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], deletionChanges:[SMUploadDeletion]) -> SMSyncControlError? {
 
         for deletionChange:SMUploadDeletion in deletionChanges {
             let localFile = deletionChange.localFile!
@@ -375,23 +381,23 @@ internal class SMUploadFiles : NSObject {
             let serverFile:SMServerFile? = SMServerFile.getFile(fromFiles: serverFileIndex, withUUID: NSUUID(UUIDString: localFile.uuid!)!)
             
             if nil == serverFile {
-                return Error.Create("File you are deleting is not on the server!")
+                return .InternalError(Error.Create("File you are deleting is not on the server!"))
             }
             
             if serverFile!.deleted!.boolValue {
-                return Error.Create("The server file you are attempting to delete was already deleted!")
+                return .InternalError(Error.Create("The server file you are attempting to delete was already deleted!"))
             }
             
             // Also seems odd to delete a file version that you don't know about.
             if localVersion != serverFile!.version {
-                return Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)")
+                return .InternalError(Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)"))
             }
         }
         
         return nil
     }
     
-    internal func filesToUpload(serverFileIndex:[SMServerFile]) -> (filesToUpload:[SMServerFile]?, error:NSError?) {
+    internal func filesToUpload(serverFileIndex:[SMServerFile]) -> (filesToUpload:[SMServerFile]?, error:SMSyncControlError?) {
         
         var filesToUpload = [SMServerFile]()
 
@@ -423,11 +429,11 @@ internal class SMUploadFiles : NSObject {
             }
             else {
                 if localVersion != currentServerFile!.version {
-                    return (filesToUpload:nil, error: Error.Create("Server file version \(currentServerFile!.version) not the same as local file version \(localVersion)"))
+                    return (filesToUpload:nil, error: .InternalError(Error.Create("Server file version \(currentServerFile!.version) not the same as local file version \(localVersion)")))
                 }
                 
                 if currentServerFile!.deleted!.boolValue {
-                    return (filesToUpload:nil, error: Error.Create("The server file you are attempting to upload was already deleted!"))
+                    return (filesToUpload:nil, error: .InternalError(Error.Create("The server file you are attempting to upload was already deleted!")))
                 }
                 
                 uploadServerFile = fileChange.convertToServerFile()
@@ -493,6 +499,14 @@ internal class SMUploadFiles : NSObject {
         return numberUpdates + numberNewFiles + numberDeletions
     }
 }
+
+/*
+// MARK: Recovery methods.
+extension SMUploadFiles {
+    func recovery() {
+    }
+}
+*/
 
 #if false
 
@@ -697,5 +711,3 @@ extension SMUploadFiles : SMServerAPIUploadDelegate {
         self.syncServerDelegate?.syncServerEventOccurred(.SingleUploadComplete(uuid: serverFile.uuid))
     }
 }
-
-

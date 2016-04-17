@@ -11,13 +11,23 @@
 import Foundation
 import SMCoreLib
 
+enum SMSyncControlError {
+    // Operation will restart when the network is connected again.
+    case NetworkNotConnected
+    
+    // See SMClientMode
+    case ClientAPIError(NSError)
+    case NonRecoverableError(NSError)
+    case InternalError(NSError)
+}
+
 internal protocol SMSyncControlDelegate : class {
-    // Indicate the end of a upload or download operations. Separate delegate callbacks for these because we're dealing with these actions differently.
+    // Indicate the end of a upload or download operations.
     func syncControlUploadsFinished()
     func syncControlDownloadsFinished()
     
     // Indicate an error condition and operation needs to stop.
-    func syncControlError()
+    func syncControlError(syncControlError:SMSyncControlError)
 }
 
 internal class SMSyncControl {
@@ -32,8 +42,15 @@ internal class SMSyncControl {
     
     private var serverFileIndex:[SMServerFile]?
     
-    private var justUploadedFiles:Bool = false
+    // Have we fetched the server file index since this launch of the app and having the server lock?
+    private var checkedForServerFileIndex = false
     
+    private let MAX_NUMBER_ATTEMPTS = 3
+    private var numberLockAttempts = 0
+    private var numberGetFileIndexAttempts = 0
+    private var numberGetFileIndexForUploadAttempts = 0
+    private var numberUnlockAttempts = 0
+
     internal static let session = SMSyncControl()
     internal weak var delegate:SMSyncServerDelegate?
     
@@ -66,11 +83,13 @@ internal class SMSyncControl {
             Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
             self._operating = true
             Log.special("Starting operating!")
+            
             self.delegate?.syncServerModeChange(.Operating)
+            
             self.next()
         }
         else {
-            // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation().
+            // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation(). This is not an error.
             Log.special("Couldn't get the lock!")
         }
     }
@@ -106,9 +125,9 @@ internal class SMSyncControl {
                 Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock (uploads)!")
                 self.processPendingUploads()
             }
-            else if !SMSyncControl.haveServerLock.boolValue {
+            else if !SMSyncControl.haveServerLock.boolValue
+                    || !self.checkedForServerFileIndex {
                 Log.special("SMSyncControl: checkServerForDownloads")
-                // Only check for server downloads when we don't have the server lock. If we have the server lock this indicates we have already checked for server downloads and don't need to do it again in the span of holding the server lock.
                 // No pending uploads or pending downloads. See if the server has any new files that need downloading.
                 self.checkServerForDownloads()
             }
@@ -160,14 +179,15 @@ internal class SMSyncControl {
         
         if nil == self.serverFileIndex {
             Log.msg("getFileIndex within processPendingUploads")
+            
             SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
                 if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                     self.serverFileIndex = fileIndex
+                    self.numberGetFileIndexForUploadAttempts = 0
                     doUploads()
                 }
                 else {
-                    // We couldn't get the file index from the server. We have the lock. Recovery will attempt unlocking and try again.
-                    self.recovery()
+                    self.retry(&self.numberGetFileIndexForUploadAttempts, errorSpecifics: "attempting to get the file index for uploads")
                 }
             }
         }
@@ -184,61 +204,63 @@ internal class SMSyncControl {
             if SMTest.If.success(lockResult.error, context: .Lock) {
             
                 SMSyncControl.haveServerLock.boolValue = true
+                self.numberLockAttempts = 0
                 
                 Log.msg("getFileIndex within checkServerForDownloads")
                 SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
                     if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                         self.serverFileIndex = fileIndex
+                        self.checkedForServerFileIndex = true
+                        self.numberGetFileIndexAttempts = 0
                         SMQueues.current().checkForDownloads(fromServerFileIndex: fileIndex!)
                         self.next()
                     }
                     else {
-                        // We couldn't get the file index from the server. We have the lock. Recovery will attempt unlocking and try again.
-                        self.recovery()
+                        // We couldn't get the file index from the server. We have the lock.
+                        self.retry(&self.numberGetFileIndexAttempts, errorSpecifics: "attempting to get the file index")
                     }
                 }
             }
             else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
-                Log.error("Lock already held")
+                // Not really an error.
+                Log.special("Lock already held by another userId")
                 // We're calling the "NoFilesToDownload" delegate callback. In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held. However, for debugging purposes, we effectively have no files to download, so report that back.
                 self.stopOperating()
                 self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
             }
             else {
-                // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is held at this point, but we just failed on getting the return code from the server. Our recovery is going to consist of making certain we don't have the lock, and trying this all over again.
-                Log.error("Failed on obtaining lock: \(lockResult.error)")
-                self.recovery()
+                // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
+                // Not going to check for nextwork connection here because next() checks that.
+                self.retry(&self.numberLockAttempts, errorSpecifics: "attempting to get lock")
             }
         }
     }
     
-    // Make sure we don't have the lock and retry our server check. We'll limit the number of times we do this so we don't get in an infinite loop.
-    private func recovery() {
-        Assert.badMojo(alwaysPrintThisString: "TO BE IMPLEMENTED!")
-        
-        SMServerAPI.session.unlock() { unlockResult in
-            if SMTest.If.success(unlockResult.error, context: .Unlock) {
-                SMSyncControl.haveServerLock.boolValue = false
+    private func retry(inout attempts:Int, errorSpecifics:String) {
+        // Retry up to a max number of times, then fail.
+        if attempts < self.MAX_NUMBER_ATTEMPTS {
+            attempts += 1
+            
+            SMServerNetworking.exponentialFallback(forAttempt: attempts) {
+                self.next()
             }
-            else {
-                Log.error("Failed on unlock: \(unlockResult.error)")
-                self.recovery()
-            }
+        }
+        else {
+            self.syncControlError(.InternalError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
         }
     }
     
-    // Try a fixed number of times to release the server lock. 
-    // TODO: We'll limit the number of times we do this so we don't get in an infinite loop.
     private func releaseServerLock() {
         SMServerAPI.session.unlock() { unlockResult in
             if SMTest.If.success(unlockResult.error, context: .Unlock) {
                 Log.msg("Have released lock!")
                 SMSyncControl.haveServerLock.boolValue = false
+                self.checkedForServerFileIndex = false
+                self.numberUnlockAttempts = 0
                 self.stopOperating()
             }
             else {
-                Log.error("Failed on unlock: \(unlockResult.error)")
-                self.recovery()
+                self.retry(&self.numberUnlockAttempts, errorSpecifics: "attempting to unlock")
             }
         }
     }
@@ -264,8 +286,24 @@ extension SMSyncControl : SMSyncControlDelegate {
     }
     
     // Indicate an error condition and operation needs to stop.
-    func syncControlError() {
-        Assert.badMojo(alwaysPrintThisString: "Not yet handling error!")
+    func syncControlError(syncControlError:SMSyncControlError) {
         self.stopOperating()
+        
+        switch syncControlError {
+        case .NetworkNotConnected:
+            // Don't need to do any more. When the network is reconnected, we'll resume operation.
+            break
+        
+        // Set the mode to one of the error cases so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
+        
+        case .ClientAPIError(let nsError):
+            break
+            
+        case .NonRecoverableError(let nsError):
+            break
+            
+        case .InternalError(let nsError):
+            break
+        }
     }
 }

@@ -164,7 +164,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
     */
     
     /* Compare our local file meta data against the server files to see which indicate download, download-deletion, and download-conflicts.
-    
     The result of this call is stored in .beingDownloaded in the SMQueues object.
     beingDownloaded must be nil before this call.
     */

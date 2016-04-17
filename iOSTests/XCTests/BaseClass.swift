@@ -139,7 +139,7 @@ extension BaseClass : SMSyncServerDelegate {
             self.idleCallbacks[self.idleSequenceNumber]()
             self.idleSequenceNumber += 1
         
-        case .NonRecoverableError:
+        case .NonRecoverableError, .ClientAPIError, .InternalError:
             self.errorCallbacks[self.errorSequenceNumber]()
             self.errorSequenceNumber += 1
     

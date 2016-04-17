@@ -143,9 +143,8 @@ public class TestBasics {
             }
             else if apiResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
                 let attempt = attemptNumber+1
-                let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: attempt)
-
-                TimedCallback.withDuration(duration) {
+                
+                SMServerNetworking.exponentialFallback(forAttempt: attempt) {
                     self.checkFileSizeAux(attempt, uuid: uuid, size: size, finish: finish)
                 }
             }

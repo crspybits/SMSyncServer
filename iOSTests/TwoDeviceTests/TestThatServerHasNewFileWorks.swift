@@ -73,7 +73,11 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
             
         case .NonRecoverableError(let error):
             self.failTest("We got a non-recoverable error: \(error)")
-            
+        case .InternalError(let error):
+            self.failTest("We got an internal error: \(error)")
+        case .ClientAPIError(let error):
+            self.failTest("We got an client api error: \(error)")
+
         case .Running(_, .Recovery):
             if self.isSlave {
                 // On the slave, we shouldn't get a recovery mode-change. It's OK on the master as the slave could hold the lock.

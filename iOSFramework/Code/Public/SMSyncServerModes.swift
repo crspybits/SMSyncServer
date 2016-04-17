@@ -45,12 +45,16 @@ public enum SMClientMode {
     
     case Running(SMRunningMode, SMModeType)
     
-    /* An error that SMSyncServer couldn't recover from. It's up to the client app to deal with this.
-    This error can occur in one of two types of circumstances:
-    1) There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-    2) There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
-    */
+    // Errors that SMSyncServer couldn't recover from. It's up to the client app to deal with these. The errors below do not include simple network connection lost/network connection regain, which are handled internally.
+    
+    // There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
+    case ClientAPIError(NSError)
+    
+    // There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
     case NonRecoverableError(NSError)
+    
+    // An error within the SMSyncServer framework.
+    case InternalError(NSError)
 }
 
 internal class SMClientModeWrapper : NSObject, NSCoding
@@ -74,6 +78,14 @@ internal class SMClientModeWrapper : NSObject, NSCoding
         case "NonRecoverableError":
             let error = aDecoder.decodeObjectForKey("error") as! NSError
             self.mode = .NonRecoverableError(error)
+
+        case "ClientAPIError":
+            let error = aDecoder.decodeObjectForKey("error") as! NSError
+            self.mode = .ClientAPIError(error)
+            
+        case "InternalError":
+            let error = aDecoder.decodeObjectForKey("error") as! NSError
+            self.mode = .InternalError(error)
 
         case "Running":
             let type = SMModeType(rawValue: Int(aDecoder.decodeInt32ForKey("modeType")))!
@@ -101,7 +113,15 @@ internal class SMClientModeWrapper : NSObject, NSCoding
         case .NonRecoverableError(let err):
             name = "NonRecoverableError"
             error = err
-
+            
+        case .ClientAPIError(let err):
+            name = "ClientAPIError"
+            error = err
+            
+        case .InternalError(let err):
+            name = "InternalError"
+            error = err
+            
         case .Running(let runMode, let type):
             name = "Running"
             runningMode = runMode

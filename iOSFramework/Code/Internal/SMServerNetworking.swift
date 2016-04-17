@@ -617,11 +617,19 @@ NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:reques
 }
 
 extension SMServerNetworking /* Extras */ {
-    // I'm making this available from SMServerNetworking because the concept of exponential fallback is at the networking level.
     // Returns a duration in seconds.
-    internal class func exponentialFallbackDuration(forAttempt numberTimesTried:Int) -> Float {
+    private class func exponentialFallbackDuration(forAttempt numberTimesTried:Int) -> Float {
         let duration:Float = pow(Float(numberTimesTried), 2.0)
         Log.msg("Will try operation again in \(duration) seconds")
         return duration
+    }
+
+    // I'm making this available from SMServerNetworking because the concept of exponential fallback is at the networking level.
+    class func exponentialFallback(forAttempt numberTimesTried:Int, completion:()->()) {
+        let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: numberTimesTried)
+
+        TimedCallback.withDuration(duration) {
+            completion()
+        }
     }
 }
