@@ -482,7 +482,8 @@ class Upload: BaseClass {
         let uploadCompleteCallbackExpectation2 = self.expectationWithDescription("Upload2 Complete")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete1")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete2")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
 
         self.extraServerResponseTime = 60
 
@@ -519,7 +520,7 @@ class Upload: BaseClass {
                 
                 // let idleExpectation = self.expectationWithDescription("Idle")
                 self.idleCallbacks.append() {
-                    idleExpectation.fulfill()
+                    idleExpectation2.fulfill()
                 }
                 
                 SMSyncServer.session.commit()
@@ -536,6 +537,11 @@ class Upload: BaseClass {
                     uploadCompleteCallbackExpectation1.fulfill()
                     secondUpload()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()

@@ -37,6 +37,9 @@ internal class SMSyncControl {
     // Ensuring thread safe operation of the api client interface for uploading and downloading.
     private var lock = NSLock()
     
+    // Dealing with a race condition between starting a next operation and ending the current operation.
+    private let nextOperationLock = NSLock()
+
     // For now, we're assuming that there is no server lock breaking. I.e., once we get the server lock, we have it until we release it. We only obtain the server lock in the process of checking for downloads, and we don't release it until the next() method has no work to do. We're storing this persistently because having or not having the server lock persists across launches of the app.
     private static let haveServerLock = SMPersistItemBool(name: "SMSyncControl.haveServerLock", initialBoolValue: false, persistType: .UserDefaults)
     
@@ -62,7 +65,9 @@ internal class SMSyncControl {
         SMUploadFiles.session.syncControlDelegate = self
     }
     
-    /* Call this to perform the next sync operation. This needs to be called when:
+    /* Call this to try to perform the next sync operation. If the thread lock can be obtained, this will perform a next sync operation if there is one. Otherwise, will just return.
+    
+        This needs to be called when:
         A) the app starts
         B) the network comes back online
         C) we get a WebSocket request from the server to do so.
@@ -90,7 +95,30 @@ internal class SMSyncControl {
         }
         else {
             // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation(). This is not an error.
-            Log.special("Couldn't get the lock!")
+            Log.special("nextSyncOperation: Couldn't get the lock!")
+        }
+    }
+    
+    internal func lockAndNextSyncOperation(upload:()->()) {
+        self.nextOperationLock.lock()
+        upload()
+        self.nextSyncOperation()
+        self.nextOperationLock.unlock()
+    }
+    
+    private func doNextUploadOrStop() {
+        self.nextOperationLock.lock()
+        
+        if nil == SMQueues.current().committedUploads {
+            // No uploads, stop operating
+            self.stopOperating()
+            self.nextOperationLock.unlock()
+        }
+        else {
+            self.nextOperationLock.unlock()
+
+            // Will necessarily do another check for downloads, but once we get the lock, we'll also process the commited uploads that are waiting.
+            self.next()
         }
     }
     
@@ -197,7 +225,7 @@ internal class SMSyncControl {
     }
     
     // Check the server to see if downloads are needed. We always check for downloads as a first priority (e.g., before doing any uploads) because the server files act as the `truth`. Any device managing to get an upload or upload-deletion to the server will be taken to have established the working current value (`truth`) of the files. If a device has modified a file (including deletion) and hasn't yet uploaded it, it has clearly come later to the game and its changes should receive lower priority. HOWEVER, conflict management will make it possible that after the download, the devices modified file can subsequently replace the server update.
-    // Assumes the threading lock is held. Assumes that there are no pending downloads and no pending uploads. Assumes we have no lock on the server.
+    // Assumes the threading lock is held. Assumes that there are no pending downloads and no pending uploads. The server lock typically won't be held, but could already be held in the case of retrying to get the server file index (on an error with that). (It is not an error to try to get the server lock if we alread hold it.)
     // The result of calling this method, if it succeeds, is to hold the server lock, and to change download and conflict queues in SMQueues.
     private func checkServerForDownloads() {
         SMServerAPI.session.lock() { lockResult in
@@ -209,9 +237,11 @@ internal class SMSyncControl {
                 Log.msg("getFileIndex within checkServerForDownloads")
                 SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
                     if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
+                    
                         self.serverFileIndex = fileIndex
                         self.checkedForServerFileIndex = true
                         self.numberGetFileIndexAttempts = 0
+                        
                         SMQueues.current().checkForDownloads(fromServerFileIndex: fileIndex!)
                         self.next()
                     }
@@ -267,21 +297,21 @@ internal class SMSyncControl {
 }
 
 extension SMSyncControl : SMSyncControlDelegate {
-    // After uploads are complete, there will be no server lock held, *and* we'll be at the bottom priority of our list in [1].
+    // After uploads are complete, there will be no server lock held (because the server lock automatically gets released by the server after outbound transfers finish), *and* we'll be at the bottom priority of our list in [1].
     func syncControlUploadsFinished() {
         SMSyncControl.haveServerLock.boolValue = false
         
         // Because we don't have the lock and we're at the bottom priority, and we just released the lock, don't call self.next(). That would just cause another server check for downloads, and since we just released the lock, and had checked for downloads initially, there can't be downloads straight away.
+        // HOWEVER, there may be additional uploads to process. I.e., there may be other committed uploads.
         
-        // Instead, stop operating
-        self.stopOperating()
+        self.doNextUploadOrStop()
     }
     
     // Again, after downloads are complete, there will be no server lock held. But, we'll not be at the bottom of the priority list.
     func syncControlDownloadsFinished() {
         SMSyncControl.haveServerLock.boolValue = false
 
-        // Since we're not at the bottom of the priority list, call next(). This will result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
+        // Since we're not at the bottom of the priority list, call next(). This will (unfortunately) result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
         self.next()
     }
     

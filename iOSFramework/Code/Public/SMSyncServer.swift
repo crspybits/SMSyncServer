@@ -474,8 +474,10 @@ public class SMSyncServer : NSObject {
         let result = SMQueues.current().addToUploadsBeingPrepared(outboundTransfer)
         Assert.If(!result, thenPrintThisString: "Couldn't add outbound transfer!")
         
-        SMQueues.current().moveBeingPreparedToCommitted()
-        SMSyncControl.session.nextSyncOperation()
+        // The reason for this locking operation is to deal with a race condition between queueing a committed collection of uploads and stopping a currently running sync operation.
+        SMSyncControl.session.lockAndNextSyncOperation() {
+            SMQueues.current().moveBeingPreparedToCommitted()
+        }
         
         return true
     }
