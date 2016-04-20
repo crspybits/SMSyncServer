@@ -30,51 +30,7 @@ internal class SMUploadFiles : NSObject {
     // For error recovery, it's useful to have the operationId if we have one.
     private static let _operationId = SMPersistItemString(name: "SMUploadFiles.OperationId", initialStringValue: "", persistType: .UserDefaults)
     
-    // TODO: If we fail on an attempt at recovery, we may to impose a timed interval between recovery attempts. E.g., if the server went down, we'd like to give it time to come back up.
-    
-    private class var mode:SMClientMode {
-        set {
-            SMSyncServer.session.mode = newValue
-            self.numberTimesTriedRecovery = 0
-        
-            switch (newValue) {
-            case .Running(.Upload, _),
-                .Running(.BetweenUploadAndOutBoundTransfer, _),
-                .Running(.OutboundTransfer, _),
-                .Running(.AfterOutboundTransfer, _):
-                break
-        
-            case .Idle, .NonRecoverableError, .InternalError, .ClientAPIError:
-                break
-        
-            case .Running(.InboundTransfer, _),
-                .Running(.Download, _):
-                Assert.badMojo(alwaysPrintThisString: "Yikes: Bad mode value for SMUploadFiles!")
-            
-            case .Operating:
-                break
-            }
-        }
-    
-        get {
-            return SMSyncServer.session.mode
-        }
-    }
-    
-    // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
-    internal func resetFromError() {
-        // SMSyncControl should be the one that does this resetting. And the one that changes to an .Idle mode.
-        Assert.badMojo(alwaysPrintThisString: "Fix Me")
-        
-        switch SMUploadFiles.mode {
-        case .NonRecoverableError:
-            break
-        default:
-            Assert.badMojo(alwaysPrintThisString: "We're not in .NonRecoverableError mode")
-        }
-        
-        SMUploadFiles.mode = .Idle
-    }
+    private static let operationCount = SMPersistItemInt(name: "SMUploadFiles.operationCount", initialIntValue: 0, persistType: .UserDefaults)
     
     // Our strategy is to delay updating local meta data for files until we are completely assured the changes have propagated through to cloud storage.
     private var serverOperationId:String? {
@@ -105,6 +61,17 @@ internal class SMUploadFiles : NSObject {
     private let MAX_NUMBER_ATTEMPTS = 3
     private var numberDeletionAttempts = 0
     private var numberUploadAttempts = 0
+    private var numberOutboundTransferAttempts = 0
+    private var numberCheckOperationStatusErrors = 0
+    private var numberRemoveOperationIdAttempts = 0
+
+    private func resetAttempts() {
+        self.numberDeletionAttempts = 0
+        self.numberUploadAttempts = 0
+        self.numberOutboundTransferAttempts = 0
+        self.numberCheckOperationStatusErrors = 0
+        self.numberRemoveOperationIdAttempts = 0
+    }
 
     private override init() {
         super.init()
@@ -121,23 +88,20 @@ internal class SMUploadFiles : NSObject {
     private func callSyncServerCommitComplete(numberOperations numberOperations:Int?) {
     
         // The server lock gets released automatically when the transfer to cloud storage completes. I'm doing this automatic releasing of the lock because the cloud storage transfer is a potentially long running operation, and we could lose network connectivity. What's the point of holding the lock if we don't have network connectivity?
+        // TODO: This may change once we have a websockets server-client communication method in place. If using websockets the server can communicate with assuredness to the client app that the outbound transfer is done, then the server may not have to release the lock.
         self.syncControlDelegate?.syncControlUploadsFinished()
         
         self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
     }
     
-    private func callSyncServerError(syncControlError:SMSyncControlError) {
-        // We've had an error we couldn't deal with. Don't try to do any pending next operation.
-        
-        self.syncControlDelegate?.syncControlError(syncControlError)
+    private func callSyncControlModeChange(mode:SMSyncServerMode) {
+        self.syncControlDelegate?.syncControlModeChange(mode)
     }
     
     // MARK: End: Methods that call delegate methods
     
     func doUploadOperations(serverFileIndex:[SMServerFile]) {
-        self.numberDeletionAttempts = 0
-        self.numberUploadAttempts = 0
-        
+        self.resetAttempts()
         self.serverFileIndex = serverFileIndex
         self.uploadControl()
     }
@@ -156,7 +120,13 @@ internal class SMUploadFiles : NSObject {
                 return
             }
             else if !wereUploadFiles! {
-                self.doOutboundTransfer()
+                let wasAnOutboundTransfer = self.doOutboundTransfer()
+                if !wasAnOutboundTransfer {
+                    let readyToPoll = self.startToPollForOperationFinish()
+                    if !readyToPoll {
+                        self.removeOperationId()
+                    }
+                }
             }
         }
     }
@@ -171,7 +141,7 @@ internal class SMUploadFiles : NSObject {
         var serverFileDeletions:[SMServerFile]?
         
         if let error = self.errorCheckingForDeletion(self.serverFileIndex!, deletionChanges: deletionChanges!) {
-            self.callSyncServerError(error)
+            self.callSyncControlModeChange(error)
             return nil
         }
         
@@ -208,16 +178,18 @@ internal class SMUploadFiles : NSObject {
                 attempts += 1
                 
                 SMServerNetworking.exponentialFallback(forAttempt: attempts) {
+                    self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
+
                     // Using uploadControl instead of more specific retry methods because the more specific methods assume they are being called by uploadControl. Should make reasoning simpler.
                     self.uploadControl()
                 }
             }
             else {
-                self.callSyncServerError(.NonRecoverableError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
+                self.callSyncControlModeChange(.NonRecoverableError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
             }
         }
         else {
-            self.callSyncServerError(.NetworkNotConnected)
+            self.callSyncControlModeChange(.NetworkNotConnected)
         }
     }
 
@@ -225,7 +197,7 @@ internal class SMUploadFiles : NSObject {
         let (filesToUpload, error) = self.filesToUpload(self.serverFileIndex!)
         
         if error != nil {
-            self.callSyncServerError(error!)
+            self.callSyncControlModeChange(error!)
             return nil
         }
         
@@ -237,15 +209,12 @@ internal class SMUploadFiles : NSObject {
             Log.msg("SMSyncServer.session.doUpload: \(uploadResult.error)")
             
             if SMTest.If.success(uploadResult.error, context: .UploadFiles) {
-                // Just about to do the commit. If we detect failure of the commit on the client, we'll not be fully sure if the commit succeeded. E.g., we could lose a network connection as the commit is operating making it look as if the commit failed, but it actually succeeded.
-                SMUploadFiles.mode = .Running(.BetweenUploadAndOutBoundTransfer, .Operating)
-
                 self.uploadControl()
             }
             else {
                 if (uploadResult.returnCode == SMServerConstants.rcServerAPIError) {
                     // Not sure if this was a programming error within the SMSyncServer framework or from usage of the client api by the app.
-                    self.callSyncServerError(.InternalError(uploadResult.error!))
+                    self.callSyncControlModeChange(.InternalError(uploadResult.error!))
                 }
                 else {
                     self.retryIfNetworkConnected(&self.numberUploadAttempts, errorSpecifics: "upload")
@@ -256,122 +225,129 @@ internal class SMUploadFiles : NSObject {
         return true
     }
     
-    private func doOutboundTransfer() {
-        let outboundTransfer = SMQueues.current().beingUploaded!.getChanges(.OutboundTransfer) as?[SMUploadOutboundTransfer]
-        if outboundTransfer == nil {
-            return
+    private func getWrapup(stage:SMUploadWrapup.WrapupStage?) -> SMUploadWrapup? {
+        
+        if let wrapUpArray = SMQueues.current().beingUploaded!.getChanges(.UploadWrapup) as? [SMUploadWrapup] {
+            Assert.If(wrapUpArray.count != 1, thenPrintThisString: "Not exactly one wrapup object")
+            
+            let wrapUp = wrapUpArray[0]
+            
+            if nil == stage || wrapUp.wrapupStage == stage {
+                return wrapUp
+            }
         }
         
-        Assert.If(outboundTransfer!.count != 1, thenPrintThisString: "Not exactly one outbound transfer")
+        return nil
+    }
+    
+    private func doOutboundTransfer() -> Bool {
+        let wrapUp = self.getWrapup(.OutboundTransfer)
+        if wrapUp == nil {
+            return false
+        }
         
         SMServerAPI.session.startOutboundTransfer() { operationId, sotResult in
             Log.msg("SMSyncServer.session.startOutboundTransfer: \(sotResult.error); operationId: \(operationId)")
+            
             if SMTest.If.success(sotResult.error, context: .OutboundTransfer) {
                 self.serverOperationId = operationId
-                // We *know* we have a successful commit. Change to our last recovery case.
-                SMUploadFiles.mode = .Running(.OutboundTransfer, .Operating)
-                
-                SMQueues.current().beingUploaded!.removeChanges(.OutboundTransfer)
-                
-                self.startToPollForOperationFinish()
+                wrapUp!.wrapupStage = .OutboundTransferWait
+                self.uploadControl()
             }
             else {
-                if Network.session().connected() {
-                    Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
-                    //self.recovery()
-                }
-                else {
-                    self.callSyncServerError(.NetworkNotConnected)
-                }
+                self.retryIfNetworkConnected(&self.numberOutboundTransferAttempts, errorSpecifics: "outbound transfer")
             }
         }
+        
+        return true
     }
     
     // Start timer to poll the server to check if our operation has succeeded. That check will update our local file meta data if/when the file sync completes successfully.
-    private func startToPollForOperationFinish() {
-        SMUploadFiles.mode = .Running(.OutboundTransfer, .Operating)
-
+    private func startToPollForOperationFinish() -> Bool {
+        let wrapUp = self.getWrapup(.OutboundTransferWait)
+        if wrapUp == nil {
+            return false
+        }
+        
         self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMUploadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: #selector(SMUploadFiles.pollIfFileOperationFinished), andTarget: self)
         self.checkIfUploadOperationFinishedTimer!.start()
+        
+        return true
     }
     
     // PRIVATE
     // TODO: How do we know if we've been checking for too long?
     func pollIfFileOperationFinished() {
+        let wrapUp = self.getWrapup(.OutboundTransferWait)
+        if wrapUp == nil {
+            Assert.badMojo(alwaysPrintThisString: "Should not get here")
+        }
+        
         Log.msg("checkIfFileOperationFinished")
         self.checkIfUploadOperationFinishedTimer!.cancel()
         
         // TODO: Should fallback exponentially in our checks-- sometimes cloud storage can take a while. Either because it's just slow, or because the file is large.
+        
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
             if (apiResult.error != nil) {
-                // TODO: How many times to check/recheck and still get an error?
                 Log.msg("Yikes: Error checking operation status")
-                self.checkIfUploadOperationFinishedTimer!.start()
+                self.retryIfNetworkConnected(&self.numberCheckOperationStatusErrors, errorSpecifics: "check operation status")
             }
             else {
-                // TODO: Deal with other collection of operation status here.
-                
                 switch (operationResult!.status) {
                 case SMServerConstants.rcOperationStatusInProgress:
                     Log.msg("Operation still in progress")
                     self.checkIfUploadOperationFinishedTimer!.start()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
-                    Log.msg("wrapUpOperation called from pollIfFileOperationFinished")
-                    self.wrapUpOperation(operationResult!)
-                
-                case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
-                
-                    if SMServerConstants.rcOperationStatusFailedAfterTransfer == operationResult!.status {
-                        SMUploadFiles.mode = .Running(.AfterOutboundTransfer, .Recovery)
-                    }
+                    Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
                     
-                    // This will do more work than necessary (e.g., checking with the server again for operation status), but it handles these three cases.
-                    Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
+                    let numberUploads = self.updateMetaDataForSuccessfulUploads()
+                    
+                    // 3/15/16; Because of a server error, operation count could be greater than the number uploads. Just ran into this.
+                    Assert.If(numberUploads > operationResult!.count, thenPrintThisString: "Something bad is going on: numberUploads \(numberUploads) > operation count \(operationResult!.count)")
+        
+                    SMUploadFiles.operationCount.intValue = operationResult!.count
 
-                    //self.recovery()
-                    
-                default:
-                    let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
-                    Log.msg(msg)
-                    self.callSyncServerError(.InternalError(Error.Create(msg)))
+                    wrapUp!.wrapupStage = .RemoveOperationId
+                    self.uploadControl()
+
+                default: // Must have failed on outbound transfer.
+                    // Revert to the last stage-- recovery.
+                    wrapUp!.wrapupStage = .OutboundTransfer
+                    self.uploadControl()
                 }
             }
         }
     }
     
-    private func wrapUpOperation(operationResult: SMOperationResult?) {
-
-        let numberUploads = self.updateMetaDataForSuccessfulUploads()
-        
-        if operationResult != nil {
-            Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
-            
-            // 3/15/16; Because of a server error, operation count could be greater than the number uploads. Just ran into this.
-            Assert.If(numberUploads > operationResult!.count, thenPrintThisString: "Something bad is going on: numberUploads \(numberUploads) > operation count \(operationResult!.count)")
+    private func removeOperationId() -> Bool {
+        let wrapUp = self.getWrapup(.RemoveOperationId)
+        if wrapUp == nil {
+            return false
         }
-        
-        // Letting SMSyncControl deal with this.
-        // SMUploadFiles.mode = .Idle
         
         // Now that we know we succeeded, we can remove the Operation Id from the server. In some sense it's not a big deal if this fails. HOWEVER, since we set self.serverOperationId to nil on completion (see [4]), it is a big deal: I just ran into an apparent race condition where in testThatTwoSeriesFileUploadWorks(), I got a crash because self.serverOperationId was nil. Seems like this crash occurred because the removeOperationId completion handler for the first upload was called *after* the second call to startFileChanges completed. To avoid this race condition, I'm going to delay the syncServerCommitComplete callback until removeOperationId completes.
         SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { apiResult in
         
             if SMTest.If.success(apiResult.error, context: .RemoveOperationId) {
                 self.serverOperationId = nil // [4]
-                self.callSyncServerCommitComplete(numberOperations: numberUploads)
+                SMQueues.current().beingUploaded!.removeChanges(.UploadWrapup)
+                
+                // Fully done the upload-- can return to SMSyncControl now.
+                self.callSyncServerCommitComplete(numberOperations: SMUploadFiles.operationCount.intValue)
             }
             else {
-                // While this may not seem like much of an error, treat it seriously because it could be indicating a network error. If I don't treat it seriously, I can proceed forward which could leave the upload in the wrong recovery mode.
                 Log.file("Failed removing OperationId from server: \(apiResult.error)")
-                Assert.badMojo(alwaysPrintThisString: "Can't yet do recovery!")
-                //self.recovery()
+                self.retryIfNetworkConnected(&self.numberRemoveOperationIdAttempts, errorSpecifics: "remove operation id")
             }
         }
+        
+        return true
     }
     
-    // Do error checking for the files  to be deleted using.
-    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], deletionChanges:[SMUploadDeletion]) -> SMSyncControlError? {
+    // Do error checking for the files  to be deleted using. If non-nil, the return value will be one of the errors in SMSyncServerMode.
+    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], deletionChanges:[SMUploadDeletion]) -> SMSyncServerMode? {
 
         for deletionChange:SMUploadDeletion in deletionChanges {
             let localFile = deletionChange.localFile!
@@ -397,7 +373,8 @@ internal class SMUploadFiles : NSObject {
         return nil
     }
     
-    internal func filesToUpload(serverFileIndex:[SMServerFile]) -> (filesToUpload:[SMServerFile]?, error:SMSyncControlError?) {
+    // If non-nil, the return value will be one of the errors in SMSyncServerMode.
+    internal func filesToUpload(serverFileIndex:[SMServerFile]) -> (filesToUpload:[SMServerFile]?, error:SMSyncServerMode?) {
         
         var filesToUpload = [SMServerFile]()
 
@@ -499,205 +476,6 @@ internal class SMUploadFiles : NSObject {
         return numberUpdates + numberNewFiles + numberDeletions
     }
 }
-
-/*
-// MARK: Recovery methods.
-extension SMUploadFiles {
-    func recovery() {
-    }
-}
-*/
-
-#if false
-
-// MARK: Recovery methods.
-extension SMUploadFiles {
-    // `internal` and not `private` so that we can use this from SMSyncServer.swift.
-    internal func recovery(forceModeChangeReport forceModeChangeReport:Bool=true) {
-        if SMUploadFiles.numberTimesTriedRecovery > SMUploadFiles.maxTimesToTryRecovery {
-            Log.error("Failed recovery: Already tried \(SMUploadFiles.numberTimesTriedRecovery) times, and can't get it to work")
-            
-            // Yikes! What else can we do? Seems like we've given this our best effort in terms of recovery. Kick the error upwards.
-            self.callSyncServerError(Error.Create("Failed to recover from SyncServer error after \(SMUploadFiles.numberTimesTriedRecovery) recovery attempts"))
-            
-            return
-        }
-        
-        if forceModeChangeReport {
-            SMUploadFiles.mode = SMClientModeWrapper.convertToRecovery(SMUploadFiles.mode)
-        }
-        
-        SMSync.session.continueIf({
-            return Network.session().connected()
-        }, then: {
-            // This gets executed if we have network access.
-            SMUploadFiles.numberTimesTriedRecovery += 1
-            
-            switch (SMUploadFiles.mode) {
-            case .Running(.Upload, _):
-                self.uploadRecovery()
-                
-            case .Running(.BetweenUploadAndOutBoundTransfer, _):
-                self.betweenUploadAndOutBoundTransferRecovery()
-                
-            case .Running(.OutboundTransfer, _),
-                .Running(.AfterOutboundTransfer, _):
-                self.outboundTransferRecovery()
-
-            default:
-                Assert.badMojo(alwaysPrintThisString: "Should not have this recovery mode")
-            }
-        })
-    }
-    
-    private func delayedRecovery() {
-        let duration = SMServerNetworking.exponentialFallbackDuration(forAttempt: SMUploadFiles.numberTimesTriedRecovery)
-
-        TimedCallback.withDuration(duration) {
-            self.recovery()
-        }
-    }
-    
-    // TODO: Create test case [3] in Upload tests.
-    // We know that we are recovering from an error that occurred sometime between lock (inclusive) and commit (exclusive).
-    private func uploadRecovery() {
-        // TODO: Create test case [2] in Upload tests.
-
-        SMServerAPI.session.uploadRecovery() {serverOperationId, fileIndex, apiResult in
-            if (nil == apiResult.error) {
-                // Either restart from scratch, or restart given the fileIndex of files that have been processed already.
-                self.serverOperationId = serverOperationId
-                self.prepareForUpload(givenAlreadyUploadedFiles: fileIndex)
-            }
-            else if apiResult.returnCode == SMServerConstants.rcLockNotHeld {
-                // We tried to recover the upload, but didn't hold a lock. Must have had a failure when attempting to obtain the lock. We can't already have uploaded files given that we don't have the lock.
-                self.prepareForUpload(givenAlreadyUploadedFiles: nil)
-            }
-            else {
-                // Error, but try again later.
-                self.delayedRecovery()
-            }
-        }
-    }
-    
-    // It appears that some files were transferred to cloud storage, but we got an error part way through.
-    private func outboundTransferRecovery() {
-
-        SMServerAPI.session.outboundTransferRecovery { operationId, apiResult in
-            var afterOutboundTransfer = false
-            
-            switch SMUploadFiles.mode {
-            case .Running(.AfterOutboundTransfer, .Recovery):
-                afterOutboundTransfer = true
-                
-            default:
-                break
-            }
-            
-            if (nil == apiResult.error) {
-                self.serverOperationId = operationId
-                // OK. Looks like a successful commit. We need to wait for the file transfer to complete.
-                self.startToPollForOperationFinish()
-            }
-            else if SMServerConstants.rcLockNotHeld == apiResult.returnCode && afterOutboundTransfer {
-                // Don't really need further recovery. The lock isn't held. And it's after the transfer.
-                self.wrapUpOperation(nil)
-            }
-            else {
-                // Error, but try again later.
-                self.delayedRecovery()
-            }
-        }
-    }
-    
-    // This is an ugly edge case-- falling between the two main recovery cases.
-    // Getting to this point, it *seems* like the commitChanges failed. However, it's also possible that something just happened in getting the response back from the server and the commitChanges didn't fail. Need to determine if the commit was successful or not. I.e., if the operation is in progress (or has completed). If the commit was not successful, then we'll do .ChangesRecovery.
-
-    private func betweenUploadAndOutBoundTransferRecovery() {
-        if (nil == self.serverOperationId) {
-            // Need to double check if we actually have an operationId. Server could have generated an operationId, but just failed to get it to us.
-            SMServerAPI.session.getOperationId(){ (theServerOperationId, apiResult) in
-                if nil == apiResult.error {
-                    if nil == theServerOperationId {
-                        SMUploadFiles.mode = .Running(.Upload, .Recovery)
-                        self.recovery(forceModeChangeReport: false)
-                    }
-                    else {
-                        self.serverOperationId = theServerOperationId
-                        self.betweenUploadAndOutBoundTransferRecoveryAux()
-                    }
-                }
-                else {
-                    self.delayedRecovery()
-                }
-            }
-        }
-        else {
-            self.betweenUploadAndOutBoundTransferRecoveryAux()
-        }
-    }
-    
-    private func betweenUploadAndOutBoundTransferRecoveryAux() {
-        SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
-            if (apiResult.error != nil) {
-                self.delayedRecovery()
-            }
-            else {
-                // TODO: How do we ensure that the set of cases in mayHaveCommittedRecovery() matches those that can actually be returned?
-                switch operationResult!.status {
-                case SMServerConstants.rcOperationStatusNotStarted:
-                    Log.msg("rcOperationStatusNotStarted")
-                    /* 
-                    Is it possible that the operation will start soon and progress into an InProgress state? It seems like it. The following would have to occur: (1) We get a failure in the return from SMSyncServer.session.commitChanges(), but that failure was a networking or other failure that wasn't actually because the SMSyncServer.session.commitChanges() failed on the server side, and (2) the server side was relatively slow in execution and the server side operation state hadn't yet changed to rcOperationStatusInProgress. So this is a combination of race condition and failure.
-                    What can we do to resolve this? What if we poll for this to change for a certain period of time?
-                    */
-                    self.delayedRecovery()
-
-                case SMServerConstants.rcOperationStatusCommitFailed:
-                    Log.msg("rcOperationStatusCommitFailed")
-                    // [1]. We'll do a little more work than necessary with the FileChangesRecovery, but since we've not transferred any files yet this will work to kick off a retry of the commit.
-                    SMUploadFiles.mode = .Running(.Upload, .Recovery)
-                    self.recovery(forceModeChangeReport: false)
-
-                case SMServerConstants.rcOperationStatusSuccessfulCompletion:
-                    Log.msg("wrapUpOperation called from rcOperationStatusSuccessfulCompletion")
-                    self.wrapUpOperation(operationResult!)
-                    
-                case SMServerConstants.rcOperationStatusInProgress:
-                    // TODO: How do we know if we get here and we have an InProgress status whether (a) InProgress really means in InProgress, or (b) the file transfer has some how failed with didn't record that fact? For now we're just going to assume that InProgress really means InProgress. We could improve this in the future by updating a time/date stamp in the operation status on the server when ever a certain amount of data has been transferred to cloud storage (if somehow that can be done). That way if the time/date stamp is too old, we'd have a good idea that InProgress was wrong and we really had a failure.
-                    Log.msg("rcOperationStatusInProgress")
-                    self.startToPollForOperationFinish()
-                
-                case SMServerConstants.rcOperationStatusFailedBeforeTransfer, SMServerConstants.rcOperationStatusFailedDuringTransfer, SMServerConstants.rcOperationStatusFailedAfterTransfer:
-
-                    if 0 == operationResult!.count {
-                        // Good. No files could have been transferred.
-                        SMUploadFiles.mode = .Running(.Upload, .Recovery)
-                    }
-                    else {
-                        var recoveryMode:SMRunningMode = .OutboundTransfer
-                        
-                        if SMServerConstants.rcOperationStatusFailedAfterTransfer == operationResult!.status {
-                            recoveryMode = .AfterOutboundTransfer
-                        }
-                        
-                        // This is a more difficult case. What do we do?
-                        SMUploadFiles.mode = .Running(recoveryMode, .Recovery)
-                    }
-                    
-                    self.recovery(forceModeChangeReport: false)
-                    
-                default:
-                    let msg = "Yikes: Unknown operationStatus: \(operationResult!.status)"
-                    Log.error(msg)
-                    self.callSyncServerError(Error.Create(msg))
-                }
-            }
-        }
-    }
-}
-
-#endif
 
 // MARK: SMServerAPIUploadDelegate methods
 

@@ -6,7 +6,7 @@ var logger = require('./Logger');
 var Common = require('./Common');
 var ServerConstants = require('./ServerConstants');
 
-const requiredProps = [ServerConstants.cloudFileNameKey, ServerConstants.fileUUIDKey, ServerConstants.fileVersionKey, ServerConstants.fileVersionKey, ServerConstants.fileMIMEtypeKey];
+const requiredProps = [ServerConstants.cloudFileNameKey, ServerConstants.fileUUIDKey, ServerConstants.fileVersionKey, ServerConstants.fileMIMEtypeKey];
 var props = requiredProps.slice(0);
 props.push(ServerConstants.appFileTypeKey);
 

@@ -59,8 +59,7 @@ public class SMSyncConflicts : SMSyncAttributes {
 }
 */
 
-// Events are momentary occurrences. i.e., occurrences with a short time-frame.
-public enum SMClientEvent {
+public enum SMSyncServerEvent {
     // Deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
     case DeletionsSent(uuids:[NSUUID])
     
@@ -78,6 +77,9 @@ public enum SMClientEvent {
     
     // The client polled the server and found that there were no files available to download or files that needed deletion.
     case NoFilesToDownload
+    
+    // Internal error recovery event.
+    case Recovery
 }
 
 // "class" to make the delegate weak.
@@ -95,10 +97,10 @@ public protocol SMSyncServerDelegate : class {
     // func syncServerFileConflicts(conflictingFiles:[SMSyncConflicts], resolution:([SMSyncConflicts])->())
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
-    func syncServerModeChange(newMode:SMClientMode)
+    func syncServerModeChange(newMode:SMSyncServerMode)
     
     // Reports events. Useful for testing and debugging.
-    func syncServerEventOccurred(event:SMClientEvent)
+    func syncServerEventOccurred(event:SMSyncServerEvent)
 }
 
 // Derived from NSObject because of the use of addTarget from TargetsAndSelectors below.
@@ -131,7 +133,7 @@ public class SMSyncServer : NSObject {
     public var autoCommitIntervalSeconds:Float {
         set {
             if newValue < 0 {
-                self.mode = .NonRecoverableError(Error.Create("Yikes: Bad autoCommitIntervalSeconds"))
+                self.callSyncServerModeChange(.NonRecoverableError(Error.Create("Yikes: Bad autoCommitIntervalSeconds")))
             }
             else {
                 _autoCommitIntervalSeconds = newValue
@@ -178,18 +180,16 @@ public class SMSyncServer : NSObject {
     }
     
     // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
-    private static let _mode = SMPersistItemData(name: "SMSyncServer.Mode", initialDataValue: NSKeyedArchiver.archivedDataWithRootObject(SMClientModeWrapper(withMode: .Idle)), persistType: .UserDefaults)
+    private static let _mode = SMPersistItemData(name: "SMSyncServer.Mode", initialDataValue: NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: .Idle)), persistType: .UserDefaults)
     
-    internal var mode:SMClientMode {
-        // `mode` is an instance variable and not a class variable so I can access self.delegate within it.
-        get {
-            let clientMode = NSKeyedUnarchiver.unarchiveObjectWithData(SMSyncServer._mode.dataValue) as! SMClientModeWrapper
-            return clientMode.mode
-        }
-        set {
-            SMSyncServer._mode.dataValue = NSKeyedArchiver.archivedDataWithRootObject(SMClientModeWrapper(withMode: newValue))
-            self.delegate?.syncServerModeChange(newValue)
-        }
+    private func setMode(mode:SMSyncServerMode) {
+        SMSyncServer._mode.dataValue = NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: mode))
+    }
+    
+    public var mode:SMSyncServerMode {
+        // `mode` is an instance variable and not a class variable just for consistency for the client API, i.e., to access it from the session member.
+        let syncServerMode = NSKeyedUnarchiver.unarchiveObjectWithData(SMSyncServer._mode.dataValue) as! SMSyncServerModeWrapper
+        return syncServerMode.mode
     }
     
     // Only retains a weak reference to the cloudStorageUserDelegate
@@ -238,50 +238,6 @@ public class SMSyncServer : NSObject {
         }
     }
     
-    /*
-    private enum StartWhen {
-        case AppLaunched
-        case NetworkBackOnline
-        // TODO: It seems we really need a 3rd case here: Starting when the user signs in, but the app wasn't just launched. E.g., this could happen when the user signs out and signs back in again.
-    }
-    
-    private func start(when startedWhen:StartWhen) {
-        var currentlyOperating:Bool?
-        
-        switch startedWhen {
-        case .AppLaunched:
-            // We're never operating when the app is first launched.
-            currentlyOperating = false
-            
-        case .NetworkBackOnline:
-            // currentlyOperating can be false when the network comes back online (the typical case because an operation likely failed), or possibly true if there was a quick bump in the network online/offline state.
-            currentlyOperating = nil
-        }
-        
-        switch (self.mode) {
-            case .Idle:
-                SMSync.session.startDelayed(currentlyOperating: currentlyOperating)
-
-            case .Running(.Upload, _),
-                .Running(.BetweenUploadAndOutBoundTransfer, _),
-                .Running(.OutboundTransfer, _),
-                .Running(.AfterOutboundTransfer, _):
-                SMSync.session.start() {
-                    SMUploadFiles.session.recovery()
-                }
-            
-            case .Running(.InboundTransfer, _),
-                .Running(.Download, _):
-                SMSync.session.start() {
-                    SMDownloadFiles.session.recovery()
-                }
-            
-            case .NonRecoverableError:
-                Assert.badMojo(alwaysPrintThisString: "Yikes: Client app should have handled this!!")
-        }
-    }
-    */
-    
     // Returns a SMSyncAttributes object iff the file is locally known (on the device) to the SMSyncServer. Nil could be returned if the file was uploaded by another app/client to the server recently, but not downloaded to the current device (app/client) yet.
     public func localFileStatus(uuid: NSUUID) -> SMSyncAttributes? {
         var fileAttr:SMSyncAttributes?
@@ -322,7 +278,8 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
-                self.mode = .NonRecoverableError(Error.Create("mimeType not given!"))
+                self.callSyncServerModeChange(
+                    .NonRecoverableError(Error.Create("mimeType not given!")))
                 return
             }
             
@@ -331,7 +288,8 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.appFileType = attr.appFileType
             
             if nil == attr.remoteFileName {
-                self.mode = .NonRecoverableError(Error.Create("remoteFileName not given!"))
+                self.callSyncServerModeChange(
+                    .NonRecoverableError(Error.Create("remoteFileName not given!")))
                 return
             }
             
@@ -341,7 +299,8 @@ public class SMSyncServer : NSObject {
             // Existing file
             
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
-                self.mode = .NonRecoverableError(Error.Create("You gave a different remote file name than was present on the server!"))
+                self.callSyncServerModeChange(
+                    .NonRecoverableError(Error.Create("You gave a different remote file name than was present on the server!")))
                 return
             }
         }
@@ -361,7 +320,7 @@ public class SMSyncServer : NSObject {
         change.localFile = localFileMetaData!
         
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
-            self.mode = .NonRecoverableError(Error.Create("File was already deleted!"))
+            self.callSyncServerModeChange(.NonRecoverableError(Error.Create("File was already deleted!")))
         }
         
         // The localVersion property of the SMLocalFile object will get updated, if needed, when we sync this file meta data to the server meta data.
@@ -379,10 +338,16 @@ public class SMSyncServer : NSObject {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
         let localFile = SMFiles.createTemporaryRelativeFile()
-        Assert.If(localFile == nil, thenPrintThisString: "Yikes: Could not create file!")
+        
+        if localFile == nil {
+            self.callSyncServerModeChange(
+                .InternalError(Error.Create("Yikes: Could not create file!")))
+            return
+        }
         
         if !data.writeToURL(localFile!, atomically: true) {
-            Assert.badMojo(alwaysPrintThisString:"Could not write data to temporary file!")
+            self.callSyncServerModeChange(
+                .InternalError(Error.Create("Could not write data to temporary file!")))
             return
         }
 
@@ -397,7 +362,7 @@ public class SMSyncServer : NSObject {
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
-            self.mode = .NonRecoverableError(Error.Create("Attempt to delete a file unknown to SMSyncServer!"))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("Attempt to delete a file unknown to SMSyncServer!")))
             return
         }
         
@@ -405,7 +370,8 @@ public class SMSyncServer : NSObject {
         change.localFile = localFileMetaData!
         
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
-            self.mode = .NonRecoverableError(Error.Create("File was already deleted!"))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
+            return
         }
         
         self.startNormalTimer()
@@ -441,10 +407,14 @@ public class SMSyncServer : NSObject {
     }
 #endif
 
-    // Returns true iff the SMSyncServer is currently in the process of upload or download file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging).
+    // Returns true iff the SMSyncServer is currently in the process of upload or download file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging). This is just a synonym for self.mode == .Synchronizing
     public var isOperating: Bool {
-        get {
-            return SMSyncControl.session.operating
+        switch self.mode {
+        case .Synchronizing:
+            return true
+            
+        default:
+            return false
         }
     }
     
@@ -455,7 +425,7 @@ public class SMSyncServer : NSObject {
     // There must be a user signed to the cloud storage system when you call this method.
     // If you do a commit and no files have changed (i.e., no uploads or deletes have been enqueued), then the commit does nothing (and false is returned). (No delegate methods are called in this case).
     public func commit() -> Bool? {
-        // Testing for network availability is done by the SMServerNetworking class accessed indirectly through SMUploadFiles, so I'm not going to do that here.
+        // Testing for network availability is done by the SMServerNetworking class accessed indirectly through SMSyncControl, so I'm not going to do that here. ALSO: Our intent is to enable the client API to queue up uploads and upload-deletions independent of network access.
         
         Log.msg("Attempting to commit")
 
@@ -465,15 +435,15 @@ public class SMSyncServer : NSObject {
         }
         
         if !SMSyncServerUser.session.delegate.syncServerUserIsSignedIn {
-            self.mode = .NonRecoverableError(Error.Create("There is no user signed in"))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("There is no user signed in")))
             return nil
         }
         
-        // Add an outbound transfer to the uploadsBeingPrepared, then we're ready for the commit.
-        let outboundTransfer = SMUploadOutboundTransfer.newObject() as! SMUploadOutboundTransfer
-        let result = SMQueues.current().addToUploadsBeingPrepared(outboundTransfer)
-        Assert.If(!result, thenPrintThisString: "Couldn't add outbound transfer!")
-        
+        // Add a wrapup to the uploadsBeingPrepared, then we're ready for the commit.
+        let wrapUp = SMUploadWrapup.newObject() as! SMUploadWrapup
+        let result = SMQueues.current().addToUploadsBeingPrepared(wrapUp)
+        Assert.If(!result, thenPrintThisString: "Couldn't add SMUploadWrapup!")
+
         // The reason for this locking operation is to deal with a race condition between queueing a committed collection of uploads and stopping a currently running sync operation.
         SMSyncControl.session.lockAndNextSyncOperation() {
             SMQueues.current().moveBeingPreparedToCommitted()
@@ -481,6 +451,15 @@ public class SMSyncServer : NSObject {
         
         return true
     }
+    
+    // MARK: Functions calling delegate methods
+    
+    private func callSyncServerModeChange(mode:SMSyncServerMode) {
+        self.setMode(mode)
+        self.delegate?.syncServerModeChange(mode)
+    }
+    
+    // MARK: End calling delegate methods
 
 #if DEBUG
     public func getFileIndex() {
@@ -511,7 +490,7 @@ public class SMSyncServer : NSObject {
 
     // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
     public func resetFromError() {
-        SMUploadFiles.session.resetFromError()
+        self.setMode(.Idle)
     }
 }
 

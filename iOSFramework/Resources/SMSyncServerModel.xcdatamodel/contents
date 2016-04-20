@@ -55,12 +55,14 @@
     <entity name="SMUploadOperation" representedClassName=".SMUploadOperation" isAbstract="YES" syncable="YES">
         <relationship name="queue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMUploadQueue" inverseName="operations" inverseEntity="SMUploadQueue" syncable="YES"/>
     </entity>
-    <entity name="SMUploadOutboundTransfer" representedClassName=".SMUploadOutboundTransfer" parentEntity="SMUploadOperation" syncable="YES"/>
     <entity name="SMUploadQueue" representedClassName=".SMUploadQueue" syncable="YES">
         <relationship name="beingUploaded" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="beingUploaded" inverseEntity="SMQueues" syncable="YES"/>
         <relationship name="committedUploads" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="internalCommittedUploads" inverseEntity="SMQueues" syncable="YES"/>
         <relationship name="operations" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMUploadOperation" inverseName="queue" inverseEntity="SMUploadOperation" syncable="YES"/>
         <relationship name="uncommittedUploads" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="uploadsBeingPrepared" inverseEntity="SMQueues" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadWrapup" representedClassName=".SMUploadWrapup" parentEntity="SMUploadOperation" syncable="YES">
+        <attribute name="internalWrapupStage" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
         <element name="SMDownloadBlock" positionX="790" positionY="351" width="128" height="90"/>
@@ -77,7 +79,7 @@
         <element name="SMUploadFile" positionX="-432" positionY="590" width="128" height="88"/>
         <element name="SMUploadFileOperation" positionX="-333" positionY="482" width="153" height="75"/>
         <element name="SMUploadOperation" positionX="-225" positionY="372" width="128" height="58"/>
-        <element name="SMUploadOutboundTransfer" positionX="-144" positionY="477" width="171" height="45"/>
+        <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
         <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="103"/>
     </elements>
 </model>

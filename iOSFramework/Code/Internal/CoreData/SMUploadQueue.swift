@@ -45,13 +45,13 @@ class SMUploadQueue: NSManagedObject, CoreDataModel {
     enum ChangeType {
         case UploadFile
         case UploadDeletion
-        case OutboundTransfer
+        case UploadWrapup
     }
     
-    // Returns the subset of the .operations objects that represent uploads, upload-deletions, or outbound tranfer. Doesn't modify the SMUploadQueue. Returns nil if there were no objects. Give operationStage as nil to ignore the operationStage of the operations. If you give a changeType of OutboundTransfer, then you must give operationStage as nil.
+    // Returns the subset of the .operations objects that represent uploads, upload-deletions, or outbound tranfer. Doesn't modify the SMUploadQueue. Returns nil if there were no objects. Give operationStage as nil to ignore the operationStage of the operations. If you give a changeType of UploadWrapup then you must give operationStage as nil.
     func getChanges(changeType:ChangeType, operationStage:SMUploadFileOperation.OperationStage?=nil) -> [SMUploadOperation]? {
     
-        Assert.If(changeType == .OutboundTransfer && operationStage != nil, thenPrintThisString: "Yikes: Outbound transfer but not a nil operationStage")
+        Assert.If(changeType == .UploadWrapup && operationStage != nil, thenPrintThisString: "Yikes: Wrapup but not a nil operationStage")
     
         var result = [SMUploadOperation]()
         
@@ -69,9 +69,9 @@ class SMUploadQueue: NSManagedObject, CoreDataModel {
                         result.append(deletion)
                     }
                     
-                case .OutboundTransfer:
-                    if let outboundTransfer = elem as? SMUploadOutboundTransfer {
-                        result.append(outboundTransfer)
+                case .UploadWrapup:
+                    if let wrapup = elem as? SMUploadWrapup {
+                        result.append(wrapup)
                     }
                 }
             }

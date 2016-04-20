@@ -204,7 +204,7 @@ app.post('/' + ServerConstants.operationUnlock, function (request, response) {
                 });
             }
         } else {
-            op.endWithErrorDetails("No lock to unlock!");
+            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, "Lock not held");
         }
     });
 });
@@ -219,6 +219,7 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
 */
 // DEBUGGING
 
+// Going to allow two (sequential) uploads of the same file, in order to enable recovery on the client. The second upload will not duplicate info in PSOutboundFileChange's.
 /* This doesn't remove the PSOperationId on an uplod error because the client/app may be in the middle of a long series of uploads/deletes and may need to retry a specific upload.
 */
 // Failure mode analysis: File may have been moved into our temporary directory and/or entry may have been created in PSOutboundFileChange.
@@ -244,7 +245,7 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
         // User is on the system.
         // console.log("request.file: " + JSON.stringify(request.file));
         
-        // Make sure user/device has started uploads. i.e., make sure this user/device has the lock.
+        // Make sure user/device has the lock.
 
         if (!isDefined(psLock)) {
             var message = "Error: Don't have the lock!";
@@ -298,6 +299,8 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                 fileId: clientFile[ServerConstants.fileUUIDKey]
             };
             
+            var createOutboundFileChangeEntry = true;
+            
             // 1) Do this first, with the userId and file UUID.
             checkIfFileExists(fileData, function (error, fileIndexObj, outbndFileObj) {
                 if (error) {
@@ -323,11 +326,18 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                 }
                 
                 if (outbndFileObj) {
-                    var message = "Attempting to upload two instances of the same file id";
-                    logger.error(message);
-                    op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                message);
-                    return;
+                    // To enable recovery, not going to consider this an error, as long as the cloud file name matches up too.
+                    if (clientFile[ServerConstants.cloudFileNameKey] == outbndFileObj.cloudFileName) {
+                        createOutboundFileChangeEntry = false;
+                        logger.info("Uploading two instances with same file id and cloud file name");
+                    }
+                    else {
+                        var message = "Attempting to upload two instances of the same file id, but without the same cloud file name";
+                        logger.error(message);
+                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                                    message);
+                        return;
+                    }
                 }
                 
                 // This fileData is used across PSFileIndex and PSOutboundFileChange in checkIfFileExists
@@ -357,11 +367,16 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                     }
                     
                     if (outbndFileObj) {
-                        var message = "Attempting to upload two files with the same cloudFileName";
-                        logger.error(message);
-                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                message);
-                        return;
+                        if (clientFile[ServerConstants.fileUUIDKey] == outbndFileObj.fileId && !createOutboundFileChangeEntry) {
+                            logger.info("Uploading two instances with same file id and cloud file name");
+                        }
+                        else {
+                            var message = "Attempting to upload two files with the same cloudFileName";
+                            logger.error(message);
+                            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                                    message);
+                            return;
+                        }
                     }
                     
                     // TODO: Validate that the mimeType is from an acceptable list of MIME types (e..g, so we don't get an injection error with someone injecting a special Google Drive object such as a folder).
@@ -382,14 +397,19 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                             op.endWithErrorDetails(err);
                         }
                         else {
-                            addToOutboundFileChanges(op, clientFile, false, function (error) {
-                                if (error) {
-                                    logger.error("Failed on addToOutboundFileChanges: %j", error);
-                                    op.endWithErrorDetails(error);
-                                } else {
-                                    op.endWithRC(ServerConstants.rcOK);
-                                }
-                            });
+                            if (createOutboundFileChangeEntry) {
+                                addToOutboundFileChanges(op, clientFile, false, function (error) {
+                                    if (error) {
+                                        logger.error("Failed on addToOutboundFileChanges: %j", error);
+                                        op.endWithErrorDetails(error);
+                                    } else {
+                                        op.endWithRC(ServerConstants.rcOK);
+                                    }
+                                });
+                            }
+                            else {
+                                op.endWithRC(ServerConstants.rcOK);
+                            }
                         }
                     });
                 });
@@ -453,6 +473,7 @@ function checkIfFileExists(fileData, callback) {
 }
 
 /* This doesn't remove any PSOperationId on an uplod error because the client/app may be in the middle of a long series of uploads/deletes and may need to retry a specific upload.
+    This can be called multiple times from the client with the same parameters. Once the info for a specific file to be deleted is entered into the PSOutboundFileChange, it will not be entered a second time. E.g., with no failure the first time around, calling this a second time has no effect and doesn't cause an error.
 */
 app.post('/' + ServerConstants.operationDeleteFiles, function (request, response) {
     var op = new Operation(request, response);
@@ -484,7 +505,8 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
 
             var clientFileArray = null;
             try {
-                clientFileArray = ClientFile.objsFromArray(request.body[ServerConstants.filesToDeleteKey]);
+                clientFileArray =
+                    ClientFile.objsFromArray(request.body[ServerConstants.filesToDeleteKey]);
             } catch (error) {
                 logger.error(error);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
@@ -498,32 +520,19 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
                 return;
             }
             
-            function errorChecking(clientFile, callback) {
-                errorCheckFileForDeletion(op, clientFile, function (error) {
+            // Only adds the upload-deletion into the PSOutboundFileChanges if it is not already there.
+            function addToOutboundIfNew(clientFile, callback) {
+                addDeletionToOutboundIfNew(op, clientFile, function (error) {
                     callback(error);
                 });
             }
             
-            function addToOutbound(clientFile, callback) {
-                addToOutboundFileChanges(op, clientFile, true, function (error) {
-                    callback(error);
-                });
-            }
-            
-            Common.applyFunctionToEach(errorChecking, clientFileArray, function (error) {
+            Common.applyFunctionToEach(addToOutboundIfNew, clientFileArray, function (error) {
                 if (error) {
-                    op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
+                    op.endWithErrorDetails(error);
                 }
                 else {
-                    Common.applyFunctionToEach(addToOutbound, clientFileArray, function (error) {
-                        if (error) {
-                            // TODO: If we get an erorr here, there may be lingering deletion entries in the PSOutboundFileChanges that could be a problem. A cleanup is required from the client!!!
-                            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
-                        }
-                        else {
-                            op.endWithRC(ServerConstants.rcOK);
-                        }
-                    });
+                    op.endWithRC(ServerConstants.rcOK);
                 }
             });
         }
@@ -531,7 +540,7 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
 });
 
 // The callback has one parameter: error.
-function errorCheckFileForDeletion(op, clientFile, callback) {
+function addDeletionToOutboundIfNew(op, clientFile, callback) {
     // This fileData is used across PSFileIndex and PSOutboundFileChange in checkIfFileExists
     var fileData = {
         userId: op.userId(),
@@ -544,7 +553,7 @@ function errorCheckFileForDeletion(op, clientFile, callback) {
             return;
         }
         
-        // Make sure this file isn't deleted already.
+        // Make sure this file isn't deleted already. i.e., that it's not marked as deleted in the PSFileIndex.
         if (fileIndexObj) {
             if (fileIndexObj.deleted) {
                 callback(new Error("File was already deleted in the PSFileIndex"));
@@ -552,13 +561,17 @@ function errorCheckFileForDeletion(op, clientFile, callback) {
             }
         }
         
-        // Make sure that the file isn't already in the outbound file changes.
+        // Check if the file is already scheduled for deletion in the outbound file changes.
         if (outbndFileObj) {
-            callback(new Error("Attempting to upload/delete two instances of the same file id"));
-            return;
+            logger.info("Attempting to upload-delete two instances of the same file id");
+            callback(null);
         }
-        
-        callback(null);
+        else {
+            var markForDeletion = true;
+            addToOutboundFileChanges(op, clientFile, markForDeletion, function (error) {
+                callback(error);
+            });
+        }
     });
 }
 
@@ -619,24 +632,18 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else if (isDefined(psOperationId)) {
-            if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-                // This check is to deal with error recovery.
-                var message = "Error: Have lock, but operation is already in progress!";
-                logger.error(message);
-                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            }
-            else if (psOperationId.operationType != "Outbound") {
+            // Outbound transfer recovery.
+            
+            if (psOperationId.operationType != "Outbound") {
                 var message = "Error: Not doing outbound operation!";
                 logger.error(message);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             }
             else {
-                // Already have operation Id.
-                startOutboundTransfer(op, psLock, psOperationId);
+                outboundTransferRecovery(op, psLock, psOperationId);
             }
         }
         else {
-            
             var psOperationId = null;
 
             try {
@@ -658,6 +665,62 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
     });
 });
 
+function outboundTransferRecovery(op, psLock, psOperationId) {
+    switch (op.operationStatus) {
+    case ServerConstants.rcOperationStatusNotStarted:
+    case ServerConstants.rcOperationStatusFailedBeforeTransfer:
+        // Must have failed on or before the commit. Need to do the commit.
+        startOutboundTransfer(op, psLock, psOperationId);
+        break;
+        
+    case ServerConstants.rcOperationStatusFailedDuringTransfer:
+        logger.debug("About to check log consistency...");
+
+        var fileTransfers = new FileTransfers(op, psOperationId);
+        
+        fileTransfers.ensureLogConsistency(function (error) {
+            if (error) {
+                op.endWithErrorDetails(error);
+            }
+            else {
+                startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameSendFiles);
+            }
+        });
+        break;
+
+    case ServerConstants.rcOperationStatusFailedAfterTransfer:
+        psLock.removeLock(function (error) {
+            if (objOrInject(error, op,
+                ServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)) {
+                var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
+                logger.error(errorMessage);
+                op.endWithErrorDetails(errorMessage);
+            }
+            else {
+                logger.trace("Removed the lock.");
+                updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
+                logger.trace("Successfully completed operation!");
+                op.endWithRC(ServerConstants.rcOK);
+            }
+        });
+        break;
+        
+    case ServerConstants.rcOperationStatusInProgress:
+    case ServerConstants.rcOperationStatusSuccessfulCompletion:
+        var message = "Operation was InProgress or Completed -- Not doing transfer recovery.";
+        logger.debug(message);
+        op.endWithRC(ServerConstants.rcOK);
+        break;
+        
+    default:
+        var message = "Yikes: Unknown operationStatus: " + op.operationStatus;
+        logger.error(message);
+        op.endWithErrorDetails(message);
+        break;
+    }
+}
+
+// This is called in two cases: 1) To start outbound tranfers for the first time, and 2) To initiate recovery, when the calling client app detects a problem with outbound transfer.
 function startOutboundTransfer(op, psLock, psOperationId) {
     // Always returning operationId, just for uniformity.
     
@@ -678,19 +741,9 @@ function startOutboundTransfer(op, psLock, psOperationId) {
                 if (objOrInject(error, op, ServerConstants.dbTcCommitChanges)) {
                     logger.error("Failed on PSOutboundFileChange.commit: " + error);
                     
-                    // What the heck? Not proceeding with operation, so the PSOperationId is now not valid in some sense. I could remove it, but it costs little to leave it, and record the failure redundantly. Leaving it may also help us in recovery.
+                    // What the heck? Not proceeding with operation, so the PSOperationId is now not valid in some sense. I could remove it, but it costs little to leave it, and record the failure redundantly. Plus, it should help with recovery.
                     
-                    psOperationId.operationStatus = ServerConstants.rcOperationStatusCommitFailed;
-                    psOperationId.error = error;
-                    
-                    psOperationId.update(function (updateError) {
-                        if (updateError) {
-                            // Can't do much with this we've got two successive errors...
-                            logger.error("Error on top of error: %s", updateError);
-                        }
-                        
-                        op.endWithErrorDetails(error);
-                    });
+                    op.endWithErrorDetails(error);
                 }
                 else {
                     startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameSendFiles);
@@ -708,14 +761,85 @@ function startOutboundTransfer(op, psLock, psOperationId) {
 // transferMethodName can be FileTransfers.methodNameSendFiles or FileTransfers.methodNameReceiveFiles
 function startTransferOfFiles(op, psLock, psOperationId, transferMethodName) {
     // Change PSOperationId status to rcOperationStatusInProgress to mark that the operation is operating asynchronously from the REST/API call.
-    // It is best to not do this too early. i.e., we should not do this before we actually know that the operation is actually in-progress. If we do this early, then if we get a false negative in setting the in-progress status (we successfully set the status to in-progress, but get a report of failure), we will be in a bad state: We will believe we the operation is in-progress, but we have really not started the transfer operation.
+    // 4/19/16; I've struggled with when to change the status to rcOperationStatusInProgress. Up until now, my view was as follows: "It is best to not do this too early. i.e., we should not do this before we actually know that the operation is actually in-progress. If we do this early, then if we get a false negative in setting the in-progress status (we successfully set the status to in-progress, but get a report of failure), we will be in a bad state: We will believe we the operation is in-progress, but we have really not started the transfer operation."
+    // HOWEVER, now, I'm going to change the status to InProgress prior to ending the HTTP connection with client. I'm doing this because I'm making an assumption that I will eventually be able to get ongoing feedback in outbound and inbound transfers, as in the TODO immediately below. ALSO: It just makes more sense to set this to InProgress before returning to the user. Otherwise, there is at least logically a race condition. e.g., The client app could have the result back before the status change.
+    // TODO: We need to get some kind of ongoing feedback (e.g., a callback that occurs periodically on the basis of time or bytes transferred) from the cloud storage file transfer, and when we fail to get that ongoing feedback, we change the operation status to a failure status. See [1].
+
+    psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
+    psOperationId.error = null;
     
-    // 2) Tell the user we're off to the races, and end the connection.
     op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
-    op.endWithRC(ServerConstants.rcOK);
+
+    psOperationId.update(function (updateError) {
+        if (objOrInject(updateError, op, ServerConstants.dbTcInProgress)) {
+            var errorMessage = "Could not update operation to rcOperationStatusInProgress: %s", updateError;
+            logger.error(errorMessage);
+            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
+            op.endWithErrorDetails(error);
+        }
+        else {
+            // 2) Tell the user we're off to the races, and end the connection.
+            op.endWithRC(ServerConstants.rcOK);
+            
+            // 3) Do the file transfer between the cloud storage system and the sync server.
+            cloudStorageTransfer(op, psLock, psOperationId, transferMethodName);
+        }
+    });
+}
+
+// Update the operationId without specific error checking. This is for use in failure cases.
+function updateOperationId(psOperationId, rc, errorMessage) {
+    if (errorMessage) {
+        logger.error(errorMessage);
+        psOperationId.error = errorMessage;
+    }
+    else {
+        psOperationId.error = null;
+    }
     
-    // 3) Do the file transfer between the cloud storage system and the sync server.
-    cloudStorageTransfer(op, psLock, psOperationId, transferMethodName);
+    psOperationId.operationStatus = rc;
+    psOperationId.update();
+}
+
+// transferMethod is given by a string-- this is a method of the FileTransfers.sjs class. FileTransfers.methodNameReceiveFiles or FileTransfers.methodNameSendFiles
+// This function operates in asynchronous mode, i.e., with the connection to the client terminated already.
+function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
+    logger.info("Attempting FileTransfers.setup...");
+    var fileTransfers = new FileTransfers(op, psOperationId);
+
+    fileTransfers.setup(function (error) {
+        if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
+            var errorMessage = "Failed on setup: " + JSON.stringify(error);
+            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
+        }
+        else {
+            logger.info("Attempting FileTransfers.%s...", transferMethod);
+
+            fileTransfers[transferMethod](function (error) {
+                if (objOrInject(error, op, ServerConstants.dbTcTransferFiles)) {
+                    var errorMessage = "Error transferring files: " + JSON.stringify(error);
+                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
+                    
+                    // I'm not going to remove the lock here, in order to give the app a chance to recover from this error in a locked condition.
+                    return;
+                }
+
+                psLock.removeLock(function (error) {
+                    if (objOrInject(error, op,
+                        ServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)) {
+                        var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
+                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
+                    }
+                    else {
+                        logger.trace("Removed the lock.");
+
+                        updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
+                        logger.trace("Successfully completed operation!");
+                    }
+                });
+            });
+        }
+    });
 }
 
 app.post('/' + ServerConstants.operationGetFileIndex, function (request, response) {
@@ -923,120 +1047,6 @@ function removeOperationId(op, request) {
     });
 }
 
-app.post('/' + ServerConstants.operationUploadRecovery, function (request, response) {
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-    
-    op.validateUser(function (psLock, psOperationId) {
-        
-        /* 
-        Our situation: PSOperationId may have been created, PSLock may be held and PSOutboundFileChange's may have been created.
-        The important issue is with the PSOutboundFileChange entries in the database: Because they typically represent upload work done. If we have one or more of these, we'll be restarting. If we have none of these, we'll clean up and let the app start file changes from scratch.
-        */
-        /* 
-        12/25/15; Up until this point, I was allowing lock to be called muliple times (i.e., I was making use of this for recovery-- so I didn't have to release the lock and reacquire it). However, I ran into an issue with testing: 1) I simulated failure of the commit operation on the client side, and 2) the app tried to do a recovery. However, because the commit actually succeeded, at the same time as the commit was occuring on the server, the app was starting up a concurrent lock, and so I ended up with two concurrent commits occuring for the same user/device. In general, this poses an issue: When you believe you've got an error on the commit, how do you ensure that the commit isn't actually proceeding?
-        WHAT ABOUT: Before beginning this recovery, on the server, we check what the status of the Operation Id is. If the status is some error or failure, then we can proceed with the recovery. If the status not rcOperationStatusInProgress then the operation is not in asynchronous/concurrent execution, and we can proceed with the recovery.
-        */
-                    
-        if (!isDefined(psLock)) {
-            var message = "We don't have the lock!";
-            logger.error(message);
-            // 2/13/16; Not returning this as rcServerAPIError because this doesn't necessarily represent an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
-            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
-        }
-        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
-            // This is really an error. We should never have an in-progress operation for UploadRecovery because we should only ever be doing a UploadRecovery prior to a successful commit.
-            var message = "Operation status was rcOperationStatusInProgress";
-            logger.error(message);
-            // Should we really call this a rcServerAPIError?
-            op.endWithRCAndErrorDetails(ServerConstants.rcOperationInProgress, message);
-        }
-        else if (isDefined(psOperationId) && (psOperationId.operationType != "Outbound")) {
-            var message = "Error: Not doing outbound transfer operation!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-        }
-        else {
-            finishUploadRecovery(op, psLock, psOperationId);
-        }
-    });
-});
-
-function finishUploadRecovery(op, lock, psOperationId) {
-    PSOutboundFileChange.getAllFor(op.userId(), op.deviceId(),
-        function (error, psOutboundFileChanges) {
-            if (error) {
-                op.endWithErrorDetails(error);
-            }
-            else if (psOutboundFileChanges.length == 0) {
-                logger.info("No PSOutboundFileChange items. Try to remove any PSOperationId and/or PSLock.");
-                // Try to remove the lock first. That's the most important. If we fail to remove the PSOperationId, it's no biggie. Garbage collection can get that later.
-
-                lock.removeLock(function (error) {
-                    if (error) {
-                        op.endWithErrorDetails(error);
-                    }
-                    else {
-                        if (isDefined(psOperationId)) {
-                            psOperationId.remove(function (error) {
-                                if (error) {
-                                    op.endWithErrorDetails(error);
-                                }
-                                else {
-                                    op.endWithRC(ServerConstants.rcOK);
-                                }
-                            });
-                        }
-                        else {
-                            op.endWithRC(ServerConstants.rcOK);
-                        }
-                    }
-                });
-            }
-            else {
-                logger.info("We've got PSOutboundFileChange items. Client/app will need to work from an existing set of file uploads.");
-
-                // With PSOutboundFileChange items, we will necessarily have a PSLock. This is because in order to create a PSOutboundFileChange, we necessarily have a PSLock.
-                // I'm going to format these PSOutboundFileChange items like they were a file index.
-                
-                function returnOutboundFileChanges() {
-                    var result = [];
-                    
-                    for (var index in psOutboundFileChanges) {
-                        var obj = psOutboundFileChanges[index];
-                        result.push(obj.convertToFileIndex());
-                    }
-                    
-                    op.result[ServerConstants.resultFileIndexKey] = result;
-                    op.endWithRC(ServerConstants.rcOK);
-                }
-                
-                if (isDefined(psOperationId)) {
-                    // Set the PSOperationId to an initial, non-error state.
-                    psOperationId.operationStatus = ServerConstants.rcOperationStatusNotStarted;
-                    psOperationId.error = null;
-                    
-                    psOperationId.update(function (updateError) {
-                        if (updateError) {
-                            logger.error("Could not update operation to rcOperationStatusNotStarted: %s", updateError);
-                            op.endWithErrorDetails(updateError);
-                        }
-                        else {
-                            op.result[ServerConstants.resultOperationIdKey] = lock.operationId;
-                            returnOutboundFileChanges();
-                        }
-                    });
-                }
-                else {
-                    returnOutboundFileChanges();
-                }
-            }
-        });
-}
-
 // Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId (if any).
 app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     var op = new Operation(request, response);
@@ -1099,61 +1109,6 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
                             });
                         }
                     });
-                }
-            });
-        }
-    });
-});
-
-app.post('/' + ServerConstants.operationOutboundTransferRecovery, function (request, response) {
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-    
-    op.validateUser(function (psLock, psOperationId) {
-        if (!isDefined(psLock)) {
-            var message = "We don't have the lock!";
-            logger.error(message);
-            
-            // Returning rcLockNotHeld (and not rcServerAPIError) because in some cases of errors, we can have the lock not held and it's not incorrect API usage-- e.g., if there was a certain kind of failure at the end of outbound transfer.
-            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
-        }
-        else if (!isDefined(psOperationId)) {
-            // Should not be doing a transfer recovery without an operationId.
-            var message = "There is no operationId!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-        }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-            // If the operation is InProgress, we'll consider this not be an error and not something we have to recover from.
-            var message = "Operation was InProgress-- Not doing transfer recovery.";
-            logger.debug(message);
-            
-            // Send back the operationId just because we can.
-            op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
-            op.endWithRC(ServerConstants.rcOK);
-        }
-        else if (psOperationId.operationType != "Outbound") {
-            var message = "Error: Not doing outbound transfer operation!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-        }
-        else {
-            logger.debug("About to check log consistency...");
-            
-            var fileTransfers = new FileTransfers(op, psOperationId);
-            
-            fileTransfers.ensureLogConsistency(function (error) {
-                if (error) {
-                    op.endWithErrorDetails(error);
-                }
-                else {
-                    // Originally I was thinking of this as now being in the same kind of situation as upload recovery at this point. HOWEVER, that is not true. If there are files listed in outbound file changes, they will be *committed*. All files will have already been uploaded. Treating this like upload recovery would indicate that some files might still need to be uploaded. Which is incorrect. Rather, the question is: What files still need to be transferred to cloud storage? We've made our log consistent, so our PSOutboundFileChange info and our PSFileIndex will be consistent. SO, our job right now is to do the remaining transfers.
-                    // startTransferOfFiles calls cloudStorageTransfer, which calls sendFiles, which looks up committed entries in PSOutboundFileChange's, so that will do what we want at this point.
-                    // In fact, this will act in the same manner as the end part of CommitFileChanges-- it will let the file transfer run asynchronously and "return" to the server REST API caller.
-                    startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameSendFiles);
                 }
             });
         }
@@ -1328,76 +1283,6 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
         }
     });
 });
-
-// transferMethod is given by a string-- this is a method of the FileTransfers.sjs class. FileTransfers.methodNameReceiveFiles or FileTransfers.methodNameSendFiles
-// This function operates in asynchronous mode, i.e., with the connection to the client terminated already.
-function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
-
-    function updateOperationId(psOperationId, rc, errorMessage) {
-        if (errorMessage) {
-            logger.error(errorMessage);
-            psOperationId.error = errorMessage;
-        }
-        else {
-            psOperationId.error = null;
-        }
-        
-        psOperationId.operationStatus = rc;
-        psOperationId.update();
-    }
-    
-    // We have a choice to make about when we change the operation status to in-progress. For example, could do it (a) here, (b) after setup, (c) or after starting the first transfer. When we do this is somewhat arbitrary. The problem I'm trying to avoid is getting a permanent in-progress status without actually making any progress. I.e., without having continuing operation of the file transfer.
-    // TODO: It would be better if we could get some kind of ongoing feedback (e.g., a callback that occurs periodically on the basis of time or bytes transferred) from the cloud storage file transfer, and when we fail to get that ongoing feedback, we change the operation status to a failure status.
-    psOperationId.operationStatus = ServerConstants.rcOperationStatusInProgress;
-    psOperationId.error = null;
-    
-    // Choosing to do the update to in-progress status before the setup.
-    psOperationId.update(function (updateError) {
-        if (objOrInject(updateError, op, ServerConstants.dbTcInProgress)) {
-            var errorMessage = "Could not update operation to rcOperationStatusInProgress: %s", updateError;
-            logger.error(errorMessage);
-            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
-        }
-        else {
-            logger.info("Attempting FileTransfers.setup...");
-            var fileTransfers = new FileTransfers(op, psOperationId);
-
-            fileTransfers.setup(function (error) {
-                if (objOrInject(error, op, ServerConstants.dbTcSetup)) {
-                    var errorMessage = "Failed on setup: " + JSON.stringify(error);
-                    updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedBeforeTransfer, errorMessage);
-                }
-                else {
-                    logger.info("Attempting FileTransfers.%s...", transferMethod);
-
-                    fileTransfers[transferMethod](function (error) {
-                        if (objOrInject(error, op, ServerConstants.dbTcTransferFiles)) {
-                            var errorMessage = "Error transferring files: " + JSON.stringify(error);
-                            updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedDuringTransfer, errorMessage);
-                            
-                            // I'm not going to remove the lock here, in order to give the app a chance to recover from this error in a locked condition.
-                            return;
-                        }
-
-                        psLock.removeLock(function (error) {
-                            if (objOrInject(error, op,
-                                ServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)) {
-                                var errorMessage = "Failed to remove the lock: " + JSON.stringify(error);
-                                updateOperationId(psOperationId, ServerConstants.rcOperationStatusFailedAfterTransfer, errorMessage);
-                            }
-                            else {
-                                logger.trace("Removed the lock.");
-
-                                updateOperationId(psOperationId, ServerConstants.rcOperationStatusSuccessfulCompletion, null);
-                                logger.trace("Successfully completed operation!");
-                            }
-                        });
-                    });
-                }
-            });
-        }
-    });
-}
 
 app.post('/' + ServerConstants.operationDownloadFile, function (request, response) {
     // logger.debug("DownloadFile operation: %j", request.body);

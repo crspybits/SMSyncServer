@@ -27,13 +27,16 @@ public struct TestFile {
         return self.appFile.uuid!
     }
     
-    public var attr:SMSyncAttributes {
+    public var remoteFile:String {
         var remoteFile = self.fileName
         if self.remoteFileName != nil {
             remoteFile = self.remoteFileName
         }
-        
-        return SMSyncAttributes(withUUID: self.uuid, mimeType: self.mimeType, andRemoteFileName: remoteFile)
+        return remoteFile
+    }
+    
+    public var attr:SMSyncAttributes {
+        return SMSyncAttributes(withUUID: self.uuid, mimeType: self.mimeType, andRemoteFileName: self.remoteFile)
     }
     
     public var url:SMRelativeLocalURL {

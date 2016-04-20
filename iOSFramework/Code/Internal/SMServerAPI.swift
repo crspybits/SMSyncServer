@@ -346,8 +346,9 @@ internal class SMServerAPI {
         }
     }
     
+    // You should probably use uploadFiles. This is exposed (i.e., not private) to enable testing.
     // fileToUpload must have a localURL.
-    private func uploadFile(fileToUpload: SMServerFile, completion:((apiResult:SMServerAPIResult)->(Void))?) {
+    internal func uploadFile(fileToUpload: SMServerFile, completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
         let serverOpURL = NSURL(string: self.serverURLString + "/" + SMServerConstants.operationUploadFile)!
         
@@ -591,45 +592,6 @@ internal class SMServerAPI {
             completion?(serverOperationId: serverOperationId, apiResult:result)
         }
     }
-    
-    /* 
-    Prepare so that we can recover from an error that occurred *prior* to any files being transferred to cloud storage.
-    The input parameter serverOperationId can be given as nil if lock reported failure, but actually did create a lock on the server.
-    
-    On success, this returns either: 
-    
-    (1) Both a fileIndex and serverOperationId.
-        The fileIndex objects indicate the collection of files that have already been either uploaded or marked for deletion. The lock is still held and the operation Id is still present.
-    (2) Neither of these.
-        Indicates that recovery can take place by just restarting the upload process. No files have been uploaded/marked for deletion already. No lock is held. No OperationId is present.
-    */
-    internal func uploadRecovery(completion:((serverOperationId:String?, fileIndex:[SMServerFile]?, apiResult:SMServerAPIResult)->(Void))?) {
-    
-        let userParams = self.userDelegate.serverParams
-        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
-
-        Log.msg("parameters: \(userParams)")
-        
-        let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationUploadRecovery)!
-        
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
-            let result = self.initialServerResponseProcessing(serverResponse, error: requestError)
-            
-            if (result.error != nil) {
-                completion?(serverOperationId: nil, fileIndex: nil, apiResult:result)
-                return
-            }
-            
-            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
-
-            var errorResult:NSError? = nil
-            let fileIndex = self.processFileIndex(serverResponse, error:&errorResult)
-            
-            completion?(serverOperationId: serverOperationId, fileIndex: fileIndex, apiResult:SMServerAPIResult(returnCode: result.returnCode, error: errorResult))
-        }
-    }
  
     // Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId.
     // This is useful for cleaning up in the case of an error/failure during an upload/download operation.
@@ -646,31 +608,6 @@ internal class SMServerAPI {
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             let result = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(apiResult: result)
-        }
-    }
-    
-    internal func outboundTransferRecovery(
-        completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
-
-        let userParams = self.userDelegate.serverParams
-        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
-        
-        Log.msg("parameters: \(userParams)")
-        
-        let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationOutboundTransferRecovery)!
-        
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
-            
-            var result = self.initialServerResponseProcessing(serverResponse, error: requestError)
-            
-            let serverOperationId:String? = serverResponse?[SMServerConstants.resultOperationIdKey] as? String
-            Log.msg("\(serverOpURL); OperationId: \(serverOperationId)")
-            if (nil == result.error && nil == serverOperationId) {
-                result.error = Error.Create("No server operationId obtained")
-            }
-            
-            completion?(serverOperationId: serverOperationId, apiResult: result)
         }
     }
     
@@ -896,6 +833,3 @@ internal class SMServerAPI {
         }
     }
 }
-
-
-

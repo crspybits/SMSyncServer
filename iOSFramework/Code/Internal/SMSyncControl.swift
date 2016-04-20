@@ -11,23 +11,13 @@
 import Foundation
 import SMCoreLib
 
-enum SMSyncControlError {
-    // Operation will restart when the network is connected again.
-    case NetworkNotConnected
-    
-    // See SMClientMode
-    case ClientAPIError(NSError)
-    case NonRecoverableError(NSError)
-    case InternalError(NSError)
-}
-
 internal protocol SMSyncControlDelegate : class {
     // Indicate the end of a upload or download operations.
     func syncControlUploadsFinished()
     func syncControlDownloadsFinished()
     
-    // Indicate an error condition and operation needs to stop.
-    func syncControlError(syncControlError:SMSyncControlError)
+    // On error conditions, operation needs to stop.
+    func syncControlModeChange(newMode:SMSyncServerMode)
 }
 
 internal class SMSyncControl {
@@ -57,8 +47,19 @@ internal class SMSyncControl {
     internal static let session = SMSyncControl()
     internal weak var delegate:SMSyncServerDelegate?
     
-    internal var operating : Bool {
-        return self._operating
+    private var operating : Bool {
+        get {
+            return self._operating
+        }
+        set {
+            self._operating = newValue
+            if self._operating {
+                self.syncControlModeChange(.Synchronizing)
+            }
+            else {
+                self.syncControlModeChange(.Idle)
+            }
+        }
     }
 
     private init() {
@@ -85,11 +86,9 @@ internal class SMSyncControl {
     */
     internal func nextSyncOperation() {
         if self.lock.tryLock() {
-            Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
-            self._operating = true
+            Assert.If(self.operating, thenPrintThisString: "Yikes: Already operating!")
+            self.operating = true
             Log.special("Starting operating!")
-            
-            self.delegate?.syncServerModeChange(.Operating)
             
             self.next()
         }
@@ -123,21 +122,18 @@ internal class SMSyncControl {
     }
     
     private func stopOperating() {
-        Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
-        self._operating = false
+        Assert.If(!self.operating, thenPrintThisString: "Yikes: Not operating!")
+        self.operating = false
         
         Log.special("Stopped operating!")
         Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
 
         self.lock.unlock()
-        
-        // TODO: Fix this: Replace with usage of a mode class.
-        self.delegate?.syncServerModeChange(.Idle)
     }
     
     // Must have thread lock before calling. Must do thread unlock upon returning-- that return and thread unlock may be delayed due to an asynchronous operation.
     private func next() {
-        Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
+        Assert.If(!self.operating, thenPrintThisString: "Yikes: Not operating!")
 
         if Network.session().connected() {
             Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
@@ -176,8 +172,7 @@ internal class SMSyncControl {
             }
         }
         else {
-            // Network not connected.
-            self.stopOperating()
+            self.syncControlModeChange(.NetworkNotConnected)
         }
     }
     
@@ -272,22 +267,33 @@ internal class SMSyncControl {
             attempts += 1
             
             SMServerNetworking.exponentialFallback(forAttempt: attempts) {
+                self.delegate?.syncServerEventOccurred(.Recovery)
                 self.next()
             }
         }
         else {
-            self.syncControlError(.InternalError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
+            self.syncControlModeChange(.InternalError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
         }
     }
     
     private func releaseServerLock() {
+        func success() {
+            Log.msg("Have released lock!")
+            SMSyncControl.haveServerLock.boolValue = false
+            self.checkedForServerFileIndex = false
+            self.numberUnlockAttempts = 0
+            
+            // Not calling stopOperating() directly to deal with race condition between committing uploads and stopping.
+            self.doNextUploadOrStop()
+        }
+        
         SMServerAPI.session.unlock() { unlockResult in
             if SMTest.If.success(unlockResult.error, context: .Unlock) {
-                Log.msg("Have released lock!")
-                SMSyncControl.haveServerLock.boolValue = false
-                self.checkedForServerFileIndex = false
-                self.numberUnlockAttempts = 0
-                self.stopOperating()
+                success()
+            }
+            else if unlockResult.returnCode == SMServerConstants.rcLockNotHeld {
+                // This situation could arise if the first attempt at unlocking somehow resulted in the return result being not being communicated correctly back to the app. The second time we try to unlock, we don't hold the lock, which is what we want.
+                success()
             }
             else {
                 self.retry(&self.numberUnlockAttempts, errorSpecifics: "attempting to unlock")
@@ -315,25 +321,24 @@ extension SMSyncControl : SMSyncControlDelegate {
         self.next()
     }
     
-    // Indicate an error condition and operation needs to stop.
-    func syncControlError(syncControlError:SMSyncControlError) {
-        self.stopOperating()
+    func syncControlModeChange(newMode:SMSyncServerMode) {
         
-        switch syncControlError {
+        switch newMode {
+        case .Idle:
+            // Don't call stopOperating(); The .Idle mode is only set from within stopOperating() itself.
+            break
+            
+        case .Synchronizing:
+            // Don't call stopOperating()-- we're most certainly operating!
+            break
+            
         case .NetworkNotConnected:
-            // Don't need to do any more. When the network is reconnected, we'll resume operation.
-            break
+            self.stopOperating()
         
-        // Set the mode to one of the error cases so that if the app restarts we don't try to recover again. This also has the additional effect of forcing the caller of this class to do something to recover. i.e., at least to call the resetFromError method.
-        
-        case .ClientAPIError(let nsError):
-            break
-            
-        case .NonRecoverableError(let nsError):
-            break
-            
-        case .InternalError(let nsError):
-            break
+        case .ClientAPIError, .NonRecoverableError, .InternalError:
+            self.stopOperating()
         }
+        
+        self.delegate?.syncServerModeChange(newMode)
     }
 }

@@ -97,11 +97,11 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         failTest()
     }
     
-    func syncServerModeChange(newMode:SMClientMode) {
+    func syncServerModeChange(newMode:SMSyncServerMode) {
         failTest()
     }
     
-    func syncServerEventOccurred(event:SMClientEvent) {
+    func syncServerEventOccurred(event:SMSyncServerEvent) {
         failTest()
     }
     

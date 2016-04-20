@@ -44,11 +44,11 @@ class SMTwoDeviceTestThatTwoUploadsWork : TwoDeviceTestCase {
         
     }
     
-    override func syncServerModeChange(newMode:SMClientMode) {
+    override func syncServerModeChange(newMode:SMSyncServerMode) {
         
     }
     
-    override func syncServerEventOccurred(event:SMClientEvent) {
+    override func syncServerEventOccurred(event:SMSyncServerEvent) {
         switch event {
         case .SingleUploadComplete(uuid: let uuid):
             self.numberUploads += 1

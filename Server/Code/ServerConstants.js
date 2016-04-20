@@ -44,9 +44,6 @@ function define(name, value) {
 	define("operationCheckOperationStatus", "CheckOperationStatus");
 	define("operationRemoveOperationId", "RemoveOperationId");
 
-    // Recovery from errors during upload process (i.e., prior to transferring files to cloud storage).
-	define("operationUploadRecovery", "UploadRecovery");
-
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
 	define("operationOutboundTransferRecovery", "OutboundTransferRecovery");
     
@@ -239,7 +236,7 @@ function define(name, value) {
 	define("rcUserOnSystem", 51);
 	define("rcUserNotOnSystem", 52);
     
-    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
+    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed because the lock wasn't held.
 	define("rcLockNotHeld", 53);
     
 	define("rcNoOperationId", 54);
@@ -261,17 +258,14 @@ function define(name, value) {
     
     // The operation hasn't started asynchronous operation yet.
 	define("rcOperationStatusNotStarted", 200);
-
-    // No files transferred to cloud storage. Didn't successfully kick off commit-- commit would have returned an error.
-	define("rcOperationStatusCommitFailed", 201);
     
     // Operation is in asynchronous operation. It is running after operationCommitChanges returned success to the REST/API caller.
-	define("rcOperationStatusInProgress", 202);
+	define("rcOperationStatusInProgress", 201);
     
     // These three can occur after the commit returns success to the client/app. For purposes of recovering from failure, the following three statuses should be taken to be the same-- just indicating failure. Use the resultOperationStatusCountKey to determine what kind of recovery to perform.
-	define("rcOperationStatusFailedBeforeTransfer", 203);
-	define("rcOperationStatusFailedDuringTransfer", 204);
-	define("rcOperationStatusFailedAfterTransfer", 205);
+	define("rcOperationStatusFailedBeforeTransfer", 202);
+	define("rcOperationStatusFailedDuringTransfer", 203);
+	define("rcOperationStatusFailedAfterTransfer", 204);
     
 	define("rcOperationStatusSuccessfulCompletion", 210);
 

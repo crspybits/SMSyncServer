@@ -10,6 +10,7 @@ import XCTest
 // The @testable notation lets us access "internal" classes within our project.
 @testable import SMSyncServer
 import SMCoreLib
+@testable import Tests
 
 class ServerAPI: BaseClass {
     
@@ -46,6 +47,91 @@ class ServerAPI: BaseClass {
             }
         }
                 
+        self.waitForExpectations()
+    }
+    
+    // Calling the deleteFiles API interface twice with the same file(s) should work, and not cause an error the second time.
+    func testThatDoubleDeletionOfASingleFileWorks() {
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
+        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
+        let deletionExpectation = self.expectationWithDescription("Delete")
+        
+        self.extraServerResponseTime = 30
+        
+        self.waitUntilSyncServerUserSignin() {
+            let testFile = TestBasics.session.createTestFile("DoubleDeletionOfASingleFile")
+            
+            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == testFile.uuidString)
+                singleUploadExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                uploadCompleteCallbackExpectation.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+                
+                let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appFileType: nil, version: 0)
+            
+                SMServerAPI.session.lock() { lockResult in
+                    XCTAssert(lockResult.error == nil)
+            
+                    SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
+                        XCTAssert(apiResult.error == nil)
+
+                        SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
+                            XCTAssert(apiResult.error == nil)
+
+                            SMServerAPI.session.cleanup(){ cleanupResult in
+                                XCTAssert(cleanupResult.error == nil)
+                                
+                                deletionExpectation.fulfill()
+                            }
+                        }
+                    }
+                }
+            }
+            
+            SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    func testThatDoubleUploadOfASingleFileWorks() {
+        let uploadExpectation = self.expectationWithDescription("Upload")
+
+        self.waitUntilSyncServerUserSignin() {
+            let testFile = TestBasics.session.createTestFile("DoubleUploadOfASingleFile")
+            let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appFileType: nil, version: 0)
+            serverFile.localURL = testFile.url
+            
+            SMServerAPI.session.lock() { lockResult in
+                XCTAssert(lockResult.error == nil)
+        
+                SMServerAPI.session.uploadFile(serverFile) { apiResult in
+                    XCTAssert(apiResult.error == nil)
+
+                    SMServerAPI.session.uploadFile(serverFile) { apiResult in
+                        XCTAssert(apiResult.error == nil)
+
+                        SMServerAPI.session.cleanup(){ cleanupResult in
+                            XCTAssert(cleanupResult.error == nil)
+                            
+                            uploadExpectation.fulfill()
+                        }
+                    }
+                }
+            }
+        }
+        
         self.waitForExpectations()
     }
     

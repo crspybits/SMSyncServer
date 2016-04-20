@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E23531C8126AE0054D97C /* SMSyncServerModes.swift */; };
+		83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */; };
 		832ADADC1CB10D7300FFDD4C /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 832ADADB1CB10D7300FFDD4C /* README.txt */; };
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
 		83D0A8D01C877E170096132E /* PersistedServerFileIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D0A8CF1C877E170096132E /* PersistedServerFileIndex.swift */; };
@@ -57,8 +58,7 @@
 		83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */; };
 		83E55CF11CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD71CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift */; };
 		83E55CF21CBA07DB00F204E0 /* SMDownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */; };
-		83E55CF31CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */; };
-		83E55CF41CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */; };
+		83E55CF41CBA07DB00F204E0 /* SMUploadWrapup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CDA1CBA07DB00F204E0 /* SMUploadWrapup.swift */; };
 		83E55CF51CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CDB1CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift */; };
 		83F3B1AB1C54112A005DA375 /* SMSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F3B1AA1C54112A005DA375 /* SMSync.swift */; };
 /* End PBXBuildFile section */
@@ -82,6 +82,7 @@
 
 /* Begin PBXFileReference section */
 		830E23531C8126AE0054D97C /* SMSyncServerModes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerModes.swift; path = Code/Public/SMSyncServerModes.swift; sourceTree = "<group>"; };
+		83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadWrapup+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadWrapup+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		832ADADB1CB10D7300FFDD4C /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = Code/Internal/CoreData/README.txt; sourceTree = "<group>"; };
 		832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SMUploadBlock.swift; path = Code/Internal/CoreData/SMUploadBlock.swift; sourceTree = "<group>"; };
 		832CD50C1C5DA40C005F99D4 /* SMFiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFiles.swift; path = Code/Internal/SMFiles.swift; sourceTree = "<group>"; };
@@ -133,8 +134,7 @@
 		83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadFileOperation.swift; path = Code/Internal/CoreData/SMDownloadFileOperation.swift; sourceTree = "<group>"; };
 		83E55CD71CBA07DB00F204E0 /* SMDownloadDeletion+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadDeletion+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadDeletion+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadDeletion.swift; path = Code/Internal/CoreData/SMDownloadDeletion.swift; sourceTree = "<group>"; };
-		83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadOutboundTransfer+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadOutboundTransfer+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadOutboundTransfer.swift; path = Code/Internal/CoreData/SMUploadOutboundTransfer.swift; sourceTree = "<group>"; };
+		83E55CDA1CBA07DB00F204E0 /* SMUploadWrapup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadWrapup.swift; path = Code/Internal/CoreData/SMUploadWrapup.swift; sourceTree = "<group>"; };
 		83E55CDB1CBA07DB00F204E0 /* SMUploadFile+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadFile+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadFile+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83F3B1AA1C54112A005DA375 /* SMSync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSync.swift; path = Code/Internal/SMSync.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -154,7 +154,7 @@
 		832ADAEF1CB1176E00FFDD4C /* Generated (don't change by hand) */ = {
 			isa = PBXGroup;
 			children = (
-				83E55CD91CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift */,
+				83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */,
 				83E55CD31CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift */,
 				83E55CCC1CBA07DB00F204E0 /* SMUploadFileOperation+CoreDataProperties.swift */,
 				83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */,
@@ -300,7 +300,7 @@
 			isa = PBXGroup;
 			children = (
 				83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */,
-				83E55CDA1CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift */,
+				83E55CDA1CBA07DB00F204E0 /* SMUploadWrapup.swift */,
 				83E55CCD1CBA07DB00F204E0 /* SMUploadFileOperation.swift */,
 				83E55CD41CBA07DB00F204E0 /* SMUploadDeletion.swift */,
 				83D3EDCE1C4DD0F200BFDA93 /* SMUploadFile.swift */,
@@ -438,13 +438,13 @@
 				83D732901CB366BA00B2BFD3 /* SMDownloadBlock.swift in Sources */,
 				83E55CE91CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift in Sources */,
 				83E55CBC1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift in Sources */,
+				83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */,
 				83D3EA291C4C870C00BFDA93 /* SMFileDiffs.swift in Sources */,
 				83E55CEB1CBA07DB00F204E0 /* SMDownloadInboundTransfer+CoreDataProperties.swift in Sources */,
 				83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */,
 				830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */,
 				83D3EDD01C4DD0F200BFDA93 /* SMUploadFile.swift in Sources */,
 				832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */,
-				83E55CF31CBA07DB00F204E0 /* SMUploadOutboundTransfer+CoreDataProperties.swift in Sources */,
 				83E55CF21CBA07DB00F204E0 /* SMDownloadDeletion.swift in Sources */,
 				83E55CB81CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift in Sources */,
 				83D3E97C1C4C84A600BFDA93 /* SMSyncServer.swift in Sources */,
@@ -453,7 +453,7 @@
 				83D7328E1CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift in Sources */,
 				83D3EA2F1C4C870C00BFDA93 /* SMUploadFiles.swift in Sources */,
 				83E55CE41CBA07DB00F204E0 /* SMDownloadOperation.swift in Sources */,
-				83E55CF41CBA07DB00F204E0 /* SMUploadOutboundTransfer.swift in Sources */,
+				83E55CF41CBA07DB00F204E0 /* SMUploadWrapup.swift in Sources */,
 				83E55CBD1CB84A4800F204E0 /* SMDownloadConflict.swift in Sources */,
 				83D7329A1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift in Sources */,
 				83E55CEC1CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift in Sources */,

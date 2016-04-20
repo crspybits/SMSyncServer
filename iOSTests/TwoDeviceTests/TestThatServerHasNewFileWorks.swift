@@ -66,9 +66,9 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         self.timer!.cancel()
     }
     
-    override func syncServerModeChange(newMode:SMClientMode) {
+    override func syncServerModeChange(newMode:SMSyncServerMode) {
         switch newMode {
-        case .Idle:
+        case .Idle, .Synchronizing, .NetworkNotConnected:
             break
             
         case .NonRecoverableError(let error):
@@ -77,19 +77,10 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
             self.failTest("We got an internal error: \(error)")
         case .ClientAPIError(let error):
             self.failTest("We got an client api error: \(error)")
-
-        case .Running(_, .Recovery):
-            if self.isSlave {
-                // On the slave, we shouldn't get a recovery mode-change. It's OK on the master as the slave could hold the lock.
-                self.failTest("Slave got a .Recovery mode")
-            }
-            
-        case .Running(_, .Operating), .Operating:
-            break
         }
     }
     
-    override func syncServerEventOccurred(event:SMClientEvent) {
+    override func syncServerEventOccurred(event:SMSyncServerEvent) {
         switch event {
         case .SingleUploadComplete(uuid: let uuid):
             if self.isSlave {

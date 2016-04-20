@@ -53,9 +53,6 @@ public class SMServerConstants {
     public static let operationCheckOperationStatus = "CheckOperationStatus"
     public static let operationRemoveOperationId = "RemoveOperationId"
 
-    // Recovery from errors during upload process (i.e., prior to transferring files to cloud storage).
-    public static let operationUploadRecovery = "UploadRecovery"
-
     // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
     public static let operationOutboundTransferRecovery = "OutboundTransferRecovery"
     
@@ -248,7 +245,7 @@ public class SMServerConstants {
     public static let rcUserOnSystem = 51
     public static let rcUserNotOnSystem = 52
     
-    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed becuase the lock wasn't held.
+    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed because the lock wasn't held.
     public static let rcLockNotHeld = 53
     
     public static let rcNoOperationId = 54
@@ -270,17 +267,14 @@ public class SMServerConstants {
     
     // The operation hasn't started asynchronous operation yet.
     public static let rcOperationStatusNotStarted = 200
-
-    // No files transferred to cloud storage. Didn't successfully kick off commit-- commit would have returned an error.
-    public static let rcOperationStatusCommitFailed = 201
     
     // Operation is in asynchronous operation. It is running after operationCommitChanges returned success to the REST/API caller.
-    public static let rcOperationStatusInProgress = 202
+    public static let rcOperationStatusInProgress = 201
     
     // These three can occur after the commit returns success to the client/app. For purposes of recovering from failure, the following three statuses should be taken to be the same-- just indicating failure. Use the resultOperationStatusCountKey to determine what kind of recovery to perform.
-    public static let rcOperationStatusFailedBeforeTransfer = 203
-    public static let rcOperationStatusFailedDuringTransfer = 204
-    public static let rcOperationStatusFailedAfterTransfer = 205
+    public static let rcOperationStatusFailedBeforeTransfer = 202
+    public static let rcOperationStatusFailedDuringTransfer = 203
+    public static let rcOperationStatusFailedAfterTransfer = 204
     
     public static let rcOperationStatusSuccessfulCompletion = 210
 
