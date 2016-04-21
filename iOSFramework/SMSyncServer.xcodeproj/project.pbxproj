@@ -284,9 +284,9 @@
 		83D732791CB1B5D300B2BFD3 /* Download */ = {
 			isa = PBXGroup;
 			children = (
+				83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */,
 				83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */,
 				83E55CD21CBA07DB00F204E0 /* SMDownloadInboundTransfer.swift */,
-				83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */,
 				83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */,
 				83D732831CB366BA00B2BFD3 /* SMDownloadBlock.swift */,
 				83D732851CB366BA00B2BFD3 /* SMDownloadFile.swift */,

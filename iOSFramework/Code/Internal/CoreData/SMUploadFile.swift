@@ -85,4 +85,16 @@ class SMUploadFile: SMUploadFileOperation, CoreDataModel {
         
         CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
+    
+    override func removeObject() {
+        // We can't iterate over self.blocks! and delete the blocks within there because the deletion itself changes the contents of self.blocks and causes this to fail.
+        let blocksToDelete = NSOrderedSet(orderedSet: self.blocks!)
+        for elem in blocksToDelete {
+            let block = elem as? SMUploadBlock
+            Assert.If(nil == block, thenPrintThisString: "Didn't have an SMUploadBlock object")
+            block!.removeObject()
+        }
+        
+        super.removeObject()
+    }
 }

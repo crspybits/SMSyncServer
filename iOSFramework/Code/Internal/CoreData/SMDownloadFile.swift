@@ -44,6 +44,18 @@ class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
         return downloadFileChange
     }
     
+    override func removeObject() {
+        let blocksToDelete = NSOrderedSet(orderedSet: self.blocks!)
+
+        for elem in blocksToDelete {
+            let block = elem as? SMDownloadBlock
+            Assert.If(nil == block, thenPrintThisString: "Didn't have an SMDownloadBlock object")
+            block!.removeObject()
+        }
+        
+        super.removeObject()
+    }
+    
     // Returns nil if the file change indicates a deletion. Don't use self.internalRelativeLocalURL directly.
     var fileURL: SMRelativeLocalURL? {
         get {

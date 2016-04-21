@@ -12,6 +12,10 @@ import XCTest
 import SMCoreLib
 
 class UploadRecovery: BaseClass {
+
+    // To enable 2nd part of recovery test after app crash.
+    static let recoveryAfterAppCrash1 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash1", initialBoolValue: true, persistType: .UserDefaults)
+    static let recoveryAfterAppCrash2 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash2", initialBoolValue: true, persistType: .UserDefaults)
         
     // Flag so I can get ordering of expectations right.
     var doneRecovery = false
@@ -326,8 +330,8 @@ class UploadRecovery: BaseClass {
         let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
-        if Upload.recoveryAfterAppCrash1.boolValue {
-            Upload.recoveryAfterAppCrash1.boolValue = false
+        if UploadRecovery.recoveryAfterAppCrash1.boolValue {
+            UploadRecovery.recoveryAfterAppCrash1.boolValue = false
             
             let singleUploadExpectation = self.expectationWithDescription("Upload Callback")
 
@@ -393,8 +397,8 @@ class UploadRecovery: BaseClass {
         let testFileName2 = testFileNameBase + ".2"
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
-        if Upload.recoveryAfterAppCrash2.boolValue {
-            Upload.recoveryAfterAppCrash2.boolValue = false
+        if UploadRecovery.recoveryAfterAppCrash2.boolValue {
+            UploadRecovery.recoveryAfterAppCrash2.boolValue = false
 
             self.waitUntilSyncServerUserSignin() {
                 

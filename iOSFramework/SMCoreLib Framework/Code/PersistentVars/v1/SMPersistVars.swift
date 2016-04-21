@@ -108,6 +108,7 @@ public class SMPersistItem : NSObject {
     private func savePersistentValue(value:AnyObject!) -> Bool {
         let archivedData = self.archiveValue(value)
         if nil == archivedData {
+            Log.error("savePersistentValue: Failed")
             return false
         } else {
             self.savePersistentData(archivedData!)

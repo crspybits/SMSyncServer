@@ -38,6 +38,14 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         return self.newObjectAndMakeUUID(false)
     }
     
+    func removeObject() {
+        SMDownloadOperation.removeObjectsInOrderedSet(self.downloadOperations!)
+        SMUploadOperation.removeObjectsInOrderedSet(self.pendingUploads!)
+        
+        CoreData.sessionNamed(SMCoreData.name).removeObject(self)
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
+    
     class func fetchAllObjects() -> [AnyObject]? {
         var resultObjects:[AnyObject]? = nil
         

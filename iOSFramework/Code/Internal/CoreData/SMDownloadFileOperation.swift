@@ -8,10 +8,7 @@
 
 import Foundation
 import CoreData
-
+import SMCoreLib
 
 class SMDownloadFileOperation: SMDownloadOperation {
-
-// Insert code here to add functionality to your managed object subclass
-
 }

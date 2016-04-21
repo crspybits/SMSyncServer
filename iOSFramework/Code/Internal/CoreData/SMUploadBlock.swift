@@ -22,5 +22,10 @@ class SMUploadBlock: NSManagedObject {
 
         return uploadBlock
     }
+    
+    func removeObject() {
+        CoreData.sessionNamed(SMCoreData.name).removeObject(self)
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
 }
 

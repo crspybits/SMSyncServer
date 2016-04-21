@@ -21,7 +21,24 @@ internal protocol SMSyncControlDelegate : class {
 }
 
 internal class SMSyncControl {
-    // Are we currently uploading, downloading, or doing a related operation?
+    // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
+    private static let _mode = SMPersistItemData(name: "SMSyncControl.Mode", initialDataValue: NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: .Idle)), persistType: .UserDefaults)
+    
+    internal var mode:SMSyncServerMode {
+        get {
+            let syncServerMode = NSKeyedUnarchiver.unarchiveObjectWithData(SMSyncControl._mode.dataValue) as! SMSyncServerModeWrapper
+            let result = syncServerMode.mode
+            Log.msg("mode.get: \(result)")
+            return result
+        }
+        
+        set {
+            Log.msg("mode.set: \(newValue)")
+            SMSyncControl._mode.dataValue = NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: newValue))
+        }
+    }
+    
+    // Are we currently uploading, downloading, or doing a related operation? Note that this is somewhat redundant with the .Idle vs. .Synchronizing mode, but it makes sense to make this a non-persistent member variable to reflect the locked vs. unlocked state of the the following lock.
     private var _operating:Bool = false
     
     // Ensuring thread safe operation of the api client interface for uploading and downloading.
@@ -43,24 +60,18 @@ internal class SMSyncControl {
     private var numberGetFileIndexAttempts = 0
     private var numberGetFileIndexForUploadAttempts = 0
     private var numberUnlockAttempts = 0
+    private var numberCleanupAttempts = 0
+    
+    private func resetAttempts() {
+        self.numberLockAttempts = 0
+        self.numberGetFileIndexAttempts = 0
+        self.numberGetFileIndexForUploadAttempts = 0
+        self.numberUnlockAttempts = 0
+        self.numberCleanupAttempts = 0
+    }
 
     internal static let session = SMSyncControl()
     internal weak var delegate:SMSyncServerDelegate?
-    
-    private var operating : Bool {
-        get {
-            return self._operating
-        }
-        set {
-            self._operating = newValue
-            if self._operating {
-                self.syncControlModeChange(.Synchronizing)
-            }
-            else {
-                self.syncControlModeChange(.Idle)
-            }
-        }
-    }
 
     private init() {
         SMUploadFiles.session.syncControlDelegate = self
@@ -85,11 +96,22 @@ internal class SMSyncControl {
         4) If there are committed uploads, assign a queue of those as pending uploads, go back to 3) (requires a lock created during checking for downloads).
     */
     internal func nextSyncOperation() {
-        if self.lock.tryLock() {
-            Assert.If(self.operating, thenPrintThisString: "Yikes: Already operating!")
-            self.operating = true
-            Log.special("Starting operating!")
+        switch self.mode {
+        case .ClientAPIError, .InternalError, .NonRecoverableError:
+            // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
+            self.delegate?.syncServerModeChange(self.mode)
+            return
             
+        case .Idle, .Synchronizing, .NetworkNotConnected:
+            break
+        }
+        
+        if self.lock.tryLock() {
+            Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
+            self._operating = true
+            self.syncControlModeChange(.Synchronizing)
+            Log.special("Starting operating!")
+            self.resetAttempts()
             self.next()
         }
         else {
@@ -109,7 +131,7 @@ internal class SMSyncControl {
         self.nextOperationLock.lock()
         
         if nil == SMQueues.current().committedUploads {
-            // No uploads, stop operating
+            // No uploads, stop operating; will set mode to .Idle
             self.stopOperating()
             self.nextOperationLock.unlock()
         }
@@ -121,9 +143,13 @@ internal class SMSyncControl {
         }
     }
     
-    private func stopOperating() {
-        Assert.If(!self.operating, thenPrintThisString: "Yikes: Not operating!")
-        self.operating = false
+    private func stopOperating(andSetModeToIdle setModeToIdle:Bool=true) {
+        Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
+        
+        self._operating = false
+        if setModeToIdle {
+            self.syncControlModeChange(.Idle)
+        }
         
         Log.special("Stopped operating!")
         Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
@@ -131,9 +157,52 @@ internal class SMSyncControl {
         self.lock.unlock()
     }
     
+    internal func resetFromError(completion:((error:NSError?)->())?=nil) {
+        switch (self.mode) {
+        case .Idle, .Synchronizing, .NetworkNotConnected:
+            completion?(error: Error.Create("Not in an error mode: \(self.mode)"))
+            return
+        
+        case .ClientAPIError, .InternalError, .NonRecoverableError:
+            // Normal situation in order to do a resetFromError
+            break
+        }
+        
+        // Should not be operating-- because we're in an error mode. The only time self._operating should be true is when we're in .Synchronizing mode.
+        Assert.If(self._operating, thenPrintThisString: "Should not be operating!")
+        
+        SMServerAPI.session.cleanup() { apiResult in
+            if nil == apiResult.error {
+                SMQueues.current().flush()
+                self.numberCleanupAttempts = 0
+                
+                // One result of successfully calling cleanup is that we won't have the server lock any more.
+                SMSyncControl.haveServerLock.boolValue = false
+                
+                self.syncControlModeChange(.Idle)
+                completion?(error: nil)
+            }
+            else {
+                // Retry up to a max number of times, then fail. Not using self.retry because we don't want to call next() here. Not checking Network.session().connected() because SMServerNetworking will check that and we can retry here.
+                
+                if self.numberCleanupAttempts < self.MAX_NUMBER_ATTEMPTS {
+                    self.numberCleanupAttempts += 1
+                    
+                    SMServerNetworking.exponentialFallback(forAttempt: self.numberCleanupAttempts) {
+                        self.delegate?.syncServerEventOccurred(.Recovery)
+                        self.resetFromError(completion)
+                    }
+                }
+                else {
+                    completion?(error: apiResult.error)
+                }
+            }
+        }
+    }
+    
     // Must have thread lock before calling. Must do thread unlock upon returning-- that return and thread unlock may be delayed due to an asynchronous operation.
     private func next() {
-        Assert.If(!self.operating, thenPrintThisString: "Yikes: Not operating!")
+        Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
 
         if Network.session().connected() {
             Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
@@ -322,6 +391,8 @@ extension SMSyncControl : SMSyncControlDelegate {
     }
     
     func syncControlModeChange(newMode:SMSyncServerMode) {
+        self.mode = newMode
+        Log.special("newMode: \(self.mode)")
         
         switch newMode {
         case .Idle:
@@ -333,10 +404,12 @@ extension SMSyncControl : SMSyncControlDelegate {
             break
             
         case .NetworkNotConnected:
-            self.stopOperating()
+            // We've set the mode above, and don't want to change it to .Idle. But, we do want to stop operating.
+            self.stopOperating(andSetModeToIdle: false)
         
         case .ClientAPIError, .NonRecoverableError, .InternalError:
-            self.stopOperating()
+            // Ditto.
+            self.stopOperating(andSetModeToIdle: false)
         }
         
         self.delegate?.syncServerModeChange(newMode)

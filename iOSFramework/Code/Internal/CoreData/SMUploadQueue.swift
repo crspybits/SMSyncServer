@@ -112,10 +112,32 @@ class SMUploadQueue: NSManagedObject, CoreDataModel {
     func removeChanges(changeType:ChangeType) {
         if let changes = self.getChanges(changeType) {
             for change in changes {
-                CoreData.sessionNamed(SMCoreData.name).removeObject(change)
+                change.removeObject()
             }
         }
         
         CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
+    
+    func removeObject() {
+        let operations = NSOrderedSet(orderedSet: self.operations!)
+        for elem in operations {
+            let uploadOperation = elem as? SMUploadOperation
+            Assert.If(nil == uploadOperation, thenPrintThisString: "Didn't get SMUploadOperation object")
+            uploadOperation!.removeObject()
+        }
+        
+        CoreData.sessionNamed(SMCoreData.name).removeObject(self)
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
+    
+    // The objects will not be removed directly from the given ordered set, so you can pass a Core Data ordered set relation object.
+    class func removeObjectsInOrderedSet(uploadQueues:NSOrderedSet) {
+        let queues = NSOrderedSet(orderedSet: uploadQueues)
+        for elem in queues {
+            let queue = elem as? SMUploadQueue
+            Assert.If(nil == queue, thenPrintThisString: "Didn't have SMUploadQueue object")
+            queue!.removeObject()
+        }
     }
 }

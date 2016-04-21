@@ -16,10 +16,6 @@ import SMCoreLib
 
 class Upload: BaseClass {
     
-    // To enable 2nd part of recovery test after app crash.
-    static let recoveryAfterAppCrash1 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash1", initialBoolValue: true, persistType: .UserDefaults)
-    static let recoveryAfterAppCrash2 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash2", initialBoolValue: true, persistType: .UserDefaults)
-    
     override func setUp() {
         super.setUp()
     }
@@ -133,6 +129,8 @@ class Upload: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let idleExpectation = self.expectationWithDescription("Idle")
         
+        self.extraServerResponseTime = 30
+
         self.waitUntilSyncServerUserSignin() {
             
             let cloudStorageFileName = "SingleDataUpload"
@@ -305,6 +303,8 @@ class Upload: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let idleExpectation = self.expectationWithDescription("Idle")
 
+        self.extraServerResponseTime = 30
+        
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("TwoFileUpdateUpload1")
             
@@ -558,18 +558,24 @@ class Upload: BaseClass {
     func testThatTwoFileSameNameUploadFails() {
         let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete1")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.waitUntilSyncServerUserSignin() {
             
-            var testFile1 = TestBasics.session.createTestFile("SameFileNameUpload1")
-            testFile1.remoteFileName = "SameFileNameUpload"
+            var testFile1 = TestBasics.session.createTestFile("SameFileNameUpload1.2")
+            testFile1.remoteFileName = "SameFileNameUpload1.2"
 
             SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
-            var testFile2 = TestBasics.session.createTestFile("SameFileNameUpload2")
+            var testFile2 = TestBasics.session.createTestFile("SameFileNameUpload2.2")
             testFile2.remoteFileName = testFile1.remoteFileName
 
             SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
             
             // TODO: What is the expectation for this commit? Should it cause the first file to be committed? i.e., the second upload throws an error. What should following operations, such as commmit do?
             SMSyncServer.session.commit()
@@ -583,15 +589,15 @@ class Upload: BaseClass {
                 SMSyncServer.session.cleanupFile(testFile1.uuid)
                 SMSyncServer.session.cleanupFile(testFile2.uuid)
                 
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile1.appFile)
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile2.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile1.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile2.appFile)
                 CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
-                SMSyncServer.session.resetFromError()
-                
-                // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { apiResult in
-                    XCTAssert(apiResult.error == nil)
+                // Cleanup so we can do the next test.
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }
@@ -605,10 +611,11 @@ class Upload: BaseClass {
         let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
         let singleUploadExpectation1 = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation2 = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("NotSameFileNameUpload")
-            let testFile2 = TestBasics.session.createTestFile("SameFileNameUpload")
+            let testFile2 = TestBasics.session.createTestFile("SameFileNameUpload1")
             var testFile3 = TestBasics.session.createTestFile("SameFileNameUpload2")
             testFile3.remoteFileName = testFile2.fileName
             
@@ -626,6 +633,11 @@ class Upload: BaseClass {
                 singleUploadExpectation2.fulfill()
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             // TODO: Again, what is our expectation here?
             SMSyncServer.session.commit()
             
@@ -634,16 +646,16 @@ class Upload: BaseClass {
                 SMSyncServer.session.cleanupFile(testFile2.uuid)
                 SMSyncServer.session.cleanupFile(testFile3.uuid)
                 
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile1.appFile)
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile2.appFile)
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile3.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile1.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile2.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile3.appFile)
                 CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
-                SMSyncServer.session.resetFromError()
-                
-                // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { apiResult in
-                    XCTAssert(apiResult.error == nil)
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }
@@ -696,15 +708,6 @@ class Upload: BaseClass {
             // Gotta put the error callback before the uploadImmutableFile in this case because the error callback is thrown from uploadImmutableFile.
             self.errorCallbacks.append() {
                 // Since this error doesn't occur during an actual upload we don't need to do a resetFromError or a cleanup.
-                /*
-                SMSyncServer.session.resetFromError()
-                
-                // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { error in
-                    XCTAssert(error == nil)
-                    errorCallbackExpectation.fulfill()
-                }
-                */
                 
                 errorCallbackExpectation.fulfill()
             }
@@ -758,14 +761,13 @@ class Upload: BaseClass {
                 // file2 was in error and didn't get uploaded-- need to clean it up.
                 SMSyncServer.session.cleanupFile(testFile2.uuid)
                 
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(testFile2.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile2.appFile)
                 CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
-                SMSyncServer.session.resetFromError()
-                
-                // A call to cleanup is necessary so we can do the next test.
-                SMServerAPI.session.cleanup() { apiResult in
-                    XCTAssert(apiResult.error == nil)
+                // Cleanup so we can do the next test.
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
                     errorCallbackExpectation.fulfill()
                 }
             }

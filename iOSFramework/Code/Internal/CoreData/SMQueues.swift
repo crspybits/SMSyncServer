@@ -121,7 +121,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
         Assert.If(self.committedUploads == nil, thenPrintThisString: "No committed queues!")
         
         if self.beingUploaded != nil {
-            CoreData.sessionNamed(SMCoreData.name).removeObject(self.beingUploaded!)
+            self.beingUploaded!.removeObject()
         }
         
         self.beingUploaded = (self.committedUploads!.firstObject as! SMUploadQueue)
@@ -140,28 +140,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
             }
         }
     }
-    
-    func endUploading() {
-        Assert.If(self.beingUploaded == nil, thenPrintThisString: "Not uploading!")
-        Assert.If(self.beingUploaded!.operations!.count != 0, thenPrintThisString: "Still upload operations!")
-        self.beingUploaded = nil
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
-    }
-    
-    /*
-    func end(direction:FileSyncDirection) {
-        switch direction {
-
-        case .Download:
-            Assert.If(self.beingUploaded != nil, thenPrintThisString: "Already uploading!")
-            Assert.If(self.beingDownloaded == nil, thenPrintThisString: "Not downloading!")
-            Assert.If(self.beingDownloaded!.count != 0, thenPrintThisString: "Still files to download!")
-            self.beingDownloaded = nil
-        }
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
-    }
-    */
     
     /* Compare our local file meta data against the server files to see which indicate download, download-deletion, and download-conflicts.
     The result of this call is stored in .beingDownloaded in the SMQueues object.
@@ -182,7 +160,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                 if localFile != nil  {
                     // Record this as a file to be deleted locally, only if we haven't already done so.
                     if !localFile!.deletedOnServer!.boolValue {
-                        let downloadDeletion = SMDownloadDeletion.newObject( fromLocalFileMetaData: localFile!)
+                        let downloadDeletion = SMDownloadDeletion.newObject( withLocalFileMetaData: localFile!)
                         downloadOperations.addObject(downloadDeletion)
                         
                         // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The caller should do it at a time that will preserve the atomic nature of the operation.
@@ -275,19 +253,13 @@ class SMQueues: NSManagedObject, CoreDataModel {
             }
             
             // Remove any prior upload changes in the same queue with the same uuid
-            var toBeDeleted = [SMUploadFileOperation]()
-            for elem in self.uploadsBeingPrepared!.operations! {
+            let operations = NSOrderedSet(orderedSet: self.uploadsBeingPrepared!.operations!)
+            for elem in operations {
                 if let uploadFileChange = elem as? SMUploadFile {
                     if uploadFileChange.localFile!.uuid == localFileMetaData.uuid {
-                        toBeDeleted.append(uploadFileChange)
+                        uploadFileChange.removeObject()
                     }
                 }
-            }
-            
-            // I believe this will remove the uploadFileFile change from self.uploadsBeingPrepared!.changes! as well.
-            for uploadFileChange in toBeDeleted {
-                CoreData.sessionNamed(SMCoreData.name).removeObject(
-                    uploadFileChange)
             }
         }
 
@@ -320,6 +292,22 @@ class SMQueues: NSManagedObject, CoreDataModel {
             else {
                 return (result as! [SMDownloadConflict])
             }
+        }
+    }
+    
+    // Removes & deletes all objects in all queues.
+    func flush() {
+        self.beingUploaded?.removeObject()
+        
+        self.uploadsBeingPrepared?.removeObject()
+        self.uploadsBeingPrepared = (SMUploadQueue.newObject() as! SMUploadQueue)
+
+        if self.committedUploads != nil {
+            SMUploadQueue.removeObjectsInOrderedSet(self.committedUploads!)
+        }
+        
+        if self.beingDownloaded != nil {
+            SMDownloadOperation.removeObjectsInOrderedSet(self.beingDownloaded!)
         }
     }
 }

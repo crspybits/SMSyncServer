@@ -22,4 +22,9 @@ class SMDownloadBlock: NSManagedObject {
 
         return downloadBlock
     }
+    
+    func removeObject() {
+        CoreData.sessionNamed(SMCoreData.name).removeObject(self)
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
 }

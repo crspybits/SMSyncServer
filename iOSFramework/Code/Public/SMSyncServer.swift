@@ -179,17 +179,12 @@ public class SMSyncServer : NSObject {
         }
     }
     
-    // Persisting this variable because we need to be know what mode we are operating in even if the app is restarted or crashes.
-    private static let _mode = SMPersistItemData(name: "SMSyncServer.Mode", initialDataValue: NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: .Idle)), persistType: .UserDefaults)
-    
     private func setMode(mode:SMSyncServerMode) {
-        SMSyncServer._mode.dataValue = NSKeyedArchiver.archivedDataWithRootObject(SMSyncServerModeWrapper(withMode: mode))
+        SMSyncControl.session.mode = mode
     }
     
     public var mode:SMSyncServerMode {
-        // `mode` is an instance variable and not a class variable just for consistency for the client API, i.e., to access it from the session member.
-        let syncServerMode = NSKeyedUnarchiver.unarchiveObjectWithData(SMSyncServer._mode.dataValue) as! SMSyncServerModeWrapper
-        return syncServerMode.mode
+        return SMSyncControl.session.mode
     }
     
     // Only retains a weak reference to the cloudStorageUserDelegate
@@ -288,8 +283,9 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.appFileType = attr.appFileType
             
             if nil == attr.remoteFileName {
-                self.callSyncServerModeChange(
-                    .NonRecoverableError(Error.Create("remoteFileName not given!")))
+                let error = Error.Create("remoteFileName not given!")
+                Log.error("\(error)")
+                self.callSyncServerModeChange(.NonRecoverableError(error))
                 return
             }
             
@@ -299,8 +295,10 @@ public class SMSyncServer : NSObject {
             // Existing file
             
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
+                let error = Error.Create("You gave a different remote file name than was present on the server!")
+                Log.error("\(error)")
                 self.callSyncServerModeChange(
-                    .NonRecoverableError(Error.Create("You gave a different remote file name than was present on the server!")))
+                    .NonRecoverableError(error))
                 return
             }
         }
@@ -318,9 +316,11 @@ public class SMSyncServer : NSObject {
         }
         
         change.localFile = localFileMetaData!
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             self.callSyncServerModeChange(.NonRecoverableError(Error.Create("File was already deleted!")))
+            return
         }
         
         // The localVersion property of the SMLocalFile object will get updated, if needed, when we sync this file meta data to the server meta data.
@@ -368,7 +368,8 @@ public class SMSyncServer : NSObject {
         
         let change = SMUploadDeletion.newObject() as! SMUploadDeletion
         change.localFile = localFileMetaData!
-        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
             return
@@ -382,8 +383,7 @@ public class SMSyncServer : NSObject {
     public func cleanupFile(uuid:NSUUID) {
         let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
         Assert.If(localFileMetaData == nil, thenPrintThisString: "Yikes: Couldn't find uuid: \(uuid)")
-        CoreData.sessionNamed(SMCoreData.name).removeObject(localFileMetaData!)
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
+        localFileMetaData!.removeObject()
     }
     
     // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
@@ -391,15 +391,15 @@ public class SMSyncServer : NSObject {
         Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
         
         if uuid == nil {
-            if let metaDataArray = SMLocalFile.fetchAllObjects() {
+            if let metaDataArray = SMLocalFile.fetchAllObjects() as? [SMLocalFile] {
                 for localFile in metaDataArray {
-                    CoreData.sessionNamed(SMCoreData.name).removeObject(localFile as! NSManagedObject)
+                    localFile.removeObject()
                 }
             }
         }
         else {
             if let localFile = SMLocalFile.fetchObjectWithUUID(uuid!.UUIDString) {
-                CoreData.sessionNamed(SMCoreData.name).removeObject(localFile)
+                localFile.removeObject()
             }
         }
         
@@ -488,9 +488,10 @@ public class SMSyncServer : NSObject {
     }
 #endif
 
-    // Doesn't actually recover from the error. Expect the caller to somehow do that. Just resets the mode so this class can later proceed.
-    public func resetFromError() {
-        self.setMode(.Idle)
+    // USE CAREFULLY!
+    // Doesn't actually recover from the error. Expects the caller to somehow do that. But does two main actions: 1) Resets the pending upload operations to the initial state (i.e., all uploads/deletions you have queued will be lost), and 2) resets the server so that it can operate again (e.g., removes the server lock), and if the server reset is successful, resets the mode to .Idle. The client *must* have the server lock in order for this to succeed.
+    public func resetFromError(completion:((error:NSError?)->())?=nil) {
+        SMSyncControl.session.resetFromError(completion)
     }
 }
 

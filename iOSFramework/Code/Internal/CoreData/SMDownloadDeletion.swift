@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import SMCoreLib
 
-class SMDownloadDeletion: SMDownloadFileOperation {
+class SMDownloadDeletion: SMDownloadFileOperation, CoreDataModel {
 
     class func entityName() -> String {
         return "SMDownloadDeletion"
@@ -24,11 +24,12 @@ class SMDownloadDeletion: SMDownloadFileOperation {
         return fileChange
     }
     
-    class func newObject(fromLocalFileMetaData localFileMetaData:SMLocalFile) -> SMDownloadDeletion {
+    class func newObject(withLocalFileMetaData localFileMetaData:SMLocalFile) -> SMDownloadDeletion {
         let downloadFileChange = self.newObject() as! SMDownloadDeletion
         
         downloadFileChange.localFile = localFileMetaData
-        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+
         return downloadFileChange
     }
 }
