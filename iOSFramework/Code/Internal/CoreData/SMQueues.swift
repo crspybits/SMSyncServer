@@ -252,6 +252,9 @@ class SMQueues: NSManagedObject, CoreDataModel {
                 return false
             }
             
+            NSLog("self.uploadsBeingPrepared: \(self.uploadsBeingPrepared)")
+            NSLog("self.uploadsBeingPrepared!.operations: \(self.uploadsBeingPrepared!.operations)")
+            
             // Remove any prior upload changes in the same queue with the same uuid
             let operations = NSOrderedSet(orderedSet: self.uploadsBeingPrepared!.operations!)
             for elem in operations {
@@ -301,7 +304,8 @@ class SMQueues: NSManagedObject, CoreDataModel {
         
         self.uploadsBeingPrepared?.removeObject()
         self.uploadsBeingPrepared = (SMUploadQueue.newObject() as! SMUploadQueue)
-
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
+        
         if self.committedUploads != nil {
             SMUploadQueue.removeObjectsInOrderedSet(self.committedUploads!)
         }

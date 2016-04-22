@@ -319,7 +319,7 @@ public class SMSyncServer : NSObject {
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
-            self.callSyncServerModeChange(.NonRecoverableError(Error.Create("File was already deleted!")))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
             return
         }
         
@@ -489,7 +489,20 @@ public class SMSyncServer : NSObject {
 #endif
 
     // USE CAREFULLY!
-    // Doesn't actually recover from the error. Expects the caller to somehow do that. But does two main actions: 1) Resets the pending upload operations to the initial state (i.e., all uploads/deletions you have queued will be lost), and 2) resets the server so that it can operate again (e.g., removes the server lock), and if the server reset is successful, resets the mode to .Idle. The client *must* have the server lock in order for this to succeed.
+    /* Doesn't actually recover from the error. Expects the caller to somehow do that.
+    
+    Has two behaviors:
+    
+    1) Local cleanup: resets the pending upload operations to the initial state (i.e., all uploads/deletions you have queued will be lost).
+    
+    2) Server cleanup: resets the server so that it can operate again (e.g., removes the server lock), and if the server reset is successful, resets the mode to .Idle. The client *must* have the server lock in order for this to succeed.
+    
+    For .ClientAPIError's: Does only behavior 1) and does it *synchronously*.
+    
+    For .InternalError's and .NonRecoverableError's: Does behavior 2) asynchronously, and if behavior 2) is successful, does behavior 1). So effectively, both behaviors are *asynchronous*.
+    
+    On normal reset operation (i.e., the reset worked properly), the callback error parameter will be nil.
+    */
     public func resetFromError(completion:((error:NSError?)->())?=nil) {
         SMSyncControl.session.resetFromError(completion)
     }

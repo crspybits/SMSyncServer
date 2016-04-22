@@ -158,13 +158,23 @@ internal class SMSyncControl {
     }
     
     internal func resetFromError(completion:((error:NSError?)->())?=nil) {
+        func localCleanup() {
+            SMQueues.current().flush()
+            self.numberCleanupAttempts = 0
+            self.syncControlModeChange(.Idle)
+        }
+        
         switch (self.mode) {
         case .Idle, .Synchronizing, .NetworkNotConnected:
             completion?(error: Error.Create("Not in an error mode: \(self.mode)"))
             return
         
-        case .ClientAPIError, .InternalError, .NonRecoverableError:
-            // Normal situation in order to do a resetFromError
+        case .ClientAPIError:
+            localCleanup()
+            completion?(error: nil)
+            return
+            
+        case .InternalError, .NonRecoverableError:
             break
         }
         
@@ -173,13 +183,10 @@ internal class SMSyncControl {
         
         SMServerAPI.session.cleanup() { apiResult in
             if nil == apiResult.error {
-                SMQueues.current().flush()
-                self.numberCleanupAttempts = 0
-                
                 // One result of successfully calling cleanup is that we won't have the server lock any more.
                 SMSyncControl.haveServerLock.boolValue = false
                 
-                self.syncControlModeChange(.Idle)
+                localCleanup()
                 completion?(error: nil)
             }
             else {

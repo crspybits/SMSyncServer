@@ -191,7 +191,10 @@ class UploadDeletion: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
         let errorExpectation = self.expectationWithDescription("Error")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let errorCallbackExpectation = self.expectationWithDescription("ErrorCallback")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+        let idleExpectation3 = self.expectationWithDescription("Idle3")
 
         var errorExpected = false
         
@@ -215,12 +218,17 @@ class UploadDeletion: BaseClass {
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
                     
                     SMSyncServer.session.deleteFile(testFile.uuid)
                     SMSyncServer.session.commit()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -240,6 +248,11 @@ class UploadDeletion: BaseClass {
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation3.fulfill()
+                }
+                
                 errorExpected = true
                 SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
                 SMSyncServer.session.commit()
@@ -248,6 +261,11 @@ class UploadDeletion: BaseClass {
             self.errorCallbacks.append() {
                 XCTAssert(errorExpected)
                 errorExpectation.fulfill()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
+                    errorCallbackExpectation.fulfill()
+                }
             }
         }
         
@@ -262,7 +280,10 @@ class UploadDeletion: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
         let errorExpectation = self.expectationWithDescription("Error")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+        let idleExpectation3 = self.expectationWithDescription("Idle3")
 
         var errorExpected = false
         
@@ -286,12 +307,17 @@ class UploadDeletion: BaseClass {
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
                     
                     SMSyncServer.session.deleteFile(testFile.uuid)
                     SMSyncServer.session.commit()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -310,6 +336,11 @@ class UploadDeletion: BaseClass {
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation3.fulfill()
+                }
+            
                 errorExpected = true
                 SMSyncServer.session.deleteFile(testFile.uuid)
                 SMSyncServer.session.commit()
@@ -320,6 +351,11 @@ class UploadDeletion: BaseClass {
             self.errorCallbacks.append() {
                 XCTAssert(errorExpected)
                 errorExpectation.fulfill()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
+                    errorCallbackExpectation.fulfill()
+                }
             }
         }
         
@@ -329,6 +365,8 @@ class UploadDeletion: BaseClass {
     // Delete a file unknown to the sync server. e.g., file never uploaded.
     func testThatDeletingUnknownFileFails() {
         let errorExpectation = self.expectationWithDescription("Error")
+        let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("UnknownFile")
@@ -338,12 +376,20 @@ class UploadDeletion: BaseClass {
                 XCTAssert(fileAttr == nil)
                 
                 errorExpectation.fulfill()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
+                    errorCallbackExpectation.fulfill()
+                }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
             
             SMSyncServer.session.deleteFile(testFile.uuid)
             SMSyncServer.session.commit()
-            
-            XCTAssert(!SMSyncServer.session.isOperating)
         }
         
         self.waitForExpectations()
@@ -504,11 +550,13 @@ class UploadDeletion: BaseClass {
     // Edge cases. Should *fail* when attempting to delete, upload, and commit the same file.
     func testThatDeleteUploadSameFileFails() {
         let commitCompleteCallbackExpectation1 = self.expectationWithDescription("Commit1 Complete1")
-        let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit2 Complete1")
+        //let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit2 Complete1")
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
-        let deleteExpectation = self.expectationWithDescription("Deletion Complete")
+        //let deleteExpectation = self.expectationWithDescription("Deletion Complete")
         let errorExpectation = self.expectationWithDescription("Error")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
 
         var errorExpected = false
         
@@ -532,27 +580,36 @@ class UploadDeletion: BaseClass {
                     commitCompleteCallbackExpectation1.fulfill()
 
                     SMSyncServer.session.deleteFile(testFile1.uuid)
-
-                    errorExpected = true
-                    SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
+                        idleExpectation2.fulfill()
                     }
-                    
-                    // Our expectation here is that this should delete the file, despite the error delegate callback for the upload after the delete.
+
+                    errorExpected = true
+                    SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+
+                    // Our expectation here is that this should *not* delete the file. This is because the resetFromError() call does a flush operation, removing uploads, and upload-deletions.
                     SMSyncServer.session.commit()
                 }
             }
             
-            SMSyncServer.session.commit()
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+            }
             
             self.errorCallbacks.append() {
                 XCTAssert(errorExpected)
                 errorExpectation.fulfill()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
+                    errorCallbackExpectation.fulfill()
+                }
             }
             
+            /*
             self.commitCompleteCallbacks.append() { numberOperations in
                 XCTAssert(numberOperations == 1)
                 commitCompleteCallbackExpectation2.fulfill()
@@ -563,7 +620,9 @@ class UploadDeletion: BaseClass {
                 XCTAssert(uuids[0].UUIDString == testFile1.uuidString)
                 
                 deleteExpectation.fulfill()
-            }
+            }*/
+            
+            SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -572,11 +631,13 @@ class UploadDeletion: BaseClass {
     // Delete two files, the first is fine, but the second is the same as the first.
     func testThatRepeatedDeleteFails() {
         let commitCompleteCallbackExpectation1 = self.expectationWithDescription("Commit Complete1")
-        let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit Complete2")
+        //let commitCompleteCallbackExpectation2 = self.expectationWithDescription("Commit Complete2")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
-        let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
-        let errorExpectation = self.expectationWithDescription("Deletion Complete")
-        let idleExpectation = self.expectationWithDescription("Idle")
+        //let singleDeletionExpectation = self.expectationWithDescription("Deletion Complete")
+        let errorExpectation = self.expectationWithDescription("Error")
+        let errorCallbackExpectation = self.expectationWithDescription("Error Callback")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
 
         var errorExpected = false
         
@@ -599,22 +660,28 @@ class UploadDeletion: BaseClass {
                     commitCompleteCallbackExpectation1.fulfill()
                     
                     SMSyncServer.session.deleteFile(testFile.uuid)
+
+                    // let idleExpectation = self.expectationWithDescription("Idle")
+                    self.idleCallbacks.append() {
+                        idleExpectation2.fulfill()
+                    }
                     
                     errorExpected = true
                     SMSyncServer.session.deleteFile(testFile.uuid)
                     
-                    // let idleExpectation = self.expectationWithDescription("Idle")
-                    self.idleCallbacks.append() {
-                        idleExpectation.fulfill()
-                    }
-
-                    // Expect the first delete to work.
+                    // Expect neither delete to work-- because of the flush in the error reset.
                     SMSyncServer.session.commit()
                 }
+            }
+
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
             }
             
             SMSyncServer.session.commit()
             
+            /*
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
                 XCTAssert(uuids[0].UUIDString == testFile.uuidString)
@@ -625,11 +692,16 @@ class UploadDeletion: BaseClass {
             self.commitCompleteCallbacks.append() { numberDeletions in
                 XCTAssert(numberDeletions == 1)
                 commitCompleteCallbackExpectation2.fulfill()
-            }
+            }*/
                         
             self.errorCallbacks.append() {
                 XCTAssert(errorExpected)
                 errorExpectation.fulfill()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    XCTAssert(error == nil)
+                    errorCallbackExpectation.fulfill()
+                }
             }
         }
         
