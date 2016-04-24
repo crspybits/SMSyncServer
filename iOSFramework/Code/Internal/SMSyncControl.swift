@@ -101,8 +101,18 @@ internal class SMSyncControl {
             // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
             self.delegate?.syncServerModeChange(self.mode)
             return
+        
+        // If we're in a .NetworkNotConnected mode, calling nextSyncOperation() should be considered a .Recovery step. i.e., because presumably the network is now connected.
+        case .NetworkNotConnected:
+            self.delegate?.syncServerEventOccurred(.Recovery)
             
-        case .Idle, .Synchronizing, .NetworkNotConnected:
+        // If we're in a .Synchronizing mode, this is also a .Recovery step. This is because they only way we should get to this point and be in a .Synchronizing mode is if the app terminated and we were in a .Synchronizing mode.
+        case .Synchronizing:
+            if !self._operating {
+                self.delegate?.syncServerEventOccurred(.Recovery)
+            }
+            
+        case .Idle:
             break
         }
         

@@ -52,9 +52,6 @@ public class SMServerConstants {
 
     public static let operationCheckOperationStatus = "CheckOperationStatus"
     public static let operationRemoveOperationId = "RemoveOperationId"
-
-    // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
-    public static let operationOutboundTransferRecovery = "OutboundTransferRecovery"
     
     // Recover from errors that occur after starting to transfer files from cloud storage.
     public static let operationInboundTransferRecovery = "InboundTransferRecovery"

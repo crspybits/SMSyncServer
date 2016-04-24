@@ -43,9 +43,6 @@ function define(name, value) {
 
 	define("operationCheckOperationStatus", "CheckOperationStatus");
 	define("operationRemoveOperationId", "RemoveOperationId");
-
-    // Recover from errors that occur after starting to transfer files to cloud storage. To use this recovery, the operation must have failed with rcOperationStatusFailedDuringTransfer. On successful operation, this will transfer any remaining needed files to cloud storage.
-	define("operationOutboundTransferRecovery", "OutboundTransferRecovery");
     
     // Recover from errors that occur after starting to transfer files from cloud storage.
 	define("operationInboundTransferRecovery", "InboundTransferRecovery");

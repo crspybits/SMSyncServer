@@ -112,7 +112,9 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                     var psOperationId = null;
                     
                     const operationIdData = {
-                        _id:lock.operationId
+                        _id: lock.operationId,
+                        userId: self.userId(),
+                        deviceId: self.deviceId()
                     };
                     
                     try {
@@ -122,8 +124,11 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                         return;
                     }
                     
-                    PSOperationId.getFor(lock.operationId, function (error, psOperationId) {
+                    PSOperationId.getFor(lock.operationId, self.userId(), self.deviceId(), function (error, psOperationId) {
                         if (error) {
+                            self.endWithErrorDetails(error);
+                        }
+                        else if (!isDefined(psOperationId)) {
                             var message = "Could not get operation id:" + error;
                             logger.error(message);
                             self.endWithErrorDetails(message);

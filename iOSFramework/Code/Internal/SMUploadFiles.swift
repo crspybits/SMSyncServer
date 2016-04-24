@@ -64,6 +64,7 @@ internal class SMUploadFiles : NSObject {
     private var numberOutboundTransferAttempts = 0
     private var numberCheckOperationStatusErrors = 0
     private var numberRemoveOperationIdAttempts = 0
+    private var numberRevertBackToOutboundTransfer = 0
 
     private func resetAttempts() {
         self.numberDeletionAttempts = 0
@@ -71,10 +72,23 @@ internal class SMUploadFiles : NSObject {
         self.numberOutboundTransferAttempts = 0
         self.numberCheckOperationStatusErrors = 0
         self.numberRemoveOperationIdAttempts = 0
+        self.numberRevertBackToOutboundTransfer = 0
     }
 
+    // Operations and their priority.
+    private var uploadOperations:[()-> Bool?]!
+    
     private override init() {
         super.init()
+        
+        // Putting deletions as first priority just because deletions should be fast.
+        self.uploadOperations = [
+            self.doUploadDeletions,
+            self.doUploadFiles,
+            self.doOutboundTransfer,
+            self.startToPollForOperationFinish,
+            self.removeOperationId
+        ]
     }
     
     internal func appLaunchSetup() {
@@ -106,27 +120,14 @@ internal class SMUploadFiles : NSObject {
         self.uploadControl()
     }
 
-    // Control for operations: 1) upload-deletions, 2) uploads, and 3) outbound transfers. The priority is in that order.
-    // Putting deletions as first priority just because deletions should be fast.
-    // Each call to this control method will do at most one of the three asynchronous operations.
+    // Control for operations. Each call to this control method does at most one of the asynchronous operations.
     private func uploadControl() {
-        let wereUploadDeletions = self.doUploadDeletions()
-        if wereUploadDeletions == nil {
-            return
-        }
-        else if !wereUploadDeletions! {
-            let wereUploadFiles = self.doUploadFiles()
-            if wereUploadFiles == nil {
-                return
-            }
-            else if !wereUploadFiles! {
-                let wasAnOutboundTransfer = self.doOutboundTransfer()
-                if !wasAnOutboundTransfer {
-                    let readyToPoll = self.startToPollForOperationFinish()
-                    if !readyToPoll {
-                        self.removeOperationId()
-                    }
-                }
+        for uploadOperation in self.uploadOperations {
+            let successfulOperation = uploadOperation()
+            
+            // If there was an error (nil), or if the operation was successful, then we're done with this go-around. The operations run asynchronously, when successful, and will callback as needed to uploadControl() to do the next operation.
+            if successfulOperation == nil || successfulOperation! {
+                break
             }
         }
     }
@@ -164,14 +165,16 @@ internal class SMUploadFiles : NSObject {
                 self.uploadControl()
             }
             else {
-                self.retryIfNetworkConnected(&self.numberDeletionAttempts, errorSpecifics: "upload-deletion")
+                self.retryIfNetworkConnected(&self.numberDeletionAttempts, errorSpecifics: "upload-deletion") {
+                    self.uploadControl()
+                }
             }
         }
         
         return true
     }
     
-    private func retryIfNetworkConnected(inout attempts:Int, errorSpecifics:String) {
+    private func retryIfNetworkConnected(inout attempts:Int, errorSpecifics:String, retryMethod:()->()) {
         if Network.session().connected() {
             // Retry up to a max number of times, then fail.
             if attempts < self.MAX_NUMBER_ATTEMPTS {
@@ -179,9 +182,7 @@ internal class SMUploadFiles : NSObject {
                 
                 SMServerNetworking.exponentialFallback(forAttempt: attempts) {
                     self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
-
-                    // Using uploadControl instead of more specific retry methods because the more specific methods assume they are being called by uploadControl. Should make reasoning simpler.
-                    self.uploadControl()
+                    retryMethod()
                 }
             }
             else {
@@ -217,7 +218,9 @@ internal class SMUploadFiles : NSObject {
                     self.callSyncControlModeChange(.InternalError(uploadResult.error!))
                 }
                 else {
-                    self.retryIfNetworkConnected(&self.numberUploadAttempts, errorSpecifics: "upload")
+                    self.retryIfNetworkConnected(&self.numberUploadAttempts, errorSpecifics: "upload") {
+                        self.uploadControl()
+                    }
                 }
             }
         }
@@ -240,7 +243,7 @@ internal class SMUploadFiles : NSObject {
         return nil
     }
     
-    private func doOutboundTransfer() -> Bool {
+    private func doOutboundTransfer() -> Bool? {
         let wrapUp = self.getWrapup(.OutboundTransfer)
         if wrapUp == nil {
             return false
@@ -255,7 +258,9 @@ internal class SMUploadFiles : NSObject {
                 self.uploadControl()
             }
             else {
-                self.retryIfNetworkConnected(&self.numberOutboundTransferAttempts, errorSpecifics: "outbound transfer")
+                self.retryIfNetworkConnected(&self.numberOutboundTransferAttempts, errorSpecifics: "outbound transfer") {
+                    self.uploadControl()
+                }
             }
         }
         
@@ -263,7 +268,7 @@ internal class SMUploadFiles : NSObject {
     }
     
     // Start timer to poll the server to check if our operation has succeeded. That check will update our local file meta data if/when the file sync completes successfully.
-    private func startToPollForOperationFinish() -> Bool {
+    private func startToPollForOperationFinish() -> Bool? {
         let wrapUp = self.getWrapup(.OutboundTransferWait)
         if wrapUp == nil {
             return false
@@ -291,7 +296,9 @@ internal class SMUploadFiles : NSObject {
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
             if (apiResult.error != nil) {
                 Log.msg("Yikes: Error checking operation status")
-                self.retryIfNetworkConnected(&self.numberCheckOperationStatusErrors, errorSpecifics: "check operation status")
+                self.retryIfNetworkConnected(&self.numberCheckOperationStatusErrors, errorSpecifics: "check operation status") {
+                    self.uploadControl()
+                }
             }
             else {
                 switch (operationResult!.status) {
@@ -301,7 +308,7 @@ internal class SMUploadFiles : NSObject {
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
                     Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
-                    
+                    self.numberRevertBackToOutboundTransfer = 0
                     let numberUploads = self.updateMetaDataForSuccessfulUploads()
                     
                     // 3/15/16; Because of a server error, operation count could be greater than the number uploads. Just ran into this.
@@ -314,14 +321,17 @@ internal class SMUploadFiles : NSObject {
 
                 default: // Must have failed on outbound transfer.
                     // Revert to the last stage-- recovery.
-                    wrapUp!.wrapupStage = .OutboundTransfer
-                    self.uploadControl()
+                    self.retryIfNetworkConnected(
+                        &self.numberRevertBackToOutboundTransfer, errorSpecifics: "failed on outbound transfer") {
+                        wrapUp!.wrapupStage = .OutboundTransfer
+                        self.uploadControl()
+                    }
                 }
             }
         }
     }
     
-    private func removeOperationId() -> Bool {
+    private func removeOperationId() -> Bool? {
         let wrapUp = self.getWrapup(.RemoveOperationId)
         if wrapUp == nil {
             return false
@@ -339,7 +349,9 @@ internal class SMUploadFiles : NSObject {
             }
             else {
                 Log.file("Failed removing OperationId from server: \(apiResult.error)")
-                self.retryIfNetworkConnected(&self.numberRemoveOperationIdAttempts, errorSpecifics: "remove operation id")
+                self.retryIfNetworkConnected(&self.numberRemoveOperationIdAttempts, errorSpecifics: "remove operation id") {
+                    self.uploadControl()
+                }
             }
         }
         

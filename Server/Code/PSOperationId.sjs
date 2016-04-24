@@ -12,13 +12,17 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "OperationIds";
 
 // These must match those properties given in the data model below.
-const props = ["_id", "startDate", "operationType", "operationCount", "operationStatus", "error"];
+const props = ["_id", "userId", "deviceId", "startDate", "operationType", "operationCount", "operationStatus", "error"];
 
-// TODO: This data model needs to have at least a userId to add some confirmation/error checking for operationCheckOperationStatus. Right now any user can access any operationId.
+// TODO: Need to add some confirmation/error checking for operationCheckOperationStatus based on userId/deviceId. Right now any user can access any operationId.
 
 /* Data model
 	{
         _id: (ObjectId), // key for this operation identifier; assigned by Mongo.
+ 
+		userId: (ObjectId), // reference into PSUserCredentials collection
+        deviceId: (String, UUID), // identifies a specific mobile device (assigned by app)
+ 
         startDate: (Date/time), // date/time that the operation started
  
         // For error checking and integrity -- to ensure the REST/API is being used as it should be. A given operation id can only be used for Outbound or Inbound operations not for both.
@@ -35,20 +39,22 @@ const props = ["_id", "startDate", "operationType", "operationCount", "operation
 */
 
 // Constructor
-// You can leave the idData null, and suitable defaults will be provided.
+// You must give deviceId and userId in idData.
 // if idData._id is provided and given as a string, it will be converted to an ObjectID.
 // Errors: Can throw an Error object.
 function PSOperationId(idData) {
     var self = this;
-
-    if (isDefined(idData)) {
-        if (isDefined(idData._id) && typeof idData._id === 'string') {
-            // This can throw an error; let the caller of PSOperationId catch it.
-            idData._id = new ObjectID.createFromHexString(idData._id);
-        }
     
-        Common.assignPropsTo(self, idData, props);
+    if (!isDefined(idData) || !isDefined(idData.userId) || !isDefined(idData.deviceId)) {
+        throw new Error("idData or userId or deviceId not given!");
     }
+    
+    if (isDefined(idData._id) && typeof idData._id === 'string') {
+        // This can throw an error; let the caller of PSOperationId catch it.
+        idData._id = new ObjectID.createFromHexString(idData._id);
+    }
+
+    Common.assignPropsTo(self, idData, props);
     
     if (!isDefined(self.startDate)) {
         self.startDate = new Date();
@@ -68,18 +74,29 @@ function PSOperationId(idData) {
 PSOperationId.prototype.storeNew = function (callback) {
     var self = this;
     
-    // TODO: Make sure this user/device doesn't already have an operationId.
-
-    if (!isDefined(self.operationType)) {
-        callback(new Error("operationType was not given in PSOperationId"))
-        return;
-    }
-    else if (self.operationType != "Outbound" && self.operationType != "Inbound") {
-        callback(new Error("operationType was not Outbound or Inbound"))
-        return;
-    }
+    // Make sure this user/device doesn't already have an operationId.
+    var query = {userId: self.userId, deviceId: self.deviceId};
     
-    Common.storeNew(self, collectionName, props, callback);
+    Common.lookup(query, props, collectionName, function (error, objectFound) {
+        if (error) {
+            callback(error);
+        }
+        else if (objectFound) {
+            callback(new Error("PSOperationId already exists for this userId/deviceId"));
+        }
+        else {
+            if (!isDefined(self.operationType)) {
+                callback(new Error("operationType was not given in PSOperationId"))
+                return;
+            }
+            else if (self.operationType != "Outbound" && self.operationType != "Inbound") {
+                callback(new Error("operationType was not Outbound or Inbound"))
+                return;
+            }
+            
+            Common.storeNew(self, collectionName, props, callback);
+        }
+    });
 }
 
 // Update persistent store from self. If you don't give an error property, it will be set to null.
@@ -116,10 +133,9 @@ PSOperationId.prototype.update = function (callback) {
         });
 }
 
-// Return a PSOperationId object from PS based on the given operationId. The operationId given can be of ObjectId type, or of string type. If of string type, it will be converted to an ObjectId.
-// It is considered an error to not find the given operationId in the collection.
-// Callback: two parameters: 1) error, and 2) the PSOperationId object if no error.
-PSOperationId.getFor = function(operationId, callback) {
+// Return a PSOperationId object from PS based on the operationId (optional), userId, and deviceId. If given, the operationId given can be of ObjectId type, or of string type. If of string type, it will be converted to an ObjectId.
+// Callback: two parameters: 1) error, and 2) the PSOperationId object or null if it cannot be found.
+PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
     if (typeof operationId === 'string') {
         try {
             operationId = new ObjectID.createFromHexString(operationId);
@@ -128,11 +144,16 @@ PSOperationId.getFor = function(operationId, callback) {
             return;
         }
     }
-    // Else, we'll try searching for it assuming it's an ObjectId
+    // Else, if non-null, we'll try searching for it assuming it's an ObjectId
     
     var query = {
-        _id: operationId
+        userId: userId,
+        deviceId: deviceId
     };
+    
+    if (isDefined(operationId)) {
+        query._id = operationId;
+    }
     
 	var cursor = Mongo.db().collection(collectionName).find(query);
 		
@@ -152,7 +173,7 @@ PSOperationId.getFor = function(operationId, callback) {
 			callback(new Error("More than one PSOperationId with: " + operationId), null);
 		}
 		else if (0 == count) {
-			callback(new Error("No PSOperationId with: " + operationId), null);
+			callback(null, null);
 		}
 		else {
 			// Just one operation id matched. We need to get it.

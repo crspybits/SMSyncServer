@@ -41,6 +41,7 @@ class UploadRecovery: BaseClass {
     func testThatRecoveryFromNetworkLossWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
 
@@ -71,6 +72,11 @@ class UploadRecovery: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -92,6 +98,7 @@ class UploadRecovery: BaseClass {
         let progressCallbackExpectation = self.expectationWithDescription("Progress Callback")
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         // [1].
         self.waitUntilSyncServerUserSignin() {
@@ -103,7 +110,6 @@ class UploadRecovery: BaseClass {
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleRecoveryCallback = { mode in
-                // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                 XCTAssertTrue(!self.doneRecovery)
                 self.doneRecovery = true
                 progressCallbackExpectation.fulfill()
@@ -121,6 +127,11 @@ class UploadRecovery: BaseClass {
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -154,6 +165,7 @@ class UploadRecovery: BaseClass {
         let context = SMTestContext.OutboundTransfer
         let serverTestCase = SMServerConstants.dbTcCommitChanges
         let fileName = context.rawValue + String(serverTestCase)
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
@@ -188,6 +200,11 @@ class UploadRecovery: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
             
             // Expecting that we'll get delegate callback on progress and then delegate callback on uploadComplete, without an error.
@@ -206,6 +223,7 @@ class UploadRecovery: BaseClass {
 
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         // [1].
         self.waitUntilSyncServerUserSignin() {
@@ -236,6 +254,11 @@ class UploadRecovery: BaseClass {
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
             
             SMSyncServer.session.commit()
@@ -274,6 +297,7 @@ class UploadRecovery: BaseClass {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let uploadExpectation1 = self.expectationWithDescription("Upload1 Complete")
         let uploadExpectation2 = self.expectationWithDescription("Upload2 Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         // [1].
         self.waitUntilSyncServerUserSignin() {
@@ -316,6 +340,11 @@ class UploadRecovery: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -328,6 +357,7 @@ class UploadRecovery: BaseClass {
     func testThatRecoveryAfterAppCrashWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
         let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         // Don't need to wait for sign in the second time through because the delay for recovery is imposed in SMSyncServer appLaunchSetup-- after sign in, the recovery will automatically start.
         if UploadRecovery.recoveryAfterAppCrash1.boolValue {
@@ -350,7 +380,6 @@ class UploadRecovery: BaseClass {
                 }
             
                 self.singleRecoveryCallback = { mode in
-                    // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
                     progressCallbackExpected.fulfill()
 
                     SMTest.session.crash()
@@ -362,7 +391,14 @@ class UploadRecovery: BaseClass {
             }
         }
         else {
+            self.processModeChanges = true
+            
             // 2nd run of test.
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
             
             self.singleRecoveryCallback = { mode in
                 // Not going to worry about which particular recovery mode we're in now. That's too internal to the sync server.
@@ -391,6 +427,7 @@ class UploadRecovery: BaseClass {
     func testThatRecoveryAfter1Of2UploadsAppCrashWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Completion Callback")
         let progressCallbackExpected = self.expectationWithDescription("Progress Callback")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         let testFileNameBase = "RecoveryAfter1Of2UploadsAppCrash"
         let testFileName1 = testFileNameBase + ".1"
@@ -425,6 +462,8 @@ class UploadRecovery: BaseClass {
             }
         }
         else {
+            self.processModeChanges = true
+
             // 2nd run of test.
             let testFile2 = TestBasics.session.recreateTestFile(fromUUID: UploadRecovery.crashUUIDString1.stringValue)
             
@@ -445,6 +484,11 @@ class UploadRecovery: BaseClass {
                 TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
                 }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
         }
         

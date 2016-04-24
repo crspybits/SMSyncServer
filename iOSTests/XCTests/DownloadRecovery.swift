@@ -453,7 +453,8 @@ class DownloadRecovery: BaseClass {
         }
         else {
             // Restart after crash.
-            
+            self.processModeChanges = true
+
             testFile = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
             
             self.singleRecoveryCallback =  { mode in
@@ -539,6 +540,7 @@ class DownloadRecovery: BaseClass {
         }
         else {
             // Restart after crash.
+            self.processModeChanges = true
             
             testFile = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
             
@@ -647,6 +649,7 @@ class DownloadRecovery: BaseClass {
         }
         else {
             // Restart after crash.
+            self.processModeChanges = true
             
             //testFile1 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
             testFile2 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString2.stringValue)
@@ -772,6 +775,7 @@ class DownloadRecovery: BaseClass {
         }
         else {
             // Restart after crash.
+            self.processModeChanges = true
             
             //testFile1 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString1.stringValue)
             testFile2 = TestBasics.session.recreateTestFile(fromUUID: DownloadRecovery.crashUUIDString2.stringValue)

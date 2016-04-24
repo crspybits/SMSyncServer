@@ -627,9 +627,39 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
         // Make sure user/device has started uploads. i.e., make sure this user/device has the lock.
 
         if (!isDefined(psLock)) {
-            var message = "Error: Don't have the lock!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            // 4/23/16; There is a possible recovery situation here. If we remove the lock in [6], but fail in reporting that back to the app, and a recovery takes place, we'll get to this point in the code. Note that with the psLock not defined, the psOperationId will also not be defined-- this is how validateUser works. So, let's lookup the PSOperationId separately, based on the user/device because we don't have an operationId as a parameter to this server API call.
+            
+            PSOperationId.getFor(null, op.userId(), op.deviceId(), function (error, psOperationId) {
+                if (error) {
+                    op.endWithErrorDetails(error);
+                }
+                else if (!isDefined(psOperationId)) {
+                
+                    // No lock and no operation id. Just a misuse of the server API.
+                    var message = "Error: Don't have the lock!";
+                    logger.error(message);
+                    op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                    
+                } else if (ServerConstants.rcOperationStatusFailedAfterTransfer ==
+                        psOperationId.operationStatus &&
+                        "Outbound" == psOperationId.operationType) {
+                        
+                    // Recovery situation: No lock, we do have an Operation Id, and we had a failure after outbound transfer.
+                    
+                    logger.info("Returning operationId to client: " + psOperationId._id);
+                    op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
+                    
+                    // Call this "Successful" so that the app can be move on and remove the operation id.
+                    
+                    updateOperationId(psOperationId,
+                        ServerConstants.rcOperationStatusSuccessfulCompletion, null);
+                    logger.trace("Successfully completed operation!");
+                    op.endWithRC(ServerConstants.rcOK);
+                    
+                } else {
+                    op.endWithErrorDetails("Operation Id present, no lock, but unknown situation!");
+                }
+            });
         }
         else if (isDefined(psOperationId)) {
             // Outbound transfer recovery.
@@ -647,7 +677,11 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
             var psOperationId = null;
 
             try {
-                psOperationId = new PSOperationId({operationType: "Outbound"});
+                psOperationId = new PSOperationId({
+                    operationType: "Outbound",
+                    userId: op.userId(),
+                    deviceId: op.deviceId()
+                });
             } catch (error) {
                 op.endWithErrorDetails(error);
                 return;
@@ -666,7 +700,12 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
 });
 
 function outboundTransferRecovery(op, psLock, psOperationId) {
-    switch (op.operationStatus) {
+    // Always returning operationId, just for uniformity.
+    
+    logger.info("Returning operationId to client: " + psOperationId._id);
+    op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
+    
+    switch (psOperationId.operationStatus) {
     case ServerConstants.rcOperationStatusNotStarted:
     case ServerConstants.rcOperationStatusFailedBeforeTransfer:
         // Must have failed on or before the commit. Need to do the commit.
@@ -713,7 +752,7 @@ function outboundTransferRecovery(op, psLock, psOperationId) {
         break;
         
     default:
-        var message = "Yikes: Unknown operationStatus: " + op.operationStatus;
+        var message = "Yikes: Unknown operationStatus: " + psOperationId.operationStatus;
         logger.error(message);
         op.endWithErrorDetails(message);
         break;
@@ -824,6 +863,7 @@ function cloudStorageTransfer(op, psLock, psOperationId, transferMethod) {
                     return;
                 }
 
+                // [6].
                 psLock.removeLock(function (error) {
                     if (objOrInject(error, op,
                         ServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)) {
@@ -957,15 +997,16 @@ app.post('/' + ServerConstants.operationCheckOperationStatus, function (request,
         // Specifically *not* checking to see if we have a lock. If an Outbound transfer operation has successfully completed, the lock will have been removed.
         
         // We already have the psOperationId, but go ahead and use the app/client's operationId to look it up.
-        PSOperationId.getFor(operationId, function (error, psOperationId) {
+        PSOperationId.getFor(operationId, op.userId(), op.deviceId(), function (error, psOperationId) {
             if (error) {
+                op.endWithErrorDetails(error);
+            }
+            else if (!isDefined(psOperationId)) {
                 var errorMessage = "Could not get operation id: " + JSON.stringify(error) + " for id: " + operationId;
                 logger.error(errorMessage);
                 op.endWithErrorDetails(errorMessage);
             }
             else {
-                // TODO: Make sure the user/device id for this operation Id is the same as ours.
-
                 op.result[ServerConstants.resultOperationStatusCountKey] = psOperationId.operationCount;
                 op.result[ServerConstants.resultOperationStatusCodeKey] = psOperationId.operationStatus;
                 op.result[ServerConstants.resultOperationStatusErrorKey] = psOperationId.error;
@@ -1026,15 +1067,16 @@ function removeOperationId(op, request) {
     // Specifically *not* checking to see if we have a lock. If the operation has successfully completed, the lock will have been removed.
 
     // We already have the psOperationId, but go ahead and use the app/client's operationId to look it up.
-    PSOperationId.getFor(operationId, function (error, psOperationId) {
+    PSOperationId.getFor(operationId, op.userId(), op.deviceId(), function (error, psOperationId) {
         if (error) {
+            op.endWithErrorDetails(error);
+        }
+        else if (!isDefined(psOperationId)) {
             var errorMessage = "Could not get operation id: " + JSON.stringify(error) + " for id: " + operationId;
             logger.error(errorMessage);
             op.endWithErrorDetails(errorMessage);
         }
-        else {
-            // TODO: Make sure the user/device id for this operation Id is the same as ours.
-            
+        else {            
             psOperationId.remove(function (error) {
                 if (error) {
                     op.endWithErrorDetails(error);
@@ -1250,7 +1292,9 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     
                     // Default for PSOperationId operationStatus will be rcOperationStatusNotStarted. We'll set the status to InProgress below (see [1]), just before we actually spin off the operation as asynchronous.
                     const operationData = {
-                        operationType: "Inbound"
+                        operationType: "Inbound",
+                        userId: op.userId(),
+                        deviceId: op.deviceId()
                     };
                     
                     try {
