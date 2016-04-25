@@ -87,12 +87,14 @@ public enum SMSyncServerEvent {
 public protocol SMSyncServerDelegate : class {
     // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)])
+    // The callee should call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->())
     
     // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerClientShouldDeleteFiles(uuids:[NSUUID])
+    // The callee should call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
+    func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->())
     
-    // TODO: Reports conflicting file versions when uploading or downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
+    // Reports conflicting file versions when downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
     // TODO: Can these occur both on upload and download?
     // func syncServerFileConflicts(conflictingFiles:[SMSyncConflicts], resolution:([SMSyncConflicts])->())
     
@@ -121,8 +123,8 @@ public class SMSyncServer : NSObject {
     public weak var delegate:SMSyncServerDelegate? {
         set {
             SMUploadFiles.session.syncServerDelegate = newValue
+            SMDownloadFiles.session.syncServerDelegate = newValue
             SMSyncControl.session.delegate = newValue
-            //SMDownloadFiles.session.delegate = newValue
         }
         get {
             return SMUploadFiles.session.syncServerDelegate
@@ -194,7 +196,7 @@ public class SMSyncServer : NSObject {
         SMServerNetworking.session.appLaunchSetup()
         SMServerAPI.session.serverURL = serverURL
         SMUploadFiles.session.appLaunchSetup()
-        //SMDownloadFiles.session.appLaunchSetup()
+        SMDownloadFiles.session.appLaunchSetup()
 
         // This seems a little hacky, but can't find a better way to get the bundle of the framework containing our model. I.e., "this" framework. Just using a Core Data object contained in this framework to track it down.
         // Without providing this bundle reference, I wasn't able to dynamically locate the model contained in the framework.
@@ -269,7 +271,7 @@ public class SMSyncServer : NSObject {
         
         if (nil == localFileMetaData) {
             localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
-            localFileMetaData!.newUpload = true
+            localFileMetaData!.syncState = .InitialUpload
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
@@ -290,9 +292,14 @@ public class SMSyncServer : NSObject {
             }
             
             localFileMetaData!.remoteFileName = attr.remoteFileName
+            
+            // Just created for upload -- it must have a version of 0.
+            localFileMetaData!.localVersion = 0
         }
         else {
             // Existing file
+            
+            Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
             
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
                 let error = Error.Create("You gave a different remote file name than was present on the server!")
@@ -358,13 +365,15 @@ public class SMSyncServer : NSObject {
     public func deleteFile(uuid:NSUUID) {
         // We must already know about this file in our SMLocalFile meta data.
         let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
-        
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("Attempt to delete a file unknown to SMSyncServer!")))
             return
         }
+        
+        Assert.If(localFileMetaData!.localVersion == nil, thenPrintThisString: "Why is the .localVersion nil?")
+        Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
         
         let change = SMUploadDeletion.newObject() as! SMUploadDeletion
         change.localFile = localFileMetaData!

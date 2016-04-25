@@ -46,7 +46,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         SMSyncServer.session.commit()
     }
     
-    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
@@ -58,6 +58,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         
         if self.numberDownloads == 1 {
             self.passTest()
+            acknowledgement()
         }
         else {
             self.failTest("Didn't get exactly one download; got: \(self.numberDownloads)")

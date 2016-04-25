@@ -1090,6 +1090,7 @@ function removeOperationId(op, request) {
 }
 
 // Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId (if any).
+// TODO: Shouldn't this remove PSInboundFile's too?
 app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
@@ -1157,8 +1158,8 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
     });
 });
 
-// Initiates an asynchronous operation transferring files from cloud storage. REST/API caller provides the list of files to be transferred.
-app.post('/' + ServerConstants.operationStartInboundTransfer, function (request, response) {
+// Makes entries in PSInboundFile for each of the inbound files. Doesn't start the inbound transfers. This server API entry point can be called multiple times with the same parameters-- for recovery purposes. The 2nd time, etc., has no effect and doesn't fail.
+app.post('/' + ServerConstants.operationSetupInboundTransfers, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
@@ -1269,7 +1270,7 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                                 inboundFile.cloudFileName = fileIndexObj.cloudFileName;
                                 inboundFile.mimeType = fileIndexObj.mimeType;
                                 
-                                // [5]. We didn't provide the .received property on the inbound file when we created the object. Provide it on now.
+                                // [5]. We didn't provide the .received property on the inbound file when we created the object. Provide it now.
                                 inboundFile.received = false;
                                 
                                 inboundFile.storeNew(function (error) {
@@ -1286,8 +1287,52 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     op.endWithErrorDetails(error);
                 }
                 else {
-                    // In some recovery situations, we'll actually not do anything additional in the following. That is, the inbound transfers will have already been done. While that amounts to a little extra work, I'm not creating a special case for that recovery situation just to simplify the code.
-                    
+                    op.endWithRC(ServerConstants.rcOK);
+                }
+            });
+        }
+    });
+});
+
+// Initiates an asynchronous operation transferring files from cloud storage. REST/API caller provides the list of files to be transferred. operationSetupInboundTransfers must have already been called or this will fail.
+app.post('/' + ServerConstants.operationStartInboundTransfer, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        // User is on the system.
+
+        var localFiles = new File(op.userId(), op.deviceId());
+        
+        if (!isDefined(psLock)) {
+            // TODO: Recovery case. Check to see if there is an operationId.
+            
+            var message = "We don't have the lock!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else if (isDefined(psOperationId)) {
+            // TODO: Recovery case. If there is a lock and there is an operationId, then we've already started the operation.
+            
+            // Should not already have an operationId because this is is going to create an operationId.
+            var message = "There is already an operationId!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            PSInboundFile.getAllFor(op.userId(), op.deviceId(), function (error, inboundFiles) {
+                if (error) {
+                   op.endWithErrorDetails(error);
+                }
+                else if (inboundFiles.length == 0 ) {
+                    logger.error("No inbound files to receive.");
+                     // This is an API error because we should not get here without some files ready to start on inbound transfer.
+                    op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                }
+                else {
                     var psOperationId = null;
                     
                     // Default for PSOperationId operationStatus will be rcOperationStatusNotStarted. We'll set the status to InProgress below (see [1]), just before we actually spin off the operation as asynchronous.
@@ -1324,6 +1369,47 @@ app.post('/' + ServerConstants.operationStartInboundTransfer, function (request,
                     });
                 }
             });
+        }
+    });
+});
+
+app.post('/' + ServerConstants.operationInboundTransferRecovery, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+                    
+        if (!isDefined(psLock)) {
+            // Not considering this to be an API error (i.e., rcServerAPIError) because one of our app/client use cases is to call this when we don't hold the lock.
+            var message = "We don't have the lock!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
+        }
+        else if (!isDefined(psOperationId)) {
+            // Similarly, a use case in our app/client is when we've failed in the inbound transfer prior to establishing an operationId.
+            var message = "There is no operationId!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcNoOperationId, message);
+        }
+        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
+            // If the operation is InProgress, we'll consider this not to be an error and not something we have to recover from.
+            var message = "Operation was InProgress-- Not doing transfer recovery.";
+            logger.debug(message);
+            
+            // Send back the operationId just because we can.
+            op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
+            op.endWithRC(ServerConstants.rcOK);
+        }
+        else if (psOperationId.operationType != "Inbound") {
+            var message = "Error: Not doing inbound transfer operation!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        }
+        else {
+            startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameReceiveFiles);
         }
     });
 });
@@ -1485,47 +1571,6 @@ function getDownloadFileInfo(request, op, callback) {
         }
     });
 }
-
-app.post('/' + ServerConstants.operationInboundTransferRecovery, function (request, response) {
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-    
-    op.validateUser(function (psLock, psOperationId) {
-                    
-        if (!isDefined(psLock)) {
-            // Not considering this to be an API error (i.e., rcServerAPIError) because one of our app/client use cases is to call this when we don't hold the lock.
-            var message = "We don't have the lock!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcLockNotHeld, message);
-        }
-        else if (!isDefined(psOperationId)) {
-            // Similarly, a use case in our app/client is when we've failed in the inbound transfer prior to establishing an operationId.
-            var message = "There is no operationId!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcNoOperationId, message);
-        }
-        else if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
-            // If the operation is InProgress, we'll consider this not to be an error and not something we have to recover from.
-            var message = "Operation was InProgress-- Not doing transfer recovery.";
-            logger.debug(message);
-            
-            // Send back the operationId just because we can.
-            op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
-            op.endWithRC(ServerConstants.rcOK);
-        }
-        else if (psOperationId.operationType != "Inbound") {
-            var message = "Error: Not doing inbound transfer operation!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-        }
-        else {
-            startTransferOfFiles(op, psLock, psOperationId, FileTransfers.methodNameReceiveFiles);
-        }
-    });
-});
 
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");

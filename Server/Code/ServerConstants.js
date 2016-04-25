@@ -26,6 +26,8 @@ function define(name, value) {
     // Holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
 	define("operationGetFileIndex", "GetFileIndex");
     
+	define("operationSetupInboundTransfers", "SetupInboundTransfers");
+
     // Both of these implicitly do an Unlock after the cloud storage transfer.
     // operationStartOutboundTransfer is also known as the "commit" operation.
 	define("operationStartOutboundTransfer", "StartOutboundTransfer");

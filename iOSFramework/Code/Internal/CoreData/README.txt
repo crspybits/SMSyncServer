@@ -1,6 +1,3 @@
-SMLocalFile
-    `newUpload`: true only when (a) the file was created as version 0 by the local app, and (b) it has just been created and is in the process of being uploaded.
-
 SMUploadQueue:
     `changes` property: A collection of file changes (uploads or upload-deletes) represented by this object.
     For a single instance of an SMUploadQueue, exactly one of the following is non-nil:

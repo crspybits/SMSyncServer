@@ -23,8 +23,11 @@ class BaseClass: XCTestCase {
     var processModeChanges = false
     
     // I have sometimes been getting test failures where it looks like the callback is not defined. i.e., there are no entries in the particular callbacks array. However, the callback was defined. This takes the form of an array index out-of-bounds crash. What was happening is that the timeout was exceeded on the prior test, and so XCTests moved on to the next test, but the prior test was actually still running-- interacting with the server. And when it finished, it tried doing the callbacks, which were no longer defined as the setup had been done for the next test. The cure was to extend the duration of the timeouts.
-    typealias recoveryCallback = ()->()
-    var singleRecoveryCallback:recoveryCallback?
+    var singleRecoveryCallback:(()->())?
+    var numberOfRecoverySteps = 0
+
+    var singleNoDownloadsCallback:(()->())?
+    var numberOfNoDownloadsCallbacks = 0
     
     typealias inboundTransferCallback = (numberOperations:Int)->()
     var singleInboundTransferCallback:inboundTransferCallback?
@@ -44,10 +47,6 @@ class BaseClass: XCTestCase {
     typealias singleDownloadType = (localFile:SMRelativeLocalURL, attr: SMSyncAttributes)->()
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
-
-    typealias noDownloadsCallback = ()->()
-    var noDownloadsSequenceNumber = 0
-    var noDownloadsCallbacks:[noDownloadsCallback]!
     
     typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes)])->()
     var downloadsCompleteSequenceNumber = 0
@@ -60,8 +59,6 @@ class BaseClass: XCTestCase {
     typealias idleCallback = ()->()
     var idleSequenceNumber = 0
     var idleCallbacks:[idleCallback]!
-    
-    var numberOfRecoverySteps = 0
     
     override func setUp() {
         super.setUp()
@@ -78,10 +75,11 @@ class BaseClass: XCTestCase {
         self.deletionCallbacks = [deletionCallback]()
         self.singleDownload = [singleDownloadType]()
         self.downloadsCompleteCallbacks = [downloadsCompletedCallback]()
-        self.noDownloadsCallbacks = [noDownloadsCallback]()
         self.idleCallbacks = [idleCallback]()
         self.singleRecoveryCallback = nil
         self.numberOfRecoverySteps = 0
+        self.numberOfNoDownloadsCallbacks = 0
+
         self.processModeChanges = false
         
         TestBasics.session.failure = {
@@ -110,13 +108,15 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {        
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->()) {
         self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloadedFiles)
         self.downloadsCompleteSequenceNumber += 1
+        acknowledgement()
     }
     
     // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
+    func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->()) {
+        acknowledgement()
     }
     
     // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
@@ -158,8 +158,10 @@ extension BaseClass : SMSyncServerDelegate {
             self.commitCompleteSequenceNumber += 1
         
         case .NoFilesToDownload:
-            self.noDownloadsCallbacks[self.noDownloadsSequenceNumber]()
-            self.noDownloadsSequenceNumber += 1
+            if nil != self.singleNoDownloadsCallback {
+                self.singleNoDownloadsCallback!()
+            }
+            self.numberOfNoDownloadsCallbacks += 1
             
         case .SingleDownloadComplete(url: let url, attr: let attr):
             self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)

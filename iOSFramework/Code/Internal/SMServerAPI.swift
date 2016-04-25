@@ -610,8 +610,8 @@ internal class SMServerAPI {
             completion?(apiResult: result)
         }
     }
-    
-    internal func startInboundTransfer(filesToTransfer: [SMServerFile], completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
+
+    internal func setupInboundTransfer(filesToTransfer: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
         let userParams = self.userDelegate.serverParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
@@ -627,9 +627,23 @@ internal class SMServerAPI {
         serverParams[SMServerConstants.filesToTransferFromCloudStorageKey] = fileTransferServerParam
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationStartInboundTransfer)!
+                        "/" + SMServerConstants.operationSetupInboundTransfers)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
+            let result = self.initialServerResponseProcessing(serverResponse, error: requestError)
+            completion?(apiResult: result)
+        }
+    }
+    
+    internal func startInboundTransfer(completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
+    
+        let userParams = self.userDelegate.serverParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+        
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationStartInboundTransfer)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
         
             var result = self.initialServerResponseProcessing(serverResponse, error: requestError)
             

@@ -75,6 +75,7 @@ internal class SMSyncControl {
 
     private init() {
         SMUploadFiles.session.syncControlDelegate = self
+        SMDownloadFiles.session.syncControlDelegate = self
     }
     
     /* Call this to try to perform the next sync operation. If the thread lock can be obtained, this will perform a next sync operation if there is one. Otherwise, will just return.
@@ -157,14 +158,15 @@ internal class SMSyncControl {
         Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
         
         self._operating = false
-        if setModeToIdle {
-            self.syncControlModeChange(.Idle)
-        }
+        self.lock.unlock()
         
         Log.special("Stopped operating!")
         Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
 
-        self.lock.unlock()
+        if setModeToIdle {
+            // Callback for .Idle mode change is after the unlock to let the idle callback acquire the lock if needed.
+            self.syncControlModeChange(.Idle)
+        }
     }
     
     internal func resetFromError(completion:((error:NSError?)->())?=nil) {
@@ -227,7 +229,7 @@ internal class SMSyncControl {
             if SMQueues.current().beingDownloaded != nil  {
                 Log.special("SMSyncControl: Process pending downloads")
                 Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock (downloads)!")
-                self.processPendingDownloads()
+                SMDownloadFiles.session.doDownloadOperations()
             }
             else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
                 // Uploads are really the bottom priority. See [1] also.
@@ -260,22 +262,6 @@ internal class SMSyncControl {
         else {
             self.syncControlModeChange(.NetworkNotConnected)
         }
-    }
-    
-    private func processPendingDownloads() {
-        Assert.badMojo(alwaysPrintThisString: "TO BE IMPLEMENTED!")
-        
-        if let conflicts = SMQueues.current().downloadConflicts() {
-            Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock!")
-            self.processPendingConflicts(conflicts)
-        }
-        
-        // Process other download too!!
-    }
-    
-    private func processPendingConflicts(conflicts:[SMDownloadConflict]) {
-        Assert.badMojo(alwaysPrintThisString: "TO BE IMPLEMENTED!")
-        // Need to call delegate methods, and require user app to resolve each conflict. We will delete each conflict out of core data when we get the response. When that's all done, we need to call next().
     }
     
     private func processPendingUploads() {
@@ -324,6 +310,10 @@ internal class SMSyncControl {
                         self.numberGetFileIndexAttempts = 0
                         
                         SMQueues.current().checkForDownloads(fromServerFileIndex: fileIndex!)
+                        if nil == SMQueues.current().beingDownloaded {
+                            self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+                        }
+                        
                         self.next()
                     }
                     else {

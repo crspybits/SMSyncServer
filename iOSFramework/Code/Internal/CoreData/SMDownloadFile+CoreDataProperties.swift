@@ -2,7 +2,7 @@
 //  SMDownloadFile+CoreDataProperties.swift
 //  SMSyncServer
 //
-//  Created by Christopher Prince on 4/9/16.
+//  Created by Christopher Prince on 4/24/16.
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu
@@ -14,7 +14,9 @@ import CoreData
 
 extension SMDownloadFile {
 
+    @NSManaged var internalOperationStage: String?
     @NSManaged var internalRelativeLocalURL: NSData?
+    @NSManaged var serverVersion: NSNumber?
     @NSManaged var blocks: NSOrderedSet?
 
 }

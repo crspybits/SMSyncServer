@@ -6,6 +6,8 @@
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 
+// TODO: Add a case for context .SetupInboundTransfer
+
 import XCTest
 @testable import Tests
 @testable import SMSyncServer
@@ -94,10 +96,13 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
+            // FIXME!!!
+            /*
             self.noDownloadsCallbacks.append() {
                 singleDownloadExpectation.fulfill()
                 allDownloadsCompleteExpectation.fulfill()
             }
+            */
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 // With .CheckOperationStatus server API failure, the "recovery" process consists of just trying to check the operation status again, which doesn't get reflected in the number of recovery steps.

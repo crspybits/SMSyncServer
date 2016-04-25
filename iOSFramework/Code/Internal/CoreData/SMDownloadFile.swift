@@ -11,7 +11,30 @@ import CoreData
 import SMCoreLib
 
 class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
+    enum OperationStage : String {
+        // Main stages in file downloads:
 
+        // 1) When the file needs to be transferred from cloud storage to our server
+        case CloudStorage
+        
+        // 2) Download, when the file needs to be downloaded to the app.
+        case ServerDownload
+        
+        // 3) Letting the app know that the download has completed.
+        case AppCallback
+    }
+    
+    // Don't access .internalOperationStage directly.
+    var operationStage: OperationStage {
+        set {
+            self.internalOperationStage = newValue.rawValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        }
+        get {
+            return OperationStage(rawValue: self.internalOperationStage!)!
+        }
+    }
+    
     class func entityName() -> String {
         return "SMDownloadFile"
     }
@@ -20,6 +43,7 @@ class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
         
         let fileChange = CoreData.sessionNamed(SMCoreData.name).newObjectWithEntityName(self.entityName()) as! SMDownloadFile
         
+        fileChange.operationStage = .CloudStorage
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         return fileChange
@@ -107,5 +131,35 @@ class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
         self.blocks = downloadBlocks
         
         CoreData.sessionNamed(SMCoreData.name).saveContext()
+    }
+
+    func convertToServerFile() -> SMServerFile {
+        Log.msg("SMDownloadFile: \(self)")
+
+        let localFile = self.localFile!
+        let localVersion:Int = self.serverVersion!.integerValue
+        Log.msg("Local file version: \(localVersion)")
+        
+        let serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!, remoteFileName: localFile.remoteFileName!, mimeType: localFile.mimeType!, appFileType: localFile.appFileType, version: localVersion)
+
+        serverFile.localFile = localFile
+        serverFile.localURL = self.fileURL!
+        
+        return serverFile
+    }
+    
+    class func convertToServerFiles(downloadFiles:[SMDownloadFile]) -> [SMServerFile]? {
+        var result = [SMServerFile]()
+        
+        for downloadFile in downloadFiles {
+            result.append(downloadFile.convertToServerFile())
+        }
+        
+        if result.count > 0 {
+            return result
+        }
+        else {
+            return nil
+        }
     }
 }

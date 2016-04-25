@@ -35,6 +35,8 @@ public class SMServerConstants {
     // Holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
     public static let operationGetFileIndex = "GetFileIndex"
     
+    public static let operationSetupInboundTransfers = "SetupInboundTransfers"
+
     // Both of these implicitly do an Unlock after the cloud storage transfer.
     // operationStartOutboundTransfer is also known as the "commit" operation.
     public static let operationStartOutboundTransfer = "StartOutboundTransfer"

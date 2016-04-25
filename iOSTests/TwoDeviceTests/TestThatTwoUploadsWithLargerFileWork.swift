@@ -49,11 +49,11 @@ class SMTwoDeviceTestThatTwoUploadsWithLargerFileWork : TwoDeviceTestCase {
         self.uploadFile()
     }
     
-    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
         
     }
     
-    override func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
+    override func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement: () -> ()) {
         
     }
     

@@ -15,6 +15,7 @@ internal enum SMTestContext: String {
     case GetFileIndex
     case UploadFiles
     case OutboundTransfer
+    case SetupInboundTransfer
     case InboundTransfer
     case DownloadFiles
     case CheckOperationStatus

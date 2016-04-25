@@ -11,6 +11,8 @@ import XCTest
 @testable import SMSyncServer
 import SMCoreLib
 
+// TODO: Add a test for context .CheckOperationStatus
+
 class UploadRecovery: BaseClass {
 
     // To enable 2nd part of recovery test after app crash.

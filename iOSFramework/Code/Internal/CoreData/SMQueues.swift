@@ -167,6 +167,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         // CONFLICT CASE: What if the download-deletion file has been modified (not deleted) locally?
                         if localFile!.pendingUpload() {
                             let downloadConflict = SMDownloadConflict.newObject() as! SMDownloadConflict
+                            downloadConflict.localFile = localFile
                             downloadConflict.conflictType = .DownloadDeletionLocalUpload
                             downloadOperations.addObject(downloadConflict)
                         }
@@ -181,15 +182,31 @@ class SMQueues: NSManagedObject, CoreDataModel {
             }
             else {
                 // File not deleted on the server, i.e., this is a download not a download-deletion case.
-
+                
+                Assert.If(nil == serverFile.version, thenPrintThisString: "No version for server file.")
+                
                 if localFile == nil {
-                    // Server file doesn't yet exist on the app/client. SMLocalFile meta data needs to be created after download is completed.
-                    let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: nil)
+                    // Server file doesn't yet exist on the app/client. I'm going to create the new SMLocalFile meta data object now so that we have access to this meta data when we need to give the callback to the client.
+                    
+                    // SMServerFile must include mimeType, remoteFileName, version and appFileType if on server.
+                    Assert.If(nil == serverFile.mimeType, thenPrintThisString: "mimeType not given by server!")
+                    Assert.If(nil == serverFile.remoteFileName, thenPrintThisString: "remoteFileName not given by server!")
+            
+                    let localFile = SMLocalFile.newObject() as! SMLocalFile
+                    localFile.syncState = .InitialDownload
+                    localFile.uuid = serverFile.uuid.UUIDString
+                    localFile.mimeType = serverFile.mimeType
+                    localFile.appFileType = serverFile.appFileType
+                    localFile.remoteFileName = serverFile.remoteFileName
+                    
+                    // .localVersion must remain nil until just before callback that download is finished (syncServerDownloadsComplete)
+                    localFile.localVersion = nil
+                
+                    let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile)
+                    downloadFile.serverVersion = serverFile.version
                     downloadOperations.addObject(downloadFile)
                 }
                 else {
-                    Assert.If(nil == serverFile.version, thenPrintThisString: "No version for server file.")
-    
                     let serverVersion = serverFile.version
                     let localVersion = localFile!.localVersion!.integerValue
                     
@@ -201,6 +218,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         // Server file is updated version of that on app/client.
                         // Server version is greater. Need to download.
                         let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile!)
+                        downloadFile.serverVersion = serverVersion
                         downloadOperations.addObject(downloadFile)
 
                         // Handle conflict cases: These are only relevant when downloading an updated version from the server. If the server version hasn't changed (as in [1] above), and we have a pending upload or pending upload-deletion, then this does not indicate a conflict.
@@ -216,6 +234,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         
                         if conflictType != nil {
                             let downloadConflict = SMDownloadConflict.newObject() as! SMDownloadConflict
+                            downloadConflict.localFile = localFile
                             downloadConflict.conflictType = conflictType!
                             downloadOperations.addObject(downloadConflict)
                         }
@@ -227,6 +246,8 @@ class SMQueues: NSManagedObject, CoreDataModel {
         } // End-for
         
         if downloadOperations.count > 0 {
+            let downloadStartup = SMDownloadStartup.newObject()
+            downloadOperations.addObject(downloadStartup)
             self.beingDownloaded = downloadOperations
         }
         else {
@@ -313,5 +334,113 @@ class SMQueues: NSManagedObject, CoreDataModel {
         if self.beingDownloaded != nil {
             SMDownloadOperation.removeObjectsInOrderedSet(self.beingDownloaded!)
         }
+    }
+    
+    enum DownloadChangeType {
+        case DownloadStartup
+        case DownloadFile
+        case DownloadDeletion
+        case DownloadConflict
+    }
+    
+    // Returns the subset of the self.beingDownloaded objects that represent downloads, or download-deletions. Doesn't modify the .beingDownloaded queue. Returns nil if there were no objects. Give operationStage as nil to ignore the operationStage of the operations. You must give a nil operationStage unless you give .DownloadFile for the changeType.
+    func getBeingDownloadedChanges(changeType:DownloadChangeType, operationStage:SMDownloadFile.OperationStage?=nil) -> [SMDownloadOperation]? {
+    
+        if self.beingDownloaded == nil {
+            return nil
+        }
+        
+        Assert.If(changeType != .DownloadFile && operationStage != nil, thenPrintThisString: "Yikes: Non .DownloadFile but not a nil operationStage")
+        
+        var result = [SMDownloadOperation]()
+        
+        for elem in self.beingDownloaded! {
+            let operation = elem as? SMDownloadFile
+            if operationStage == nil || (operation != nil && operation!.operationStage == operationStage) {
+                switch (changeType) {
+                case .DownloadStartup:
+                    if let startup = elem as? SMDownloadStartup {
+                        result.append(startup)
+                    }
+                    
+                case .DownloadFile:
+                    if let download = elem as? SMDownloadFile {
+                        result.append(download)
+                    }
+                    
+                case .DownloadDeletion:
+                    if let deletion = elem as? SMDownloadDeletion {
+                        result.append(deletion)
+                    }
+                    
+                case .DownloadConflict:
+                    if let conflict = elem as? SMDownloadConflict {
+                        result.append(conflict)
+                    }
+                }
+            }
+        }
+        
+        if result.count == 0 {
+            return nil
+        }
+        else {
+            return result
+        }
+    }
+    
+    func getBeingDownloadedChange(forUUID uuid:String, andChangeType changeType:DownloadChangeType) -> SMDownloadFileOperation? {
+        var result = [SMDownloadFileOperation]()
+
+        for elem in self.beingDownloaded! {
+            if let operation = elem as? SMDownloadFileOperation {
+                var addOperation = false
+                switch changeType {
+                case .DownloadFile:
+                    if elem is SMDownloadFile {
+                        addOperation = true
+                    }
+                    
+                case .DownloadDeletion:
+                    if elem is SMDownloadDeletion {
+                        addOperation = true
+                    }
+                    
+                case .DownloadConflict:
+                    if elem is SMDownloadConflict {
+                        addOperation = true
+                    }
+                
+                case .DownloadStartup:
+                    Assert.badMojo(alwaysPrintThisString: "Should not have this")
+                }
+            
+                if addOperation && operation.localFile!.uuid == uuid {
+                    result.append(operation)
+                }
+            }
+        }
+        
+        if result.count == 0 {
+            return nil
+        }
+        else if result.count == 1 {
+            return result[0]
+        }
+        else {
+            Assert.badMojo(alwaysPrintThisString: "More than one download change for UUID \(uuid)")
+            return nil
+        }
+    }
+    
+    // Removes a particular subset of the self.beingDownloaded objects.
+    func removeBeingDownloadedChanges(changeType:DownloadChangeType) {
+        if let changes = self.getBeingDownloadedChanges(changeType) {
+            for change in changes {
+                change.removeObject()
+            }
+        }
+        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
 }

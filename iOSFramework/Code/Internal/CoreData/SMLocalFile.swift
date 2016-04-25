@@ -10,23 +10,47 @@ import Foundation
 import CoreData
 import SMCoreLib
 
+/* Property documentation:
+    `newUpload`: true only when (a) the file was created as version 0 by the local app, and (b) it has just been created and is in the process of being uploaded.
+*/
+
 @objc(SMLocalFile)
 class SMLocalFile: NSManagedObject, CoreDataModel {
+    enum SyncState : String {
+        // A new file has been created by the local client API but not yet uploaded to sync server.
+        case InitialUpload
+        
+        // A new file has created by another device, detected on the server, and is in the process of being downloaded to the local device.
+        case InitialDownload
+        
+        // The file has either been uploaded or downloaded at least once.
+        case AfterInitialSync
+    }
+    
+    var syncState : SyncState {
+        get {
+            return SyncState(rawValue: self.internalSyncState!)!
+        }
+        
+        set {
+            self.internalSyncState = newValue.rawValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        }
+    }
+    
     static let UUID_KEY = "uuid"
     
     class func entityName() -> String {
         return "SMLocalFile"
     }
 
+    // When an SMLocalFile is created for purposes of uploading, it must have a .localVersion of 0. When it is created for purposes of downloading (i.e., the first version of the file was created on another device), the .localVersion should be nil until just before the callback that indicates to the client app that the file was downloaded (syncServerDownloadsComplete).
     class func newObjectAndMakeUUID(makeUUID: Bool) -> NSManagedObject {
         let localFile = CoreData.sessionNamed(SMCoreData.name).newObjectWithEntityName(self.entityName()) as! SMLocalFile
         
         if makeUUID {
             localFile.uuid = UUID.make()
         }
-        
-        // First version of a file *must* be 0.
-        localFile.localVersion = 0
         
         localFile.pendingUploads = NSOrderedSet()
         CoreData.sessionNamed(SMCoreData.name).saveContext()
@@ -76,7 +100,7 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         
         if self.pendingUploads != nil {
             for fileChange in self.pendingUploads! {
-                if let _ = fileChange as? SMUploadFile {
+                if fileChange is SMUploadFile {
                     result = true
                     break
                 }

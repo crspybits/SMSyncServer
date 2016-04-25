@@ -135,15 +135,14 @@ class ServerAPI: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatStartInboundTransferWithNoLockFails() {
+    func testThatSetupInboundTransferWithNoLockFails() {
         let afterStartExpectation = self.expectationWithDescription("After Start")
         
         let noServerFiles = [SMServerFile]()
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, apiResult)  in
+            SMServerAPI.session.setupInboundTransfer(noServerFiles) {  apiResult  in
             
-                XCTAssert(serverOperationId == nil)
                 XCTAssert(apiResult.error != nil)
                 XCTAssert(apiResult.returnCode == SMServerConstants.rcServerAPIError)
                 afterStartExpectation.fulfill()
@@ -153,7 +152,7 @@ class ServerAPI: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatStartInboundTransferWith0FilesFails() {
+    func testThatSetupInboundTransferWith0FilesFails() {
         let afterStartExpectation = self.expectationWithDescription("After Cleanup")
         
         let noServerFiles = [SMServerFile]()
@@ -162,10 +161,9 @@ class ServerAPI: BaseClass {
             SMServerAPI.session.lock() { lockResult in
                 XCTAssert(lockResult.error == nil)
                 
-                SMServerAPI.session.startInboundTransfer(noServerFiles) { (serverOperationId, sitResult)  in
+                SMServerAPI.session.setupInboundTransfer(noServerFiles) { (sitResult)  in
                 
                     XCTAssert(sitResult.error != nil)
-                    XCTAssert(serverOperationId == nil)
                     XCTAssert(sitResult.returnCode == SMServerConstants.rcServerAPIError)
                     
                     // Get rid of the lock.
@@ -181,6 +179,7 @@ class ServerAPI: BaseClass {
         self.waitForExpectations()
     }
     
+    /*
     func DISABLED_testThatStartInboundTransferWith1FileWorks() {
         let afterStartExpectation = self.expectationWithDescription("After Cleanup")
         
@@ -206,7 +205,8 @@ class ServerAPI: BaseClass {
         
         self.waitForExpectations()
     }
-    
+    */
+ 
     // Test downloading of a random UUID from the server. Should fail because that file is not on the server/ready to download.
     func testThatDownloadOfRandomUUIDFails() {
         let downloadExpectation = self.expectationWithDescription("Handler called")

@@ -27,8 +27,9 @@ class Download: BaseClass {
     func testFilesInSyncResultsInNoDownloadsWorks() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
-        let noDownloadExpectation = self.expectationWithDescription("No Downloads")
-        
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+       
         self.extraServerResponseTime = 30
         
         self.waitUntilSyncServerUserSignin() {
@@ -46,15 +47,20 @@ class Download: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
-                    
-                    // Should detect no files available/needed for download.
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
-            self.noDownloadsCallbacks.append() {
-                noDownloadExpectation.fulfill()
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+                self.numberOfNoDownloadsCallbacks = 0
+                SMSyncControl.session.nextSyncOperation()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation2.fulfill()
+                XCTAssert(self.numberOfNoDownloadsCallbacks == 1)
             }
             
             SMSyncServer.session.commit()
@@ -75,6 +81,9 @@ class Download: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let singleDownloadExpectation = self.expectationWithDescription("Single Download")
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+
         var numberDownloads = 0
         
         self.extraServerResponseTime = 360
@@ -91,12 +100,6 @@ class Download: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
-                    
-                    // Now, forget locally about that uploaded file so we can download it.
-                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
-                    
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -111,6 +114,22 @@ class Download: BaseClass {
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 1)
                 allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+                
+                // Forget locally about the uploaded file so we can download it.
+                SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                
+                // Force the check for downloads.
+                SMSyncControl.session.nextSyncOperation()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation2.fulfill()
             }
             
             SMSyncServer.session.commit()

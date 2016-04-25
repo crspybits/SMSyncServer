@@ -93,7 +93,11 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         }
     }
     
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+        failTest()
+    }
+
+    func syncServerClientShouldDeleteFiles(uuids: [NSUUID], acknowledgement: () -> ()) {
         failTest()
     }
     
@@ -102,10 +106,6 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
     }
     
     func syncServerEventOccurred(event:SMSyncServerEvent) {
-        failTest()
-    }
-    
-    func syncServerClientShouldDeleteFiles(uuids:[NSUUID]) {
         failTest()
     }
 }

@@ -10,22 +10,26 @@
     </entity>
     <entity name="SMDownloadDeletion" representedClassName=".SMDownloadDeletion" parentEntity="SMDownloadFileOperation" syncable="YES"/>
     <entity name="SMDownloadFile" representedClassName=".SMDownloadFile" parentEntity="SMDownloadFileOperation" syncable="YES">
+        <attribute name="internalOperationStage" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="internalRelativeLocalURL" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="serverVersion" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <relationship name="blocks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMDownloadBlock" inverseName="download" inverseEntity="SMDownloadBlock" syncable="YES"/>
     </entity>
     <entity name="SMDownloadFileOperation" representedClassName=".SMDownloadFileOperation" isAbstract="YES" parentEntity="SMDownloadOperation" syncable="YES">
         <relationship name="localFile" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMLocalFile" inverseName="downloadOperations" inverseEntity="SMLocalFile" syncable="YES"/>
     </entity>
-    <entity name="SMDownloadInboundTransfer" representedClassName=".SMDownloadInboundTransfer" parentEntity="SMDownloadOperation" syncable="YES"/>
     <entity name="SMDownloadOperation" representedClassName=".SMDownloadOperation" isAbstract="YES" syncable="YES">
         <relationship name="queue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="internalBeingDownloaded" inverseEntity="SMQueues" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadStartup" representedClassName=".SMDownloadStartup" parentEntity="SMDownloadOperation" syncable="YES">
+        <attribute name="internalStartupStage" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="SMLocalFile" representedClassName="SMLocalFile" syncable="YES">
         <attribute name="appFileType" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="deletedOnServer" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="internalSyncState" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="localVersion" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <attribute name="mimeType" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="newUpload" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="remoteFileName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="uuid" optional="YES" attributeType="String" indexed="YES" syncable="YES"/>
         <relationship name="downloadOperations" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMDownloadFileOperation" inverseName="localFile" inverseEntity="SMDownloadFileOperation" syncable="YES"/>
@@ -68,10 +72,10 @@
         <element name="SMDownloadBlock" positionX="790" positionY="351" width="128" height="90"/>
         <element name="SMDownloadConflict" positionX="394" positionY="365" width="128" height="58"/>
         <element name="SMDownloadDeletion" positionX="243" positionY="369" width="128" height="45"/>
-        <element name="SMDownloadFile" positionX="567" positionY="360" width="171" height="73"/>
+        <element name="SMDownloadFile" positionX="567" positionY="360" width="171" height="105"/>
         <element name="SMDownloadFileOperation" positionX="421" positionY="540" width="164" height="58"/>
-        <element name="SMDownloadInboundTransfer" positionX="612" positionY="549" width="189" height="45"/>
         <element name="SMDownloadOperation" positionX="423" positionY="680" width="162" height="58"/>
+        <element name="SMDownloadStartup" positionX="612" positionY="549" width="189" height="60"/>
         <element name="SMLocalFile" positionX="61" positionY="485" width="128" height="180"/>
         <element name="SMQueues" positionX="-144" positionY="162" width="128" height="105"/>
         <element name="SMUploadBlock" positionX="-585" positionY="387" width="128" height="90"/>
@@ -79,7 +83,7 @@
         <element name="SMUploadFile" positionX="-432" positionY="590" width="128" height="88"/>
         <element name="SMUploadFileOperation" positionX="-333" positionY="482" width="153" height="75"/>
         <element name="SMUploadOperation" positionX="-225" positionY="372" width="128" height="58"/>
-        <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
         <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="103"/>
+        <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
     </elements>
 </model>

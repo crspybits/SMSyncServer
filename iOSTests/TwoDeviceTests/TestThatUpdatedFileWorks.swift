@@ -50,7 +50,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
     
     let newFileContents = "newFileContents"
     
-    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)]) {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
@@ -68,6 +68,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             // On the slave, we'll get one file downloaded each time.
             self.passTest()
             self.timer!.cancel()
+            acknowledgement()
         }
         else if self.numberDownloads > 2 {
             self.failTest("Got more than two downloads: \(self.numberDownloads)")

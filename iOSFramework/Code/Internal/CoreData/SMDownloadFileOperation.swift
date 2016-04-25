@@ -10,5 +10,5 @@ import Foundation
 import CoreData
 import SMCoreLib
 
-class SMDownloadFileOperation: SMDownloadOperation {
+class SMDownloadFileOperation: SMDownloadOperation {    
 }

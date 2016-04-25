@@ -81,18 +81,19 @@ internal class SMUploadFiles : NSObject {
     private override init() {
         super.init()
         
+        unowned let unownedSelf = self
+
         // Putting deletions as first priority just because deletions should be fast.
         self.uploadOperations = [
-            self.doUploadDeletions,
-            self.doUploadFiles,
-            self.doOutboundTransfer,
-            self.startToPollForOperationFinish,
-            self.removeOperationId
+            unownedSelf.doUploadDeletions,
+            unownedSelf.doUploadFiles,
+            unownedSelf.doOutboundTransfer,
+            unownedSelf.startToPollForOperationFinish,
+            unownedSelf.removeOperationId
         ]
     }
     
     internal func appLaunchSetup() {
-        // SMSync.session.delayDelegate = self
         SMServerAPI.session.uploadDelegate = self
     }
     
@@ -294,17 +295,11 @@ internal class SMUploadFiles : NSObject {
         // TODO: Should fallback exponentially in our checks-- sometimes cloud storage can take a while. Either because it's just slow, or because the file is large.
         
         SMServerAPI.session.checkOperationStatus(serverOperationId: self.serverOperationId!) {operationResult, apiResult in
-            if (apiResult.error != nil) {
-                Log.msg("Yikes: Error checking operation status")
-                self.retryIfNetworkConnected(&self.numberCheckOperationStatusErrors, errorSpecifics: "check operation status") {
-                    self.uploadControl()
-                }
-            }
-            else {
+            if SMTest.If.success(apiResult.error, context: .CheckOperationStatus) {
                 switch (operationResult!.status) {
                 case SMServerConstants.rcOperationStatusInProgress:
                     Log.msg("Operation still in progress")
-                    self.checkIfUploadOperationFinishedTimer!.start()
+                    self.uploadControl()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
                     Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
@@ -326,6 +321,12 @@ internal class SMUploadFiles : NSObject {
                         wrapUp!.wrapupStage = .OutboundTransfer
                         self.uploadControl()
                     }
+                }
+            }
+            else {
+                Log.msg("Yikes: Error checking operation status")
+                self.retryIfNetworkConnected(&self.numberCheckOperationStatusErrors, errorSpecifics: "check operation status") {
+                    self.uploadControl()
                 }
             }
         }
@@ -465,8 +466,8 @@ internal class SMUploadFiles : NSObject {
                     Assert.If(!fileWasDeleted, thenPrintThisString: "File could not be deleted")
                 }
                 
-                if localFile.newUpload!.boolValue {
-                    localFile.newUpload = false
+                if localFile.syncState == .InitialUpload {
+                    localFile.syncState = .AfterInitialSync
                     numberNewFiles += 1
                 }
                 else {
@@ -498,6 +499,7 @@ extension SMUploadFiles : SMServerAPIUploadDelegate {
         Assert.If(change == nil, thenPrintThisString: "Yikes: Couldn't get upload for uuid \(serverFile.uuid.UUIDString)")
         change!.operationStage = .CloudStorage
         
-        self.syncServerDelegate?.syncServerEventOccurred(.SingleUploadComplete(uuid: serverFile.uuid))
+        self.syncServerDelegate?.syncServerEventOccurred(
+            .SingleUploadComplete(uuid: serverFile.uuid))
     }
 }

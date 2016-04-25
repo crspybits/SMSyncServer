@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 import SMCoreLib
 
-class SMDownloadConflict: NSManagedObject {
+class SMDownloadConflict: SMDownloadFileOperation {
     enum ConflictType : String {
         // A download-deletion file has been modified (not deleted) locally
         case DownloadDeletionLocalUpload
