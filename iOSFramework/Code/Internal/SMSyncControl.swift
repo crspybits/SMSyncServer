@@ -95,12 +95,15 @@ internal class SMSyncControl {
             While the ordering of this pending uploads check appears to be higher priority than than the check for downloads in 4), the only way we actually achieve pending uploads is in 5).
         3) Check for downloads (assumes we don't have a lock). This check can result in downloads, download-deletions, and download-conflicts, so we need to go back to 1).
         4) If there are committed uploads, assign a queue of those as pending uploads, go back to 3) (requires a lock created during checking for downloads).
+        
+        The completion, if given is called: a) just before returning on error or not getting lock, or b) just after getting the lock.
     */
-    internal func nextSyncOperation() {
+    internal func nextSyncOperation(completion:(()->())?=nil) {
         switch self.mode {
         case .ClientAPIError, .InternalError, .NonRecoverableError:
             // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
             self.delegate?.syncServerModeChange(self.mode)
+            completion?()
             return
         
         // If we're in a .NetworkNotConnected mode, calling nextSyncOperation() should be considered a .Recovery step. i.e., because presumably the network is now connected.
@@ -118,6 +121,7 @@ internal class SMSyncControl {
         }
         
         if self.lock.tryLock() {
+            completion?()
             Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
             self._operating = true
             self.syncControlModeChange(.Synchronizing)
@@ -126,6 +130,7 @@ internal class SMSyncControl {
             self.next()
         }
         else {
+            completion?()
             // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation(). This is not an error.
             Log.special("nextSyncOperation: Couldn't get the lock!")
         }
@@ -134,17 +139,20 @@ internal class SMSyncControl {
     internal func lockAndNextSyncOperation(upload:()->()) {
         self.nextOperationLock.lock()
         upload()
-        self.nextSyncOperation()
-        self.nextOperationLock.unlock()
+        // Shouldn't hold the nextOperationLock for very long-- the nextSyncOperation callback will release it quickly.
+        self.nextSyncOperation() {
+            self.nextOperationLock.unlock()
+        }
     }
     
     private func doNextUploadOrStop() {
         self.nextOperationLock.lock()
-        
         if nil == SMQueues.current().committedUploads {
-            // No uploads, stop operating; will set mode to .Idle
+            // No uploads, stop operating
             self.stopOperating()
+            // Unlock before calling .Idle callback so we don't get into deadlock issues. E.g., .Idle callback could cause lockAndNextSyncOperation to be called.
             self.nextOperationLock.unlock()
+            self.syncControlModeChange(.Idle)
         }
         else {
             self.nextOperationLock.unlock()
@@ -154,7 +162,7 @@ internal class SMSyncControl {
         }
     }
     
-    private func stopOperating(andSetModeToIdle setModeToIdle:Bool=true) {
+    private func stopOperating() {
         Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
         
         self._operating = false
@@ -163,10 +171,7 @@ internal class SMSyncControl {
         Log.special("Stopped operating!")
         Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
 
-        if setModeToIdle {
-            // Callback for .Idle mode change is after the unlock to let the idle callback acquire the lock if needed.
-            self.syncControlModeChange(.Idle)
-        }
+        // Callback for .Idle mode change is after the unlock (and now, after this method call) to let the idle callback acquire the lock if needed.
     }
     
     internal func resetFromError(completion:((error:NSError?)->())?=nil) {
@@ -327,6 +332,7 @@ internal class SMSyncControl {
                 Log.special("Lock already held by another userId")
                 // We're calling the "NoFilesToDownload" delegate callback. In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held. However, for debugging purposes, we effectively have no files to download, so report that back.
                 self.stopOperating()
+                self.syncControlModeChange(.Idle)
                 self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
             }
             else {
@@ -411,12 +417,11 @@ extension SMSyncControl : SMSyncControlDelegate {
             break
             
         case .NetworkNotConnected:
-            // We've set the mode above, and don't want to change it to .Idle. But, we do want to stop operating.
-            self.stopOperating(andSetModeToIdle: false)
+            self.stopOperating()
         
         case .ClientAPIError, .NonRecoverableError, .InternalError:
             // Ditto.
-            self.stopOperating(andSetModeToIdle: false)
+            self.stopOperating()
         }
         
         self.delegate?.syncServerModeChange(newMode)

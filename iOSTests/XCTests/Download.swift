@@ -158,7 +158,8 @@ class Download: BaseClass {
     func testThatDownloadOfUntransferredServerFileDoesntWork() {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
-        let unlockExpectation = self.expectationWithDescription("Unlock Complete")
+        let downloadExpectation = self.expectationWithDescription("Download Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 30
         
@@ -177,24 +178,22 @@ class Download: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
+                }
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
 
-                    SMServerAPI.session.lock() { lockResult in
-                        XCTAssert(lockResult.error == nil)
-
-                        let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1", toBaseURLType: .DocumentsDirectory)
-                        let serverFile = SMServerFile(uuid: testFile.uuid)
-                        serverFile.localURL = downloadFileURL
+                let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1", toBaseURLType: .DocumentsDirectory)
+                let serverFile = SMServerFile(uuid: testFile.uuid)
+                serverFile.localURL = downloadFileURL
+            
+                SMServerAPI.session.downloadFile(serverFile) { downloadResult in
+                    // Should get an error here: Because we're trying to download a file that's not in the PSInboundFiles and marked as received. I.e., it hasn't been transferred from the server.
+                    XCTAssert(downloadResult.error != nil)
                     
-                        SMServerAPI.session.downloadFile(serverFile) { downloadResult in
-                            // Should get an error here: Because we're trying to download a file that's not in the PSInboundFiles and marked as received. I.e., it hasn't been transferred from the server.
-                            XCTAssert(downloadResult.error != nil)
-                            
-                            SMServerAPI.session.unlock() { unlockResult in
-                                XCTAssert(unlockResult.error == nil)
-                                unlockExpectation.fulfill()
-                            }
-                        }
-                    }
+                    downloadExpectation.fulfill()
                 }
             }
             
@@ -217,6 +216,9 @@ class Download: BaseClass {
         let singleDownloadExpectation2 = self.expectationWithDescription("Single2 Download")
 
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+
         var numberDownloads = 0
         
         self.extraServerResponseTime = 60
@@ -249,13 +251,6 @@ class Download: BaseClass {
                         let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                         XCTAssert(fileAttr2 != nil)
                         XCTAssert(!fileAttr2!.deleted!)
-                        
-                        // Now, forget locally about the uploaded files so we can download them.
-                        SMSyncServer.session.resetMetaData(forUUID:testFile1.uuid)
-                        SMSyncServer.session.resetMetaData(forUUID:testFile2.uuid)
-                        
-                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                        //SMDownloadFiles.session.checkForDownloads()
                     }
                 }
             }
@@ -292,6 +287,22 @@ class Download: BaseClass {
                 allDownloadsCompleteExpectation.fulfill()
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+        
+                // Now, forget locally about the uploaded files so we can download them.
+                SMSyncServer.session.resetMetaData(forUUID:testFile1.uuid)
+                SMSyncServer.session.resetMetaData(forUUID:testFile2.uuid)
+                
+                SMSyncControl.session.nextSyncOperation()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation2.fulfill()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -315,6 +326,9 @@ class Download: BaseClass {
         let singleDownloadExpectation = self.expectationWithDescription("Single Download")
 
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+
         var numberDownloads = 0
         var expectSecondUpload = false
         
@@ -337,16 +351,6 @@ class Download: BaseClass {
                     let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                     XCTAssert(fileAttr1 != nil)
                     XCTAssert(!fileAttr1!.deleted!)
-                    
-                    // Now, forget locally about the uploaded file so we can download it.
-                    SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
-                    
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
-                    
-                    SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
-                    
-                    SMSyncServer.session.commit()
                 }
             }
  
@@ -389,6 +393,25 @@ class Download: BaseClass {
                 allDownloadsCompleteExpectation.fulfill()
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+                
+                // Now, forget locally about the uploaded file so we can download it.
+                SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
+                
+                SMSyncControl.session.nextSyncOperation()
+                
+                SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation2.fulfill()
+                }
+                
+                SMSyncServer.session.commit()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -412,6 +435,9 @@ class Download: BaseClass {
         let singleDownloadExpectation2 = self.expectationWithDescription("Single2 Download")
 
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+
         var numberDownloads = 0
         var expectThirdUpload = false
         
@@ -445,16 +471,6 @@ class Download: BaseClass {
                         let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                         XCTAssert(fileAttr2 != nil)
                         XCTAssert(!fileAttr2!.deleted!)
-                        
-                        // Now, forget locally about the uploaded files so we can download them.
-                        SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
-                        SMSyncServer.session.resetMetaData(forUUID: testFile2.uuid)
-                        
-                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                        //SMDownloadFiles.session.checkForDownloads()
-                        
-                        SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
-                        SMSyncServer.session.commit()
                     }
                 }
             }
@@ -512,16 +528,28 @@ class Download: BaseClass {
                 }
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+                       
+                // Now, forget locally about the uploaded files so we can download them.
+                SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
+                SMSyncServer.session.resetMetaData(forUUID: testFile2.uuid)
+                
+                SMSyncControl.session.nextSyncOperation()
+                
+                SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
+                
+                self.idleCallbacks.append() {
+                    idleExpectation2.fulfill()
+                }
+            
+                SMSyncServer.session.commit()
+            }
+            
             SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
     }
-        
-    // TODO: Server file has been deleted, so download causes deletion of file on app/client. NOTE: This isn't yet handled by SMFileDiffs.
-    
-    // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts. NOTE: This isn't yet handled by SMFileDiffs.
-    
-    // TODO: Test download recovery where there are no files remaining to be downloaded.
-    
 }
