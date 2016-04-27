@@ -177,6 +177,8 @@ internal class SMUploadFiles : NSObject {
     
     private func retryIfNetworkConnected(inout attempts:Int, errorSpecifics:String, retryMethod:()->()) {
         if Network.session().connected() {
+            Log.special("retry: for \(errorSpecifics)")
+
             // Retry up to a max number of times, then fail.
             if attempts < self.MAX_NUMBER_ATTEMPTS {
                 attempts += 1

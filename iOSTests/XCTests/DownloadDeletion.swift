@@ -19,6 +19,8 @@ class DownloadDeletion: BaseClass {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-            
-    // TODO: Server file has been deleted, so download causes deletion of file on app/client. NOTE: This isn't yet handled by SMFileDiffs.
+    
+    // Download deletion of a single file
+    // Download deletion of two files
+    // Download deletion of one file with download of one file.
 }

@@ -306,31 +306,39 @@ internal class SMDownloadFiles : NSObject {
         if let fileDownloads = SMQueues.current().getBeingDownloadedChanges(
             .DownloadFile, operationStage: .AppCallback) as? [SMDownloadFile] {
             Log.msg("\(fileDownloads.count) file downloads")
-            self.callSyncServerDownloadsComplete(fileDownloads)
+            self.callSyncServerDownloadsComplete(fileDownloads) {
+                self.doCallbacks()
+            }
             result = true
         }
-        
-        if let fileDeletions = SMQueues.current().getBeingDownloadedChanges(
+        else if let fileDeletions = SMQueues.current().getBeingDownloadedChanges(
             .DownloadDeletion) as? [SMDownloadDeletion] {
             Log.msg("\(fileDeletions.count) file deletions")
-            self.callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions)
+            self.callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions) {
+                self.doCallbacks()
+            }
             result = true
         }
-        
-        if let fileConflicts = SMQueues.current().getBeingDownloadedChanges(
+        else if let fileConflicts = SMQueues.current().getBeingDownloadedChanges(
             .DownloadConflict) as? [SMDownloadConflict] {
             Log.msg("\(fileConflicts.count) file conflicts")
             Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
+            self.callSyncServerSyncServerClientShouldResolveConflicts(fileConflicts) {
+                self.doCallbacks()
+            }
             result = true
         }
-        
-        self.callSyncServerDownloadsFinished()
+        else {
+            self.callSyncServerDownloadsFinished()
+        }
         
         return result
     }
     
     private func retryIfNetworkConnected(inout attempts:Int, errorSpecifics:String, retryMethod:()->()) {
         if Network.session().connected() {
+            Log.special("retry: for \(errorSpecifics)")
+
             // Retry up to a max number of times, then fail.
             if attempts < self.MAX_NUMBER_ATTEMPTS {
                 attempts += 1
@@ -356,7 +364,7 @@ internal class SMDownloadFiles : NSObject {
         self.syncControlDelegate?.syncControlModeChange(mode)
     }
 
-    private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile]) {
+    private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile], completion:()->()) {
         var downloaded = [(NSURL, SMSyncAttributes)]()
         
         for downloadFile in fileDownloads {
@@ -378,10 +386,11 @@ internal class SMDownloadFiles : NSObject {
         
         self.syncServerDelegate?.syncServerDownloadsComplete(downloaded) {
             SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
+            completion()
         }
     }
     
-    private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion]) {
+    private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
             
         var uuids = [NSUUID]()
         
@@ -397,7 +406,11 @@ internal class SMDownloadFiles : NSObject {
         
         self.syncServerDelegate?.syncServerClientShouldDeleteFiles(uuids) {
             SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
+            completion()
         }
+    }
+    
+    private func callSyncServerSyncServerClientShouldResolveConflicts(fileConflicts:[SMDownloadConflict], completion:()->()) {
     }
     
     private func callSyncServerDownloadsFinished() {

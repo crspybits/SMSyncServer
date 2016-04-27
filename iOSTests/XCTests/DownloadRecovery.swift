@@ -39,6 +39,7 @@ class DownloadRecovery: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
         let singleDownloadExpectation = self.expectationWithDescription("Single Download or No Download Complete")
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
 
         self.extraServerResponseTime = 60
         var numberInboundTransfers = 0
@@ -59,25 +60,6 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
-                    
-                    // Unlock only applies to situations where there are no files to download.
-                    if testContext == .Unlock {
-                        noDownloads = true
-                    }
-                    else {
-                        // Now, forget locally about that uploaded file so we can download it.
-                        SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
-                    }
-                    
-                    SMTest.session.doClientFailureTest(testContext)
-                    
-                    if testContext == .InboundTransferRecovery {
-                        // In order to get the .InboundTransferRecovery failure, we need to make a primary failure, first.
-                        SMTest.session.doClientFailureTest(.InboundTransfer)
-                    }
-                    
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -96,29 +78,45 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            // FIXME!!!
-            /*
-            self.noDownloadsCallbacks.append() {
-                singleDownloadExpectation.fulfill()
-                allDownloadsCompleteExpectation.fulfill()
+            self.singleNoDownloadsCallback = {
+                if noDownloads {
+                    singleDownloadExpectation.fulfill()
+                    allDownloadsCompleteExpectation.fulfill()
+                }
             }
-            */
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 // With .CheckOperationStatus server API failure, the "recovery" process consists of just trying to check the operation status again, which doesn't get reflected in the number of recovery steps.
                 if testContext != .CheckOperationStatus {
                     XCTAssert(self.numberOfRecoverySteps >= 1)
-                    
-                    if testContext == .InboundTransferRecovery {
-                        // At least two-- because of primary then secondary failure.
-                        XCTAssert(self.numberOfRecoverySteps >= 2)
-                    }
                 }
                 
                 if !noDownloads {
                     XCTAssert(numberInboundTransfers >= 1)
                 }
                 allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+            
+                // Unlock only applies to situations where there are no files to download.
+                if testContext == .Unlock {
+                    noDownloads = true
+                }
+                else {
+                    // Now, forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                }
+                
+                SMTest.session.doClientFailureTest(testContext)
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                    idleExpectation.fulfill()
+                }
+                
+                SMSyncControl.session.nextSyncOperation()
             }
             
             SMSyncServer.session.commit()
@@ -153,10 +151,6 @@ class DownloadRecovery: BaseClass {
     
     func testThatRecoveryBasedOnRemoveOperationIdContextWorks() {
         self.recoveryBasedOnTestContextWorks(.RemoveOperationId)
-    }
-
-    func testThatRecoveryBasedOnInboundTransferRecoveryContextWorks() {
-        self.recoveryBasedOnTestContextWorks(.InboundTransferRecovery)
     }
     
     // Not using an integer directly here because an integer would imply generality.

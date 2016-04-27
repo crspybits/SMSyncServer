@@ -20,7 +20,6 @@ internal enum SMTestContext: String {
     case DownloadFiles
     case CheckOperationStatus
     case RemoveOperationId
-    case InboundTransferRecovery
 }
 
 import Foundation

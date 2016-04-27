@@ -300,6 +300,9 @@ internal class SMSyncControl {
     // Assumes the threading lock is held. Assumes that there are no pending downloads and no pending uploads. The server lock typically won't be held, but could already be held in the case of retrying to get the server file index (on an error with that). (It is not an error to try to get the server lock if we alread hold it.)
     // The result of calling this method, if it succeeds, is to hold the server lock, and to change download and conflict queues in SMQueues.
     private func checkServerForDownloads() {
+        // Set this to false to deal with situation where (a) we get the lock, but (b) we fail on getFileIndex-- this will ensure we do a retryon getFileIndex.
+        self.checkedForServerFileIndex = false
+        
         SMServerAPI.session.lock() { lockResult in
             if SMTest.If.success(lockResult.error, context: .Lock) {
             
@@ -344,6 +347,8 @@ internal class SMSyncControl {
     }
     
     private func retry(inout attempts:Int, errorSpecifics:String) {
+        Log.special("retry: for \(errorSpecifics)")
+        
         // Retry up to a max number of times, then fail.
         if attempts < self.MAX_NUMBER_ATTEMPTS {
             attempts += 1
