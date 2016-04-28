@@ -344,14 +344,7 @@ class Download: BaseClass {
             
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 1)
-                TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
-                
-                    uploadCompleteCallbackExpectation1.fulfill()
-                    
-                    let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
-                    XCTAssert(fileAttr1 != nil)
-                    XCTAssert(!fileAttr1!.deleted!)
-                }
+                uploadCompleteCallbackExpectation1.fulfill()
             }
  
             self.singleUploadCallbacks.append() { uuid in
@@ -397,19 +390,26 @@ class Download: BaseClass {
             self.idleCallbacks.append() {
                 idleExpectation1.fulfill()
                 
-                // Now, forget locally about the uploaded file so we can download it.
-                SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
-                
-                SMSyncControl.session.nextSyncOperation()
-                
-                SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
-                
-                // let idleExpectation = self.expectationWithDescription("Idle")
-                self.idleCallbacks.append() {
-                    idleExpectation2.fulfill()
+                TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
+                    
+                    let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
+                    XCTAssert(fileAttr1 != nil)
+                    XCTAssert(!fileAttr1!.deleted!)
+                    
+                    // Now, forget locally about the uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid)
+                    
+                    SMSyncControl.session.nextSyncOperation()
+                    
+                    SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                    
+                    // let idleExpectation = self.expectationWithDescription("Idle")
+                    self.idleCallbacks.append() {
+                        idleExpectation2.fulfill()
+                    }
+                    
+                    SMSyncServer.session.commit()
                 }
-                
-                SMSyncServer.session.commit()
             }
             
             SMSyncServer.session.commit()
