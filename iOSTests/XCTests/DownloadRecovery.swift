@@ -204,30 +204,6 @@ class DownloadRecovery: BaseClass {
                 else {
                     XCTAssert(numberUploads == 2)
                 }
-                
-                func finish() {
-                    uploadCompleteCallbackExpectation.fulfill()
-                    SMTest.session.serverDebugTest =  serverTestCase
-                    
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
-                }
-                
-                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
-                    
-                    // Forget locally about that uploaded file so we can download it.
-                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
-                    
-                    if numberOfFilesToDownload == .One {
-                        finish()
-                    }
-                    else {
-                        TestBasics.session.checkFileSize(testFile2!.uuidString, size: testFile2!.sizeInBytes) {
-                            SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
-                            finish()
-                        }
-                    }
-                }
             }
             
             self.singleRecoveryCallback =  { mode in
@@ -261,6 +237,32 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberInboundTransfers >= 1)
                 allDownloadsCompleteExpectation.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                func finish() {
+                    uploadCompleteCallbackExpectation.fulfill()
+                    SMTest.session.serverDebugTest =  serverTestCase
+                    
+                    SMSyncControl.session.nextSyncOperation()
+                }
+                
+                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                    
+                    // Forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                    
+                    if numberOfFilesToDownload == .One {
+                        finish()
+                    }
+                    else {
+                        TestBasics.session.checkFileSize(testFile2!.uuidString, size: testFile2!.sizeInBytes) {
+                            SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
+                            finish()
+                        }
+                    }
+                }
             }
             
             SMSyncServer.session.commit()
@@ -342,7 +344,7 @@ class DownloadRecovery: BaseClass {
                 singleUploadExpectation.fulfill()
             }
             
-            Network.session().connectionStateCallbacks.addTarget!(self, withSelector: "recoveryFromNetworkLossAction")
+            Network.session().connectionStateCallbacks.addTarget!(self, withSelector: #selector(DownloadRecovery.recoveryFromNetworkLossAction))
             
             self.singleRecoveryCallback =  { mode in
                 self.numberOfRecoverySteps += 1
@@ -352,12 +354,6 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(numberUploads == 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
-                    
-                    // Now, forget locally about that uploaded file so we can download it.
-                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
-                    
-                    Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                    //SMDownloadFiles.session.checkForDownloads()
                 }
             }
             
@@ -378,6 +374,15 @@ class DownloadRecovery: BaseClass {
                 allDownloadsCompleteExpectation.fulfill()
             }
             
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                    
+                // Now, forget locally about that uploaded file so we can download it.
+                SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                    
+                SMSyncControl.session.nextSyncOperation()
+            }
+            
             SMSyncServer.session.commit()
         }
         
@@ -385,7 +390,7 @@ class DownloadRecovery: BaseClass {
     }
 
     // This method applies to the above test only. If I just turn the network back on, immediately, I will not get this test to work. Because the network being off will never be detected immediately after the upload. So, instead, I'm delaying the network coming back on for a few seconds.
-    func recoveryFromNetworkLossAction() {
+    @objc private func recoveryFromNetworkLossAction() {
         if !Network.connected() {
             TimedCallback.withDuration(5) {
                 Network.session().debugNetworkOff = false
@@ -399,6 +404,7 @@ class DownloadRecovery: BaseClass {
         var singleUploadExpectation:XCTestExpectation?
         var singleDownloadExpectation:XCTestExpectation?
         var allDownloadsCompleteExpectation:XCTestExpectation?
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         if DownloadRecovery.crash1.boolValue {
             uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
@@ -407,6 +413,7 @@ class DownloadRecovery: BaseClass {
         else {
             singleDownloadExpectation = self.expectationWithDescription("Single Download or No Download Complete")
             allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+            
         }
         
         self.extraServerResponseTime = 30
@@ -433,18 +440,21 @@ class DownloadRecovery: BaseClass {
                 self.commitCompleteCallbacks.append() { numberUploads in
                     XCTAssert(numberUploads == 1)
                     TestBasics.session.checkFileSize(testFile!.uuidString, size: testFile!.sizeInBytes) {
-                        
-                        // Now, forget locally about that uploaded file so we can download it.
-                        SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
-                        
-                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                        //SMDownloadFiles.session.checkForDownloads()
-                        
-                        SMTest.session.crash()
-                        
-                        // Will actually never get to here...
-                        uploadCompleteCallbackExpectation!.fulfill()
                     }
+                }
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                        
+                    // Now, forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
+                    
+                    SMSyncControl.session.nextSyncOperation()
+                    
+                    SMTest.session.crash()
+                    
+                    // Will actually never get to here...
+                    uploadCompleteCallbackExpectation!.fulfill()
                 }
                 
                 SMSyncServer.session.commit()
@@ -476,6 +486,11 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(numberInboundTransfers >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
             }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
         }
         
         self.waitForExpectations()
@@ -487,6 +502,7 @@ class DownloadRecovery: BaseClass {
         var singleUploadExpectation:XCTestExpectation?
         var singleDownloadExpectation:XCTestExpectation?
         var allDownloadsCompleteExpectation:XCTestExpectation?
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         if DownloadRecovery.crash2.boolValue {
             uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
@@ -521,17 +537,21 @@ class DownloadRecovery: BaseClass {
                     XCTAssert(numberUploads == 1)
                     TestBasics.session.checkFileSize(testFile!.uuidString, size: testFile!.sizeInBytes) {
                         uploadCompleteCallbackExpectation!.fulfill()
-                        
-                        // Now, forget locally about that uploaded file so we can download it.
-                        SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
-                        
-                        Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                        //SMDownloadFiles.session.checkForDownloads()
                     }
                 }
                 
+                // singleInboundTransferCallback: Is for *download*.
                 self.singleInboundTransferCallback = { numberOperations in
                     SMTest.session.crash()
+                }
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                        
+                    // Now, forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile!.uuid)
+                    
+                    SMSyncControl.session.nextSyncOperation()
                 }
                 
                 SMSyncServer.session.commit()
@@ -558,6 +578,11 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
             }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
         }
         
         self.waitForExpectations()
@@ -582,6 +607,7 @@ class DownloadRecovery: BaseClass {
         //singleDownloadExpectation1 = self.expectationWithDescription("Single Download1 Complete")
         singleDownloadExpectation2 = self.expectationWithDescription("Single Download2 Complete")
         allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.extraServerResponseTime = 30
         
@@ -621,13 +647,6 @@ class DownloadRecovery: BaseClass {
                         TestBasics.session.checkFileSize(testFile2!.uuidString, size: testFile2!.sizeInBytes) {
                     
                             uploadCompleteCallbackExpectation!.fulfill()
-                        
-                            // Now, forget locally about the uploaded files so we can download them.
-                            SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
-                            SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
-                            
-                            Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                            //SMDownloadFiles.session.checkForDownloads()
                         }
                     }
                 }
@@ -641,6 +660,16 @@ class DownloadRecovery: BaseClass {
                     XCTAssert(filesAreTheSame)
                     
                     SMTest.session.crash()
+                }
+                
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                        
+                    // Now, forget locally about the uploaded files so we can download them.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
+                    SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
+                    
+                    SMSyncControl.session.nextSyncOperation()
                 }
                 
                 SMSyncServer.session.commit()
@@ -678,6 +707,11 @@ class DownloadRecovery: BaseClass {
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
             }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
         }
         
         self.waitForExpectations()
@@ -690,6 +724,7 @@ class DownloadRecovery: BaseClass {
         var singleUploadExpectation2:XCTestExpectation?
         //var singleDownloadExpectation1:XCTestExpectation?
         var downloadsComplete:XCTestExpectation?
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         // Creating this for both the crash and not-crash cases so that in the crash case, we'll have an unfulfilled expectation-- so the test doesn't just finish before the crash.
         downloadsComplete = self.expectationWithDescription("All Downloads Complete")
@@ -741,13 +776,6 @@ class DownloadRecovery: BaseClass {
                         TestBasics.session.checkFileSize(testFile2!.uuidString, size: testFile2!.sizeInBytes) {
                     
                             uploadCompleteCallbackExpectation!.fulfill()
-                        
-                            // Now, forget locally about the uploaded files so we can download them.
-                            SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
-                            SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
-                            
-                            Assert.badMojo(alwaysPrintThisString: "Fixed this below!")
-                            //SMDownloadFiles.session.checkForDownloads()
                         }
                     }
                 }
@@ -769,6 +797,16 @@ class DownloadRecovery: BaseClass {
                     SMTest.session.crash()
                 }
                 
+                // let idleExpectation = self.expectationWithDescription("Idle")
+                self.idleCallbacks.append() {
+                        
+                    // Now, forget locally about the uploaded files so we can download them.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile1!.uuid)
+                    SMSyncServer.session.resetMetaData(forUUID:testFile2!.uuid)
+                    
+                    SMSyncControl.session.nextSyncOperation()
+                }
+                
                 SMSyncServer.session.commit()
             }
         }
@@ -784,7 +822,13 @@ class DownloadRecovery: BaseClass {
             }
 
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
+                XCTAssert(self.numberOfRecoverySteps >= 1)
                 downloadsComplete!.fulfill()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
             }
         }
         

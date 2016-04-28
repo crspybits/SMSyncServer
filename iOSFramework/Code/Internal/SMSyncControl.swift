@@ -96,7 +96,7 @@ internal class SMSyncControl {
         3) Check for downloads (assumes we don't have a lock). This check can result in downloads, download-deletions, and download-conflicts, so we need to go back to 1).
         4) If there are committed uploads, assign a queue of those as pending uploads, go back to 3) (requires a lock created during checking for downloads).
         
-        The completion, if given is called: a) just before returning on error or not getting lock, or b) just after getting the lock.
+        The completion, if given, is called: a) just before returning on error or not getting lock, or b) just after getting the lock.
     */
     internal func nextSyncOperation(completion:(()->())?=nil) {
         switch self.mode {

@@ -129,7 +129,8 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                             self.endWithErrorDetails(error);
                         }
                         else if (!isDefined(psOperationId)) {
-                            var message = "Could not get operation id:" + error;
+                            var message = "validateUser: Could not get operation id:" +
+                                lock.operationId;
                             logger.error(message);
                             self.endWithErrorDetails(message);
                         }
