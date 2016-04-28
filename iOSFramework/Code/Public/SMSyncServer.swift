@@ -91,7 +91,7 @@ public protocol SMSyncServerDelegate : class {
     func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->())
     
     // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    // The callee should call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
+    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
     func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->())
     
     // Reports conflicting file versions when downloading. The callee should use the resolution callback to indicate how to deal with these conflicts.
