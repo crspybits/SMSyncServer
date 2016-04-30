@@ -135,16 +135,20 @@ internal class SMUploadFiles : NSObject {
     
     // Returns true if there were deletions to do (which will be in process asynchronously), and false if there were no deletions to do. Nil is returned in the case of an error.
     private func doUploadDeletions() -> Bool? {
-        let deletionChanges = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
+        var deletionChanges = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
         if deletionChanges == nil {
             return false
         }
         
         var serverFileDeletions:[SMServerFile]?
         
-        if let error = self.errorCheckingForDeletion(self.serverFileIndex!, deletionChanges: deletionChanges!) {
+        if let error = self.errorCheckingForDeletion(self.serverFileIndex!, deletionChanges: &deletionChanges) {
             self.callSyncControlModeChange(error)
             return nil
+        }
+        
+        if deletionChanges == nil {
+            return false
         }
         
         serverFileDeletions = SMUploadFileOperation.convertToServerFiles(deletionChanges!)
@@ -307,10 +311,14 @@ internal class SMUploadFiles : NSObject {
                     Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
                     self.numberRevertBackToOutboundTransfer = 0
                     let numberUploads = self.updateMetaDataForSuccessfulUploads()
+                    Log.msg("number server operations: \(operationResult!.count); numberUploads: \(numberUploads)")
                     
                     // 3/15/16; Because of a server error, operation count could be greater than the number uploads. Just ran into this.
+                    // 4/29/16; And just ran into a situation where because the deletion was eliminated locally (becuase of a prior deletion-download), there were no server operations.
+                    /*
                     Assert.If(numberUploads > operationResult!.count, thenPrintThisString: "Something bad is going on: numberUploads \(numberUploads) > operation count \(operationResult!.count)")
-        
+                    */
+                    
                     SMUploadFiles.operationCount.intValue = operationResult!.count
 
                     wrapUp!.wrapupStage = .RemoveOperationId
@@ -361,10 +369,12 @@ internal class SMUploadFiles : NSObject {
         return true
     }
     
-    // Do error checking for the files  to be deleted using. If non-nil, the return value will be one of the errors in SMSyncServerMode.
-    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], deletionChanges:[SMUploadDeletion]) -> SMSyncServerMode? {
+    // Do error checking for the files to be deleted using. If non-nil, the return value will be one of the errors in SMSyncServerMode. The deletionChanges parameter will get updated if there are deletions that don't have to be done because they have already been done on the server. The received value of deletionChanges will not be nil, but the result might be nil.
+    private func errorCheckingForDeletion(serverFileIndex:[SMServerFile], inout deletionChanges:[SMUploadDeletion]?) -> SMSyncServerMode? {
 
-        for deletionChange:SMUploadDeletion in deletionChanges {
+        var updatedDeletionChanges = [SMUploadDeletion]()
+        
+        for deletionChange:SMUploadDeletion in deletionChanges! {
             let localFile = deletionChange.localFile!
             
             let localVersion:Int = localFile.localVersion!.integerValue
@@ -376,13 +386,29 @@ internal class SMUploadFiles : NSObject {
             }
             
             if serverFile!.deleted!.boolValue {
-                return .InternalError(Error.Create("The server file you are attempting to delete was already deleted!"))
+                // This isn't necessarily an error. If we queued an upload-deletion, and then processed a (naturally higher priority) download-deletion, then the file will already be deleted-- and will be marked as such in the local meta data.
+                if localFile.deletedOnServer != nil && localFile.deletedOnServer!.boolValue {
+                    // skip this deletionChange
+                    continue
+                }
+                else {
+                    return .InternalError(Error.Create("The server file you are attempting to delete was already deleted!"))
+                }
             }
             
             // Also seems odd to delete a file version that you don't know about.
             if localVersion != serverFile!.version {
                 return .InternalError(Error.Create("Server file version \(serverFile!.version) not the same as local file version \(localVersion)"))
             }
+            
+            updatedDeletionChanges.append(deletionChange)
+        }
+        
+        if updatedDeletionChanges.count == 0 {
+            deletionChanges = nil
+        }
+        else {
+            deletionChanges = updatedDeletionChanges
         }
         
         return nil

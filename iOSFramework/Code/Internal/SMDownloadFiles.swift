@@ -71,7 +71,8 @@ internal class SMDownloadFiles : NSObject {
         
         /* Download execution follows two paths:
         1) If there are file downloads, all of the download steps are followed.
-        2) If there are no file downloads, but there are file deletions (and possibly file conflicts), then steps are skipped until doCallbacks. The .NoFileDownloads SMDownloadStartup.StartupStage is used to control this.
+        2) If there are no file downloads, and there are only file deletions (and possibly file conflicts), then steps are skipped until doCallbacks. The .NoFileDownloads SMDownloadStartup.StartupStage is used to control this.
+        This is different than the way that uploads operate-- because all uploads (uploads and upload-deletions) have to be processed on the server. Only file downloads have to be processed from the server, however. Download-deletions (once we know about the server file index) only need to be processed locally.
         */
         self.downloadOperations = [
             // I've separated Setup and Start to make recovery easier.

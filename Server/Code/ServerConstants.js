@@ -49,9 +49,6 @@ function define(name, value) {
     // Recover from errors that occur after starting to transfer files from cloud storage.
 	define("operationInboundTransferRecovery", "InboundTransferRecovery");
 
-    // Recovery from errors during the download process (i.e., after transferring files from cloud storage).
-	define("operationDownloadRecovery", "DownloadRecovery");
-
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
 	define("operationCleanup", "Cleanup");
 

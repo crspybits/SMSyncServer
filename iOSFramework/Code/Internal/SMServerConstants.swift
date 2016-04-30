@@ -58,9 +58,6 @@ public class SMServerConstants {
     // Recover from errors that occur after starting to transfer files from cloud storage.
     public static let operationInboundTransferRecovery = "InboundTransferRecovery"
 
-    // Recovery from errors during the download process (i.e., after transferring files from cloud storage).
-    public static let operationDownloadRecovery = "DownloadRecovery"
-
     // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
     public static let operationCleanup = "Cleanup"
 
