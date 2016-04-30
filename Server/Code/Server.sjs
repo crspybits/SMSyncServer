@@ -1362,16 +1362,19 @@ function noLockRecoveryForTransfer(op, transferDirection) {
         }
         else if (!isDefined(psOperationId)) {
         
-            // No lock and no operation id. Just a misuse of the server API.
+            // No lock and no operation id. A misuse of the server API.
             var message = "Error: Don't have the lock!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             
-        } else if (ServerConstants.rcOperationStatusFailedAfterTransfer ==
-                psOperationId.operationStatus &&
+        }
+        else if ((ServerConstants.rcOperationStatusFailedAfterTransfer ==
+                psOperationId.operationStatus ||
+                ServerConstants.rcOperationStatusSuccessfulCompletion ==
+                psOperationId.operationStatus) &&
                 transferDirection == psOperationId.operationType) {
                 
-            // Recovery situation: No lock, we do have an Operation Id, and we had a failure after outbound transfer.
+            // Recovery situation: No lock, we do have an Operation Id, and we (may have) had a failure after outbound transfer.
             
             logger.info("Returning operationId to client: " + psOperationId._id);
             op.result[ServerConstants.resultOperationIdKey] = psOperationId._id;
