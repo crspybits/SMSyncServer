@@ -33,7 +33,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, and downloading. Download-deletion and conflict management for downloaded files is pending.
+* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, downloading, and download-deletion. Conflict management for downloaded files is pending.
 * Currently only Google Drive is supported in terms of cloud storage systems.
 * Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
 
@@ -172,6 +172,10 @@ Since downloads are caused by other devices uploading files, these are initiated
 		// The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
 		// The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
 		func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->())
+		
+		// Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+		// The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
+		func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->())
 	
 		// Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
 		func syncServerModeChange(newMode:SMSyncServerMode)
