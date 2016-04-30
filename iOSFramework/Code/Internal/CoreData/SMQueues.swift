@@ -149,6 +149,8 @@ class SMQueues: NSManagedObject, CoreDataModel {
     
         Assert.If(self.beingDownloaded != nil, thenPrintThisString: "There are already files being downloaded")
         
+        var fileDownloads = 0
+        
         // This is for downloads, download-deletions and download-conflicts.
         let downloadOperations = NSMutableOrderedSet()
         
@@ -205,6 +207,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                     let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile)
                     downloadFile.serverVersion = serverFile.version
                     downloadOperations.addObject(downloadFile)
+                    fileDownloads += 1
                 }
                 else {
                     let serverVersion = serverFile.version
@@ -220,7 +223,8 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile!)
                         downloadFile.serverVersion = serverVersion
                         downloadOperations.addObject(downloadFile)
-
+                        fileDownloads += 1
+                        
                         // Handle conflict cases: These are only relevant when downloading an updated version from the server. If the server version hasn't changed (as in [1] above), and we have a pending upload or pending upload-deletion, then this does not indicate a conflict.
                         var conflictType:SMDownloadConflict.ConflictType?
                         
@@ -246,8 +250,15 @@ class SMQueues: NSManagedObject, CoreDataModel {
         } // End-for
         
         if downloadOperations.count > 0 {
-            let downloadStartup = SMDownloadStartup.newObject()
+            let downloadStartup = SMDownloadStartup.newObject() as! SMDownloadStartup
+            
+            if fileDownloads == 0 {
+                // We don't have any files to downloads: Only download-deletions and possibly download-conflicts.
+                downloadStartup.startupStage = .NoFileDownloads
+            }
+            
             downloadOperations.addObject(downloadStartup)
+            
             self.beingDownloaded = downloadOperations
         }
         else {

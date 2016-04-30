@@ -20,6 +20,7 @@
 		83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C511C817C2B005F0C40 /* DownloadRecovery.swift */; };
 		83554C541C84AB88005F0C40 /* UploadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C531C84AB88005F0C40 /* UploadRecovery.swift */; };
 		8369D3061CCEEBDD006DA33C /* DownloadConflicts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */; };
+		8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */; };
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
 		837E06361C7C108D000695F2 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06351C7C108D000695F2 /* AppFile.swift */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
@@ -111,6 +112,7 @@
 		83554C511C817C2B005F0C40 /* DownloadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadRecovery.swift; path = XCTests/DownloadRecovery.swift; sourceTree = SOURCE_ROOT; };
 		83554C531C84AB88005F0C40 /* UploadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = UploadRecovery.swift; path = XCTests/UploadRecovery.swift; sourceTree = SOURCE_ROOT; };
 		8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadConflicts.swift; path = XCTests/DownloadConflicts.swift; sourceTree = SOURCE_ROOT; };
+		8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatDownloadDeletionWorks.swift; path = TwoDeviceTests/TestThatDownloadDeletionWorks.swift; sourceTree = "<group>"; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		837E06351C7C108D000695F2 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = "Core Data/AppFile.swift"; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
@@ -206,6 +208,9 @@
 		8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */ = {
 			isa = PBXGroup;
 			children = (
+				837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */,
+				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
+				83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */,
 			);
 			name = "Diff Cloud Creds";
 			sourceTree = "<group>";
@@ -216,6 +221,7 @@
 				8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */,
 				8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */,
 				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */,
+				8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */,
 				83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */,
 			);
 			name = "Same Cloud Creds";
@@ -244,9 +250,6 @@
 			isa = PBXGroup;
 			children = (
 				8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */,
-				837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */,
-				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
-				83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */,
 				8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */,
 			);
 			name = "Two Device Tests";
@@ -618,6 +621,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				83D3E8B71C4C072800BFDA93 /* MainPageVC.swift in Sources */,
+				8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */,
 				83D3EDEC1C4E2F3000BFDA93 /* CoreDataTests.swift in Sources */,
 				83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */,
 				83D3E9371C4C801D00BFDA93 /* AppFile+CoreDataProperties.m in Sources */,

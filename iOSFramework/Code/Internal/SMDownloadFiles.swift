@@ -69,6 +69,10 @@ internal class SMDownloadFiles : NSObject {
         
         unowned let unownedSelf = self
         
+        /* Download execution follows two paths:
+        1) If there are file downloads, all of the download steps are followed.
+        2) If there are no file downloads, but there are file deletions (and possibly file conflicts), then steps are skipped until doCallbacks. The .NoFileDownloads SMDownloadStartup.StartupStage is used to control this.
+        */
         self.downloadOperations = [
             // I've separated Setup and Start to make recovery easier.
             unownedSelf.doSetupInboundTransfers,
@@ -301,6 +305,11 @@ internal class SMDownloadFiles : NSObject {
     
     // File download, file deletion, and file conflict callbacks.
     private func doCallbacks() -> Bool? {
+        let startUp = self.getStartup(.NoFileDownloads)
+        if startUp != nil {
+            startUp!.removeObject()
+        }
+        
         var result = false
         
         if let fileDownloads = SMQueues.current().getBeingDownloadedChanges(
@@ -314,6 +323,14 @@ internal class SMDownloadFiles : NSObject {
         else if let fileDeletions = SMQueues.current().getBeingDownloadedChanges(
             .DownloadDeletion) as? [SMDownloadDeletion] {
             Log.msg("\(fileDeletions.count) file deletions")
+            
+            for downloadDeletion in fileDeletions {
+                Assert.If(downloadDeletion.localFile == nil, thenPrintThisString: "No localFile for SMDownloadDeletion")
+                downloadDeletion.localFile!.deletedOnServer = true
+            }
+            
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+            
             self.callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions) {
                 self.doCallbacks()
             }
@@ -395,14 +412,8 @@ internal class SMDownloadFiles : NSObject {
         var uuids = [NSUUID]()
         
         for fileToDelete in fileDeletions {
-            let localFileMetaData:SMLocalFile? = fileToDelete.localFile
-            Assert.If(localFileMetaData == nil, thenPrintThisString: "No SMLocalFile!")
-            localFileMetaData!.deletedOnServer = true
-            
-            uuids.append(NSUUID(UUIDString: localFileMetaData!.uuid!)!)
+            uuids.append(NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
         }
-        
-        CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         self.syncServerDelegate?.syncServerClientShouldDeleteFiles(uuids) {
             SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)

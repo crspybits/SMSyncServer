@@ -16,6 +16,9 @@ class SMDownloadStartup: SMDownloadOperation {
         case StartInboundTransfer
         case InboundTransferWait
         case RemoveOperationId
+        
+        // A special case-- so we skip the inbound transfer steps & the remove operation id step.
+        case NoFileDownloads
     }
     
     // Don't access internalStartupStage directly.

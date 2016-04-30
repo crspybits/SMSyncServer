@@ -244,6 +244,7 @@ public class SMSyncServer : NSObject {
             fileAttr!.remoteFileName = localFileMetaData.remoteFileName
             fileAttr!.appFileType = localFileMetaData.appFileType
             fileAttr!.deleted = false
+            Log.msg("localFileMetaData.deletedOnServer: \(localFileMetaData.deletedOnServer)")
             if localFileMetaData.deletedOnServer != nil {
                 fileAttr!.deleted = localFileMetaData.deletedOnServer!.boolValue
             }
@@ -395,10 +396,20 @@ public class SMSyncServer : NSObject {
         localFileMetaData!.removeObject()
     }
     
-    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
-    public func resetMetaData(forUUID uuid:NSUUID?=nil) {
-        Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
+    public enum ResetType {
+        // Entirely removes meta data. Default operation.
+        case DeleteMetaData
         
+        // For meta data indicating file is deleted, now marks file as not deleted.
+        case Undelete
+    }
+    
+    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
+    // Only use the ResetType parameter if you are giving a UUID.
+    public func resetMetaData(forUUID uuid:NSUUID?=nil, resetType:ResetType?=nil) {
+        Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
+        Assert.If(uuid == nil && resetType != nil, thenPrintThisString: "Needs a UUID to give a reset type")
+
         if uuid == nil {
             if let metaDataArray = SMLocalFile.fetchAllObjects() as? [SMLocalFile] {
                 for localFile in metaDataArray {
@@ -408,7 +419,13 @@ public class SMSyncServer : NSObject {
         }
         else {
             if let localFile = SMLocalFile.fetchObjectWithUUID(uuid!.UUIDString) {
-                localFile.removeObject()
+                switch resetType {
+                case .None, .Some(.DeleteMetaData):
+                    localFile.removeObject()
+                    
+                case .Some(.Undelete):
+                    localFile.deletedOnServer = false
+                }
             }
         }
         

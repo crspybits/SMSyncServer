@@ -52,6 +52,10 @@ class BaseClass: XCTestCase {
     var downloadsCompleteSequenceNumber = 0
     var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
+    typealias clientShouldDeleteFilesCallback = (uuids:[NSUUID])->()
+    var clientShouldDeleteFilesSequenceNumber = 0
+    var clientShouldDeleteFilesCallbacks:[clientShouldDeleteFilesCallback]!
+
     typealias errorCallback = ()->()
     var errorSequenceNumber = 0
     var errorCallbacks:[errorCallback]!
@@ -79,7 +83,8 @@ class BaseClass: XCTestCase {
         self.singleRecoveryCallback = nil
         self.numberOfRecoverySteps = 0
         self.numberOfNoDownloadsCallbacks = 0
-
+        self.clientShouldDeleteFilesSequenceNumber = 0
+        self.clientShouldDeleteFilesCallbacks = [clientShouldDeleteFilesCallback]()
         self.processModeChanges = false
         
         TestBasics.session.failure = {
@@ -114,8 +119,10 @@ extension BaseClass : SMSyncServerDelegate {
         acknowledgement()
     }
     
-    // Called when deletions indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+    // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
     func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->()) {
+        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](uuids: uuids)
+        self.clientShouldDeleteFilesSequenceNumber += 1
         acknowledgement()
     }
     
