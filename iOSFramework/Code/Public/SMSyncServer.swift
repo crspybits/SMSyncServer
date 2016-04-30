@@ -381,6 +381,7 @@ public class SMSyncServer : NSObject {
         CoreData.sessionNamed(SMCoreData.name).saveContext()
 
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
+            change.removeObject()
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
             return
         }

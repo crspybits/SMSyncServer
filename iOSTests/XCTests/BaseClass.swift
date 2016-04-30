@@ -134,8 +134,10 @@ extension BaseClass : SMSyncServerDelegate {
         
         switch newMode {
         case .Idle:
-            self.idleCallbacks[self.idleSequenceNumber]()
+            // Sometimes get idle callbacks called from within idle callbacks, so increment the index first.
+            let idleIndex = self.idleSequenceNumber
             self.idleSequenceNumber += 1
+            self.idleCallbacks[idleIndex]()
             
         case .Synchronizing:
             break

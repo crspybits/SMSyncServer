@@ -392,6 +392,7 @@ internal class SMDownloadFiles : NSObject {
             attr.appFileType = localFile.appFileType
             attr.mimeType = localFile.mimeType
             attr.remoteFileName = localFile.remoteFileName
+            attr.deleted = false
             downloaded.append((downloadFile.fileURL!, attr))
         
             if localFile.syncState == .InitialDownload {
