@@ -39,6 +39,9 @@
             </BuildableReference>
             <SkippedTests>
                <Test
+                  Identifier = "DownloadDeletionRecovery/testThatDownloadDeletionOfASingleFileThatExistsCrashBeforeAcknowledgeWorks()">
+               </Test>
+               <Test
                   Identifier = "DownloadRecovery/testThatCrash1RecoveryAfterOnSingleFileWorks()">
                </Test>
                <Test

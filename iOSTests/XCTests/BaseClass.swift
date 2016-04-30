@@ -52,7 +52,7 @@ class BaseClass: XCTestCase {
     var downloadsCompleteSequenceNumber = 0
     var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
-    typealias clientShouldDeleteFilesCallback = (uuids:[NSUUID])->()
+    typealias clientShouldDeleteFilesCallback = (uuids:[NSUUID], acknowledgement:()->())->()
     var clientShouldDeleteFilesSequenceNumber = 0
     var clientShouldDeleteFilesCallbacks:[clientShouldDeleteFilesCallback]!
 
@@ -121,9 +121,8 @@ extension BaseClass : SMSyncServerDelegate {
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
     func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->()) {
-        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](uuids: uuids)
+        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](uuids: uuids, acknowledgement:acknowledgement)
         self.clientShouldDeleteFilesSequenceNumber += 1
-        acknowledgement()
     }
     
     // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
@@ -187,5 +186,95 @@ extension BaseClass : SMSyncServerDelegate {
             }
             self.numberOfRecoverySteps += 1
         }
+    }
+
+    func uploadFiles(testFiles:[TestFile], uploadExpectations:[XCTestExpectation], commitComplete:XCTestExpectation, idleExpectation:XCTestExpectation,
+        complete:(()->())?) {
+        
+        for testFileIndex in 0...testFiles.count-1 {
+            let testFile = testFiles[testFileIndex]
+            let uploadExpectation = uploadExpectations[testFileIndex]
+        
+            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == testFile.uuidString)
+                uploadExpectation.fulfill()
+            }
+        }
+
+        // The .Idle callback gets called first
+        self.idleCallbacks.append() {
+            idleExpectation.fulfill()
+        }
+        
+        // Followed by the commit complete callback.
+        self.commitCompleteCallbacks.append() { numberUploads in
+            XCTAssert(numberUploads == testFiles.count)
+            commitComplete.fulfill()
+            self.checkFileSizes(testFiles, complete: complete)
+        }
+        
+        SMSyncServer.session.commit()
+    }
+    
+    func checkFileSizes(testFiles:[TestFile], complete:(()->())?) {
+        if testFiles.count == 0 {
+            complete?()
+        }
+        else {
+            let testFile = testFiles[0]
+            
+            TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                XCTAssert(fileAttr != nil)
+                XCTAssert(!fileAttr!.deleted!)
+                self.checkFileSizes(Array(testFiles[1..<testFiles.count]), complete: complete)
+            }
+        }
+    }
+    
+    func deleteFiles(testFiles:[TestFile], deletionExpectation:XCTestExpectation?, commitComplete:XCTestExpectation, idleExpectation:XCTestExpectation,
+        complete:(()->())?=nil) {
+        
+        for testFileIndex in 0...testFiles.count-1 {
+            let testFile = testFiles[testFileIndex]
+            SMSyncServer.session.deleteFile(testFile.uuid)
+        }
+        
+        if deletionExpectation != nil {
+            self.deletionCallbacks.append() { uuids in
+                XCTAssert(uuids.count == testFiles.count)
+                for testFileIndex in 0...testFiles.count-1 {
+                    let testFile = testFiles[testFileIndex]
+                    XCTAssert(uuids[testFileIndex].UUIDString == testFile.uuidString)
+                }
+                
+                deletionExpectation!.fulfill()
+            }
+        }
+        
+        // The .Idle callback gets called first
+        self.idleCallbacks.append() {
+            idleExpectation.fulfill()
+        }
+        
+        // Followed by the commit complete.
+        self.commitCompleteCallbacks.append() { numberDeletions in
+            if deletionExpectation != nil {
+                XCTAssert(numberDeletions == testFiles.count)
+            }
+            
+            for testFile in testFiles {
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                XCTAssert(fileAttr != nil)
+                XCTAssert(fileAttr!.deleted!)
+            }
+            
+            commitComplete.fulfill()
+            complete?()
+        }
+        
+        SMSyncServer.session.commit()
     }
 }
