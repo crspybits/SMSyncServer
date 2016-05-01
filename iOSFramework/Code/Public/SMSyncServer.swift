@@ -78,6 +78,9 @@ public enum SMSyncServerEvent {
     // The client polled the server and found that there were no files available to download or files that needed deletion.
     case NoFilesToDownload
     
+    // Attempted to do an operation but a lock was already held. This can occur both at the local app level and with the server lock.
+    case LockAlreadyHeld
+    
     // Internal error recovery event.
     case Recovery
 }
@@ -87,7 +90,7 @@ public enum SMSyncServerEvent {
 public protocol SMSyncServerDelegate : class {
     // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
-    // The callee should call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
+    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
     func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->())
     
     // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
@@ -243,11 +246,8 @@ public class SMSyncServer : NSObject {
             fileAttr!.mimeType = localFileMetaData.mimeType
             fileAttr!.remoteFileName = localFileMetaData.remoteFileName
             fileAttr!.appFileType = localFileMetaData.appFileType
-            fileAttr!.deleted = false
+            fileAttr!.deleted = localFileMetaData.deletedOnServer
             Log.msg("localFileMetaData.deletedOnServer: \(localFileMetaData.deletedOnServer)")
-            if localFileMetaData.deletedOnServer != nil {
-                fileAttr!.deleted = localFileMetaData.deletedOnServer!.boolValue
-            }
         }
         
         return fileAttr

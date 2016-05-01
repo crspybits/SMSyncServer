@@ -347,6 +347,7 @@ internal class SMDownloadFiles : NSObject {
             result = true
         }
         else {
+            Log.msg("Downloads finished.")
             self.callSyncServerDownloadsFinished()
         }
         

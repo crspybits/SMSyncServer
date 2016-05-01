@@ -387,7 +387,7 @@ internal class SMUploadFiles : NSObject {
             
             if serverFile!.deleted!.boolValue {
                 // This isn't necessarily an error. If we queued an upload-deletion, and then processed a (naturally higher priority) download-deletion, then the file will already be deleted-- and will be marked as such in the local meta data.
-                if localFile.deletedOnServer != nil && localFile.deletedOnServer!.boolValue {
+                if localFile.deletedOnServer {
                     // skip this deletionChange
                     continue
                 }

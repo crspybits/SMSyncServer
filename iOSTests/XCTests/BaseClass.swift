@@ -185,6 +185,9 @@ extension BaseClass : SMSyncServerDelegate {
                 self.singleRecoveryCallback!()
             }
             self.numberOfRecoverySteps += 1
+        
+        case .LockAlreadyHeld:
+            break
         }
     }
 

@@ -26,7 +26,7 @@
     </entity>
     <entity name="SMLocalFile" representedClassName="SMLocalFile" syncable="YES">
         <attribute name="appFileType" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="deletedOnServer" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="internalDeletedOnServer" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="internalSyncState" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="localVersion" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <attribute name="mimeType" optional="YES" attributeType="String" syncable="YES"/>

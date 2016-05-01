@@ -839,7 +839,7 @@ internal class SMServerAPI {
                 }
                 
                 Log.msg(message)
-                return SMServerAPIResult(returnCode: rc, error: Error.Create("An error occured when doing server operation."))
+                return SMServerAPIResult(returnCode: rc, error: Error.Create("An error occurred when doing server operation."))
             }
         }
         else {

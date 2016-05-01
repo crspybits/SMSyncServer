@@ -197,7 +197,7 @@ public class SMSyncServerUser {
                 }
                 
             default:
-                returnError = Error.Create("An error occured when trying to sign in (return code: \(apiResult.returnCode))")
+                returnError = Error.Create("An error occurred when trying to sign in (return code: \(apiResult.returnCode))")
             }
         }
         

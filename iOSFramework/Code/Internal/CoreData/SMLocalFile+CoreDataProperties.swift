@@ -2,7 +2,7 @@
 //  SMLocalFile+CoreDataProperties.swift
 //  SMSyncServer
 //
-//  Created by Christopher Prince on 4/25/16.
+//  Created by Christopher Prince on 4/30/16.
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu
@@ -15,7 +15,7 @@ import CoreData
 extension SMLocalFile {
 
     @NSManaged var appFileType: String?
-    @NSManaged var deletedOnServer: NSNumber?
+    @NSManaged var internalDeletedOnServer: NSNumber?
     @NSManaged var localVersion: NSNumber?
     @NSManaged var mimeType: String?
     @NSManaged var internalSyncState: String?

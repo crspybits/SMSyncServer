@@ -38,6 +38,21 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         }
     }
     
+    var deletedOnServer:Bool {
+        get {
+            if self.internalDeletedOnServer == nil {
+                return false
+            }
+            else {
+                return self.internalDeletedOnServer!.boolValue
+            }
+        }
+        
+        set {
+            self.internalDeletedOnServer = newValue
+        }
+    }
+    
     static let UUID_KEY = "uuid"
     
     class func entityName() -> String {
@@ -52,6 +67,7 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
             localFile.uuid = UUID.make()
         }
         
+        localFile.internalDeletedOnServer = false
         localFile.pendingUploads = NSOrderedSet()
         CoreData.sessionNamed(SMCoreData.name).saveContext()
 

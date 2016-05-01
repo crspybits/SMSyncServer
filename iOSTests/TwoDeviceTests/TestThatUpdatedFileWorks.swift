@@ -67,12 +67,12 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         else if self.numberDownloads == 2 {
             // On the slave, we'll get one file downloaded each time.
             self.passTest()
-            self.timer!.cancel()
-            acknowledgement()
         }
         else if self.numberDownloads > 2 {
             self.failTest("Got more than two downloads: \(self.numberDownloads)")
         }
+        
+        acknowledgement()
     }
     
     override func syncServerModeChange(newMode:SMSyncServerMode) {
@@ -90,6 +90,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
     }
     
     override func syncServerEventOccurred(event:SMSyncServerEvent) {
+        Log.special("event: \(event)")
+        
         switch event {
         case .SingleUploadComplete(uuid: let uuid):
             if self.isSlave {
@@ -103,18 +105,29 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             
         case .OutboundTransferComplete:
             self.commitComplete()
-            
-        case .NoFilesToDownload:
-            // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
-            if self.isMaster {
-                self.failTest()
+               
+        case .NoFilesToDownload, .LockAlreadyHeld:
+            // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded. Not an error to get this event on the master, because in SMSyncControl we normally check for downloads to get the lock.
+            if self.isSlave {
+                if self.numberDownloads < 2 {
+                    // Start the timer to check for additional downloads in a while.
+                    self.timer!.start()
+                }
+            }
+            else {
+                switch event {
+                case .LockAlreadyHeld:
+                    TimedCallback.withDuration(5.0) {
+                        SMSyncControl.session.nextSyncOperation()
+                    }
+                    
+                default:
+                    break
+                }
             }
             
-            // No downloads ready yet. Start the timer to check for downloads in a while.
-            self.timer!.start()
-        
         default:
-            Log.special("event: \(event)")
+            break
         }
     }
     
@@ -174,10 +187,9 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         self.checkForDownloads()
     }
     
-    // PRIVATE
     // I'm not sure why but despite the fact that this class inherits from NSObject, I still have to mark this as @objc or I get a crash on the RepeatingTimer init method.
     // See also http://stackoverflow.com/questions/27911479/nstimer-doesnt-find-selector
-    @objc func checkForDownloads() {
+    @objc private func checkForDownloads() {
         Log.msg("Slave: checkForDownloads")
         
         // We'll start it again if we don't get downloads.
@@ -190,8 +202,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             return
         }
         
-        Assert.badMojo(alwaysPrintThisString: "Need to put this next line back!")
-        // SMDownloadFiles.session.checkForDownloads()
+        SMSyncControl.session.nextSyncOperation()
     }
     
     func singleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {

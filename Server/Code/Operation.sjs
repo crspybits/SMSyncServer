@@ -163,6 +163,10 @@ Operation.prototype.validateUserAlwaysCallback = function (userMustBeOnSystem, c
 		}
         else {
             self.psUserCreds = psUserCreds;
+            
+            logger.info("UserId: " + self.userId());
+            logger.info("DeviceId: " + self.deviceId());
+
             if (userMustBeOnSystem && !self.psUserCreds.stored) {
                 callback("User is not on the system!", false);
                 return;

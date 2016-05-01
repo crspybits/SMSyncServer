@@ -161,7 +161,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
                 // File was deleted on the server.
                 if localFile != nil  {
                     // Record this as a file to be deleted locally, only if we haven't already done so.
-                    if !localFile!.deletedOnServer!.boolValue {
+                    if !localFile!.deletedOnServer {
                         let downloadDeletion = SMDownloadDeletion.newObject( withLocalFileMetaData: localFile!)
                         downloadOperations.addObject(downloadDeletion)
                         
@@ -276,7 +276,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
             Assert.If(change.localFile == nil, thenPrintThisString: "changedFile property not set!")
             let localFileMetaData:SMLocalFile = change.localFile!
             
-            let alreadyDeleted = localFileMetaData.deletedOnServer != nil && localFileMetaData.deletedOnServer!.boolValue
+            let alreadyDeleted = localFileMetaData.deletedOnServer
             
             // Pass the deletion change as a param to pendingUploadDeletion, if it is a deletion change, because we don't want to consider the currently being added operation.
             let deletionChange = change as? SMUploadDeletion

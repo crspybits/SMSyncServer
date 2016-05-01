@@ -58,13 +58,12 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         
         if self.numberDownloads == 1 {
             self.passTest()
-            acknowledgement()
         }
         else {
             self.failTest("Didn't get exactly one download; got: \(self.numberDownloads)")
         }
-        
-        self.timer!.cancel()
+
+        acknowledgement()
     }
     
     override func syncServerModeChange(newMode:SMSyncServerMode) {
@@ -82,6 +81,8 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     }
     
     override func syncServerEventOccurred(event:SMSyncServerEvent) {
+        Log.special("event: \(event)")
+
         switch event {
         case .SingleUploadComplete(uuid: let uuid):
             if self.isSlave {
@@ -107,17 +108,27 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
                 self.passTest()
             }
             
-        case .NoFilesToDownload:
-            // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded.
-            if self.isMaster {
-                self.failTest()
+        case .NoFilesToDownload, .LockAlreadyHeld:
+            // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded. It is not an error to get this event on the master: We get this in normal operation in SMSyncControl when we check for downloads/get the lock.
+            if self.isSlave && self.numberDownloads < 1 {
+                // No downloads ready yet. Start the timer to check for downloads in a while.
+                self.timer!.start()
             }
             
-            // No downloads ready yet. Start the timer to check for downloads in a while.
-            self.timer!.start()
+            if self.isMaster {
+                switch event {
+                case .LockAlreadyHeld:
+                    TimedCallback.withDuration(5.0) {
+                        SMSyncControl.session.nextSyncOperation()
+                    }
+                    
+                default:
+                    break
+                }
+            }
             
         default:
-            Log.special("event: \(event)")
+            break
         }
     }
     
@@ -153,8 +164,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
             return
         }
         
-        Assert.badMojo(alwaysPrintThisString: "Need to put this next line back!")
-        // SMDownloadFiles.session.checkForDownloads()
+        SMSyncControl.session.nextSyncOperation()
     }
     
     func singleFileDownloadComplete(temporaryLocalFile:NSURL, withFileAttributes attr: SMSyncAttributes) {

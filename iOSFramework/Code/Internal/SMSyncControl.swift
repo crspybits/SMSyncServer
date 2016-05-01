@@ -120,7 +120,16 @@ internal class SMSyncControl {
             break
         }
         
-        if self.lock.tryLock() {
+        // Having an issue with locking/unlocking self.lock from different threads.
+        func tryLock() -> Bool {
+            var result:Bool!
+            NSThread.runSyncOnMainThread() {
+                result = self.lock.tryLock()
+            }
+            return result
+        }
+        
+        if tryLock() {
             completion?()
             Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
             self._operating = true
@@ -132,6 +141,7 @@ internal class SMSyncControl {
         else {
             completion?()
             // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation(). This is not an error.
+            self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
             Log.special("nextSyncOperation: Couldn't get the lock!")
         }
     }
@@ -148,7 +158,7 @@ internal class SMSyncControl {
     private func doNextUploadOrStop() {
         self.nextOperationLock.lock()
         if nil == SMQueues.current().committedUploads {
-            // No uploads, stop operating
+            Log.msg("No uploads, stop operating")
             self.stopOperating()
             // Unlock before calling .Idle callback so we don't get into deadlock issues. E.g., .Idle callback could cause lockAndNextSyncOperation to be called.
             self.nextOperationLock.unlock()
@@ -166,7 +176,10 @@ internal class SMSyncControl {
         Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
         
         self._operating = false
-        self.lock.unlock()
+        
+        NSThread.runSyncOnMainThread() {
+            self.lock.unlock()
+        }
         
         Log.special("Stopped operating!")
         Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
@@ -333,10 +346,10 @@ internal class SMSyncControl {
             else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
                 // Not really an error.
                 Log.special("Lock already held by another userId")
-                // We're calling the "NoFilesToDownload" delegate callback. In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held. However, for debugging purposes, we effectively have no files to download, so report that back.
+                // In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
                 self.stopOperating()
                 self.syncControlModeChange(.Idle)
-                self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+                self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
             }
             else {
                 // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
@@ -402,6 +415,7 @@ extension SMSyncControl : SMSyncControlDelegate {
     
     // Again, after downloads are complete, there will be no server lock held. But, we'll not be at the bottom of the priority list.
     func syncControlDownloadsFinished() {
+        Log.msg("syncControlDownloadsFinished")
         SMSyncControl.haveServerLock.boolValue = false
 
         // Since we're not at the bottom of the priority list, call next(). This will (unfortunately) result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
