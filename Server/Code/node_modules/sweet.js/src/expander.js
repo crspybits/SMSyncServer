@@ -2715,9 +2715,19 @@
                     }, exposed);
 
                     if (tok.leadingComments) {
+                        tok.leadingComments.forEach(function(comment) {
+                            var rangeDiff = comment.range[1] - openParen.token.range[0];
+                            comment.range[1] -= rangeDiff;
+                            comment.range[0] -= rangeDiff;
+                        });
                         openParen.token.leadingComments = tok.leadingComments;
                     }
                     if (tok.trailingComments) {
+                        tok.trailingComments.forEach(function(comment) {
+                            var rangeDiff = comment.range[1] - openParen.token.range[0];
+                            comment.range[1] -= rangeDiff;
+                            comment.range[0] -= rangeDiff;
+                        });
                         openParen.token.trailingComments = tok.trailingComments;
                     }
 
@@ -2770,6 +2780,8 @@
     exports.enforest = enforest;
     exports.expand = expandTopLevel;
     exports.expandModule = expandModule;
+    exports.flatten = flatten;
+    exports.adjustLineContext = adjustLineContext;
 
     exports.resolve = resolve;
     exports.get_expression = get_expression;

@@ -293,7 +293,7 @@ internal class SMSyncControl {
         if nil == self.serverFileIndex {
             Log.msg("getFileIndex within processPendingUploads")
             
-            SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
+            SMServerAPI.session.getFileIndex(requirePreviouslyHeldLock: true) { (fileIndex, gfiResult) in
                 if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                     self.serverFileIndex = fileIndex
                     self.numberGetFileIndexForUploadAttempts = 0
@@ -323,7 +323,7 @@ internal class SMSyncControl {
                 self.numberLockAttempts = 0
                 
                 Log.msg("getFileIndex within checkServerForDownloads")
-                SMServerAPI.session.getFileIndex() { (fileIndex, gfiResult) in
+                SMServerAPI.session.getFileIndex(requirePreviouslyHeldLock: true) { (fileIndex, gfiResult) in
                     if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
                     
                         self.serverFileIndex = fileIndex

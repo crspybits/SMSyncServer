@@ -93,6 +93,11 @@ public class SMServerConstants {
     public static let mobileDeviceUUIDKey = "MobileDeviceUUID"
     // Value: A UUID assigned by the app that uniquely represents this device.
     
+    // Used with GetFileIndex operation
+    // Key:
+    public static let requirePreviouslyHeldLockKey = "RequirePreviouslyHeldLock"
+    // Value: Boolean
+    
     // When one or more files are being deleted (operationDeleteFiles), use the following
     // Key:
     public static let filesToDeleteKey = "FilesToDelete"

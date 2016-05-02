@@ -662,6 +662,20 @@ describe("macro expander", function() {
         expect(x).to.be(42);
     });
 
+    it("should work with ASI and pattern matching a delimiter", function() {
+        // throws parse error if ASI is wrong
+        let m  = macro {
+            rule { $body } => {
+                $body
+            }
+        }
+
+        m {
+            42
+            24
+        }
+    });
+
     it("should match tokens as is in literal groups", function() {
         let m = macro {
             rule { $a $[...] $b } => {
@@ -1177,5 +1191,74 @@ describe("macro expander", function() {
             rule { $c:base_contract } => { $c }
         }
         expect(any_contract (Str) -> Str).to.be("fun");
+    });
+
+    it("should match repeated variables", function() {
+        macro m {
+            rule { ( $a , $a ) } => { true }
+        }
+        expect(m(1,1)).to.be(true);
+        expect(m((23 + 42), (23 + 42))).to.be(true);
+    });
+
+    it("should match repeated variables in groups", function() {
+        macro m {
+            rule { ( $( $a ) , $a ) } => { true }
+        }
+        expect(m(1,1)).to.be(true);
+    });
+
+
+    it("should match repeated variables with named bindings", function() {
+        macro m {
+          rule {
+              ( $a:( ( $b 12 ) ) , $a:( ( 23 $c ) ) )
+          } => {
+              $a$b + $a$c
+          }
+        }
+        expect( m((23 12) , (23 12)) ).to.be(35);
+    });
+
+    it("should match repeated variables with ellipses", function() {
+        macro m {
+            rule { $a [$a $m] ... } => { true }
+        }
+        expect(m a).to.be(true);
+        expect(m a [a 1]).to.be(true);
+        expect(m a [a 1] [a 2]).to.be(true);
+    });
+
+    it("should match repeated variables with ellipses in a delimiter", function() {
+        macro m {
+            rule { $a { [$a $m] ... } } => { true }
+        }
+        expect(m a { } ).to.be(true);
+        expect(m a { [a 1] } ).to.be(true);
+        expect(m a { [a 1] [a 2] }).to.be(true);
+    });
+
+    it("should match repeated variables with two ellipses and seperator", function() {
+        macro m {
+            rule { [$a $m] ... & [$a $n] ... } => { true }
+        }
+        expect(m [a 1] & [a 2]).to.be(true);
+        expect(m [a 1] [b 2] & [a 3] [b 4]).to.be(true);
+    });
+
+    it("should match repeated variables with two ellipses without seperator", function() {
+        macro m {
+            rule { [$a $m] ... [$a $n] ... } => { true }
+        }
+        expect(m [a 1] [a 2]).to.be(true);
+        expect(m [a 1] [b 2] [a 3] [b 4]).to.be(true);
+    });
+
+    it("should support empty groups of level 2", function() {
+        macro m {
+            rule { [ $a ... ] ... } => { [ $( 0 $( + $a ) ... ) (,) ... ] }
+        }
+        expect(m [1 2] [2 3]).to.eql([3, 5]);
+        expect(m []).to.eql([0]);
     });
 });

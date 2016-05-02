@@ -864,10 +864,19 @@ app.post('/' + ServerConstants.operationGetFileIndex, function (request, respons
         // In order to get a coherent view of the files on the SyncServer it seems that we need to have a lock. Without a lock, some other client could be in the middle of changing (updating or deleting) files in the index.
         // We can already hold the lock, or obtain the lock for just the duration of this call.
 
+        // 5/1/16; I just ran into a situation where the lock wasn't held beforehand, but it should have been. I've added an extra parameter to try to debug this.
+        
+        const requirePreviouslyHeldLock = request.body[ServerConstants.requirePreviouslyHeldLockKey]
+        
         if (isDefined(psLock)) {
             // We already held the lock-- prior to this get file index operation, so get list of files, but don't remove the lock afterwards.
             finishOperationGetFileIndex(op, null);
-        } else {
+        }
+        else if (requirePreviouslyHeldLock) {
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                "Should have previously held the lock!");
+        }
+        else {
             // Create a lock.
         
             var lockData = {
@@ -1611,6 +1620,9 @@ app.use(function(err, req, res, next) {
     logger.error(err.stack);
 });
 
-app.listen(8081);
+// 5/1/16; Changes for running on Heroku
+app.set('port', (process.env.PORT || 8081));
+app.listen(app.get('port'), function() {
+  logger.info('Node app is running on port', app.get('port'));
+});
 
-logger.info('Server running at http://127.0.0.1:8081/');

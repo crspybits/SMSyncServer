@@ -453,16 +453,18 @@ internal class SMServerAPI {
     }
     
     // On success, the returned SMSyncServerFile objects will have nil localURL members.
-    internal func getFileIndex(completion:((fileIndex:[SMServerFile]?, apiResult:SMServerAPIResult)->(Void))?) {
+    internal func getFileIndex(requirePreviouslyHeldLock requirePreviouslyHeldLock:Bool=false, completion:((fileIndex:[SMServerFile]?, apiResult:SMServerAPIResult)->(Void))?) {
     
-        let userParams = self.userDelegate.serverParams
-        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
-        Log.msg("parameters: \(userParams)")
+        var params = self.userDelegate.serverParams
+        Assert.If(nil == params, thenPrintThisString: "No user server params!")
+        Log.msg("parameters: \(params)")
+        
+        params![SMServerConstants.requirePreviouslyHeldLockKey] = requirePreviouslyHeldLock
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationGetFileIndex)!
         
-        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: params!) { (serverResponse:[String:AnyObject]?, requestError:NSError?) in
         
             let result = self.initialServerResponseProcessing(serverResponse, error: requestError)
             

@@ -84,6 +84,11 @@ function define(name, value) {
 	define("mobileDeviceUUIDKey", "MobileDeviceUUID");
     // Value: A UUID assigned by the app that uniquely represents this device.
     
+    // Used with GetFileIndex operation
+    // Key:
+	define("requirePreviouslyHeldLock", "RequirePreviouslyHeldLock");
+    // Value: Boolean
+    
     // When one or more files are being deleted (operationDeleteFiles), use the following
     // Key:
 	define("filesToDeleteKey", "FilesToDelete");
