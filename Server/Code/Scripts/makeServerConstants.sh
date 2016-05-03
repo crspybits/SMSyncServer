@@ -2,11 +2,12 @@
 
 # Script to extract constants out of .swift file containing constants and put them into a .js module so we don't have to keep retyping them every time they change.
 
+# Assuming we're running this script from the root of the iOSFramework
 # The relative path for INPUTFILE assumes that we run this script from the directory where serverConstants.js is located.
 # Any spaces in the directory names don't need backslashes to escape the spaces.
-INPUTFILE="../../iOSFramework/Code/Internal/SMServerConstants.swift"
+INPUTFILE="Code/Internal/SMServerConstants.swift"
 
-OUTPUTFILE="serverConstants.js"
+OUTPUTFILE="../Server/Code/ServerConstants.js"
 START="SERVER-CONSTANTS-START"
 END="SERVER-CONSTANTS-END"
 WARNING="// ***** This is a machine generated file: Do not change by hand!! *****"

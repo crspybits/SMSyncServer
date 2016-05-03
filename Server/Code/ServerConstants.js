@@ -86,7 +86,7 @@ function define(name, value) {
     
     // Used with GetFileIndex operation
     // Key:
-	define("requirePreviouslyHeldLock", "RequirePreviouslyHeldLock");
+	define("requirePreviouslyHeldLockKey", "RequirePreviouslyHeldLock");
     // Value: Boolean
     
     // When one or more files are being deleted (operationDeleteFiles), use the following

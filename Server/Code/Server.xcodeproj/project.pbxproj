@@ -9,6 +9,8 @@
 /* Begin PBXFileReference section */
 		833BFC9F1C52F7A000CFCBF6 /* PSInboundFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSInboundFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		8357A3EA1C0FD864005891B9 /* PSLock.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSLock.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		8369D3431CD827C6006DA33C /* startOnHeroku.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = startOnHeroku.sh; sourceTree = "<group>"; };
+		8369D3441CD827D4006DA33C /* googleClientSecretSource.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = googleClientSecretSource.json; sourceTree = "<group>"; };
 		836F28751C128D1D00385636 /* FileTransfers.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FileTransfers.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28761C12D9E700385636 /* Server.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Server.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28771C12DF1500385636 /* macros.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = macros.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
@@ -26,11 +28,10 @@
 		83B0BEBE1C114935002B5735 /* CloudStorage.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = CloudStorage.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF73A1C0A3BBE009F9796 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
 		83EBF73B1C0A3BBE009F9796 /* JSON.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = JSON.js; sourceTree = "<group>"; };
-		83EBF73C1C0A3BBE009F9796 /* Mongo.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Mongo.js; sourceTree = "<group>"; };
+		83EBF73C1C0A3BBE009F9796 /* Mongo.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Mongo.sjs; sourceTree = "<group>"; };
 		83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PSUserCredentials.js; sourceTree = "<group>"; };
 		83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ServerConstants.js; sourceTree = "<group>"; };
 		83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = UserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
-		83EBF7411C0A3BD4009F9796 /* client_secret.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = client_secret.json; sourceTree = "<group>"; };
 		83EBF7611C0C217A009F9796 /* PSOutboundFileChange.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSOutboundFileChange.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF7661C0E890A009F9796 /* Operation.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Operation.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF76D1C0E9E66009F9796 /* makeServerConstants.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = makeServerConstants.sh; path = Scripts/makeServerConstants.sh; sourceTree = "<group>"; };
@@ -93,7 +94,7 @@
 				83EBF7661C0E890A009F9796 /* Operation.sjs */,
 				836F28781C13758900385636 /* File.sjs */,
 				838607841C459D7300EB2FAD /* ClientFile.sjs */,
-				83EBF73C1C0A3BBE009F9796 /* Mongo.js */,
+				83EBF73C1C0A3BBE009F9796 /* Mongo.sjs */,
 				83EBF73B1C0A3BBE009F9796 /* JSON.js */,
 				836F28791C13CCE300385636 /* Logger.js */,
 				836F287E1C1679C900385636 /* Common.sjs */,
@@ -104,7 +105,7 @@
 		83EBF7401C0A3BC3009F9796 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				83EBF7411C0A3BD4009F9796 /* client_secret.json */,
+				8369D3441CD827D4006DA33C /* googleClientSecretSource.json */,
 				836F28771C12DF1500385636 /* macros.sjs */,
 			);
 			name = Resources;
@@ -113,6 +114,7 @@
 		83EBF7421C0A3BE6009F9796 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
+				8369D3431CD827C6006DA33C /* startOnHeroku.sh */,
 				83EBF76D1C0E9E66009F9796 /* makeServerConstants.sh */,
 				83EBF76E1C0E9E66009F9796 /* startMongoDb.sh */,
 				83EBF76F1C0E9E66009F9796 /* startServer.sh */,

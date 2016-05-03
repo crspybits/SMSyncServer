@@ -323,6 +323,7 @@
 				83D3E9641C4C840C00BFDA93 /* Frameworks */,
 				83D3E9651C4C840C00BFDA93 /* Headers */,
 				83D3E9661C4C840C00BFDA93 /* Resources */,
+				8369D3421CD81D9A006DA33C /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -398,6 +399,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		8369D3421CD81D9A006DA33C /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = ../Server/Code/Scripts/makeServerConstants.sh;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		83D3E9631C4C840C00BFDA93 /* Sources */ = {

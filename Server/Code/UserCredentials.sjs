@@ -14,6 +14,8 @@ var googleAuth = require('google-auth-library');
 var ServerConstants = require('./ServerConstants');
 var logger = require('./Logger');
 
+const clientSecretFile = "googleClientSecret.json";
+
 // Constructor
 // Throws an error if credentialsData don't have insufficient info.
 // credentialsData is from serverConstants userCredentialsDataKey
@@ -26,7 +28,7 @@ function UserCredentials(credentialsData) {
     // TODO: Get this from the app.
     this.username = null;
     
-    // Data for signing into Google from client_secret.json
+    // Data for signing into Google from clientSecretFile
     this.googleServerCredentials = {};
     
     // Credentials specific to the user.
@@ -98,7 +100,7 @@ UserCredentials.prototype.persistent = function () {
 UserCredentials.prototype.setPersistent = function (cloud_storage, callback) {
 	var self = this;
 
-    fs.readFile('client_secret.json', function (err, content) {
+    fs.readFile(clientSecretFile, function (err, content) {
         if (err) {
             logger.error('Error loading client secret file: ' + err);
             callback(err);
@@ -181,7 +183,7 @@ UserCredentials.prototype.validate = function (callback) {
     // See http://stackoverflow.com/questions/20279484/how-to-access-the-correct-this-context-inside-a-callback
     var self = this;
     
-    fs.readFile('client_secret.json', function (err, content) {
+    fs.readFile(clientSecretFile, function (err, content) {
         if (err) {
             logger.error('Error loading client secret file: ' + err);
             callback(err, false);
