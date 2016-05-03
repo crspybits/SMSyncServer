@@ -45,34 +45,43 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 ## 2) MongoDb installation
 
-* SMSyncServer makes use of MongoDb to store file meta data and locks. Current tests are using [mLab](https://www.mlab.com) as an add-on service through [Heroku](https://heroku.com). You can [find MongoDb here](https://www.mongodb.org).
+* SMSyncServer makes use of MongoDb to store file meta data and locks. Current tests are using MongoDb locally on a Mac OS X system (version v3.0.7), and on [mLab](https://www.mlab.com) as an add-on service through [Heroku](https://heroku.com). You can [find MongoDb here](https://www.mongodb.org).
 
 ## 3) Server installation
 
-* The SMSyncServer server makes use of Node.js. Current tests are using v5.1.0 on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
+* Create your own `serverSecrets.json` file (i.e., `Server/Code/serverSecrets.json`). This file is not in the public repo because it has private info -- it is in the SMSyncServer .gitignore file. You must create your own. This file contains keys for cloud storage access and for MongoDb access. Its structure is as follows:
 
-* Create your own `googleClientSecret.json` file (See `Server/Code/googleClientSecret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). See also the file `Server/Code/startOnHeroku.sh`. The structure of `googleClientSecret.json` is as follows:
+### `serverSecrets.json`
 
-### `googleClientSecret.json`
+	{
+		"MongoDbURL": "mongodb://<snip>",
+		"CloudStorageServices": {
+			"GoogleDrive": {
+				"client_id": "<snip>",
+				"client_secret": "<snip>",
+				"redirect_uris": [
+					"<snip>"
+				],
+				"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+				"token_uri": "https://accounts.google.com/o/oauth2/token"
+			}
+		}
+	}
+	
+Each entry in the `CloudStorageServices` dictionary must abide by the structure required for the particular cloud storage service. For Google Drive, see [Google Sign In](https://developers.google.com/identity/sign-in/ios/).
 
-            {
-              "installed": {
-                "client_id": "<snip>",
-                "client_secret": "<snip>",
-                "redirect_uris": ["<snip>"],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://accounts.google.com/o/oauth2/token"
-              }
-            }
+* The SMSyncServer server is written in Node.js. Current tests are using Node.js v5.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
 
-* A startup script for the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/Scripts/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/`. You need to do something like:
+* A startup script to run the SMSyncServer Node.js on your local Mac OS X system is `Server/Code/Scripts/startServer.sh`.
+
+* A startup script to run the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/` and created the Heroku server/app. You need to initially do something like:
 
 		git init
 		git add .
+		git commit -a -m "Initial commit"
+		heroku create
 		mv .ignored.git .git
-		# The last line is needed for the `startOnHeroku.sh` script.
-
-    
+		# The last line is needed because I don't have the server code setup as a Git submodule.
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 

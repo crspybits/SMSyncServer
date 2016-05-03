@@ -32,6 +32,8 @@ var PSFileIndex = require('./PSFileIndex');
 var Common = require('./Common');
 var ClientFile = require('./ClientFile');
 var PSInboundFile = require('./PSInboundFile');
+var Secrets = require('./Secrets');
+var assert = require('assert');
 
 // See http://stackoverflow.com/questions/31496100/cannot-app-usemulter-requires-middleware-function-error
 // See also https://codeforgeek.com/2014/11/file-uploads-using-node-js/
@@ -43,7 +45,10 @@ var upload = multer({ dest: initialUploadDirectory}).single(ServerConstants.file
 app.use(bodyParser.json({extended : true}));
 
 // Server main.
-Mongo.connect();
+Secrets.load(function (error) {
+    assert.equal(null, error);
+    Mongo.connect(Secrets.mongoDbURL());
+});
 
 app.post("/" + ServerConstants.operationCheckForExistingUser, function(request, response) {
 
@@ -1620,7 +1625,7 @@ app.use(function(err, req, res, next) {
     logger.error(err.stack);
 });
 
-// 5/1/16; Changes for running on Heroku
+// 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only one in the server I think.
 app.set('port', (process.env.PORT || 8081));
 app.listen(app.get('port'), function() {
   logger.info('Node app is running on port', app.get('port'));

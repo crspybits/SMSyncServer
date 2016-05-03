@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Start our server
+# Start our server -- running local to Mac OS X system.
 
 clear
-
 node index.js
 

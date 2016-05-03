@@ -2,8 +2,6 @@
 
 'use strict';
 
-var fs = require('fs');
-
 // See https://github.com/request/request
 var request = require('request');
 
@@ -13,8 +11,7 @@ var googleAuth = require('google-auth-library');
 // Local
 var ServerConstants = require('./ServerConstants');
 var logger = require('./Logger');
-
-const clientSecretFile = "googleClientSecret.json";
+var Secrets = require('./Secrets');
 
 // Constructor
 // Throws an error if credentialsData don't have insufficient info.
@@ -99,38 +96,29 @@ UserCredentials.prototype.persistent = function () {
 // The callback method has one parameter: error
 UserCredentials.prototype.setPersistent = function (cloud_storage, callback) {
 	var self = this;
+    
+    if (!cloud_storage.cloud_creds.access_token ||
+        !cloud_storage.cloud_creds.refresh_token ||
+        !cloud_storage.cloud_creds.sub) {
+        callback("One more of the cloud_storage properties was empty.");
+        return;
+    }
 
-    fs.readFile(clientSecretFile, function (err, content) {
-        if (err) {
-            logger.error('Error loading client secret file: ' + err);
-            callback(err);
-            return;
-        }
-        
-        if (!cloud_storage.cloud_creds.access_token ||
-            !cloud_storage.cloud_creds.refresh_token ||
-            !cloud_storage.cloud_creds.sub) {
-            callback("One more of the cloud_storage properties was empty.");
-            return;
-        }
+    self.googleServerCredentials = Secrets.cloudStorageService(Secrets.googleCloudStorageService);
 
-		var parsedContent = JSON.parse(content);
-		self.googleServerCredentials = parsedContent.installed;
-
-        var auth = new googleAuth();
-        self.googleUserCredentials.oauth2Client = 
-                new auth.OAuth2(self.googleServerCredentials.client_id,
-                    self.googleServerCredentials.client_secret,
-                    self.googleServerCredentials.redirect_uris[0]);
-                
-        self.googleUserCredentials.oauth2Client.setCredentials({
-            access_token: cloud_storage.cloud_creds.access_token,
-            refresh_token: cloud_storage.cloud_creds.refresh_token
-        });
-        
-        self.googleUserCredentials.sub = cloud_storage.cloud_creds.sub;
-        callback(null);
+    var auth = new googleAuth();
+    self.googleUserCredentials.oauth2Client = 
+            new auth.OAuth2(self.googleServerCredentials.client_id,
+                self.googleServerCredentials.client_secret,
+                self.googleServerCredentials.redirect_uris[0]);
+            
+    self.googleUserCredentials.oauth2Client.setCredentials({
+        access_token: cloud_storage.cloud_creds.access_token,
+        refresh_token: cloud_storage.cloud_creds.refresh_token
     });
+    
+    self.googleUserCredentials.sub = cloud_storage.cloud_creds.sub;
+    callback(null);
 }
 
 // Returns an object suitable for querying persistent data, i.e., some of the data in the .persistent method may change over time, but that returned here doesn't change over time.
@@ -182,102 +170,96 @@ UserCredentials.prototype.persistentVariant = function () {
 UserCredentials.prototype.validate = function (callback) {
     // See http://stackoverflow.com/questions/20279484/how-to-access-the-correct-this-context-inside-a-callback
     var self = this;
+
+    logger.debug("Secrets.googleCloudStorageService" + Secrets.googleCloudStorageService);
+    logger.debug("self.googleServerCredentials" + self.googleServerCredentials);
+
+    self.googleServerCredentials = Secrets.cloudStorageService(Secrets.googleCloudStorageService);
+
+    var auth = new googleAuth();
+    self.googleUserCredentials.oauth2Client = 
+            new auth.OAuth2(self.googleServerCredentials.client_id,
+                self.googleServerCredentials.client_secret,
+                self.googleServerCredentials.redirect_uris[0]);
+
+    // The audience to verify against the ID Token  
+    // See https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/oauth2client.js#L384
+    // TODO: I think this is for the "aud" field
+    var audience = null;
     
-    fs.readFile(clientSecretFile, function (err, content) {
-        if (err) {
-            logger.error('Error loading client secret file: ' + err);
-            callback(err, false);
-            return;
-        }
-
-		var parsedContent = JSON.parse(content);
-		self.googleServerCredentials = parsedContent.installed;
-
-        var auth = new googleAuth();
-        self.googleUserCredentials.oauth2Client = 
-                new auth.OAuth2(self.googleServerCredentials.client_id,
-                    self.googleServerCredentials.client_secret,
-                    self.googleServerCredentials.redirect_uris[0]);
-
-        // The audience to verify against the ID Token  
-        // See https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/oauth2client.js#L384
-        // TODO: I think this is for the "aud" field
-        var audience = null;
+    // 12/1/15; I'm getting:
+    //  verifyIdToken error: TypeError: Not a buffer
+    // at times. See, e.g., https://github.com/google/google-auth-library-nodejs/issues/46
+    // I got this when I tried to verify an IdToken that was a couple of days old.
+    // When I Logged out from Google, then logged back in, the new IdToken succeeded with verify Token.
+    /* Later today, I'm getting an error like:
+    verifyIdToken error: Error: Token used too late, 1449373721.729 > 1449372540: {"iss":"https://accounts.google.com","at_hash":"uP9fQDUF_xrVAzy6TWLwWw","aud":"973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com","sub":"102879067671627156497","email_verified":true,"azp":"973140004732-nss95sev1cscktkds4nr8vchvbnkuh7g.apps.googleusercontent.com","email":"crspybits@gmail.com","iat":1449368640,"exp":1449372240,"name":"Christopher G. Prince","picture":"https://lh3.googleusercontent.com/-PuoGipqj3hE/AAAAAAAAAAI/AAAAAAAAAJ8/aSdvLsy51jE/s96-c/photo.jpg","given_name":"Christopher G.","family_name":"Prince","locale":"en"}
+    */
+    
+    /* 12/9/15; I'm still getting "UserCredentials.sjs:116 () error: Not a buffer" at times. Seems to be because of a stale IdToken.
+    */
+    
+    // The second parameter to the callback is a LoginTicket object, 
+    // which is just a thin wrapper over the parsed idToken.
+    self.googleUserCredentials.oauth2Client.verifyIdToken(
+        self.googleUserCredentials.idToken, audience, 
         
-        // 12/1/15; I'm getting:
-        //  verifyIdToken error: TypeError: Not a buffer
-        // at times. See, e.g., https://github.com/google/google-auth-library-nodejs/issues/46
-        // I got this when I tried to verify an IdToken that was a couple of days old.
-        // When I Logged out from Google, then logged back in, the new IdToken succeeded with verify Token.
-        /* Later today, I'm getting an error like:
-        verifyIdToken error: Error: Token used too late, 1449373721.729 > 1449372540: {"iss":"https://accounts.google.com","at_hash":"uP9fQDUF_xrVAzy6TWLwWw","aud":"973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com","sub":"102879067671627156497","email_verified":true,"azp":"973140004732-nss95sev1cscktkds4nr8vchvbnkuh7g.apps.googleusercontent.com","email":"crspybits@gmail.com","iat":1449368640,"exp":1449372240,"name":"Christopher G. Prince","picture":"https://lh3.googleusercontent.com/-PuoGipqj3hE/AAAAAAAAAAI/AAAAAAAAAJ8/aSdvLsy51jE/s96-c/photo.jpg","given_name":"Christopher G.","family_name":"Prince","locale":"en"}
-        */
-        
-        /* 12/9/15; I'm still getting "UserCredentials.sjs:116 () error: Not a buffer" at times. Seems to be because of a stale IdToken.
-        */
-        
-        // The second parameter to the callback is a LoginTicket object, 
-        // which is just a thin wrapper over the parsed idToken.
-        self.googleUserCredentials.oauth2Client.verifyIdToken(
-            self.googleUserCredentials.idToken, audience, 
-            
-            function(err, loginTicket) {
-                // console.log('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
-				if (err) {
-                    var stringMessage = "failed on verifyIdToken: error: %j"  + err;
-                    if (stringMessage.indexOf("Token used too late") != -1) {
-                        logger.error("User security token is stale: %j", err);
-                        callback(err, true);
-                    }
-                    else {
-                        logger.error(stringMessage);
-                        callback(err, false);
-                    }
-					
-					return;
-				}
-				
-                // See code. https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/loginticket.js
-				// getUserId returns the "sub" field.
-            	self.googleUserCredentials.sub = loginTicket.getUserId();
-                
-                // console.log(self.googleUserCredentials.oauth2Client.credentials);
-                
-                // If there is an authorization code, I'm going to exchange it for an access token, and a refresh token (using exchangeAuthorizationCode), which generates a call to the Google servers, and thus takes some time. My assumption is that we will only have an authorization code here infrequently-- e.g., when the user initially signs into the app, this will generate an authorization code. Subsequently (and the main use case), when a silent sign in is used, there will be no authorization code, and hence no Google server access.
-                if (!self.googleUserCredentials.authCode) {
-                    logger.debug("We got no authorization code");
-                	callback(null, null);
-                	return;
+        function(err, loginTicket) {
+            // console.log('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
+            if (err) {
+                var stringMessage = "failed on verifyIdToken: error: %j"  + err;
+                if (stringMessage.indexOf("Token used too late") != -1) {
+                    logger.error("User security token is stale: %j", err);
+                    callback(err, true);
+                }
+                else {
+                    logger.error(stringMessage);
+                    callback(err, false);
                 }
                 
-				exchangeAuthorizationCode(self.googleUserCredentials.authCode, 
-					self.googleServerCredentials.client_id, 
-					self.googleServerCredentials.client_secret, 
-					function (err, exchangedContent) {
+                return;
+            }
+            
+            // See code. https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/loginticket.js
+            // getUserId returns the "sub" field.
+            self.googleUserCredentials.sub = loginTicket.getUserId();
+            
+            // console.log(self.googleUserCredentials.oauth2Client.credentials);
+            
+            // If there is an authorization code, I'm going to exchange it for an access token, and a refresh token (using exchangeAuthorizationCode), which generates a call to the Google servers, and thus takes some time. My assumption is that we will only have an authorization code here infrequently-- e.g., when the user initially signs into the app, this will generate an authorization code. Subsequently (and the main use case), when a silent sign in is used, there will be no authorization code, and hence no Google server access.
+            if (!self.googleUserCredentials.authCode) {
+                logger.debug("We got no authorization code");
+                callback(null, null);
+                return;
+            }
+            
+            exchangeAuthorizationCode(self.googleUserCredentials.authCode, 
+                self.googleServerCredentials.client_id, 
+                self.googleServerCredentials.client_secret, 
+                function (err, exchangedContent) {
 
-						if (err) {
-							logger.error('Error exchanging authorization code: ' + err);
-                            callback(err, false);
-                        }
-                        else if (!exchangedContent || !exchangedContent.access_token || !exchangedContent.refresh_token) {
-                            callback("ERROR: Could not exchange authorization code", false);
-						}
-                        else {
-							logger.debug("exchangedContent.access_token: " +
-								exchangedContent.access_token);
-							logger.debug("exchangedContent.refresh_token: " +
-								 exchangedContent.refresh_token);
+                    if (err) {
+                        logger.error('Error exchanging authorization code: ' + err);
+                        callback(err, false);
+                    }
+                    else if (!exchangedContent || !exchangedContent.access_token || !exchangedContent.refresh_token) {
+                        callback("ERROR: Could not exchange authorization code", false);
+                    }
+                    else {
+                        logger.debug("exchangedContent.access_token: " +
+                            exchangedContent.access_token);
+                        logger.debug("exchangedContent.refresh_token: " +
+                             exchangedContent.refresh_token);
 
-							self.googleUserCredentials.oauth2Client.setCredentials({
-								access_token: exchangedContent.access_token,
-								refresh_token: exchangedContent.refresh_token
-							});
-                            
-                            callback(null, null);
-						}
-					});
-            });
-    });
+                        self.googleUserCredentials.oauth2Client.setCredentials({
+                            access_token: exchangedContent.access_token,
+                            refresh_token: exchangedContent.refresh_token
+                        });
+                        
+                        callback(null, null);
+                    }
+                });
+        });
 }
 
 /* For documentation on HTTP/REST, see https://developers.google.com/identity/protocols/OAuth2WebServer
