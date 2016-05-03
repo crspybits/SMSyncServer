@@ -53,7 +53,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 * Create your own `googleClientSecret.json` file (See `Server/Code/googleClientSecret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). See also the file `Server/Code/startOnHeroku.sh`. The structure of `googleClientSecret.json` is as follows:
 
-### `googleClientSecret.json.json`
+### `googleClientSecret.json`
 
             {
               "installed": {
@@ -65,13 +65,14 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
               }
             }
 
-* A startup script for the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/Scripts/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/` also. You need to do something like:
+* A startup script for the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/Scripts/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/`. You need to do something like:
 
 		git init
 		git add .
 		mv .ignored.git .git
+		# The last line is needed for the `startOnHeroku.sh` script.
 
-This last line is needed for the `startOnHeroku.sh` script.
+    
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 
