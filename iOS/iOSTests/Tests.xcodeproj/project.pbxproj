@@ -24,10 +24,10 @@
 		8369D33F1CD49E65006DA33C /* DownloadDeletionRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */; };
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
 		837E06361C7C108D000695F2 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06351C7C108D000695F2 /* AppFile.swift */; };
+		839739C11CD9682B00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; };
+		839739C21CD9682B00FD8520 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; };
-		839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06A61C5057CD0037AD9A /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
 		839EC7AB1C894A0B00F9E988 /* DownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */; };
 		83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */; };
@@ -61,6 +61,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		839739C31CD9682B00FD8520 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 83D3ECE41C4DBFCF00BFDA93;
+			remoteInfo = SMCoreLib;
+		};
 		839A06741C4F0CA40037AD9A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */;
@@ -74,6 +81,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 83D3E9671C4C840C00BFDA93;
 			remoteInfo = SMSyncServer;
+		};
+		83CA6A1C1CD967AE00047A86 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 83D3ECE51C4DBFCF00BFDA93;
+			remoteInfo = SMCoreLib;
+		};
+		83CA6A1E1CD967AE00047A86 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 831594F61C9B4BCB00D55E3A;
+			remoteInfo = SMCoreLibTests;
 		};
 		83D3E88D1C4C01E800BFDA93 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -92,7 +113,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */,
-				839A06A81C5057CD0037AD9A /* SMCoreLib.framework in Embed Frameworks */,
+				839739C21CD9682B00FD8520 /* SMCoreLib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -118,12 +139,12 @@
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		837E06351C7C108D000695F2 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = "Core Data/AppFile.swift"; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
-		839A06A61C5057CD0037AD9A /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/Tests-dmepbyyrfeiwetajvvmtsqynzchs/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletion.swift; path = XCTests/DownloadDeletion.swift; sourceTree = SOURCE_ROOT; };
 		83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWithLargerFileWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWithLargerFileWork.swift; sourceTree = "<group>"; };
 		83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwoDeviceTests.swift; sourceTree = "<group>"; };
 		83A4F1D31C6854C60086B22F /* TestBasics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestBasics.swift; sourceTree = "<group>"; };
+		83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMCoreLib.xcodeproj; path = "../../../../Common/SMCoreLib Framework/SMCoreLib.xcodeproj"; sourceTree = "<group>"; };
 		83D3E8751C4C01E800BFDA93 /* Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83D3E88C1C4C01E800BFDA93 /* XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -168,7 +189,7 @@
 			files = (
 				25A15FE102572BB137CB1ABB /* Pods_Tests.framework in Frameworks */,
 				839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */,
-				839A06A71C5057CD0037AD9A /* SMCoreLib.framework in Frameworks */,
+				839739C11CD9682B00FD8520 /* SMCoreLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,6 +282,15 @@
 			isa = PBXGroup;
 			children = (
 				839A06751C4F0CA40037AD9A /* SMSyncServer.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		83CA6A181CD967AE00047A86 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */,
+				83CA6A1F1CD967AE00047A86 /* SMCoreLibTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -358,8 +388,8 @@
 		83D3E8CB1C4C07C200BFDA93 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */,
 				839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */,
-				839A06A61C5057CD0037AD9A /* SMCoreLib.framework */,
 				A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */,
 				BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */,
 			);
@@ -407,6 +437,7 @@
 			);
 			dependencies = (
 				839A06791C4F0D980037AD9A /* PBXTargetDependency */,
+				839739C41CD9682B00FD8520 /* PBXTargetDependency */,
 			);
 			name = Tests;
 			productName = Tests;
@@ -466,6 +497,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 83CA6A181CD967AE00047A86 /* Products */;
+					ProjectRef = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+				},
+				{
 					ProductGroup = 839A06701C4F0CA40037AD9A /* Products */;
 					ProjectRef = 839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */;
 				},
@@ -484,6 +519,20 @@
 			fileType = wrapper.framework;
 			path = SMSyncServer.framework;
 			remoteRef = 839A06741C4F0CA40037AD9A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = SMCoreLib.framework;
+			remoteRef = 83CA6A1C1CD967AE00047A86 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83CA6A1F1CD967AE00047A86 /* SMCoreLibTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SMCoreLibTests.xctest;
+			remoteRef = 83CA6A1E1CD967AE00047A86 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -674,6 +723,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		839739C41CD9682B00FD8520 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SMCoreLib;
+			targetProxy = 839739C31CD9682B00FD8520 /* PBXContainerItemProxy */;
+		};
 		839A06791C4F0D980037AD9A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = SMSyncServer;

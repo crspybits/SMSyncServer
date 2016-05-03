@@ -549,7 +549,7 @@ public class SMPersistVarTest : NSObject {
             
         case .ChangeValues:
             self.TEST_BOOL.boolValue = false
-            self.TEST_INT.intValue++
+            self.TEST_INT.intValue += 1
             self.TEST_SET.setValue.addObject(NSDate())
             self.TEST_STRING.stringValue = "New user defaults string"
             self.TEST_DICT.dictValue["someKey"] = "someValue"

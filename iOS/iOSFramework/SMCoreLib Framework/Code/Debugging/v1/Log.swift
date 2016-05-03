@@ -23,7 +23,7 @@ public class Log {
     //  also doesn't work.
     
     public class func msg(message: String,
-        functionName:  String = __FUNCTION__, fileNameWithPath: String = __FILE__, lineNumber: Int = __LINE__ ) {
+        functionName:  String = #function, fileNameWithPath: String = #file, lineNumber: Int = #line ) {
 
 #if DEBUG
         let output = self.formatLogString(message, loggingColor: .Blue, functionName: functionName, fileNameWithPath: fileNameWithPath, lineNumber: lineNumber)
@@ -33,7 +33,7 @@ public class Log {
     
     // For use in debugging only. Doesn't log to file. Marks output in red.
     public class func error(message: String,
-        functionName:  String = __FUNCTION__, fileNameWithPath: String = __FILE__, lineNumber: Int = __LINE__ ) {
+        functionName:  String = #function, fileNameWithPath: String = #file, lineNumber: Int = #line ) {
 #if DEBUG
         let output = self.formatLogString(message, loggingColor: .Red, functionName: functionName, fileNameWithPath: fileNameWithPath, lineNumber: lineNumber)
         print(output)
@@ -42,7 +42,7 @@ public class Log {
     
     // For use in debugging only. Doesn't log to file. Marks output in pink. (Yellow on white background is unreadable)
     public class func warning(message: String,
-        functionName:  String = __FUNCTION__, fileNameWithPath: String = __FILE__, lineNumber: Int = __LINE__ ) {
+        functionName:  String = #function, fileNameWithPath: String = #file, lineNumber: Int = #line ) {
 #if DEBUG
         let output = self.formatLogString(message, loggingColor: .Pink, functionName: functionName, fileNameWithPath: fileNameWithPath, lineNumber: lineNumber)
         print(output)
@@ -51,7 +51,7 @@ public class Log {
     
     // For use in debugging only. Doesn't log to file. Marks output in purple.
     public class func special(message: String,
-        functionName:  String = __FUNCTION__, fileNameWithPath: String = __FILE__, lineNumber: Int = __LINE__ ) {
+        functionName:  String = #function, fileNameWithPath: String = #file, lineNumber: Int = #line ) {
 #if DEBUG
         let output = self.formatLogString(message, loggingColor: .Purple, functionName: functionName, fileNameWithPath: fileNameWithPath, lineNumber: lineNumber)
         print(output)
@@ -100,7 +100,7 @@ public class Log {
     
     // Call this log method when something bad or important has happened.
     public class func file(message: String,
-        functionName:  String = __FUNCTION__, fileNameWithPath: String = __FILE__, lineNumber: Int = __LINE__ ) {
+        functionName:  String = #function, fileNameWithPath: String = #file, lineNumber: Int = #line ) {
         
         var output:String
             

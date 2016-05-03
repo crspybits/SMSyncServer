@@ -7,7 +7,7 @@
 # Any spaces in the directory names don't need backslashes to escape the spaces.
 INPUTFILE="Code/Internal/SMServerConstants.swift"
 
-OUTPUTFILE="../Server/Code/ServerConstants.js"
+OUTPUTFILE="../../Server/Code/ServerConstants.js"
 START="SERVER-CONSTANTS-START"
 END="SERVER-CONSTANTS-END"
 WARNING="// ***** This is a machine generated file: Do not change by hand!! *****"
