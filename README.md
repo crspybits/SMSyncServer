@@ -45,15 +45,15 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 ## 2) MongoDb installation
 
-* SMSyncServer makes use of Mongo. Current tests are using v3.0.7 running on Mac OS X. You can [find Mongo here](https://www.mongodb.org). After installation a script to start Mongo is at `Server/Code/Scripts/startMongoDb.sh`
+* SMSyncServer makes use of MongoDb to store file meta data and locks. Current tests are using [mLab](https://www.mlab.com) as an add-on service through [Heroku](https://heroku.com). You can [find MongoDb here](https://www.mongodb.org).
 
 ## 3) Server installation
 
-* The SMSyncServer server makes use of Node.js. Current tests are using v5.1.0 on Mac OS X. You can find [Node.js here](https://nodejs.org/).
+* The SMSyncServer server makes use of Node.js. Current tests are using v5.1.0 on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
 
-* Create your own `client_secret.json` file (See `Server/Code/client_secret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). Its structure as follows:
+* Create your own `googleClientSecret.json` file (See `Server/Code/googleClientSecret.json`). It’s currently a symbolic link and must be replaced. The info in this file is from [Google Sign In](https://developers.google.com/identity/sign-in/ios/). See also the file `Server/Code/startOnHeroku.sh`. The structure of `googleClientSecret.json` is as follows:
 
-### `client_secret.json`
+### `googleClientSecret.json.json`
 
             {
               "installed": {
@@ -65,8 +65,13 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
               }
             }
 
-* A startup script for the SMSyncServer Node.js server is `Server/Code/Scripts/startServer.sh`. (When using this startServer script and you have the server running remotely-- specifically, when the iOSFramework folder is not available, you'll need to comment out the line `./Scripts/makeServerConstants.sh` in the startup script). 
+* A startup script for the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/Scripts/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/` also. You need to do something like:
 
+		git init
+		git add .
+		mv .ignored.git .git
+
+This last line is needed for the `startOnHeroku.sh` script.
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 
