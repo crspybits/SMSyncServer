@@ -115,9 +115,9 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You need most of the code in your App Delegate from the example AppDelegate.swift file-- all of it except for that using Core Data. See the method `didFinishLaunchingWithOptions` and the method:
 
-    func application(application: UIApplication,
-        openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
-    }
+		func application(application: UIApplication,
+			openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
+		}
 
 * You need to create your own `SMSyncServer-client.plist` file. See above.
 
@@ -137,7 +137,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 			<true/>
 		</dict>
 
-* When you get to the point you see "Error signing in: Error Domain=com.google.GIDSignIn Code=-4" on the console log, you know you are making progress! Your next steps should include allow the user to sign-in to their cloud storage account, and making sure you have the [URL Schemes required by Google SignIn](https://developers.google.com/identity/sign-in/ios/start-integrating#add-config).
+* When you get to the point you see "Error signing in: Error Domain=com.google.GIDSignIn Code=-4" on the console log, you know you are making progress! Your next steps should include allowing the user to sign-in to their cloud storage account, and making sure you have the [URL Schemes required by Google SignIn](https://developers.google.com/identity/sign-in/ios/start-integrating#add-config).
 
 * You will also need to setup a delegate for the SMSyncServer session shared instance.
 
