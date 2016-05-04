@@ -483,7 +483,9 @@ public class SMSyncServer : NSObject {
     
     private func callSyncServerModeChange(mode:SMSyncServerMode) {
         self.setMode(mode)
-        self.delegate?.syncServerModeChange(mode)
+        NSThread.runSyncOnMainThread() {
+            self.delegate?.syncServerModeChange(mode)
+        }
     }
     
     // MARK: End calling delegate methods
@@ -532,6 +534,32 @@ public class SMSyncServer : NSObject {
     */
     public func resetFromError(completion:((error:NSError?)->())?=nil) {
         SMSyncControl.session.resetFromError(completion)
+    }
+    
+    // Convenience function to get data from smSyncServerClientPlist
+    public class func getDataFromPlist(syncServerClientPlistFileName fileName:String) -> (serverURL:String, cloudFolderPath:String, googleServerClientId:String) {
+        // Extract parameters out of smSyncServerClientPlist
+        let bundlePath = NSBundle.mainBundle().bundlePath as NSString
+        let syncServerClientPlistPath = bundlePath.stringByAppendingPathComponent(fileName)
+        let syncServerClientPlistData = NSDictionary(contentsOfFile: syncServerClientPlistPath)
+        
+        Assert.If(syncServerClientPlistData == nil, thenPrintThisString: "Could not access your \(fileName) file at: \(syncServerClientPlistPath)")
+        
+        var serverURLString:String?
+        var cloudFolderPath:String?
+        var googleServerClientId:String?
+        
+        func getDictVar(varName:String, inout result:String?) {
+            result = syncServerClientPlistData![varName] as? String
+            Assert.If(result == nil, thenPrintThisString: "Could not access \(varName) in \(fileName)")
+            Log.msg("Using: \(varName): \(result)")
+        }
+        
+        getDictVar("ServerURL", result: &serverURLString)
+        getDictVar("CloudFolderPath", result: &cloudFolderPath)
+        getDictVar("GoogleServerClientID", result: &googleServerClientId)
+        
+        return (serverURL:serverURLString!, cloudFolderPath:cloudFolderPath!, googleServerClientId:googleServerClientId!)
     }
 }
 

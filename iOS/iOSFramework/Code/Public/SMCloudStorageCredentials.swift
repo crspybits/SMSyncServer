@@ -11,7 +11,6 @@
 
 import Foundation
 import SMCoreLib
-import SMSyncServer
 
 /* TODO: Handle this: Got it when I pressed the Sign In button to connect to Google.
 2015-11-26 21:09:38.198 NetDb[609/0x16e12f000] [lvl=3] __65-[GGLClearcutLogger sendNextPendingRequestWithCompletionHandler:]_block_invoke_3() Error posting to Clearcut: Error Domain=NSURLErrorDomain Code=-1005 "The network connection was lost." UserInfo={NSUnderlyingError=0x15558de70 {Error Domain=kCFErrorDomainCFNetwork Code=-1005 "(null)" UserInfo={_kCFStreamErrorCodeKey=57, _kCFStreamErrorDomainKey=1}}, NSErrorFailingURLStringKey=https://play.googleapis.com/log, NSErrorFailingURLKey=https://play.googleapis.com/log, _kCFStreamErrorDomainKey=1, _kCFStreamErrorCodeKey=57, NSLocalizedDescription=The network connection was lost.}

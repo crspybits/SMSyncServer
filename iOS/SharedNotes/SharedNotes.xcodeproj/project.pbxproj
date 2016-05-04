@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6FD0BE8A568536B303639F69 /* Pods_SharedNotes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */; };
 		8369D32C1CD1C79E006DA33C /* SharedNotesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */; };
 		839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CC1CD96D7400FD8520 /* AppDelegate.swift */; };
 		839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CE1CD96D7D00FD8520 /* ViewController.swift */; };
@@ -15,6 +16,16 @@
 		839739DF1CD96E5500FD8520 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 839739DB1CD96E5500FD8520 /* LaunchScreen.storyboard */; };
 		839739E01CD96E5500FD8520 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 839739DD1CD96E5500FD8520 /* Main.storyboard */; };
 		839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739E11CD96F7800FD8520 /* SyncSpinner.swift */; };
+		83973A031CD986DA00FD8520 /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83973A021CD986BB00FD8520 /* SMSyncServer.framework */; };
+		83973A041CD986DA00FD8520 /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83973A021CD986BB00FD8520 /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		83973A091CD986E700FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83973A081CD986E700FD8520 /* SMCoreLib.framework */; };
+		83973A0A1CD986E700FD8520 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83973A081CD986E700FD8520 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		83973A0C1CD9872E00FD8520 /* SMGoogleCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */; };
+		83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */; };
+		83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */; };
+		83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */; };
+		83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */; };
+		C8D3F07FB58C327C1E45AD4E /* Pods_SharedNotesTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,9 +36,42 @@
 			remoteGlobalIDString = 8369D30F1CD1C792006DA33C;
 			remoteInfo = SharedNotes;
 		};
+		83973A011CD986BB00FD8520 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 839739FC1CD986BA00FD8520 /* SMSyncServer.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 83D3E9681C4C840C00BFDA93;
+			remoteInfo = SMSyncServer;
+		};
+		83973A051CD986DA00FD8520 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 839739FC1CD986BA00FD8520 /* SMSyncServer.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 83D3E9671C4C840C00BFDA93;
+			remoteInfo = SMSyncServer;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		83973A071CD986DA00FD8520 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				83973A041CD986DA00FD8520 /* SMSyncServer.framework in Embed Frameworks */,
+				83973A0A1CD986E700FD8520 /* SMCoreLib.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		178227570E2FED98FBEF6ACB /* Pods-SharedNotes.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotes.release.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes.release.xcconfig"; sourceTree = "<group>"; };
+		2B7584F72A62F25A58394752 /* Pods-SharedNotes.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotes.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes.debug.xcconfig"; sourceTree = "<group>"; };
+		4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		550D6AA2AFFE88F55F028546 /* Pods-SharedNotesTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.debug.xcconfig"; sourceTree = "<group>"; };
 		8369D3101CD1C792006DA33C /* SharedNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SharedNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesTests.swift; sourceTree = "<group>"; };
@@ -40,6 +84,17 @@
 		839739DC1CD96E5500FD8520 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/LaunchScreen.storyboard; sourceTree = SOURCE_ROOT; };
 		839739DE1CD96E5500FD8520 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/Main.storyboard; sourceTree = SOURCE_ROOT; };
 		839739E11CD96F7800FD8520 /* SyncSpinner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncSpinner.swift; sourceTree = "<group>"; };
+		839739FC1CD986BA00FD8520 /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
+		83973A081CD986E700FD8520 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = SMCoreLib.framework; path = "/Users/chris/Library/Developer/Xcode/DerivedData/SharedNotes-dgnkvvryssyctxckftrromurqysv/Build/Products/Debug-iphoneos/SMCoreLib.framework"; sourceTree = "<absolute>"; };
+		83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleCredentials.swift; path = ../../iOSFramework/Code/SignIn/SMGoogleCredentials.swift; sourceTree = "<group>"; };
+		83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMGoogleSignInController.swift; sourceTree = "<group>"; };
+		83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Resources/SMSyncServer-client.plist"; sourceTree = "<group>"; };
+		83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Resources/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SharedNotes-Bridging-Header.h"; sourceTree = "<group>"; };
+		83973A2F1CD99C9900FD8520 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CALayer+MBAnimationPersistence.h"; sourceTree = "<group>"; };
+		83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CALayer+MBAnimationPersistence.m"; sourceTree = "<group>"; };
+		A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotesTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7DA0A26D6C930D38F329309 /* Pods-SharedNotesTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +102,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83973A031CD986DA00FD8520 /* SMSyncServer.framework in Frameworks */,
+				6FD0BE8A568536B303639F69 /* Pods_SharedNotes.framework in Frameworks */,
+				83973A091CD986E700FD8520 /* SMCoreLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -54,20 +112,36 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8D3F07FB58C327C1E45AD4E /* Pods_SharedNotesTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5AC37B91B6E9CF31796DF542 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				2B7584F72A62F25A58394752 /* Pods-SharedNotes.debug.xcconfig */,
+				178227570E2FED98FBEF6ACB /* Pods-SharedNotes.release.xcconfig */,
+				550D6AA2AFFE88F55F028546 /* Pods-SharedNotesTests.debug.xcconfig */,
+				F7DA0A26D6C930D38F329309 /* Pods-SharedNotesTests.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 		8369D3071CD1C791006DA33C = {
 			isa = PBXGroup;
 			children = (
+				83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */,
 				8369D3121CD1C793006DA33C /* Code */,
+				83973A241CD99C5200FD8520 /* Other Libs */,
 				839739D31CD96DC200FD8520 /* Supporting Files */,
 				839739D01CD96D9900FD8520 /* Resources */,
 				8369D32A1CD1C79E006DA33C /* SharedNotesTests */,
 				8369D3111CD1C792006DA33C /* Products */,
+				5AC37B91B6E9CF31796DF542 /* Pods */,
+				8F0B42316AA9A168E8422D9F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -86,6 +160,8 @@
 				839739CC1CD96D7400FD8520 /* AppDelegate.swift */,
 				839739CE1CD96D7D00FD8520 /* ViewController.swift */,
 				839739E11CD96F7800FD8520 /* SyncSpinner.swift */,
+				83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */,
+				83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */,
 				839739D61CD96DFD00FD8520 /* Core Data */,
 			);
 			path = Code;
@@ -115,6 +191,8 @@
 			isa = PBXGroup;
 			children = (
 				839739D41CD96DD800FD8520 /* Info.plist */,
+				83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */,
+				83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -127,6 +205,43 @@
 			name = "Core Data";
 			sourceTree = "<group>";
 		};
+		839739FD1CD986BA00FD8520 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				83973A021CD986BB00FD8520 /* SMSyncServer.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		83973A241CD99C5200FD8520 /* Other Libs */ = {
+			isa = PBXGroup;
+			children = (
+				83973A2E1CD99C9900FD8520 /* CALayer+MBAnimationPersistence */,
+			);
+			name = "Other Libs";
+			sourceTree = "<group>";
+		};
+		83973A2E1CD99C9900FD8520 /* CALayer+MBAnimationPersistence */ = {
+			isa = PBXGroup;
+			children = (
+				83973A2F1CD99C9900FD8520 /* CALayer+MBAnimationPersistence.h */,
+				83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */,
+			);
+			name = "CALayer+MBAnimationPersistence";
+			path = "OtherLibs/CALayer+MBAnimationPersistence";
+			sourceTree = "<group>";
+		};
+		8F0B42316AA9A168E8422D9F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				83973A081CD986E700FD8520 /* SMCoreLib.framework */,
+				839739FC1CD986BA00FD8520 /* SMSyncServer.xcodeproj */,
+				4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */,
+				A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -134,13 +249,18 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */;
 			buildPhases = (
+				989193649A92E3A252ADEEBF /* Check Pods Manifest.lock */,
 				8369D30C1CD1C792006DA33C /* Sources */,
 				8369D30D1CD1C792006DA33C /* Frameworks */,
 				8369D30E1CD1C792006DA33C /* Resources */,
+				6378EF905FAB3FEF1652218D /* Embed Pods Frameworks */,
+				6D9E65A9E997AC95CBDDE2AD /* Copy Pods Resources */,
+				83973A071CD986DA00FD8520 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				83973A061CD986DA00FD8520 /* PBXTargetDependency */,
 			);
 			name = SharedNotes;
 			productName = SharedNotes;
@@ -151,9 +271,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8369D3331CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotesTests" */;
 			buildPhases = (
+				EE46AC8FC1DA0B7145B20CD1 /* Check Pods Manifest.lock */,
 				8369D3231CD1C79E006DA33C /* Sources */,
 				8369D3241CD1C79E006DA33C /* Frameworks */,
 				8369D3251CD1C79E006DA33C /* Resources */,
+				B53308AC42637C191B707E62 /* Embed Pods Frameworks */,
+				6485BFB9234CEF2BFDD15AA5 /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -195,6 +318,12 @@
 			mainGroup = 8369D3071CD1C791006DA33C;
 			productRefGroup = 8369D3111CD1C792006DA33C /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 839739FD1CD986BA00FD8520 /* Products */;
+					ProjectRef = 839739FC1CD986BA00FD8520 /* SMSyncServer.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				8369D30F1CD1C792006DA33C /* SharedNotes */,
@@ -203,6 +332,16 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXReferenceProxy section */
+		83973A021CD986BB00FD8520 /* SMSyncServer.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = SMSyncServer.framework;
+			remoteRef = 83973A011CD986BB00FD8520 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
 /* Begin PBXResourcesBuildPhase section */
 		8369D30E1CD1C792006DA33C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -210,7 +349,9 @@
 			files = (
 				839739D21CD96DBA00FD8520 /* Assets.xcassets in Resources */,
 				839739E01CD96E5500FD8520 /* Main.storyboard in Resources */,
+				83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */,
 				839739DF1CD96E5500FD8520 /* LaunchScreen.storyboard in Resources */,
+				83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -223,14 +364,110 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		6378EF905FAB3FEF1652218D /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		6485BFB9234CEF2BFDD15AA5 /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		6D9E65A9E997AC95CBDDE2AD /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		989193649A92E3A252ADEEBF /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		B53308AC42637C191B707E62 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EE46AC8FC1DA0B7145B20CD1 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		8369D30C1CD1C792006DA33C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */,
+				83973A0C1CD9872E00FD8520 /* SMGoogleCredentials.swift in Sources */,
 				839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
+				83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -250,6 +487,11 @@
 			isa = PBXTargetDependency;
 			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
 			targetProxy = 8369D3281CD1C79E006DA33C /* PBXContainerItemProxy */;
+		};
+		83973A061CD986DA00FD8520 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SMSyncServer;
+			targetProxy = 83973A051CD986DA00FD8520 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -360,28 +602,38 @@
 		};
 		8369D3311CD1C79E006DA33C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2B7584F72A62F25A58394752 /* Pods-SharedNotes.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotes;
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
 		8369D3321CD1C79E006DA33C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 178227570E2FED98FBEF6ACB /* Pods-SharedNotes.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotes;
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
 			};
 			name = Release;
 		};
 		8369D3341CD1C79E006DA33C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 550D6AA2AFFE88F55F028546 /* Pods-SharedNotesTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				INFOPLIST_FILE = SharedNotesTests/Info.plist;
@@ -394,6 +646,7 @@
 		};
 		8369D3351CD1C79E006DA33C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F7DA0A26D6C930D38F329309 /* Pods-SharedNotesTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				INFOPLIST_FILE = SharedNotesTests/Info.plist;

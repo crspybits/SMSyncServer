@@ -26,6 +26,8 @@
 		837E06361C7C108D000695F2 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06351C7C108D000695F2 /* AppFile.swift */; };
 		839739C11CD9682B00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; };
 		839739C21CD9682B00FD8520 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		839739EB1CD97B4F00FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */; };
+		839739FB1CD97EED00FD8520 /* SMGoogleCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739FA1CD97EED00FD8520 /* SMGoogleCredentials.swift */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
@@ -48,9 +50,6 @@
 		83D3E8CA1C4C079900BFDA93 /* Upload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8C11C4C079900BFDA93 /* Upload.swift */; };
 		83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9331C4C801D00BFDA93 /* AppFile.m */; };
 		83D3E9371C4C801D00BFDA93 /* AppFile+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9351C4C801D00BFDA93 /* AppFile+CoreDataProperties.m */; };
-		83D3E93B1C4C80AB00BFDA93 /* SMGoogleCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9391C4C80AB00BFDA93 /* SMGoogleCredentials.swift */; };
-		83D3E93C1C4C80AB00BFDA93 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E93A1C4C80AB00BFDA93 /* SMGoogleSignInController.swift */; };
-		83D3ECBF1C4D58B700BFDA93 /* SMCloudStorageCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECBE1C4D58B700BFDA93 /* SMCloudStorageCredentials.swift */; };
 		83D3ECCE1C4D91EE00BFDA93 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECCA1C4D91EE00BFDA93 /* LaunchScreen.storyboard */; };
 		83D3ECCF1C4D91EE00BFDA93 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECCC1C4D91EE00BFDA93 /* Main.storyboard */; };
 		83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */; };
@@ -138,6 +137,8 @@
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		837E06351C7C108D000695F2 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = "Core Data/AppFile.swift"; sourceTree = "<group>"; };
+		839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMGoogleSignInController.swift; sourceTree = "<group>"; };
+		839739FA1CD97EED00FD8520 /* SMGoogleCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleCredentials.swift; path = ../../iOSFramework/Code/SignIn/SMGoogleCredentials.swift; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletion.swift; path = XCTests/DownloadDeletion.swift; sourceTree = SOURCE_ROOT; };
@@ -166,9 +167,6 @@
 		83D3E9331C4C801D00BFDA93 /* AppFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppFile.m; path = "Core Data/AppFile.m"; sourceTree = "<group>"; };
 		83D3E9341C4C801D00BFDA93 /* AppFile+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "AppFile+CoreDataProperties.h"; path = "Core Data/AppFile+CoreDataProperties.h"; sourceTree = "<group>"; };
 		83D3E9351C4C801D00BFDA93 /* AppFile+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "AppFile+CoreDataProperties.m"; path = "Core Data/AppFile+CoreDataProperties.m"; sourceTree = "<group>"; };
-		83D3E9391C4C80AB00BFDA93 /* SMGoogleCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleCredentials.swift; path = Credentials/SMGoogleCredentials.swift; sourceTree = "<group>"; };
-		83D3E93A1C4C80AB00BFDA93 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleSignInController.swift; path = Credentials/SMGoogleSignInController.swift; sourceTree = "<group>"; };
-		83D3ECBE1C4D58B700BFDA93 /* SMCloudStorageCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMCloudStorageCredentials.swift; path = Credentials/SMCloudStorageCredentials.swift; sourceTree = "<group>"; };
 		83D3ECCB1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		83D3ECCD1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = ClientAppModel.xcdatamodel; path = Resources/ClientAppModel.xcdatamodel; sourceTree = SOURCE_ROOT; };
@@ -257,6 +255,7 @@
 				83D3E8B41C4C072800BFDA93 /* MainPageVC.swift */,
 				83D3E8B51C4C072800BFDA93 /* Settings.swift */,
 				83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */,
+				839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */,
 			);
 			name = "View Controllers";
 			sourceTree = "<group>";
@@ -276,6 +275,14 @@
 				8333C4EB1C72D9FD00A0A57A /* Same Cloud Creds */,
 			);
 			name = "Two Device Tests";
+			sourceTree = "<group>";
+		};
+		839739F91CD97E1700FD8520 /* From iOSFramework */ = {
+			isa = PBXGroup;
+			children = (
+				839739FA1CD97EED00FD8520 /* SMGoogleCredentials.swift */,
+			);
+			name = "From iOSFramework";
 			sourceTree = "<group>";
 		};
 		839A06701C4F0CA40037AD9A /* Products */ = {
@@ -324,7 +331,7 @@
 				83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */,
 				83D3E8A61C4C064D00BFDA93 /* Core Data */,
 				8333C4EE1C7375A100A0A57A /* View Controllers */,
-				83D3E9381C4C803400BFDA93 /* Cloud Storage User Credentials */,
+				839739F91CD97E1700FD8520 /* From iOSFramework */,
 			);
 			path = Code;
 			sourceTree = "<group>";
@@ -394,16 +401,6 @@
 				BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		83D3E9381C4C803400BFDA93 /* Cloud Storage User Credentials */ = {
-			isa = PBXGroup;
-			children = (
-				83D3E9391C4C80AB00BFDA93 /* SMGoogleCredentials.swift */,
-				83D3ECBE1C4D58B700BFDA93 /* SMCloudStorageCredentials.swift */,
-				83D3E93A1C4C80AB00BFDA93 /* SMGoogleSignInController.swift */,
-			);
-			name = "Cloud Storage User Credentials";
 			sourceTree = "<group>";
 		};
 		E4A031897A56B46569FB9E41 /* Pods */ = {
@@ -677,12 +674,9 @@
 				83D3EDEC1C4E2F3000BFDA93 /* CoreDataTests.swift in Sources */,
 				83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */,
 				83D3E9371C4C801D00BFDA93 /* AppFile+CoreDataProperties.m in Sources */,
-				83D3ECBF1C4D58B700BFDA93 /* SMCloudStorageCredentials.swift in Sources */,
 				837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */,
 				83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */,
 				83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */,
-				83D3E93C1C4C80AB00BFDA93 /* SMGoogleSignInController.swift in Sources */,
-				83D3E93B1C4C80AB00BFDA93 /* SMGoogleCredentials.swift in Sources */,
 				83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */,
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
@@ -692,11 +686,13 @@
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
 				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,
+				839739EB1CD97B4F00FD8520 /* SMGoogleSignInController.swift in Sources */,
 				83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */,
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
 				8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */,
 				8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */,
 				837E06361C7C108D000695F2 /* AppFile.swift in Sources */,
+				839739FB1CD97EED00FD8520 /* SMGoogleCredentials.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

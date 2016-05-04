@@ -18,27 +18,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private let smSyncServerClientPlist = "SMSyncServer-client.plist"
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
-        
-        // Extract parameters out of smSyncServerClientPlist
-        let bundlePath = NSBundle.mainBundle().bundlePath as NSString
-        let syncServerClientPlistPath = bundlePath.stringByAppendingPathComponent(smSyncServerClientPlist)
-        let syncServerClientPlistData = NSDictionary(contentsOfFile: syncServerClientPlistPath)
-        
-        Assert.If(syncServerClientPlistData == nil, thenPrintThisString: "Could not access your \(smSyncServerClientPlist) file at: \(syncServerClientPlistPath)")
-        
-        var serverURLString:String?
-        var cloudFolderPath:String?
-        var googleServerClientId:String?
-        
-        func getDictVar(varName:String, inout result:String?) {
-            result = syncServerClientPlistData![varName] as? String
-            Assert.If(result == nil, thenPrintThisString: "Could not access \(varName) in \(smSyncServerClientPlist)")
-            Log.msg("Using: \(varName): \(result)")
-        }
-        
-        getDictVar("ServerURL", result: &serverURLString)
-        getDictVar("CloudFolderPath", result: &cloudFolderPath)
-        getDictVar("GoogleServerClientID", result: &googleServerClientId)
     
         let coreDataSession = CoreData(namesDictionary: [
             CoreDataBundleModelName: "ClientAppModel",
@@ -48,12 +27,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         CoreData.registerSession(coreDataSession, forName: CoreDataTests.name)
         
-        // TODO: Eventually give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
+        let (serverURLString, cloudFolderPath, googleServerClientId) = SMSyncServer.getDataFromPlist(syncServerClientPlistFileName: smSyncServerClientPlist)
+        
+        // This is the path on the cloud storage service (Google Drive for now) where the app's data will be synced
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId!)
+        // Starting to establish cloud storage credentials-- user will also have to sign in their specific account.
+        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId)
         
-        let serverURL = NSURL(string: serverURLString!)
+        // Setup the SMSyncServer (Node.js) server URL.
+        let serverURL = NSURL(string: serverURLString)
         SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
 
         return true

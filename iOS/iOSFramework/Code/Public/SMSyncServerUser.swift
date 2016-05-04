@@ -59,6 +59,7 @@ public class SMSyncServerUser {
     // You *must* set this (e.g., shortly after app launch). Currently, this must be a single name, with no subfolders, relative to the root. Don't put any "/" character in the name.
     // 1/18/16; I just moved this here, from SMCloudStorageCredentials because it seems like the cloudFolderPath should be at a different level of abstraction, or at least seems independent of the details of cloud storage user creds.
     // 1/18/16; I've now made this public because the folder used in cloud storage is fundamentally a client app decision-- i.e., it is a decision made by the user of SMSyncServer, e.g., Petunia.
+    // TODO: Eventually give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
     public var cloudFolderPath:String?
     
     internal func appLaunchSetup(withCloudStorageUserDelegate cloudStorageUserDelegate:SMCloudStorageUserDelegate!) {

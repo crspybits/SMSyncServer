@@ -109,19 +109,37 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You should now be ready to build the Tests.workspace onto your device.
 
-## 5) Adding the iOSFramework into your own Xcode project
+## 5) Adding the iOSFramework into your own Xcode project 
 
-* You can also install the SMSyncServer iOS Framework into your own Xcode project.  
+* Drag the file `iOSFramework/Code/Signin/SMGoogleCredentials.swift` into your Xcode project. This .swift file depends on the Google Sign In Framework (see next step), which is not linked into the SMSyncServer framework, and so isn't explicitly part of the SMSyncServer framework.
 
-* A useful way to get started with this is to look at the AppDelegate of the sample app, and to look at the "Cloud Storage User Credentials" Xcode group/folder in that sample app. 
+* You need most of the code in your App Delegate from the example AppDelegate.swift file-- all of it except for that using Core Data. See the method `didFinishLaunchingWithOptions` and the method:
 
-* Link the [Google Sign Framework](https://developers.google.com/identity/sign-in/ios/) into your app. It seems easiest to do this using the Cocoapod. 
+    func application(application: UIApplication,
+        openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
+    }
+
+* You need to create your own `SMSyncServer-client.plist` file. See above.
+
+* Link the [Google SignIn Framework](https://developers.google.com/identity/sign-in/ios/) into your app. It seems easiest to do this [using the Cocoapod](https://developers.google.com/identity/sign-in/ios/start-integrating). As indicated in these directions, you will need to create or use a configuration file (`GoogleService-Info.plist`). Your `client_id` and `client_secret` will need to be placed into your `serverSecrets.json` server file. See above.
 
 * With your own Xcode project open in Xcode and with a Mac OS Finder folder open so you can see iOSFramework files, you need to drag `SMSyncServer.xcodeproj` from the iOSFramework folder into your Xcode project.
 
 * Then, entirely within your Xcode project, drag SMSyncServer.framework to Embedded Binaries in the General tab.
 
 * Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems necessary to build).
+
+* You might get the error "App Transport Security has blocked a cleartext HTTP (http://) resource load since it is insecure. Temporary exceptions can be configured via your app's Info.plist file." when you try run your app. For testing, you may want to use HTTP instead of HTTPS to access your SMSyncServer server. To do this, you can add the following to your app's Info.plist:
+
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+* When you get to the point you see "Error signing in: Error Domain=com.google.GIDSignIn Code=-4" on the console log, you know you are making progress! Your next steps should include allow the user to sign-in to their cloud storage account, and making sure you have the [URL Schemes required by Google SignIn](https://developers.google.com/identity/sign-in/ios/start-integrating#add-config).
+
+* You will also need to setup a delegate for the SMSyncServer session shared instance.
 
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.

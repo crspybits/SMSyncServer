@@ -102,7 +102,9 @@ internal class SMSyncControl {
         switch self.mode {
         case .ClientAPIError, .InternalError, .NonRecoverableError:
             // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
-            self.delegate?.syncServerModeChange(self.mode)
+            NSThread.runSyncOnMainThread() {
+                self.delegate?.syncServerModeChange(self.mode)
+            }
             completion?()
             return
         
@@ -443,6 +445,8 @@ extension SMSyncControl : SMSyncControlDelegate {
             self.stopOperating()
         }
         
-        self.delegate?.syncServerModeChange(newMode)
+        NSThread.runSyncOnMainThread() {
+            self.delegate?.syncServerModeChange(newMode)
+        }
     }
 }
