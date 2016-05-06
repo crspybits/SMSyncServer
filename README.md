@@ -191,6 +191,8 @@ In `iOS/Shared Notes` there is a demo app, which enables multiple devices to acc
 
 ## 4) Deletion
 
+This allows you to mark a file as deleted locally, and also mark it as deleted on the server. Other devices, on a download, will have the delegate method `syncServerClientShouldDeleteFiles` triggered (see below).
+
 	// File referenced by uuid is assumed to exist in cloud storage
 	let uuid = ...
 	
