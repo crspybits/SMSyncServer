@@ -141,6 +141,10 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You will also need to setup a delegate for the SMSyncServer session shared instance.
 
+# Demo App: Shared Notes
+
+In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of notes across iOS devices.
+
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.
 
