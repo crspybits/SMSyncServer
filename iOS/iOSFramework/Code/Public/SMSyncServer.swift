@@ -85,9 +85,10 @@ public enum SMSyncServerEvent {
     case Recovery
 }
 
-// "class" to make the delegate weak.
-// TODO: These delegate methods are called on the main thread.
+// These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
+    // "class" to make the delegate weak.
+
     // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
@@ -477,6 +478,11 @@ public class SMSyncServer : NSObject {
         }
         
         return true
+    }
+    
+    // Check for downloads and perform any other pending sync operations.
+    public func sync() {
+        SMSyncControl.session.nextSyncOperation()
     }
     
     // MARK: Functions calling delegate methods

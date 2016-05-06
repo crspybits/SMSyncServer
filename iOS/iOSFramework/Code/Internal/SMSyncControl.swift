@@ -110,12 +110,16 @@ internal class SMSyncControl {
         
         // If we're in a .NetworkNotConnected mode, calling nextSyncOperation() should be considered a .Recovery step. i.e., because presumably the network is now connected.
         case .NetworkNotConnected:
-            self.delegate?.syncServerEventOccurred(.Recovery)
+            NSThread.runSyncOnMainThread() {
+                self.delegate?.syncServerEventOccurred(.Recovery)
+            }
             
         // If we're in a .Synchronizing mode, this is also a .Recovery step. This is because they only way we should get to this point and be in a .Synchronizing mode is if the app terminated and we were in a .Synchronizing mode.
         case .Synchronizing:
             if !self._operating {
-                self.delegate?.syncServerEventOccurred(.Recovery)
+                NSThread.runSyncOnMainThread() {
+                    self.delegate?.syncServerEventOccurred(.Recovery)
+                }
             }
             
         case .Idle:
@@ -143,7 +147,9 @@ internal class SMSyncControl {
         else {
             completion?()
             // Else: Couldn't get the lock. Another thread must already being doing nextSyncOperation(). This is not an error.
-            self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
+            NSThread.runSyncOnMainThread() {
+                self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
+            }
             Log.special("nextSyncOperation: Couldn't get the lock!")
         }
     }
@@ -228,7 +234,9 @@ internal class SMSyncControl {
                     self.numberCleanupAttempts += 1
                     
                     SMServerNetworking.exponentialFallback(forAttempt: self.numberCleanupAttempts) {
-                        self.delegate?.syncServerEventOccurred(.Recovery)
+                        NSThread.runSyncOnMainThread() {
+                            self.delegate?.syncServerEventOccurred(.Recovery)
+                        }
                         self.resetFromError(completion)
                     }
                 }
@@ -334,7 +342,9 @@ internal class SMSyncControl {
                         
                         SMQueues.current().checkForDownloads(fromServerFileIndex: fileIndex!)
                         if nil == SMQueues.current().beingDownloaded {
-                            self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+                            NSThread.runSyncOnMainThread() {
+                                self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+                            }
                         }
                         
                         self.next()
@@ -351,7 +361,9 @@ internal class SMSyncControl {
                 // In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
                 self.stopOperating()
                 self.syncControlModeChange(.Idle)
-                self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
+                NSThread.runSyncOnMainThread() {
+                    self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
+                }
             }
             else {
                 // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
@@ -369,7 +381,9 @@ internal class SMSyncControl {
             attempts += 1
             
             SMServerNetworking.exponentialFallback(forAttempt: attempts) {
-                self.delegate?.syncServerEventOccurred(.Recovery)
+                NSThread.runSyncOnMainThread() {
+                    self.delegate?.syncServerEventOccurred(.Recovery)
+                }
                 self.next()
             }
         }

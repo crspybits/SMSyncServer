@@ -301,10 +301,17 @@ static CoreData* s_sharedInstance = nil;
     // Check if first if we can find the model in the main bundle.
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:modelResource withExtension:@"mom"];
     
+    // CGP; 5/5/16; I've no clue why, but today, "mom" isn't working for an example app, but "momd" is!
+    if (!modelURL) {
+        modelURL = [[NSBundle mainBundle] URLForResource:modelResource withExtension:@"momd"];
+    }
+    
     if (!modelURL && modelBundle) {
         // This is how I'm locating the CoreData model for my custom framework-- relative to the framework viewed as a bundle.
         modelURL = [modelBundle URLForResource:modelResource withExtension:@"mom"];
     }
+    
+    AssertIf(nil == modelURL, "YIKES: modelURL is nil: Couldn't find your Core Data model!")
     
     NSManagedObjectModel *theManagedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
     return theManagedObjectModel;

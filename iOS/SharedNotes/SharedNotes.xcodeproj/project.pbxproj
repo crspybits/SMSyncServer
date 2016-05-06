@@ -25,6 +25,11 @@
 		83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */; };
 		83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */; };
 		83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */; };
+		83973A3B1CDAA8A000FD8520 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */; };
+		83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3A1CDAA8A000FD8520 /* Note.swift */; };
+		83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */; };
+		83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */; };
+		83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */; };
 		C8D3F07FB58C327C1E45AD4E /* Pods_SharedNotesTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -93,6 +98,11 @@
 		83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SharedNotes-Bridging-Header.h"; sourceTree = "<group>"; };
 		83973A2F1CD99C9900FD8520 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CALayer+MBAnimationPersistence.h"; sourceTree = "<group>"; };
 		83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CALayer+MBAnimationPersistence.m"; sourceTree = "<group>"; };
+		83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "Core Data/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83973A3A1CDAA8A000FD8520 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = "Core Data/Note.swift"; sourceTree = "<group>"; };
+		83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = "Core Data/CoreDataSession.swift"; sourceTree = "<group>"; };
+		83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditNoteViewController.swift; sourceTree = "<group>"; };
+		83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
 		A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotesTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7DA0A26D6C930D38F329309 /* Pods-SharedNotesTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -158,7 +168,9 @@
 			isa = PBXGroup;
 			children = (
 				839739CC1CD96D7400FD8520 /* AppDelegate.swift */,
+				83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */,
 				839739CE1CD96D7D00FD8520 /* ViewController.swift */,
+				83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */,
 				839739E11CD96F7800FD8520 /* SyncSpinner.swift */,
 				83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */,
 				83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */,
@@ -201,6 +213,9 @@
 			isa = PBXGroup;
 			children = (
 				839739D91CD96E3F00FD8520 /* SharedNotes.xcdatamodel */,
+				83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */,
+				83973A3A1CDAA8A000FD8520 /* Note.swift */,
+				83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */,
 			);
 			name = "Core Data";
 			sourceTree = "<group>";
@@ -463,12 +478,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */,
+				83973A3B1CDAA8A000FD8520 /* Note+CoreDataProperties.swift in Sources */,
 				83973A0C1CD9872E00FD8520 /* SMGoogleCredentials.swift in Sources */,
 				839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */,
+				83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
+				83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */,
+				83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */,
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
 				83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
+				83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -608,6 +628,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -624,6 +645,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
 				PRODUCT_NAME = "$(TARGET_NAME)";

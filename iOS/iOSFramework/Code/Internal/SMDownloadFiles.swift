@@ -226,7 +226,11 @@ internal class SMDownloadFiles : NSObject {
                     self.downloadControl()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
-                    self.syncServerDelegate?.syncServerEventOccurred(.InboundTransferComplete(numberOperations:operationResult!.count))
+                    NSThread.runSyncOnMainThread() {
+                        self.syncServerDelegate?.syncServerEventOccurred(
+                            .InboundTransferComplete(
+                                numberOperations:operationResult!.count))
+                    }
                     
                     Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
         
@@ -363,7 +367,9 @@ internal class SMDownloadFiles : NSObject {
                 attempts += 1
                 
                 SMServerNetworking.exponentialFallback(forAttempt: attempts) {
-                    self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
+                    NSThread.runSyncOnMainThread() {
+                        self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
+                    }
                     retryMethod()
                 }
             }
@@ -403,9 +409,11 @@ internal class SMDownloadFiles : NSObject {
             localFile.localVersion = downloadFile.serverVersion
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
-        
-        self.syncServerDelegate?.syncServerDownloadsComplete(downloaded) {
-            SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
+
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerDownloadsComplete(downloaded) {
+                SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
+            }
             completion()
         }
     }
@@ -418,9 +426,11 @@ internal class SMDownloadFiles : NSObject {
             uuids.append(NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
         }
         
-        self.syncServerDelegate?.syncServerClientShouldDeleteFiles(uuids) {
-            SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
-            completion()
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerClientShouldDeleteFiles(uuids) {
+                SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
+                completion()
+            }
         }
     }
     
@@ -449,7 +459,10 @@ extension SMDownloadFiles : SMServerAPIDownloadDelegate {
         attr.mimeType = file.mimeType
         attr.remoteFileName = file.remoteFileName
         
-        self.syncServerDelegate?.syncServerEventOccurred(.SingleDownloadComplete(url:file.localURL!, attr:attr))
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerEventOccurred(
+                .SingleDownloadComplete(url:file.localURL!, attr:attr))
+        }
     }
 }
 

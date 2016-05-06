@@ -9,16 +9,25 @@
 import UIKit
 import CoreData
 import SMSyncServer
+import SMCoreLib
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    // MARK: Users of SMSyncServer iOSTests client need to change the contents of this file.
+    // MARK: Developers making use of SharedNotes demo app need to change the contents of this file.
     private let smSyncServerClientPlist = "SMSyncServer-client.plist"
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+    
+        let coreDataSession = CoreData(namesDictionary: [
+            CoreDataBundleModelName: "SharedNotes",
+            CoreDataSqlliteBackupFileName: "~SharedNotes.sqlite",
+            CoreDataSqlliteFileName: "SharedNotes.sqlite"
+        ]);
+        
+        CoreData.registerSession(coreDataSession, forName: CoreDataSession.name)
 
         let (serverURLString, cloudFolderPath, googleServerClientId) = SMSyncServer.getDataFromPlist(syncServerClientPlistFileName: smSyncServerClientPlist)
         

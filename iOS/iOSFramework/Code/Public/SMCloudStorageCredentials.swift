@@ -1,7 +1,7 @@
 
 //
 //  SMCloudStorageCredentials.swift
-//  NetDb
+//  SMSyncServer
 //
 //  Created by Christopher Prince on 11/26/15.
 //  Copyright © 2015 Christopher Prince. All rights reserved.

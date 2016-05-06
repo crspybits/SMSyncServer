@@ -105,8 +105,9 @@ internal class SMUploadFiles : NSObject {
         // The server lock gets released automatically when the transfer to cloud storage completes. I'm doing this automatic releasing of the lock because the cloud storage transfer is a potentially long running operation, and we could lose network connectivity. What's the point of holding the lock if we don't have network connectivity?
         // TODO: This may change once we have a websockets server-client communication method in place. If using websockets the server can communicate with assuredness to the client app that the outbound transfer is done, then the server may not have to release the lock.
         self.syncControlDelegate?.syncControlUploadsFinished()
-        
-        self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
+        }
     }
     
     private func callSyncControlModeChange(mode:SMSyncServerMode) {
@@ -161,7 +162,9 @@ internal class SMUploadFiles : NSObject {
                     uuids.append(fileToDelete.uuid)
                 }
                 
-                self.syncServerDelegate?.syncServerEventOccurred(.DeletionsSent(uuids: uuids))
+                NSThread.runSyncOnMainThread() {
+                    self.syncServerDelegate?.syncServerEventOccurred(.DeletionsSent(uuids: uuids))
+                }
                 
                 for deletionChange in deletionChanges! {
                     deletionChange.operationStage = .CloudStorage
@@ -188,7 +191,9 @@ internal class SMUploadFiles : NSObject {
                 attempts += 1
                 
                 SMServerNetworking.exponentialFallback(forAttempt: attempts) {
-                    self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
+                    NSThread.runSyncOnMainThread() {
+                        self.syncServerDelegate?.syncServerEventOccurred(.Recovery)
+                    }
                     retryMethod()
                 }
             }
@@ -527,7 +532,9 @@ extension SMUploadFiles : SMServerAPIUploadDelegate {
         Assert.If(change == nil, thenPrintThisString: "Yikes: Couldn't get upload for uuid \(serverFile.uuid.UUIDString)")
         change!.operationStage = .CloudStorage
         
-        self.syncServerDelegate?.syncServerEventOccurred(
-            .SingleUploadComplete(uuid: serverFile.uuid))
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerEventOccurred(
+                .SingleUploadComplete(uuid: serverFile.uuid))
+        }
     }
 }
