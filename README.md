@@ -143,7 +143,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 # Demo App: Shared Notes
 
-In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of notes across iOS devices.
+In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of notes across iOS devices. Open the project `Shared Notes.workspace` in Xcode.
 
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.
@@ -200,7 +200,9 @@ In `iOS/Shared Notes` there is a demo app, which enables multiple devices to acc
         
 ## 5) Download
 
-Since downloads are caused by other devices uploading files, these are initiated by the SMSyncServer and reported by the delegate method syncServerDownloadsComplete (see below).
+Downloads are caused by other devices uploading files, and these are initiated by the SMSyncServer and reported by the delegate method `syncServerDownloadsComplete` (see below). If needed, you can programmatically make a sync request which will do any currently needed downloads:
+
+	SMSyncServer.session.sync()
     
 ## 6) SMSyncServer.session.delegate
 
