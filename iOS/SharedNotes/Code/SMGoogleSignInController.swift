@@ -7,13 +7,13 @@
 //
 
 import Foundation
-
-// 1/16/16; This is needed when building SMSyncServer as a framework. It wasn't needed when building as a project.
+import SMSyncServer
 import Google
 
 public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
     var signInButton: GIDSignInButton!
     var signOutButton: UIButton!
+    var sync:UIButton!
     
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -26,22 +26,35 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         self.signOutButton = UIButton(type: .Custom)
         self.signOutButton.setTitle("Sign Out", forState: .Normal)
         self.signOutButton.frame = signInButton.frame
-        
         var frame = self.signOutButton.frame
         frame.origin.y += 100
         self.signOutButton.frame = frame
-
         self.view.addSubview(self.signOutButton)
+        self.signOutButton.addTarget(self, action: #selector(signOutButtonAction), forControlEvents: .TouchUpInside)
         
-        self.signOutButton.addTarget(self, action: #selector(SMGoogleSignInController.signOutButtonAction), forControlEvents: .TouchUpInside)
+        /*
+        self.sync = UIButton(type: .Custom)
+        self.sync.setTitle("Sync", forState: .Normal)
+        frame.origin.y += 100
+        self.sync.frame = frame
+        self.view.addSubview(self.sync)
+        self.sync.addTarget(self, action: #selector(syncButtonAction), forControlEvents: .TouchUpInside)
+        */
         
         GIDSignIn.sharedInstance().uiDelegate = self
         
-        //GIDSignIn.sharedInstance().signInSilently()
+        SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(signInCompletedAction))
     }
     
-    // Must not be private
-    func signOutButtonAction() {
+    @objc private func signOutButtonAction() {
         GIDSignIn.sharedInstance().signOut()
+    }
+
+    @objc private func syncButtonAction() {
+        SMSyncServer.session.sync()
+    }
+    
+    @objc private func signInCompletedAction() {
+        self.navigationController?.popViewControllerAnimated(true)
     }
 }

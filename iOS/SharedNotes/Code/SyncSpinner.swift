@@ -27,6 +27,14 @@ class SyncSpinner : UIView {
         self.stop()
     }
     
+    // Dealing with issue: Spinner started when view is not displayed. When view finally gets displayed, spinner graphic is displayed but it's not animating.
+    override func layoutSubviews() {
+        if self.animating {
+            self.stop()
+            self.start()
+        }
+    }
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

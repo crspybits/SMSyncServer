@@ -36,7 +36,6 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 * The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, downloading, and download-deletion. Conflict management for downloaded files is pending.
 * Currently only Google Drive is supported in terms of cloud storage systems.
 * Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
-* [TODO development list](./TODO.md)
 
 # Installation
 ## 1) Create Google Developer Credentials

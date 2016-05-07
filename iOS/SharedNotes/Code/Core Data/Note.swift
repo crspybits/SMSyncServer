@@ -42,7 +42,7 @@ class Note: NSManagedObject {
     
     // Call this based on sync-driven changes to the note. Creates the note if needed.
     // TODO: Need some kind of locking here to deal with the possiblity that the user might be modifying the note at the same time as we receive the download.
-    class func update(withUUID uuid:NSUUID, fromFileAtURL fileURL:NSURL) {
+    class func createOrUpdate(usingUUID uuid:NSUUID, fromFileAtURL fileURL:NSURL) {
         var note = self.fetch(withUUID: uuid)
         if note == nil {
             Log.special("Couldn't find uuid: \(uuid); creating new Note")

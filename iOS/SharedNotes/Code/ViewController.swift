@@ -11,11 +11,11 @@ import SMSyncServer
 import SMCoreLib
 
 class ViewController: UIViewController {
-    let spinner = SyncSpinner(frame: CGRect(x: 0, y: 0, width: 25, height: 25))
+    private let spinner = SyncSpinner(frame: CGRect(x: 0, y: 0, width: 25, height: 25))
     @IBOutlet weak var tableView: UITableView!
-    var coreDataSource:CoreDataSource!
-    let cellReuseIdentifier = "NoteCell"
-    let refreshControl = UIRefreshControl()
+    private var coreDataSource:CoreDataSource!
+    private let cellReuseIdentifier = "NoteCell"
+    private var doSyncWhenScrollStops = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,9 +30,6 @@ class ViewController: UIViewController {
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.tableView.registerClass(NoteTableViewCell.self, forCellReuseIdentifier: self.cellReuseIdentifier)
-        
-        self.tableView.addSubview(self.refreshControl)
-        refreshControl.addTarget(self, action: #selector(refreshTableViewAction), forControlEvents: .ValueChanged)
     }
     
     @objc private func refreshTableViewAction() {
@@ -60,7 +57,7 @@ class ViewController: UIViewController {
 extension ViewController : SMSyncServerDelegate {
     func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
         for (url, attr) in downloadedFiles {
-            Note.update(withUUID: attr.uuid, fromFileAtURL: url)
+            Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
         }
         
         acknowledgement()
@@ -79,9 +76,7 @@ extension ViewController : SMSyncServerDelegate {
         acknowledgement()
     }
     
-    func syncServerModeChange(newMode: SMSyncServerMode) {
-        self.refreshControl.endRefreshing()
-        
+    func syncServerModeChange(newMode: SMSyncServerMode) {        
         switch newMode {
         case .Synchronizing:
             self.spinner.start()
@@ -153,6 +148,20 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
             let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
             editNoteVC.note = note
             self.navigationController!.pushViewController(editNoteVC, animated: true)
+        }
+    }
+    
+    // Pull down to refresh. If I just activate the sync here, the table view scrolling and spinner animations look bad-- seem to conflict. So, activate the sync, below, when the scrolling stops.
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        if scrollView.contentOffset.y < 0 {
+            self.doSyncWhenScrollStops = true
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+        if self.doSyncWhenScrollStops {
+            SMSyncServer.session.sync()
+            self.doSyncWhenScrollStops = false
         }
     }
 }
