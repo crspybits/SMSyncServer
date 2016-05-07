@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     private var coreDataSource:CoreDataSource!
     private let cellReuseIdentifier = "NoteCell"
-    private var doSyncWhenScrollStops = false
+    private var refreshControl:ODRefreshControl!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,9 +30,20 @@ class ViewController: UIViewController {
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.tableView.registerClass(NoteTableViewCell.self, forCellReuseIdentifier: self.cellReuseIdentifier)
+        
+        self.refreshControl = ODRefreshControl(inScrollView: self.tableView)
+        
+        // A bit of a hack because the refresh control was appearing too high
+        self.refreshControl.yOffset = -(self.navigationController!.navigationBar.frameHeight + UIApplication.sharedApplication().statusBarFrame.height)
+        
+        // I like the "tear drop" pull down, but don't want the activity indicator.
+        self.refreshControl.activityIndicatorViewColor = UIColor.clearColor()
+        
+        self.refreshControl.addTarget(self, action: #selector(refreshTableViewAction), forControlEvents: .ValueChanged)
     }
     
     @objc private func refreshTableViewAction() {
+        self.refreshControl.endRefreshing()
         SMSyncServer.session.sync()
     }
     
@@ -148,20 +159,6 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
             let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
             editNoteVC.note = note
             self.navigationController!.pushViewController(editNoteVC, animated: true)
-        }
-    }
-    
-    // Pull down to refresh. If I just activate the sync here, the table view scrolling and spinner animations look bad-- seem to conflict. So, activate the sync, below, when the scrolling stops.
-    func scrollViewDidScroll(scrollView: UIScrollView) {
-        if scrollView.contentOffset.y < 0 {
-            self.doSyncWhenScrollStops = true
-        }
-    }
-    
-    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
-        if self.doSyncWhenScrollStops {
-            SMSyncServer.session.sync()
-            self.doSyncWhenScrollStops = false
         }
     }
 }

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		6FD0BE8A568536B303639F69 /* Pods_SharedNotes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */; };
+		834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */; };
+		8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */; };
 		8369D32C1CD1C79E006DA33C /* SharedNotesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */; };
 		839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CC1CD96D7400FD8520 /* AppDelegate.swift */; };
 		839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CE1CD96D7D00FD8520 /* ViewController.swift */; };
@@ -24,7 +26,6 @@
 		83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */; };
 		83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */; };
 		83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */; };
-		83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */; };
 		83973A3B1CDAA8A000FD8520 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */; };
 		83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3A1CDAA8A000FD8520 /* Note.swift */; };
 		83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */; };
@@ -77,6 +78,10 @@
 		2B7584F72A62F25A58394752 /* Pods-SharedNotes.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotes.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes.debug.xcconfig"; sourceTree = "<group>"; };
 		4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		550D6AA2AFFE88F55F028546 /* Pods-SharedNotesTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.debug.xcconfig"; sourceTree = "<group>"; };
+		834457871CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "CALayer+MBAnimationPersistence.h"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.h"; sourceTree = SOURCE_ROOT; };
+		834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "CALayer+MBAnimationPersistence.m"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.m"; sourceTree = SOURCE_ROOT; };
+		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
+		8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ODRefreshControl.m; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.m; sourceTree = "<group>"; };
 		8369D3101CD1C792006DA33C /* SharedNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SharedNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesTests.swift; sourceTree = "<group>"; };
@@ -96,8 +101,6 @@
 		83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Resources/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Resources/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SharedNotes-Bridging-Header.h"; sourceTree = "<group>"; };
-		83973A2F1CD99C9900FD8520 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CALayer+MBAnimationPersistence.h"; sourceTree = "<group>"; };
-		83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CALayer+MBAnimationPersistence.m"; sourceTree = "<group>"; };
 		83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "Core Data/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83973A3A1CDAA8A000FD8520 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = "Core Data/Note.swift"; sourceTree = "<group>"; };
 		83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = "Core Data/CoreDataSession.swift"; sourceTree = "<group>"; };
@@ -140,12 +143,21 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		8344578A1CDDB2D0000C3533 /* ODRefreshControl */ = {
+			isa = PBXGroup;
+			children = (
+				8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */,
+				8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */,
+			);
+			name = ODRefreshControl;
+			sourceTree = "<group>";
+		};
 		8369D3071CD1C791006DA33C = {
 			isa = PBXGroup;
 			children = (
 				83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */,
 				8369D3121CD1C793006DA33C /* Code */,
-				83973A241CD99C5200FD8520 /* Other Libs */,
+				83973A241CD99C5200FD8520 /* SDKs */,
 				839739D31CD96DC200FD8520 /* Supporting Files */,
 				839739D01CD96D9900FD8520 /* Resources */,
 				8369D32A1CD1C79E006DA33C /* SharedNotesTests */,
@@ -228,19 +240,20 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		83973A241CD99C5200FD8520 /* Other Libs */ = {
+		83973A241CD99C5200FD8520 /* SDKs */ = {
 			isa = PBXGroup;
 			children = (
+				8344578A1CDDB2D0000C3533 /* ODRefreshControl */,
 				83973A2E1CD99C9900FD8520 /* CALayer+MBAnimationPersistence */,
 			);
-			name = "Other Libs";
+			name = SDKs;
 			sourceTree = "<group>";
 		};
 		83973A2E1CD99C9900FD8520 /* CALayer+MBAnimationPersistence */ = {
 			isa = PBXGroup;
 			children = (
-				83973A2F1CD99C9900FD8520 /* CALayer+MBAnimationPersistence.h */,
-				83973A301CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m */,
+				834457871CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.h */,
+				834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */,
 			);
 			name = "CALayer+MBAnimationPersistence";
 			path = "OtherLibs/CALayer+MBAnimationPersistence";
@@ -484,10 +497,11 @@
 				83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
 				83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */,
+				8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */,
 				83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */,
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
-				83973A351CD99C9900FD8520 /* CALayer+MBAnimationPersistence.m in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
+				834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */,
 				83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
