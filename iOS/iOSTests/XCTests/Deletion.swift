@@ -1,5 +1,5 @@
 //
-//  Deletion.swift
+//  UploadDeletion.swift
 //  NetDb
 //
 //  Created by Christopher Prince on 1/12/16.
@@ -478,6 +478,29 @@ class UploadDeletion: BaseClass {
         self.waitForExpectations()
     }
     
+    // Edge cases. If you upload and then delete the same file before a commit, no server operation should occur.
+    func testThatUploadDeleteSameFileBeforeCommitWorks() {
+        let commitComplete = self.expectationWithDescription("Commit Complete")
+
+        self.waitUntilSyncServerUserSignin() {
+            
+            let testFile1 = TestBasics.session.createTestFile(
+                "UploadDeleteSameFileBeforeCommit")
+            
+            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            SMSyncServer.session.deleteFile(testFile1.uuid)
+            
+            let commitResult = SMSyncServer.session.commit()
+            if commitResult == nil || commitResult! {
+                XCTFail()
+            }
+            
+            commitComplete.fulfill()
+        }
+        
+        self.waitForExpectations()
+    }
+
     // Edge cases. *Should* be able to upload, delete, and commmit the same file. (Should only do the delete, not the upload.)
     func testThatUploadDeleteSameFileWorks() {
         let commitCompleteCallbackExpectation1 = self.expectationWithDescription("Commit Complete1")

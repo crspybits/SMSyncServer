@@ -1,5 +1,7 @@
 # TODO List: In priority order (top are more important)
 
+1. Add ability to upload a zero length file or a nil NSData. It should be possible to have an empty file on cloud storage.
+
 1. Conflict management: Dealing with downloads that conflict with local modifications.
 1. What about conflicts where the local app is modifying some data. It seems like there should be some kind of lock that can be set by an app to prevent modification while modifying the data. E.g., in the Shared Notes app, a user might be in the midst of making a change to a note. Don't want that note overwritten without taking their changes into account. Presumably these locks should not span launches of the app. e.g., to deal with the case where the app crashes or loses CPU.
 

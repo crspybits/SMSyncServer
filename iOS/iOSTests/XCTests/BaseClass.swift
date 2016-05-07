@@ -170,6 +170,9 @@ extension BaseClass : SMSyncServerDelegate {
                 self.singleNoDownloadsCallback!()
             }
             self.numberOfNoDownloadsCallbacks += 1
+        
+        case .NoFilesToUpload:
+            break
             
         case .SingleDownloadComplete(url: let url, attr: let attr):
             self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)

@@ -77,6 +77,9 @@ public enum SMSyncServerEvent {
     
     // The client polled the server and found that there were no files available to download or files that needed deletion.
     case NoFilesToDownload
+
+    // Commit was called, but there were no files to upload and no upload-deletions to send to the server.
+    case NoFilesToUpload
     
     // Attempted to do an operation but a lock was already held. This can occur both at the local app level and with the server lock.
     case LockAlreadyHeld
@@ -301,13 +304,13 @@ public class SMSyncServer : NSObject {
         else {
             // Existing file
             
+            // This should never occur: How could we get the UUID locally for a file that's being downloaded?
             Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
             
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
                 let error = Error.Create("You gave a different remote file name than was present on the server!")
                 Log.error("\(error)")
-                self.callSyncServerModeChange(
-                    .NonRecoverableError(error))
+                self.callSyncServerModeChange(.NonRecoverableError(error))
                 return
             }
         }
@@ -327,6 +330,7 @@ public class SMSyncServer : NSObject {
         change.localFile = localFileMetaData!
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
+        // This also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
             return
@@ -374,6 +378,20 @@ public class SMSyncServer : NSObject {
             return
         }
         
+        if localFileMetaData!.syncState == .InitialUpload {
+            // A new file was queued for upload, and before upload was deleted. We'll just mark the file as deleted, and return. The file will never be uploaded to the server (so the .deletedOnServer naming is incorrect in this case).
+            localFileMetaData!.deletedOnServer = true
+            
+            let uploads = NSOrderedSet(orderedSet: localFileMetaData!.pendingUploads!)
+            for managedObject in uploads {
+                let uploadFile = managedObject as! SMUploadFile
+                uploadFile.removeObject()
+            }
+            
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+            return
+        }
+        
         Assert.If(localFileMetaData!.localVersion == nil, thenPrintThisString: "Why is the .localVersion nil?")
         Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
         
@@ -381,6 +399,7 @@ public class SMSyncServer : NSObject {
         change.localFile = localFileMetaData!
         CoreData.sessionNamed(SMCoreData.name).saveContext()
 
+        // Also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             change.removeObject()
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
@@ -459,6 +478,9 @@ public class SMSyncServer : NSObject {
 
         if SMQueues.current().uploadsBeingPrepared!.operations!.count == 0 {
             Log.msg("Attempting to commit: But there were no changed files!")
+            NSThread.runSyncOnMainThread() {
+                self.delegate?.syncServerEventOccurred(.NoFilesToUpload)
+            }
             return false
         }
         
