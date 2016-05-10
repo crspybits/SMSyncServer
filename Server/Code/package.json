@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SMSyncServer Node.js server",
   "engines": {
-    "node": "5.1.0"
+    "node": "6.1.0"
   },
   "main": "index.js",
   "scripts": {

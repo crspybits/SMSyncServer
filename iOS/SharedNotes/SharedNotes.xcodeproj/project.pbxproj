@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6FD0BE8A568536B303639F69 /* Pods_SharedNotes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */; };
+		832979621CE03FAC00508783 /* SharedNotesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832979611CE03FAC00508783 /* SharedNotesUITests.swift */; };
 		834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */; };
 		8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */; };
 		8369D32C1CD1C79E006DA33C /* SharedNotesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */; };
@@ -35,6 +36,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		832979641CE03FAC00508783 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8369D3081CD1C791006DA33C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8369D30F1CD1C792006DA33C;
+			remoteInfo = SharedNotes;
+		};
 		8369D3281CD1C79E006DA33C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8369D3081CD1C791006DA33C /* Project object */;
@@ -78,6 +86,9 @@
 		2B7584F72A62F25A58394752 /* Pods-SharedNotes.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotes.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotes/Pods-SharedNotes.debug.xcconfig"; sourceTree = "<group>"; };
 		4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		550D6AA2AFFE88F55F028546 /* Pods-SharedNotesTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.debug.xcconfig"; sourceTree = "<group>"; };
+		8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		832979611CE03FAC00508783 /* SharedNotesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesUITests.swift; sourceTree = "<group>"; };
+		832979631CE03FAC00508783 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		834457871CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "CALayer+MBAnimationPersistence.h"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.h"; sourceTree = SOURCE_ROOT; };
 		834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "CALayer+MBAnimationPersistence.m"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.m"; sourceTree = SOURCE_ROOT; };
 		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
@@ -111,6 +122,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		8329795C1CE03FAB00508783 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8369D30D1CD1C792006DA33C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -143,6 +161,15 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		832979601CE03FAC00508783 /* SharedNotesUITests */ = {
+			isa = PBXGroup;
+			children = (
+				832979611CE03FAC00508783 /* SharedNotesUITests.swift */,
+				832979631CE03FAC00508783 /* Info.plist */,
+			);
+			path = SharedNotesUITests;
+			sourceTree = "<group>";
+		};
 		8344578A1CDDB2D0000C3533 /* ODRefreshControl */ = {
 			isa = PBXGroup;
 			children = (
@@ -161,6 +188,7 @@
 				839739D31CD96DC200FD8520 /* Supporting Files */,
 				839739D01CD96D9900FD8520 /* Resources */,
 				8369D32A1CD1C79E006DA33C /* SharedNotesTests */,
+				832979601CE03FAC00508783 /* SharedNotesUITests */,
 				8369D3111CD1C792006DA33C /* Products */,
 				5AC37B91B6E9CF31796DF542 /* Pods */,
 				8F0B42316AA9A168E8422D9F /* Frameworks */,
@@ -172,6 +200,7 @@
 			children = (
 				8369D3101CD1C792006DA33C /* SharedNotes.app */,
 				8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */,
+				8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -273,6 +302,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8329795E1CE03FAB00508783 /* SharedNotesUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 832979681CE03FAC00508783 /* Build configuration list for PBXNativeTarget "SharedNotesUITests" */;
+			buildPhases = (
+				8329795B1CE03FAB00508783 /* Sources */,
+				8329795C1CE03FAB00508783 /* Frameworks */,
+				8329795D1CE03FAB00508783 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				832979651CE03FAC00508783 /* PBXTargetDependency */,
+			);
+			name = SharedNotesUITests;
+			productName = SharedNotesUITests;
+			productReference = 8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		8369D30F1CD1C792006DA33C /* SharedNotes */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */;
@@ -326,6 +373,10 @@
 				LastUpgradeCheck = 0730;
 				ORGANIZATIONNAME = "Spastic Muffin, LLC";
 				TargetAttributes = {
+					8329795E1CE03FAB00508783 = {
+						CreatedOnToolsVersion = 7.3.1;
+						TestTargetID = 8369D30F1CD1C792006DA33C;
+					};
 					8369D30F1CD1C792006DA33C = {
 						CreatedOnToolsVersion = 7.3;
 					};
@@ -356,6 +407,7 @@
 			targets = (
 				8369D30F1CD1C792006DA33C /* SharedNotes */,
 				8369D3261CD1C79E006DA33C /* SharedNotesTests */,
+				8329795E1CE03FAB00508783 /* SharedNotesUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -371,6 +423,13 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		8329795D1CE03FAB00508783 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8369D30E1CD1C792006DA33C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -486,6 +545,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		8329795B1CE03FAB00508783 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				832979621CE03FAC00508783 /* SharedNotesUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8369D30C1CD1C792006DA33C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -517,6 +584,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		832979651CE03FAC00508783 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
+			targetProxy = 832979641CE03FAC00508783 /* PBXContainerItemProxy */;
+		};
 		8369D3291CD1C79E006DA33C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
@@ -549,6 +621,28 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		832979661CE03FAC00508783 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SharedNotesUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotesUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = SharedNotes;
+			};
+			name = Debug;
+		};
+		832979671CE03FAC00508783 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = SharedNotesUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotesUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = SharedNotes;
+			};
+			name = Release;
+		};
 		8369D32E1CD1C79E006DA33C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -696,6 +790,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		832979681CE03FAC00508783 /* Build configuration list for PBXNativeTarget "SharedNotesUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				832979661CE03FAC00508783 /* Debug */,
+				832979671CE03FAC00508783 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "SharedNotes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

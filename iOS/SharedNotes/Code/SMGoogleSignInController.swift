@@ -23,6 +23,7 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         self.signInButton = GIDSignInButton(frame: CGRect(x: 50, y: 200, width: 200, height: 100))
         self.view.addSubview(self.signInButton)
         
+        /*
         self.signOutButton = UIButton(type: .Custom)
         self.signOutButton.setTitle("Sign Out", forState: .Normal)
         self.signOutButton.frame = signInButton.frame
@@ -31,6 +32,7 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         self.signOutButton.frame = frame
         self.view.addSubview(self.signOutButton)
         self.signOutButton.addTarget(self, action: #selector(signOutButtonAction), forControlEvents: .TouchUpInside)
+        */
         
         /*
         self.sync = UIButton(type: .Custom)

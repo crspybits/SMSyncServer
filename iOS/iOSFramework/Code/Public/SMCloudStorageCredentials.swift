@@ -54,6 +54,9 @@ public class SMCloudStorageCredentials : NSObject, SMCloudStorageUserDelegate {
         }
     }
     
+    public func syncServerSignOutUser() {
+    }
+    
     // MARK: End of SMCloudStorageCredentials delegate methods
 }
 

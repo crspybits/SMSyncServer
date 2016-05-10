@@ -214,7 +214,7 @@ app.post('/' + ServerConstants.operationUnlock, function (request, response) {
     });
 });
 
-// DEBUGGING
+// START DEBUGGING
 /*
 app.post('/' + ServerConstants.operationUploadFile, upload, function (request, response) {
 	console.log(JSON.stringify(request.file));
@@ -222,7 +222,7 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
 	response.end(JSON.stringify(result));
 });
 */
-// DEBUGGING
+// END DEBUGGING
 
 // Going to allow two (sequential) uploads of the same file, in order to enable recovery on the client. The second upload will not duplicate info in PSOutboundFileChange's.
 /* This doesn't remove the PSOperationId on an uplod error because the client/app may be in the middle of a long series of uploads/deletes and may need to retry a specific upload.

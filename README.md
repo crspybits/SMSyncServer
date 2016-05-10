@@ -28,6 +28,7 @@ See the blog articles:
 * [Blitz to get SMSyncServer Ready for Open-Source](http://www.spasticmuffin.biz/blog/2016/01/21/blitz-to-get-smsyncserver-ready-for-open-source/)
 * [Design Issue: Changing Cloud Storage Accounts With The SMSyncServer](http://www.spasticmuffin.biz/blog/2016/04/02/design-issue-changing-cloud-storage-accounts-with-the-smsyncserver/)
 * [The Many Senses of Recovery in SMSyncServer](http://www.spasticmuffin.biz/blog/2016/04/26/the-many-senses-of-recovery-in-smsyncserver/)
+* [Re-Architecting the SMSyncServer File System](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)
 
 Contact: <chris@SpasticMuffin.biz> (primary developer)
 

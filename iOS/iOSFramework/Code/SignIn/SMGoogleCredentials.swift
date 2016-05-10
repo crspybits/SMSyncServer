@@ -107,6 +107,10 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
             }
         }
     }
+    
+    override public func syncServerSignOutUser() {
+        GIDSignIn.sharedInstance().signOut()
+    }
 }
 
 /* 1/24/16; I just got this:

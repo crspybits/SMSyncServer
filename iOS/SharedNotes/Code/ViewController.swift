@@ -13,8 +13,11 @@ import SMCoreLib
 class ViewController: UIViewController {
     private let spinner = SyncSpinner(frame: CGRect(x: 0, y: 0, width: 25, height: 25))
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var signInOrOut: UIBarButtonItem!
     private var coreDataSource:CoreDataSource!
     private let cellReuseIdentifier = "NoteCell"
+    
+    // To enable pulling down on the table view to do a sync with server.
     private var refreshControl:ODRefreshControl!
     
     override func viewDidLoad() {
@@ -53,11 +56,32 @@ class ViewController: UIViewController {
         
         // For the case when we're returning from editing the note
         self.tableView.reloadData()
+        
+        self.changeSignInSignOutButton()
     }
 
     @IBAction func signInAction(sender: AnyObject) {
-        let signInController = SMCloudStorageCredentials.session.makeSignInController()
-        self.navigationController!.pushViewController(signInController, animated: true)
+        if SMSyncServerUser.session.signedIn {
+            // User is signed in; sign them out.
+            SMCloudStorageCredentials.session.syncServerSignOutUser()
+            self.changeSignInSignOutButton()
+        }
+        else {
+            // User is not signed in; allow them to.
+            let signInController = SMCloudStorageCredentials.session.makeSignInController()
+            self.navigationController!.pushViewController(signInController, animated: true)
+        }
+    }
+    
+    private func changeSignInSignOutButton() {
+        if SMSyncServerUser.session.signedIn {
+            self.signInOrOut.title = "Signout"
+            self.signInOrOut.tintColor = nil // use the default
+        }
+        else {
+            self.signInOrOut.title = "Signin"
+            self.signInOrOut.tintColor = UIColor(red: 0.0, green: 154.0/255.0, blue: 43.0/255.0, alpha: 1.0)
+        }
     }
     
     @IBAction func createAction(sender: AnyObject) {

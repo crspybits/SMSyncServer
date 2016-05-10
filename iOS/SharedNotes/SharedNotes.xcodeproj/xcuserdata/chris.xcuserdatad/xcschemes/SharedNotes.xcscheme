@@ -38,6 +38,16 @@
                ReferencedContainer = "container:SharedNotes.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8329795E1CE03FAB00508783"
+               BuildableName = "SharedNotesUITests.xctest"
+               BlueprintName = "SharedNotesUITests"
+               ReferencedContainer = "container:SharedNotes.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference

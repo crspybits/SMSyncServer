@@ -22,6 +22,9 @@ public protocol SMCloudStorageUserDelegate : class {
     // Credentials specific to the cloud storage system being used.
     // Returns non-nil value iff syncServerUserSignedIn is true.
     var syncServerSignedInUser:SMCloudStorageUser? {get}
+    
+    // If user is currently signed in, sign them out. No effect if not signed in.
+    func syncServerSignOutUser()
 }
 
 // "class" so its delegate var can be weak.
@@ -101,6 +104,10 @@ public class SMSyncServerUser {
                 return nil
             }
         }
+    }
+    
+    public func signOut() {
+        self.delegate.syncServerUserIsSignedIn
     }
     
     // This method doesn't keep a reference to userCreds; it just allows the caller to check for an existing user on the server.

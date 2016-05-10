@@ -425,7 +425,7 @@ public class SMSyncServer : NSObject {
         case Undelete
     }
     
-    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file.
+    // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file. Does not result directly with interaction with the server.
     // Only use the ResetType parameter if you are giving a UUID.
     public func resetMetaData(forUUID uuid:NSUUID?=nil, resetType:ResetType?=nil) {
         Assert.If(self.isOperating, thenPrintThisString: "Should not be operating!")
