@@ -82,7 +82,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 		git add .
 		git commit -a -m "Initial commit"
 		heroku create
-		mv .ignored.git .git
+		mv .git .ignored.git
 		# The last line is needed because I don't have the server code setup as a Git submodule.
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
