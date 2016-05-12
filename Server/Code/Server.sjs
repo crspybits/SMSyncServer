@@ -348,20 +348,20 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                             op.endWithErrorDetails(errorMessage);
                         }
                         else {
-                            completeOperationUploadFile(op, outbndFileObj, clientFile);
+                            completeOperationUploadFile(op, outbndFileObj, clientFile, request);
                         }
                     });
                 }
                 else {
                     // Complete the upload.
-                    completeOperationUploadFile(op, outbndFileObj, clientFile);
+                    completeOperationUploadFile(op, outbndFileObj, clientFile, request);
                 }
             });
         }
     });
 });
 
-function completeOperationUploadFile(op, outbndFileObj, clientFile) {
+function completeOperationUploadFile(op, outbndFileObj, clientFile, request) {
     var createOutboundFileChangeEntry = true;
     
     if (outbndFileObj) {

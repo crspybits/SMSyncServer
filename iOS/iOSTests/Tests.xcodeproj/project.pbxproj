@@ -23,7 +23,6 @@
 		8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */; };
 		8369D33F1CD49E65006DA33C /* DownloadDeletionRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */; };
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
-		837E06361C7C108D000695F2 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06351C7C108D000695F2 /* AppFile.swift */; };
 		839739C11CD9682B00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; };
 		839739C21CD9682B00FD8520 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839739EB1CD97B4F00FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */; };
@@ -48,15 +47,16 @@
 		83D3E8C81C4C079900BFDA93 /* ServerCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8BF1C4C079900BFDA93 /* ServerCredentials.swift */; };
 		83D3E8C91C4C079900BFDA93 /* ServerNetworking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8C01C4C079900BFDA93 /* ServerNetworking.swift */; };
 		83D3E8CA1C4C079900BFDA93 /* Upload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8C11C4C079900BFDA93 /* Upload.swift */; };
-		83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9331C4C801D00BFDA93 /* AppFile.m */; };
-		83D3E9371C4C801D00BFDA93 /* AppFile+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E9351C4C801D00BFDA93 /* AppFile+CoreDataProperties.m */; };
 		83D3ECCE1C4D91EE00BFDA93 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECCA1C4D91EE00BFDA93 /* LaunchScreen.storyboard */; };
 		83D3ECCF1C4D91EE00BFDA93 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECCC1C4D91EE00BFDA93 /* Main.storyboard */; };
 		83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */; };
 		83D3ECD31C4D927D00BFDA93 /* Kitty.png in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD21C4D927D00BFDA93 /* Kitty.png */; };
 		83D3ECD51C4D942000BFDA93 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */; };
 		83D3EDE61C4E053A00BFDA93 /* ClientAppModel.xcdatamodel in Resources */ = {isa = PBXBuildFile; fileRef = 83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */; };
-		83D3EDEC1C4E2F3000BFDA93 /* CoreDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */; };
+		83E0642C1CE51B7A0088BE37 /* AppFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064271CE51B7A0088BE37 /* AppFile.m */; };
+		83E0642D1CE51B7A0088BE37 /* AppFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064281CE51B7A0088BE37 /* AppFile.swift */; };
+		83E0642E1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E0642A1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m */; };
+		83E0642F1CE51B7A0088BE37 /* CoreDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E0642B1CE51B7A0088BE37 /* CoreDataTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -136,7 +136,6 @@
 		8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatDownloadDeletionWorks.swift; path = TwoDeviceTests/TestThatDownloadDeletionWorks.swift; sourceTree = "<group>"; };
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
-		837E06351C7C108D000695F2 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = "Core Data/AppFile.swift"; sourceTree = "<group>"; };
 		839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMGoogleSignInController.swift; sourceTree = "<group>"; };
 		839739FA1CD97EED00FD8520 /* SMGoogleCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleCredentials.swift; path = ../../iOSFramework/Code/SignIn/SMGoogleCredentials.swift; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
@@ -163,16 +162,17 @@
 		83D3E8BF1C4C079900BFDA93 /* ServerCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerCredentials.swift; path = XCTests/ServerCredentials.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8C01C4C079900BFDA93 /* ServerNetworking.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerNetworking.swift; path = XCTests/ServerNetworking.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8C11C4C079900BFDA93 /* Upload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Upload.swift; path = XCTests/Upload.swift; sourceTree = SOURCE_ROOT; };
-		83D3E9321C4C801D00BFDA93 /* AppFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppFile.h; path = "Core Data/AppFile.h"; sourceTree = "<group>"; };
-		83D3E9331C4C801D00BFDA93 /* AppFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppFile.m; path = "Core Data/AppFile.m"; sourceTree = "<group>"; };
-		83D3E9341C4C801D00BFDA93 /* AppFile+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "AppFile+CoreDataProperties.h"; path = "Core Data/AppFile+CoreDataProperties.h"; sourceTree = "<group>"; };
-		83D3E9351C4C801D00BFDA93 /* AppFile+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "AppFile+CoreDataProperties.m"; path = "Core Data/AppFile+CoreDataProperties.m"; sourceTree = "<group>"; };
 		83D3ECCB1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		83D3ECCD1C4D91EE00BFDA93 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Resources/Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = ClientAppModel.xcdatamodel; path = Resources/ClientAppModel.xcdatamodel; sourceTree = SOURCE_ROOT; };
 		83D3ECD21C4D927D00BFDA93 /* Kitty.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = Kitty.png; path = Resources/Kitty.png; sourceTree = "<group>"; };
 		83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Supporting Files/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataTests.swift; path = "Core Data/CoreDataTests.swift"; sourceTree = "<group>"; };
+		83E064261CE51B7A0088BE37 /* AppFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppFile.h; path = CoreData/AppFile.h; sourceTree = "<group>"; };
+		83E064271CE51B7A0088BE37 /* AppFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppFile.m; path = CoreData/AppFile.m; sourceTree = "<group>"; };
+		83E064281CE51B7A0088BE37 /* AppFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppFile.swift; path = CoreData/AppFile.swift; sourceTree = "<group>"; };
+		83E064291CE51B7A0088BE37 /* AppFile+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "AppFile+CoreDataProperties.h"; path = "CoreData/AppFile+CoreDataProperties.h"; sourceTree = "<group>"; };
+		83E0642A1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "AppFile+CoreDataProperties.m"; path = "CoreData/AppFile+CoreDataProperties.m"; sourceTree = "<group>"; };
+		83E0642B1CE51B7A0088BE37 /* CoreDataTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataTests.swift; path = CoreData/CoreDataTests.swift; sourceTree = "<group>"; };
 		8F4C25D6AF6E58593D7A1C98 /* Pods-XCTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XCTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-XCTests/Pods-XCTests.release.xcconfig"; sourceTree = "<group>"; };
 		A81C75E1C5E020229F3F6565 /* Pods_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF4B1F7C4D8ABA60F5F4CCD3 /* Pods_XCTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_XCTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -382,12 +382,12 @@
 			isa = PBXGroup;
 			children = (
 				83D3ECD01C4D922800BFDA93 /* ClientAppModel.xcdatamodel */,
-				83D3E9321C4C801D00BFDA93 /* AppFile.h */,
-				83D3E9331C4C801D00BFDA93 /* AppFile.m */,
-				837E06351C7C108D000695F2 /* AppFile.swift */,
-				83D3E9341C4C801D00BFDA93 /* AppFile+CoreDataProperties.h */,
-				83D3E9351C4C801D00BFDA93 /* AppFile+CoreDataProperties.m */,
-				83D3EDEB1C4E2F3000BFDA93 /* CoreDataTests.swift */,
+				83E064261CE51B7A0088BE37 /* AppFile.h */,
+				83E064271CE51B7A0088BE37 /* AppFile.m */,
+				83E064281CE51B7A0088BE37 /* AppFile.swift */,
+				83E064291CE51B7A0088BE37 /* AppFile+CoreDataProperties.h */,
+				83E0642A1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m */,
+				83E0642B1CE51B7A0088BE37 /* CoreDataTests.swift */,
 			);
 			name = "Core Data";
 			sourceTree = "<group>";
@@ -671,18 +671,19 @@
 			files = (
 				83D3E8B71C4C072800BFDA93 /* MainPageVC.swift in Sources */,
 				8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */,
-				83D3EDEC1C4E2F3000BFDA93 /* CoreDataTests.swift in Sources */,
 				83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */,
-				83D3E9371C4C801D00BFDA93 /* AppFile+CoreDataProperties.m in Sources */,
+				83E0642E1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m in Sources */,
 				837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */,
 				83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */,
-				83D3E9361C4C801D00BFDA93 /* AppFile.m in Sources */,
+				83E0642F1CE51B7A0088BE37 /* CoreDataTests.swift in Sources */,
+				83E0642D1CE51B7A0088BE37 /* AppFile.swift in Sources */,
 				83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */,
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
 				8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */,
 				834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */,
+				83E0642C1CE51B7A0088BE37 /* AppFile.m in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
 				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,
@@ -691,7 +692,6 @@
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
 				8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */,
 				8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */,
-				837E06361C7C108D000695F2 /* AppFile.swift in Sources */,
 				839739FB1CD97EED00FD8520 /* SMGoogleCredentials.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -90,25 +90,90 @@ class ViewController: UIViewController {
 }
 
 extension ViewController : SMSyncServerDelegate {
-    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
-        for (url, attr) in downloadedFiles {
+    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement: () -> ()) {
+        for (url, attr, conflict) in downloadedFiles {
+            // TODO: Need to deal with conflict
             Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
         }
         
         acknowledgement()
     }
+    /*
+        let dmp = DiffMatchPatch()
+        let firstString = "Hello friend, there is my world"
+        let secondString = "Hello friend, is my world\nWhat's going on"
+        let resultPatchArray = dmp.patch_makeFromOldString(firstString, andNewString: secondString) as [AnyObject]
+        print("\(resultPatchArray)")
+        let patchedResult = dmp.patch_apply(resultPatchArray, toString: firstString)
+        print("\(patchedResult[0])")
+    */
     
-    func syncServerClientShouldDeleteFiles(uuids: [NSUUID], acknowledgement: () -> ()) {
-        for uuid in uuids {
-            if let note = Note.fetch(withUUID: uuid) {
-                note.removeObject()
-            }
-            else {
-                Log.error("Could not find note: \(uuid)")
-            }
+    private func handleFileDownloadConflicts(downloadedFiles:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
+        if deletions.count > 0 {
+            let remainingDeletions = Array(deletions[1..<deletions.count])
+            
+            let (uuid, _) = deletions[0]
+            let note = Note.fetch(withUUID: uuid)
+            Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
+            
+            // If we had useful remote names for files, we could show it to them...
+            // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
+            
+            let alert = UIAlertController(title: "Someone else has deleted a note.", message: nil, preferredStyle: .Alert)
+            
+            alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
+                note?.removeObject()
+                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            })
+            
+            alert.addAction(UIAlertAction(title: "Don't delete it.", style: .Destructive) { action in
+                note?.upload()
+                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            })
         }
-        
-        acknowledgement()
+        else {
+            acknowledgement()
+        }
+    }
+    
+    func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
+        self.handleDeletionConflicts(deletions, acknowledgement: acknowledgement)
+    }
+    
+    private func handleDeletionConflicts(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
+        if deletions.count > 0 {
+            let remainingDeletions = Array(deletions[1..<deletions.count])
+            let (uuid, conflict) = deletions[0]
+            
+            let note = Note.fetch(withUUID: uuid)
+            Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
+            
+            if conflict == nil {
+                // No conflict. Silently delete the note.
+                // TODO: Need to deal with modification locks.
+                note?.removeObject()
+                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+                return
+            }
+            
+            // If we had useful remote names for files, we could show it to them...
+            // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
+            
+            let alert = UIAlertController(title: "Someone else has deleted a note.", message: "But you just updated it!", preferredStyle: .Alert)
+            
+            alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
+                note?.removeObject()
+                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            })
+            
+            alert.addAction(UIAlertAction(title: "Keep your update.", style: .Destructive) { action in
+                note?.upload()
+                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            })
+        }
+        else {
+            acknowledgement()
+        }
     }
     
     func syncServerModeChange(newMode: SMSyncServerMode) {        

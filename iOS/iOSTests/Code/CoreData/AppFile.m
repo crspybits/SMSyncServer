@@ -53,4 +53,10 @@
     return fetchRequest;
 }
 
+- (void) removeObject;
+{
+    [[CoreData sessionNamed:[CoreDataTests name]] removeObject:self];
+    [[CoreData sessionNamed:[CoreDataTests name]] saveContext];
+}
+
 @end

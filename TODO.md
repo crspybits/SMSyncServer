@@ -36,3 +36,6 @@
 1. Improve security so that other apps can't use your server: e.g., [On iOS, implement in-app purchase-based app](security.http://stackoverflow.com/questions/29212225/is-there-a-way-to-verify-that-an-identifier-for-vendor-idfv-is-valid).
 
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible.
+
+1. Lock breaking on the server: It is possible that a client will not be able to remove a lock. E.g., if the client obtains a lock, fails, and then never gains access to the network again. To implement lock breaking, we need at minimum a means to know if an ongoing transfer is still ongoing. What I'd like to do is break a lock if it has not been removed by the owner, after some fixed period of time after an ongoing transfer has completed. Or after that fixed period of time if an ongoing transfer has not been initiated.
+

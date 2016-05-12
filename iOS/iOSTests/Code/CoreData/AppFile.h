@@ -17,6 +17,7 @@
 @interface AppFile : NSManagedObject
 
 - (SMRelativeLocalURL *) url;
+- (void) removeObject;
 
 + (NSString *) entityName;
 

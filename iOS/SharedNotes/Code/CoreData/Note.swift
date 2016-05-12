@@ -24,19 +24,23 @@ class Note: NSManagedObject {
     var text:String? {
         set {
             self.updateText(newValue)
-            
-            if let data = newValue?.dataUsingEncoding(NSUTF8StringEncoding) {
-                let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
-                SMSyncServer.session.uploadData(data, withDataAttributes: attr)
-                SMSyncServer.session.commit()
-            }
-            else {
-                Log.error("Could not convert data: \(newValue)")
-            }
+            self.upload()
         }
         
         get {
             return self.internalText
+        }
+    }
+    
+    func upload() {
+        guard self.text != nil else { return }
+        if let data = self.text!.dataUsingEncoding(NSUTF8StringEncoding) {
+            let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
+            SMSyncServer.session.uploadData(data, withDataAttributes: attr)
+            SMSyncServer.session.commit()
+        }
+        else {
+            Log.error("Could not convert text: \(self.text)")
         }
     }
     

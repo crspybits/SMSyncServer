@@ -27,11 +27,17 @@
 		83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */; };
 		83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */; };
 		83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */; };
-		83973A3B1CDAA8A000FD8520 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */; };
-		83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3A1CDAA8A000FD8520 /* Note.swift */; };
-		83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */; };
 		83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */; };
 		83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */; };
+		83E064361CE51C880088BE37 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064331CE51C880088BE37 /* CoreDataSession.swift */; };
+		83E064371CE51C880088BE37 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064341CE51C880088BE37 /* Note.swift */; };
+		83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */; };
+		83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 83E064C71CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c */; };
+		83E064D41CE534030088BE37 /* DiffMatchPatch.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064CB1CE534030088BE37 /* DiffMatchPatch.m */; };
+		83E064D51CE534030088BE37 /* NSString+JavaSubstring.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064CD1CE534030088BE37 /* NSString+JavaSubstring.m */; };
+		83E064D61CE534030088BE37 /* NSString+UnicharUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064CF1CE534030088BE37 /* NSString+UnicharUtilities.m */; };
+		83E064D71CE534030088BE37 /* NSString+UriCompatibility.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064D11CE534030088BE37 /* NSString+UriCompatibility.m */; };
+		83E064D81CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E064D31CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m */; };
 		C8D3F07FB58C327C1E45AD4E /* Pods_SharedNotesTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -112,11 +118,26 @@
 		83973A1B1CD98AEF00FD8520 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Resources/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Resources/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SharedNotes-Bridging-Header.h"; sourceTree = "<group>"; };
-		83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "Core Data/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		83973A3A1CDAA8A000FD8520 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = "Core Data/Note.swift"; sourceTree = "<group>"; };
-		83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = "Core Data/CoreDataSession.swift"; sourceTree = "<group>"; };
 		83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditNoteViewController.swift; sourceTree = "<group>"; };
 		83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
+		83E064331CE51C880088BE37 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = CoreData/CoreDataSession.swift; sourceTree = "<group>"; };
+		83E064341CE51C880088BE37 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = CoreData/Note.swift; sourceTree = "<group>"; };
+		83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "CoreData/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		83E064C41CE533FB0088BE37 /* DiffMatchPatch_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiffMatchPatch_Prefix.pch; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatch_Prefix.pch"; sourceTree = "<group>"; };
+		83E064C51CE533FB0088BE37 /* MinMaxMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MinMaxMacros.h; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/MinMaxMacros.h"; sourceTree = "<group>"; };
+		83E064C61CE533FB0088BE37 /* DiffMatchPatchCFUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiffMatchPatchCFUtilities.h; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatchCFUtilities.h"; sourceTree = "<group>"; };
+		83E064C71CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = DiffMatchPatchCFUtilities.c; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatchCFUtilities.c"; sourceTree = "<group>"; };
+		83E064C81CE533FB0088BE37 /* JXArcCompatibilityMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JXArcCompatibilityMacros.h; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/JXArcCompatibilityMacros.h"; sourceTree = "<group>"; };
+		83E064CA1CE534030088BE37 /* DiffMatchPatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiffMatchPatch.h; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatch.h"; sourceTree = "<group>"; };
+		83E064CB1CE534030088BE37 /* DiffMatchPatch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DiffMatchPatch.m; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatch.m"; sourceTree = "<group>"; };
+		83E064CC1CE534030088BE37 /* NSString+JavaSubstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+JavaSubstring.h"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+JavaSubstring.h"; sourceTree = "<group>"; };
+		83E064CD1CE534030088BE37 /* NSString+JavaSubstring.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+JavaSubstring.m"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+JavaSubstring.m"; sourceTree = "<group>"; };
+		83E064CE1CE534030088BE37 /* NSString+UnicharUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+UnicharUtilities.h"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+UnicharUtilities.h"; sourceTree = "<group>"; };
+		83E064CF1CE534030088BE37 /* NSString+UnicharUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+UnicharUtilities.m"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+UnicharUtilities.m"; sourceTree = "<group>"; };
+		83E064D01CE534030088BE37 /* NSString+UriCompatibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+UriCompatibility.h"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+UriCompatibility.h"; sourceTree = "<group>"; };
+		83E064D11CE534030088BE37 /* NSString+UriCompatibility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+UriCompatibility.m"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSString+UriCompatibility.m"; sourceTree = "<group>"; };
+		83E064D21CE534030088BE37 /* NSMutableDictionary+DMPExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableDictionary+DMPExtensions.h"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSMutableDictionary+DMPExtensions.h"; sourceTree = "<group>"; };
+		83E064D31CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableDictionary+DMPExtensions.m"; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/NSMutableDictionary+DMPExtensions.m"; sourceTree = "<group>"; };
 		A31E632C9B26EC53A1EAE581 /* Pods_SharedNotesTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SharedNotesTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7DA0A26D6C930D38F329309 /* Pods-SharedNotesTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SharedNotesTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SharedNotesTests/Pods-SharedNotesTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -254,9 +275,9 @@
 			isa = PBXGroup;
 			children = (
 				839739D91CD96E3F00FD8520 /* SharedNotes.xcdatamodel */,
-				83973A3D1CDAA9E200FD8520 /* CoreDataSession.swift */,
-				83973A3A1CDAA8A000FD8520 /* Note.swift */,
-				83973A391CDAA8A000FD8520 /* Note+CoreDataProperties.swift */,
+				83E064331CE51C880088BE37 /* CoreDataSession.swift */,
+				83E064341CE51C880088BE37 /* Note.swift */,
+				83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */,
 			);
 			name = "Core Data";
 			sourceTree = "<group>";
@@ -272,6 +293,7 @@
 		83973A241CD99C5200FD8520 /* SDKs */ = {
 			isa = PBXGroup;
 			children = (
+				83E064AC1CE532390088BE37 /* DiffMatchPatch */,
 				8344578A1CDDB2D0000C3533 /* ODRefreshControl */,
 				83973A2E1CD99C9900FD8520 /* CALayer+MBAnimationPersistence */,
 			);
@@ -286,6 +308,44 @@
 			);
 			name = "CALayer+MBAnimationPersistence";
 			path = "OtherLibs/CALayer+MBAnimationPersistence";
+			sourceTree = "<group>";
+		};
+		83E064AC1CE532390088BE37 /* DiffMatchPatch */ = {
+			isa = PBXGroup;
+			children = (
+				83E064AE1CE532A90088BE37 /* Other Sources */,
+				83E064AD1CE5329E0088BE37 /* Classes */,
+			);
+			name = DiffMatchPatch;
+			sourceTree = "<group>";
+		};
+		83E064AD1CE5329E0088BE37 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				83E064CA1CE534030088BE37 /* DiffMatchPatch.h */,
+				83E064CB1CE534030088BE37 /* DiffMatchPatch.m */,
+				83E064CC1CE534030088BE37 /* NSString+JavaSubstring.h */,
+				83E064CD1CE534030088BE37 /* NSString+JavaSubstring.m */,
+				83E064CE1CE534030088BE37 /* NSString+UnicharUtilities.h */,
+				83E064CF1CE534030088BE37 /* NSString+UnicharUtilities.m */,
+				83E064D01CE534030088BE37 /* NSString+UriCompatibility.h */,
+				83E064D11CE534030088BE37 /* NSString+UriCompatibility.m */,
+				83E064D21CE534030088BE37 /* NSMutableDictionary+DMPExtensions.h */,
+				83E064D31CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		83E064AE1CE532A90088BE37 /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				83E064C41CE533FB0088BE37 /* DiffMatchPatch_Prefix.pch */,
+				83E064C51CE533FB0088BE37 /* MinMaxMacros.h */,
+				83E064C61CE533FB0088BE37 /* DiffMatchPatchCFUtilities.h */,
+				83E064C71CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c */,
+				83E064C81CE533FB0088BE37 /* JXArcCompatibilityMacros.h */,
+			);
+			name = "Other Sources";
 			sourceTree = "<group>";
 		};
 		8F0B42316AA9A168E8422D9F /* Frameworks */ = {
@@ -557,19 +617,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83E064D81CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m in Sources */,
 				83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */,
-				83973A3B1CDAA8A000FD8520 /* Note+CoreDataProperties.swift in Sources */,
 				83973A0C1CD9872E00FD8520 /* SMGoogleCredentials.swift in Sources */,
 				839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */,
 				83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */,
+				83E064371CE51C880088BE37 /* Note.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
-				83973A3E1CDAA9E200FD8520 /* CoreDataSession.swift in Sources */,
+				83E064361CE51C880088BE37 /* CoreDataSession.swift in Sources */,
+				83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */,
+				83E064D41CE534030088BE37 /* DiffMatchPatch.m in Sources */,
+				83E064D51CE534030088BE37 /* NSString+JavaSubstring.m in Sources */,
+				83E064D61CE534030088BE37 /* NSString+UnicharUtilities.m in Sources */,
 				8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */,
-				83973A3C1CDAA8A000FD8520 /* Note.swift in Sources */,
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
+				83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */,
 				834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */,
 				83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */,
+				83E064D71CE534030088BE37 /* NSString+UriCompatibility.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

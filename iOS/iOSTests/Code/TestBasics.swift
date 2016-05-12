@@ -53,6 +53,10 @@ public struct TestFile {
             self._url = newValue
         }
     }
+    
+    public func remove() {
+        self.appFile!.removeObject()
+    }
 }
 
 public class TestBasics {

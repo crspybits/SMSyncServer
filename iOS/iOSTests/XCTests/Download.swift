@@ -242,20 +242,8 @@ class Download: BaseClass {
             
             self.commitCompleteCallbacks.append() { numberUploads in
                 XCTAssert(numberUploads == 2)
-                TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
-                    TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
-                
-                        uploadCompleteCallbackExpectation.fulfill()
-                        
-                        let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
-                        XCTAssert(fileAttr1 != nil)
-                        XCTAssert(!fileAttr1!.deleted!)
-
-                        let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
-                        XCTAssert(fileAttr2 != nil)
-                        XCTAssert(!fileAttr2!.deleted!)
-                    }
-                }
+                uploadCompleteCallbackExpectation.fulfill()
+                // Don't put the check size calls here-- will result in a race condition.
             }
             
             // The ordering of the following two downloads isn't really well specified, but guessing it'll be in the same order as uploaded. Could make the check for download more complicated and order invariant...
@@ -299,12 +287,25 @@ class Download: BaseClass {
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation1.fulfill()
-        
-                // Now, forget locally about the uploaded files so we can download them.
-                SMSyncServer.session.resetMetaData(forUUID:testFile1.uuid)
-                SMSyncServer.session.resetMetaData(forUUID:testFile2.uuid)
-                
-                SMSyncControl.session.nextSyncOperation()
+
+                TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
+                    TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
+                        
+                        let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
+                        XCTAssert(fileAttr1 != nil)
+                        XCTAssert(!fileAttr1!.deleted!)
+
+                        let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
+                        XCTAssert(fileAttr2 != nil)
+                        XCTAssert(!fileAttr2!.deleted!)
+                        
+                        // We checked for the files. Now, forget locally about the uploaded files so we can download them.
+                        SMSyncServer.session.resetMetaData(forUUID:testFile1.uuid)
+                        SMSyncServer.session.resetMetaData(forUUID:testFile2.uuid)
+                        
+                        SMSyncControl.session.nextSyncOperation()
+                    }
+                }
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")

@@ -93,12 +93,12 @@ public protocol SMSyncServerDelegate : class {
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
     // With no conflict, the recommended action is for the client to replace their existing data with that from the files. With a conflict, the client has to decide how to manage the conflict.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files, and any conflicts.
-    // It is up to the callee to check to determine if any modification conflict is occuring for a particular downloaded file.
+    // It is up to the callee to check to determine if any modification conflict is occuring for a particular downloaded file. i.e., if the client is modifying any of the files referenced.
     func syncServerDownloadsComplete(downloads:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement:()->())
     
-    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. With no conflict, the recommended action is for the client to delete the files represented by the UUID's. With a conflict, the client has to decide how to manage the conflict.
+    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a current snapshot state of files on the server. With no conflict, the recommended action is for the client to delete the files represented by the UUID's. With a conflict, the client has to decide how to manage the conflict.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files, and any conflicts.
-    // It is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file.
+    // It is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file. i.e., if the client is modifying any of the files referenced.
     func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->())
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
