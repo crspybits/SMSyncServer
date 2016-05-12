@@ -151,9 +151,9 @@ class SMQueues: NSManagedObject, CoreDataModel {
         
         var fileDownloads = 0
         
-        // This is for downloads, download-deletions and download-conflicts.
+        // This is for downloads, download-deletions
         let downloadOperations = NSMutableOrderedSet()
-        
+                
         for serverFile in serverFileIndex {
             let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
             
@@ -166,12 +166,9 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         downloadOperations.addObject(downloadDeletion)
                         
                         // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The caller should do it at a time that will preserve the atomic nature of the operation.
-                        // CONFLICT CASE: What if the download-deletion file has been modified (not deleted) locally?
+                        // CONFLICT CASE: Check to see if the download-deletion file has been modified (not deleted) locally?
                         if localFile!.pendingUpload() {
-                            let downloadConflict = SMDownloadConflict.newObject() as! SMDownloadConflict
-                            downloadConflict.localFile = localFile
-                            downloadConflict.conflictType = .DownloadDeletionLocalUpload
-                            downloadOperations.addObject(downloadConflict)
+                            downloadDeletion.conflictType = .LocalUpload
                         }
                         
                         // TODO: What about the situation where .deletedOnServer is false, but there is a pending upload-deletion? This doesn't appear to be a conflict, but an possible issue with timing-- about when we let the local app know about the deletion.
@@ -226,21 +223,18 @@ class SMQueues: NSManagedObject, CoreDataModel {
                         fileDownloads += 1
                         
                         // Handle conflict cases: These are only relevant when downloading an updated version from the server. If the server version hasn't changed (as in [1] above), and we have a pending upload or pending upload-deletion, then this does not indicate a conflict.
-                        var conflictType:SMDownloadConflict.ConflictType?
+                        var downloadConflict:SMSyncServerFileDownloadConflict?
                         
                         // I'm prioritizing deletion as a conflict. Because deletion is final, and a choice has to be made if we only issue a single conflict per file per round of downloads.
                         if localFile!.pendingUploadDeletion() {
-                            conflictType = .DownloadLocalUploadDeletion
+                            downloadConflict = .LocalUploadDeletion
                         }
                         else if localFile!.pendingUpload() {
-                            conflictType = .DownloadLocalUpload
+                            downloadConflict = .LocalUpload
                         }
                         
-                        if conflictType != nil {
-                            let downloadConflict = SMDownloadConflict.newObject() as! SMDownloadConflict
-                            downloadConflict.localFile = localFile
-                            downloadConflict.conflictType = conflictType!
-                            downloadOperations.addObject(downloadConflict)
+                        if downloadConflict != nil {
+                            downloadFile.conflictType = downloadConflict
                         }
                     } else { // serverVersion < localVersion
                         Assert.badMojo(alwaysPrintThisString: "This should never happen.")
@@ -307,29 +301,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
         return true
     }
     
-    // Returns nil if there are no conflicts.
-    func downloadConflicts() -> [SMDownloadConflict]? {        
-        if nil == self.beingDownloaded {
-            return nil
-        }
-        else {
-            let result = self.beingDownloaded!.filter() { downloadOperation in
-                if let _ = downloadOperation as? SMDownloadConflict {
-                    return true
-                }
-                else {
-                    return false
-                }
-            }
-            if result.count == 0 {
-                return nil
-            }
-            else {
-                return (result as! [SMDownloadConflict])
-            }
-        }
-    }
-    
     // Removes & deletes all objects in all queues.
     func flush() {
         self.beingUploaded?.removeObject()
@@ -351,7 +322,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
         case DownloadStartup
         case DownloadFile
         case DownloadDeletion
-        case DownloadConflict
     }
     
     // Returns the subset of the self.beingDownloaded objects that represent downloads, or download-deletions. Doesn't modify the .beingDownloaded queue. Returns nil if there were no objects. Give operationStage as nil to ignore the operationStage of the operations. You must give a nil operationStage unless you give .DownloadFile for the changeType.
@@ -383,11 +353,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
                     if let deletion = elem as? SMDownloadDeletion {
                         result.append(deletion)
                     }
-                    
-                case .DownloadConflict:
-                    if let conflict = elem as? SMDownloadConflict {
-                        result.append(conflict)
-                    }
                 }
             }
         }
@@ -414,11 +379,6 @@ class SMQueues: NSManagedObject, CoreDataModel {
                     
                 case .DownloadDeletion:
                     if elem is SMDownloadDeletion {
-                        addOperation = true
-                    }
-                    
-                case .DownloadConflict:
-                    if elem is SMDownloadConflict {
                         addOperation = true
                     }
                 

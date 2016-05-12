@@ -136,6 +136,11 @@ public class SMServerConstants {
     public static let appFileTypeKey = "AppFileType"
     // Value: An (optional) app-dependent file type for the file.
     
+    // Optional key that can be given with operationUploadFile-- used to resolve conflicts where file has been deleted on the server, but where the local app wants to override that with an update.
+    // Key:
+    public static let undeleteFileKey = "UndeleteFile"
+    // Value: true
+    
     // TODO: I'm not yet using this.
     public static let appGroupIdKey = "AppGroupId"
     // Value: A UUID string that (optionally) indicates an app-specific logical group that the file belongs to.

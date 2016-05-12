@@ -55,9 +55,11 @@ class DownloadDeletionRecovery: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { uuids, acknowledgement in
-                        XCTAssert(uuids.count == 1)
-                        XCTAssert(uuids[0].UUIDString == testFile.uuidString)
+                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                        XCTAssert(deletions.count == 1)
+                        let (uuid, conflict) = deletions[0]
+                        XCTAssert(conflict == nil)
+                        XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
@@ -125,7 +127,7 @@ class DownloadDeletionRecovery: BaseClass {
                         
                         SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                         
-                        self.clientShouldDeleteFilesCallbacks.append() { uuids, acknowledgement in
+                        self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
                             // Crash without calling acknowledgement
                             SMTest.session.crash()
                         }
@@ -141,9 +143,11 @@ class DownloadDeletionRecovery: BaseClass {
 
             let testFile = TestBasics.session.recreateTestFile(fromUUID: DownloadDeletionRecovery.crashUUIDString1.stringValue)
             
-            self.clientShouldDeleteFilesCallbacks.append() { uuids, acknowledgement in
-                XCTAssert(uuids.count == 1)
-                XCTAssert(uuids[0].UUIDString == testFile.uuidString)
+            self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                XCTAssert(deletions.count == 1)
+                let (uuid, conflict) = deletions[0]
+                XCTAssert(conflict == nil)
+                XCTAssert(uuid.UUIDString == testFile.uuidString)
                 
                 let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)

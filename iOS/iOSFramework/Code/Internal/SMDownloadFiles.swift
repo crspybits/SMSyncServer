@@ -317,9 +317,12 @@ internal class SMDownloadFiles : NSObject {
         
         var result = false
         
+        // Do check for modification lock conflict here because we're just about to call the callbacks.
+        
         if let fileDownloads = SMQueues.current().getBeingDownloadedChanges(
             .DownloadFile, operationStage: .AppCallback) as? [SMDownloadFile] {
             Log.msg("\(fileDownloads.count) file downloads")
+            
             self.callSyncServerDownloadsComplete(fileDownloads) {
                 self.doCallbacks()
             }
@@ -337,15 +340,6 @@ internal class SMDownloadFiles : NSObject {
             CoreData.sessionNamed(SMCoreData.name).saveContext()
             
             self.callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions) {
-                self.doCallbacks()
-            }
-            result = true
-        }
-        else if let fileConflicts = SMQueues.current().getBeingDownloadedChanges(
-            .DownloadConflict) as? [SMDownloadConflict] {
-            Log.msg("\(fileConflicts.count) file conflicts")
-            Assert.badMojo(alwaysPrintThisString: "Not yet implemented")
-            self.callSyncServerSyncServerClientShouldResolveConflicts(fileConflicts) {
                 self.doCallbacks()
             }
             result = true
@@ -390,7 +384,7 @@ internal class SMDownloadFiles : NSObject {
     }
 
     private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile], completion:()->()) {
-        var downloaded = [(NSURL, SMSyncAttributes)]()
+        var downloaded = [(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)]()
         
         for downloadFile in fileDownloads {
             let localFile = downloadFile.localFile!
@@ -400,7 +394,7 @@ internal class SMDownloadFiles : NSObject {
             attr.mimeType = localFile.mimeType
             attr.remoteFileName = localFile.remoteFileName
             attr.deleted = false
-            downloaded.append((downloadFile.fileURL!, attr))
+            downloaded.append((downloadFile.fileURL!, attr, downloadFile.conflictType))
         
             if localFile.syncState == .InitialDownload {
                 localFile.syncState = .AfterInitialSync
@@ -420,21 +414,19 @@ internal class SMDownloadFiles : NSObject {
     
     private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
             
-        var uuids = [NSUUID]()
+        var deletions = [(NSUUID, SMSyncServerDownloadDeletionConflict?)]()
         
         for fileToDelete in fileDeletions {
-            uuids.append(NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
+            let deletion = (NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, fileToDelete.conflictType)
+            deletions.append(deletion)
         }
         
         NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerClientShouldDeleteFiles(uuids) {
+            self.syncServerDelegate?.syncServerClientShouldDeleteFiles(deletions) {
                 SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
                 completion()
             }
         }
-    }
-    
-    private func callSyncServerSyncServerClientShouldResolveConflicts(fileConflicts:[SMDownloadConflict], completion:()->()) {
     }
     
     private func callSyncServerDownloadsFinished() {

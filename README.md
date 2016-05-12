@@ -13,22 +13,22 @@ SMSyncServer has the following general goals:
 1. Reducing data storage costs for app developers/publishers, and  
 1. Allowing sharing of data with other users. 
 
-SMSyncServer has an iOS client and a server written in Javascript/Node.js.
-
 More detailed characteristics of the SMSyncServer:
 
 1. The large majority of file information (i.e., all of the file content information) is stored in end-user cloud storage accounts. Only meta data for files, locking information, and some user credentials information is stored in the MongoDb database on the server.
 1. Client apps can operate offline. The client API queues operations (e.g., uploads) until network access is available.
 1. Interrupted operations are retried. For example, if network access is lost during a series of file uploads, then those uploads are retried when network access is available.
 1. Uploads (and downloads) are performed in a locked (a.k.a., transactional) manner. For example, if you queue a series uploads using `uploadImmutableFile` followed by a `commit`, those upload operations are carried out in an atomic manner, and are only available for download by other SMSyncServer client apps (using the same cloud storage credentials) when the entire set of files has been uploaded.
+1. SMSyncServer has an iOS client written in Swift and a server written in Javascript/Node.js. You must call the iOS client from Swift, not Objective-C, because the iOS API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
 
-See the blog articles:  
+See the blog articles:
 
 * [The SyncServer: Permanent Access to Your App Data](http://www.spasticmuffin.biz/blog/2015/12/29/the-syncserver-permanent-access-to-your-app-data/)  
 * [Blitz to get SMSyncServer Ready for Open-Source](http://www.spasticmuffin.biz/blog/2016/01/21/blitz-to-get-smsyncserver-ready-for-open-source/)
 * [Design Issue: Changing Cloud Storage Accounts With The SMSyncServer](http://www.spasticmuffin.biz/blog/2016/04/02/design-issue-changing-cloud-storage-accounts-with-the-smsyncserver/)
 * [The Many Senses of Recovery in SMSyncServer](http://www.spasticmuffin.biz/blog/2016/04/26/the-many-senses-of-recovery-in-smsyncserver/)
 * [Re-Architecting the SMSyncServer File System](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)
+* [Conflict Management in the SMSyncServer](http://www.spasticmuffin.biz/blog/2016/05/11/conflict-management-in-the-smsyncserver/)
 
 Contact: <chris@SpasticMuffin.biz> (primary developer)
 

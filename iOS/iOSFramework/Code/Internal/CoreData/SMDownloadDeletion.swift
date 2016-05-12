@@ -12,6 +12,17 @@ import SMCoreLib
 
 class SMDownloadDeletion: SMDownloadFileOperation, CoreDataModel {
 
+    var conflictType: SMSyncServerDownloadDeletionConflict? {
+        set {
+            self.internalConflictType = newValue == nil ? nil : newValue!.rawValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        }
+        get {
+            return self.internalConflictType == nil ?
+                nil : SMSyncServerDownloadDeletionConflict(rawValue: self.internalConflictType!)
+        }
+    }
+    
     class func entityName() -> String {
         return "SMDownloadDeletion"
     }

@@ -50,13 +50,13 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
     
     let newFileContents = "newFileContents"
     
-    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
         }
                 
-        for (url, attr) in downloadedFiles {
+        for (url, attr, _) in downloadedFiles {
             self.singleFileDownloadComplete(url, withFileAttributes: attr)
         }
         

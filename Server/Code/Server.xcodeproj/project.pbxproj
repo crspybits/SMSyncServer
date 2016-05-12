@@ -28,7 +28,7 @@
 		83B0BEBE1C114935002B5735 /* CloudStorage.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = CloudStorage.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF73A1C0A3BBE009F9796 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
 		83EBF73B1C0A3BBE009F9796 /* JSON.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = JSON.js; sourceTree = "<group>"; };
-		83EBF73C1C0A3BBE009F9796 /* Mongo.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Mongo.sjs; sourceTree = "<group>"; };
+		83EBF73C1C0A3BBE009F9796 /* Mongo.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Mongo.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PSUserCredentials.js; sourceTree = "<group>"; };
 		83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ServerConstants.js; sourceTree = "<group>"; };
 		83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = UserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };

@@ -20,18 +20,22 @@ class DownloadConflicts: BaseClass {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    // MARK: Test each of the basic conflicts
+    
+    func testThatDownloadDeletionLocalUploadWorks() {
+    }
+
+    func testThatDownloadDeletionLockHeldWorks() {
     }
     
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measureBlock {
-            // Put the code you want to measure the time of here.
-        }
+    func testThatDownloadFileLocalUploadDeletionWorks() {
+    }
+
+    func testThatDownloadFileLocalUploadWorks() {
     }
     
-    // TODO: Each of the conflict cases: update conflict, and the two deletion conflicts. NOTE: This isn't yet handled by SMFileDiffs.
+    func testThatDownloadFileLockHeldWorks() {
+    }
     
+    // MARK: Other tests
 }

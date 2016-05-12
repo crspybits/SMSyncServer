@@ -85,7 +85,7 @@ class DownloadRecovery: BaseClass {
                 }
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.downloadsCompleteCallbacks.append() { downloadedFiles in                
                 // With .CheckOperationStatus server API failure, the "recovery" process consists of just trying to check the operation status again, which doesn't get reflected in the number of recovery steps.
                 if testContext != .CheckOperationStatus {
                     XCTAssert(self.numberOfRecoverySteps >= 1)

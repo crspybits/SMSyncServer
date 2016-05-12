@@ -246,6 +246,8 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
       size: 22 }
     */
     
+    const undeleteFileKey = request.body[ServerConstants.undeleteFileKey];
+    
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
         // console.log("request.file: " + JSON.stringify(request.file));
@@ -304,8 +306,6 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                 fileId: clientFile[ServerConstants.fileUUIDKey]
             };
             
-            var createOutboundFileChangeEntry = true;
-            
             // 1) Do this first, with the userId and file UUID.
             checkIfFileExists(fileData, function (error, fileIndexObj, outbndFileObj) {
                 if (error) {
@@ -313,9 +313,9 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                     op.endWithErrorDetails(error);
                     return;
                 }
-                
-                if (fileIndexObj) {
-                    if (fileIndexObj.deleted) {
+                              
+                if (isDefined(fileIndexObj)) {
+                    if (fileIndexObj.deleted && !isDefined(undeleteFileKey)) {
                         var errorMessage = "File was already deleted!";
                         logger.error(errorMessage);
                         op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, errorMessage);
@@ -330,98 +330,129 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                     }
                 }
                 
-                if (outbndFileObj) {
-                    // To enable recovery, not going to consider this an error, as long as the cloud file name matches up too.
-                    if (clientFile[ServerConstants.cloudFileNameKey] == outbndFileObj.cloudFileName) {
-                        createOutboundFileChangeEntry = false;
-                        logger.info("Uploading two instances with same file id and cloud file name");
-                    }
-                    else {
-                        var message = "Attempting to upload two instances of the same file id, but without the same cloud file name";
-                        logger.error(message);
-                        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                    message);
-                        return;
-                    }
-                }
+                // I'm not going to make it an error to attempt an undeletion when a file hasn't already been marked for deletion. This is because we can have a race condition where multiple apps could try to do the undeletion.
+
+                if (isDefined(fileIndexObj) && fileIndexObj.deleted && isDefined(undeleteFileKey)) {
                 
-                // This fileData is used across PSFileIndex and PSOutboundFileChange in checkIfFileExists
-                var fileData = {
-                    userId: op.userId(),
-                    cloudFileName: clientFile[ServerConstants.cloudFileNameKey]
-                };
-                
-                // 2) Then, a second time with userId and cloudFileName
-                checkIfFileExists(fileData, function (error, fileIndexObj, outbndFileObj) {
-                    if (error) {
-                        logger.error(error);
-                        op.endWithErrorDetails(error);
-                        return;
-                    }
+                    // Need to undelete file in file index before completing the upload.
                     
-                    if (fileIndexObj) {
-                        // Make sure the fileId of this file is the same as clientFileId-- since the files have the same cloudFileName they must have the same UUID.
-                        if (fileIndexObj.fileId != clientFile[ServerConstants.fileUUIDKey]) {
-                            // This is a rcServerAPIError error because the API client made an error-- they shouldn't have given the same cloudFileName with different UUID's.
-                            var message = "Two files with same cloudFileName, but different UUID's; cloudFileName: " + clientFile[ServerConstants.cloudFileNameKey];
-                            logger.error(message);
-                            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                message);
-                            return;
-                        }
-                    }
+                    fileIndexObj.deleted = false;
                     
-                    if (outbndFileObj) {
-                        if (clientFile[ServerConstants.fileUUIDKey] == outbndFileObj.fileId && !createOutboundFileChangeEntry) {
-                            logger.info("Uploading two instances with same file id and cloud file name");
+                    // In terms of server scaling, or in terms of multiple hits on this same server concurrently, because we have a lock on the server for this userId/deviceId, we know that we'll be having the only access to the PSFileIndex for this userId.
+                    
+                    var sameFileIndexVersionIfExists = true
+                    fileIndexObj.updateOrStoreNew(sameFileIndexVersionIfExists, function (error) {
+                        if (error) {
+                            var errorMessage = "updateOrStoreNew: Error: " + error;
+                            logger.debug(errorMessage);
+                            op.endWithErrorDetails(errorMessage);
                         }
                         else {
-                            var message = "Attempting to upload two files with the same cloudFileName";
-                            logger.error(message);
-                            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
-                                    message);
-                            return;
-                        }
-                    }
-                    
-                    // TODO: Validate that the mimeType is from an acceptable list of MIME types (e..g, so we don't get an injection error with someone injecting a special Google Drive object such as a folder).
-                                 
-                    // Move the file to where it's supposed to be.
-                    
-                    var localFile = new File(op.userId(), op.deviceId(), clientFile[ServerConstants.fileUUIDKey]);
-                    
-                    // Make the new file name.
-                    var newFileNameWithPath = localFile.localFileNameWithPath();
-                    
-                    /* It is possible, from some prior server issue, that a file from a previous upload exists at the newFileNameWithPath location. E.g., if the server crashed or had a problem and didn't properly clean up the file on a previous operation. Since that this point we (a) have a lock and know we're the only one for this userId/deviceId uploading, and (b) have checked the version number for this file and know its an updated version number, we should be OK to override any existing file. Hence the clobber:true option below. Note that if we don't supply this option, the fse.move operation will fail if newFileNameWithPath exists:
-                    2015-12-06T22:30:16-0700 <trace> Operation.js:95 (Operation.end) Sending response back to client: {"ServerResult":2,"ServerErrorDetails":{"errno":-17,"code":"EEXIST","syscall":"link","path":"initialUploads/982ea39fd40380e7ea13d8ed1e001ea1","dest":"/Users/chris/Desktop/Apps/repos/NetDb/Node.js/Node1/uploads/565be13f2917086977fe6f54.DE63BA86-0121-43FF-BAA7-79BBBBFF5D74/ADB50CE8-E254-44A0-B8C4-4A3A8240CCB5"}}
-                    */
-                    fse.move(request.file.path, newFileNameWithPath, {clobber:true}, function (err) {
-                        if (err) {
-                            logger.error("Failed on fse.move: %j", err);
-                            op.endWithErrorDetails(err);
-                        }
-                        else {
-                            if (createOutboundFileChangeEntry) {
-                                addToOutboundFileChanges(op, clientFile, false, function (error) {
-                                    if (error) {
-                                        logger.error("Failed on addToOutboundFileChanges: %j", error);
-                                        op.endWithErrorDetails(error);
-                                    } else {
-                                        op.endWithRC(ServerConstants.rcOK);
-                                    }
-                                });
-                            }
-                            else {
-                                op.endWithRC(ServerConstants.rcOK);
-                            }
+                            completeOperationUploadFile(op, outbndFileObj, clientFile);
                         }
                     });
-                });
+                }
+                else {
+                    // Complete the upload.
+                    completeOperationUploadFile(op, outbndFileObj, clientFile);
+                }
             });
         }
     });
 });
+
+function completeOperationUploadFile(op, outbndFileObj, clientFile) {
+    var createOutboundFileChangeEntry = true;
+    
+    if (outbndFileObj) {
+        // To enable recovery, not going to consider this an error, as long as the cloud file name matches up too.
+        if (clientFile[ServerConstants.cloudFileNameKey] == outbndFileObj.cloudFileName) {
+            createOutboundFileChangeEntry = false;
+            logger.info("Uploading two instances with same file id and cloud file name");
+        }
+        else {
+            var message = "Attempting to upload two instances of the same file id, but without the same cloud file name";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                        message);
+            return;
+        }
+    }
+    
+    // This fileData is used across PSFileIndex and PSOutboundFileChange in checkIfFileExists
+    var fileData = {
+        userId: op.userId(),
+        cloudFileName: clientFile[ServerConstants.cloudFileNameKey]
+    };
+    
+    // 2) Then, a second time with userId and cloudFileName
+    checkIfFileExists(fileData, function (error, fileIndexObj, outbndFileObj) {
+        if (error) {
+            logger.error(error);
+            op.endWithErrorDetails(error);
+            return;
+        }
+        
+        if (fileIndexObj) {
+            // Make sure the fileId of this file is the same as clientFileId-- since the files have the same cloudFileName they must have the same UUID.
+            if (fileIndexObj.fileId != clientFile[ServerConstants.fileUUIDKey]) {
+                // This is a rcServerAPIError error because the API client made an error-- they shouldn't have given the same cloudFileName with different UUID's.
+                var message = "Two files with same cloudFileName, but different UUID's; cloudFileName: " + clientFile[ServerConstants.cloudFileNameKey];
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                    message);
+                return;
+            }
+        }
+        
+        if (outbndFileObj) {
+            if (clientFile[ServerConstants.fileUUIDKey] == outbndFileObj.fileId && !createOutboundFileChangeEntry) {
+                logger.info("Uploading two instances with same file id and cloud file name");
+            }
+            else {
+                var message = "Attempting to upload two files with the same cloudFileName";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError,
+                        message);
+                return;
+            }
+        }
+        
+        // TODO: Validate that the mimeType is from an acceptable list of MIME types (e..g, so we don't get an injection error with someone injecting a special Google Drive object such as a folder).
+                     
+        // Move the file to where it's supposed to be.
+        
+        var localFile = new File(op.userId(), op.deviceId(), clientFile[ServerConstants.fileUUIDKey]);
+        
+        // Make the new file name.
+        var newFileNameWithPath = localFile.localFileNameWithPath();
+        
+        /* It is possible, from some prior server issue, that a file from a previous upload exists at the newFileNameWithPath location. E.g., if the server crashed or had a problem and didn't properly clean up the file on a previous operation. Since that this point we (a) have a lock and know we're the only one for this userId/deviceId uploading, and (b) have checked the version number for this file and know its an updated version number, we should be OK to override any existing file. Hence the clobber:true option below. Note that if we don't supply this option, the fse.move operation will fail if newFileNameWithPath exists:
+        2015-12-06T22:30:16-0700 <trace> Operation.js:95 (Operation.end) Sending response back to client: {"ServerResult":2,"ServerErrorDetails":{"errno":-17,"code":"EEXIST","syscall":"link","path":"initialUploads/982ea39fd40380e7ea13d8ed1e001ea1","dest":"/Users/chris/Desktop/Apps/repos/NetDb/Node.js/Node1/uploads/565be13f2917086977fe6f54.DE63BA86-0121-43FF-BAA7-79BBBBFF5D74/ADB50CE8-E254-44A0-B8C4-4A3A8240CCB5"}}
+        */
+        fse.move(request.file.path, newFileNameWithPath, {clobber:true}, function (err) {
+            if (err) {
+                logger.error("Failed on fse.move: %j", err);
+                op.endWithErrorDetails(err);
+            }
+            else {
+                if (createOutboundFileChangeEntry) {
+                    addToOutboundFileChanges(op, clientFile, false, function (error) {
+                        if (error) {
+                            logger.error("Failed on addToOutboundFileChanges: %j", error);
+                            op.endWithErrorDetails(error);
+                        } else {
+                            op.endWithRC(ServerConstants.rcOK);
+                        }
+                    });
+                }
+                else {
+                    op.endWithRC(ServerConstants.rcOK);
+                }
+            }
+        });
+    });
+}
 
 /* 
 Check to see if the file exists in the PSFileIndex or PSOutboundFileChange. The parameter fileData doesn't have the deleted or toDelete property set.

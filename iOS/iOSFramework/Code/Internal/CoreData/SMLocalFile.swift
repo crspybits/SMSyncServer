@@ -31,7 +31,6 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         get {
             return SyncState(rawValue: self.internalSyncState!)!
         }
-        
         set {
             self.internalSyncState = newValue.rawValue
             CoreData.sessionNamed(SMCoreData.name).saveContext()
@@ -47,9 +46,9 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
                 return self.internalDeletedOnServer!.boolValue
             }
         }
-        
         set {
             self.internalDeletedOnServer = newValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
     }
     
@@ -69,6 +68,7 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         
         localFile.internalDeletedOnServer = false
         localFile.pendingUploads = NSOrderedSet()
+        
         CoreData.sessionNamed(SMCoreData.name).saveContext()
 
         return localFile

@@ -48,11 +48,11 @@ class BaseClass: XCTestCase {
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
     
-    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes)])->()
+    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)])->()
     var downloadsCompleteSequenceNumber = 0
     var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
-    typealias clientShouldDeleteFilesCallback = (uuids:[NSUUID], acknowledgement:()->())->()
+    typealias clientShouldDeleteFilesCallback = (deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->())->()
     var clientShouldDeleteFilesSequenceNumber = 0
     var clientShouldDeleteFilesCallbacks:[clientShouldDeleteFilesCallback]!
 
@@ -113,15 +113,15 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->()) {
+    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement:()->()) {
         self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloadedFiles)
         self.downloadsCompleteSequenceNumber += 1
         acknowledgement()
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->()) {
-        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](uuids: uuids, acknowledgement:acknowledgement)
+    func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
+        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
         self.clientShouldDeleteFilesSequenceNumber += 1
     }
     

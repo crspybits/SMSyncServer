@@ -85,7 +85,7 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         SMSyncControl.session.nextSyncOperation()
     }
     
-    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    override func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
@@ -97,13 +97,13 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         acknowledgement()
     }
 
-    override func syncServerClientShouldDeleteFiles(uuids: [NSUUID], acknowledgement: () -> ()) {
+    override func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
         }
         
-        self.assertIf(uuids.count != 1, thenFailAndGiveMessage: "Didn't get exactly one download-deletion")
+        self.assertIf(deletions.count != 1, thenFailAndGiveMessage: "Didn't get exactly one download-deletion")
         self.numberDownloadDeletions = 1
         
         acknowledgement()

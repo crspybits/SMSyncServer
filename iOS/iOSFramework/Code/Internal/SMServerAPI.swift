@@ -66,6 +66,9 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     // Indicates whether or not the file has been deleted on the server.
     internal var deleted:Bool?
     
+    // To deal with conflict resolution. Leave this as nil if you don't want undeletion. Set to true if you do want undeletion.
+    internal var undeleteServerFile:Bool?
+    
     private override init() {
     }
     
@@ -357,6 +360,11 @@ internal class SMServerAPI {
         
         var parameters = userParams!
         parameters += fileToUpload.dictionary
+        
+        if fileToUpload.undeleteServerFile != nil {
+            Assert.If(fileToUpload.undeleteServerFile! == false, thenPrintThisString: "Yikes: Must give undeleteServerFile as true or nil")
+            parameters[SMServerConstants.undeleteFileKey] = true
+        }
         
         SMServerNetworking.session.uploadFileTo(serverOpURL, fileToUpload: fileToUpload.localURL!, withParameters: parameters) { serverResponse, error in
             let result = self.initialServerResponseProcessing(serverResponse, error: error)

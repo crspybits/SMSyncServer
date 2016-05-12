@@ -113,6 +113,9 @@ class Download: BaseClass {
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 1)
+                XCTAssert(downloadedFiles.count == 1)
+                let (_, _, conflict) = downloadedFiles[0]
+                XCTAssert(conflict == nil)
                 allDownloadsCompleteExpectation.fulfill()
             }
             
@@ -275,6 +278,12 @@ class Download: BaseClass {
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 2)
+                XCTAssert(downloadedFiles.count == 2)
+                
+                let (_, _, conflict0) = downloadedFiles[0]
+                XCTAssert(conflict0 == nil)
+                let (_, _, conflict1) = downloadedFiles[1]
+                XCTAssert(conflict1 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
@@ -376,6 +385,10 @@ class Download: BaseClass {
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 1)
+                XCTAssert(downloadedFiles.count == 1)
+                
+                let (_, _, conflict0) = downloadedFiles[0]
+                XCTAssert(conflict0 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
@@ -495,6 +508,12 @@ class Download: BaseClass {
             
             self.downloadsCompleteCallbacks.append() { downloadedFiles in
                 XCTAssert(numberDownloads == 2)
+                XCTAssert(downloadedFiles.count == 2)
+                
+                let (_, _, conflict0) = downloadedFiles[0]
+                XCTAssert(conflict0 == nil)
+                let (_, _, conflict1) = downloadedFiles[1]
+                XCTAssert(conflict1 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)

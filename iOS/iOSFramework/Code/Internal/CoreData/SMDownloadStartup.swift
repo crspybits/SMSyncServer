@@ -17,7 +17,7 @@ class SMDownloadStartup: SMDownloadOperation {
         case InboundTransferWait
         case RemoveOperationId
         
-        // A special case-- so we skip the inbound transfer steps & the remove operation id step.
+        // A special case, for when we don't have any files to download-- so we skip the inbound transfer steps & the remove operation id step.
         case NoFileDownloads
     }
     

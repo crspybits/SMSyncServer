@@ -41,8 +41,6 @@
 		83D7331B1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D7331A1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift */; };
 		83E55CB31CB7530700F204E0 /* SMSyncControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CB21CB7530700F204E0 /* SMSyncControl.swift */; };
 		83E55CB81CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */; };
-		83E55CBC1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */; };
-		83E55CBD1CB84A4800F204E0 /* SMDownloadConflict.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */; };
 		83E55CE01CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */; };
 		83E55CE11CBA07DB00F204E0 /* SMUploadOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */; };
 		83E55CE31CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */; };
@@ -115,8 +113,6 @@
 		83D7331A1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadQueue+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadQueue+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83E55CB21CB7530700F204E0 /* SMSyncControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncControl.swift; path = Code/Internal/SMSyncControl.swift; sourceTree = "<group>"; };
 		83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadBlock+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadBlock+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadConflict+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadConflict+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMDownloadConflict.swift; path = Code/Internal/CoreData/SMDownloadConflict.swift; sourceTree = "<group>"; };
 		83E55CC61CBA07DB00F204E0 /* SMUploadOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83E55CC71CBA07DB00F204E0 /* SMUploadOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUploadOperation.swift; path = Code/Internal/CoreData/SMUploadOperation.swift; sourceTree = "<group>"; };
 		83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadOperation+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadOperation+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -162,7 +158,6 @@
 				83E55CD51CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift */,
 				83E55CCF1CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift */,
 				83E55CC91CBA07DB00F204E0 /* SMDownloadOperation+CoreDataProperties.swift */,
-				83E55CBA1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift */,
 				83E55CB61CB849E300F204E0 /* SMDownloadBlock+CoreDataProperties.swift */,
 				83D732891CB366BA00B2BFD3 /* SMQueues+CoreDataProperties.swift */,
 				83D732811CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift */,
@@ -281,7 +276,6 @@
 				83E55CCA1CBA07DB00F204E0 /* SMDownloadOperation.swift */,
 				83E55CD21CBA07DB00F204E0 /* SMDownloadStartup.swift */,
 				83E55CD61CBA07DB00F204E0 /* SMDownloadFileOperation.swift */,
-				83E55CBB1CB84A4800F204E0 /* SMDownloadConflict.swift */,
 				83D732831CB366BA00B2BFD3 /* SMDownloadBlock.swift */,
 				83D732851CB366BA00B2BFD3 /* SMDownloadFile.swift */,
 				83E55CD81CBA07DB00F204E0 /* SMDownloadDeletion.swift */,
@@ -447,7 +441,6 @@
 				83E55CE11CBA07DB00F204E0 /* SMUploadOperation.swift in Sources */,
 				83D732901CB366BA00B2BFD3 /* SMDownloadBlock.swift in Sources */,
 				83E55CE91CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift in Sources */,
-				83E55CBC1CB84A4800F204E0 /* SMDownloadConflict+CoreDataProperties.swift in Sources */,
 				83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */,
 				83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */,
 				830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */,
@@ -463,7 +456,6 @@
 				839739F11CD97DB200FD8520 /* SMCloudStorageCredentials.swift in Sources */,
 				83E55CE41CBA07DB00F204E0 /* SMDownloadOperation.swift in Sources */,
 				83E55CF41CBA07DB00F204E0 /* SMUploadWrapup.swift in Sources */,
-				83E55CBD1CB84A4800F204E0 /* SMDownloadConflict.swift in Sources */,
 				83D7329A1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift in Sources */,
 				83E55CEC1CBA07DB00F204E0 /* SMDownloadStartup.swift in Sources */,
 				83D3EA2D1C4C870C00BFDA93 /* SMServerNetworking.swift in Sources */,
@@ -515,7 +507,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -557,7 +549,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

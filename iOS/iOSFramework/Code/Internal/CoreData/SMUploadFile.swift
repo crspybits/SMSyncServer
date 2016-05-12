@@ -18,6 +18,22 @@ import SMCoreLib
 @objc(SMUploadFile)
 class SMUploadFile: SMUploadFileOperation, CoreDataModel {
 
+    // To deal with conflict resolution. Leave this as nil if you don't want undeletion. Set it to true if you do want undeletion.
+    var undeleteServerFile:Bool? {
+        set {
+            self.internalUndeleteServerFile = newValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        }
+        get {
+            if self.internalUndeleteServerFile == nil {
+                return nil
+            }
+            else {
+                return self.internalUndeleteServerFile!.boolValue
+            }
+        }
+    }
+    
     class func entityName() -> String {
         return "SMUploadFile"
     }
@@ -27,7 +43,7 @@ class SMUploadFile: SMUploadFileOperation, CoreDataModel {
         let fileChange = CoreData.sessionNamed(SMCoreData.name).newObjectWithEntityName(self.entityName()) as! SMUploadFile
         
         fileChange.operationStage = .ServerUpload
-
+        
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         return fileChange
@@ -96,5 +112,13 @@ class SMUploadFile: SMUploadFileOperation, CoreDataModel {
         }
         
         super.removeObject()
+    }
+    
+    override func convertToServerFile() -> SMServerFile {
+        let serverFile = super.convertToServerFile()
+        
+        serverFile.undeleteServerFile = self.undeleteServerFile
+        
+        return serverFile
     }
 }
