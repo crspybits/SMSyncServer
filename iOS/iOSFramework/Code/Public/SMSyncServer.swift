@@ -43,6 +43,8 @@ public class SMSyncAttributes {
     }
 }
 
+// MARK: Events
+
 public enum SMSyncServerEvent {
     // Deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
     case DeletionsSent(uuids:[NSUUID])
@@ -72,18 +74,29 @@ public enum SMSyncServerEvent {
     case Recovery
 }
 
-public enum SMSyncServerFileDownloadConflict : String {
-    // Has a local pending upload-deletion.
-    case LocalUploadDeletion
+// MARK: Conflict management
+
+// If you receive a non-nil conflict in a callback method, you must resolve the conflict by calling resolveConflict.
+public struct SMSyncServerConflict {
+    // Because downloads are higher-priority with the SMSyncServer, all conflicts effectively originate from a server operation: A download-deletion or a file-upload. The type of server operation will be apparent from the context.
     
-    // Has been modified (not deleted) locally
-    case LocalUpload
+    // And the conflict is between the server operation and a local, client operation.
+    public enum ClientOperation : String {
+        case UploadDeletion
+        case FileUpload
+    }
+    
+    public var conflictType:ClientOperation!
+    
+    public enum ResolutionType {
+        case DeleteConflictingClientOperations
+        case KeepConflictingClientOperations
+    }
+
+    public var resolveConflict:((resolution:ResolutionType)->())!
 }
 
-public enum SMSyncServerDownloadDeletionConflict : String {
-    // Has been modified (not deleted) locally
-    case LocalUpload
-}
+// MARK: Delegate
 
 // These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
@@ -94,12 +107,13 @@ public protocol SMSyncServerDelegate : class {
     // With no conflict, the recommended action is for the client to replace their existing data with that from the files. With a conflict, the client has to decide how to manage the conflict.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files, and any conflicts.
     // It is up to the callee to check to determine if any modification conflict is occuring for a particular downloaded file. i.e., if the client is modifying any of the files referenced.
-    func syncServerDownloadsComplete(downloads:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement:()->())
+    func syncServerDownloads(downloads:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)], acknowledgement:()->())
     
-    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a current snapshot state of files on the server. With no conflict, the recommended action is for the client to delete the files represented by the UUID's. With a conflict, the client has to decide how to manage the conflict.
+    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. With no conflict, the recommended action is for the client to delete the files represented by the UUID's. With a conflict, the client has to decide how to manage the conflict.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files, and any conflicts.
     // It is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file. i.e., if the client is modifying any of the files referenced.
-    func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->())
+    // Server conflicts will not include UploadDeletion.
+    func syncServerDownloadDeletions(deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->())
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
     func syncServerModeChange(newMode:SMSyncServerMode)
@@ -255,17 +269,17 @@ public class SMSyncServer : NSObject {
     
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
     // This operation persists across app launches, as long as the the call itself completes. If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. This operation does not access the server, and thus runs quickly and synchronously.
-    public func uploadImmutableFile(localFile:SMRelativeLocalURL, undeleteServerFile:Bool=false, withFileAttributes attr: SMSyncAttributes) {
-        self.uploadFile(localFile, ofType: .Immutable, undeleteServerFile:undeleteServerFile, withFileAttributes: attr)
+    public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
+        self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
     }
     
     // The same as above, but ownership of the file referenced is passed to this class, and once the upload operation succeeds, the file will be deleted.
-    public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL, undeleteServerFile:Bool=false, withFileAttributes attr: SMSyncAttributes) {
-        self.uploadFile(temporaryLocalFile, ofType: .Temporary, undeleteServerFile:undeleteServerFile, withFileAttributes: attr)
+    public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL,withFileAttributes attr: SMSyncAttributes) {
+        self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
     }
 
     // Analogous to the above, but the data is given in an NSData object not a file.
-    public func uploadData(data:NSData, undeleteServerFile:Bool=false, withDataAttributes attr: SMSyncAttributes) {
+    public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
         let localFile = SMFiles.createTemporaryRelativeFile()
@@ -282,7 +296,7 @@ public class SMSyncServer : NSObject {
             return
         }
 
-        self.uploadFile(localFile!, ofType: .Temporary, undeleteServerFile:undeleteServerFile, withFileAttributes: attr)
+        self.uploadFile(localFile!, ofType: .Temporary, withFileAttributes: attr)
     }
     
     private enum TypeOfUploadFile {
@@ -290,7 +304,7 @@ public class SMSyncServer : NSObject {
         case Temporary
     }
     
-    private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, undeleteServerFile:Bool=false, withFileAttributes attr: SMSyncAttributes) {
+    private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
         // Check to see if we already know about this file in our SMLocalFile meta data.
         var localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
         
@@ -347,10 +361,6 @@ public class SMSyncServer : NSObject {
             change.deleteLocalFileAfterUpload = false
         case .Temporary:
             change.deleteLocalFileAfterUpload = true
-        }
-        
-        if undeleteServerFile {
-            change.undeleteServerFile = true
         }
         
         change.localFile = localFileMetaData!

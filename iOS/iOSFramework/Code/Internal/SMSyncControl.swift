@@ -340,7 +340,7 @@ internal class SMSyncControl {
                         self.checkedForServerFileIndex = true
                         self.numberGetFileIndexAttempts = 0
                         
-                        SMQueues.current().checkForDownloads(fromServerFileIndex: fileIndex!)
+                        SMSyncControl.checkForDownloads(fromServerFileIndex: fileIndex!)
                         if nil == SMQueues.current().beingDownloaded {
                             NSThread.runSyncOnMainThread() {
                                 self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
@@ -415,6 +415,141 @@ internal class SMSyncControl {
                 self.retry(&self.numberUnlockAttempts, errorSpecifics: "attempting to unlock")
             }
         }
+    }
+
+    /* Compare our local file meta data against the server files to see which indicate download, download-deletion, and download-conflicts.
+    The result of this call is stored in .beingDownloaded in the current SMQueues object.
+    beingDownloaded must be nil before this call.
+    */
+    private class func checkForDownloads(fromServerFileIndex serverFileIndex:[SMServerFile]) {
+    
+        Assert.If(SMQueues.current().beingDownloaded != nil, thenPrintThisString: "There are already files being downloaded")
+        
+        var fileDownloads = 0
+        
+        // This is for downloads, download-deletions
+        let downloadOperations = NSMutableOrderedSet()
+                
+        for serverFile in serverFileIndex {
+            let localFile = SMLocalFile.fetchObjectWithUUID(serverFile.uuid!.UUIDString)
+            
+            if serverFile.deleted! {
+                // File was deleted on the server.
+                if localFile != nil  {
+                    // Record this as a file to be deleted locally, only if we haven't already done so.
+                    
+                    let localFileNotDeleted = !localFile!.deletedOnServer
+
+                    if localFileNotDeleted {
+                        // A pending upload-deletion is not a conflict.
+                        if localFile!.pendingUploadDeletion() {
+                            // We were trying to upload a deletion to the server, but someone else got there first.
+                            // We can remove the pending upload deletion.
+                            let deletion = localFile!.pendingSMUploadDeletion()
+                            deletion!.removeObject()
+                            // And we can mark the file as deleted on server.
+                            localFile!.deletedOnServer = true
+                            CoreData.sessionNamed(SMCoreData.name).saveContext()
+                            // And we don't have to process this as a SMDownloadDeletion object because the client app already knows about the deletion.
+                            continue;
+                        }
+                        
+                        let downloadDeletion = SMDownloadDeletion.newObject( withLocalFileMetaData: localFile!)
+                        downloadOperations.addObject(downloadDeletion)
+                        
+                        // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The caller should do it at a time that will preserve the atomic nature of the operation.
+                        // Has the download-deletion file been modified (not deleted) locally?
+                        if localFile!.pendingUpload() {
+                            downloadDeletion.conflictType = .FileUpload
+                        }
+                    }
+                    // Else: The local meta data indicates we've already know about the server deletion. No need to locally delete again.
+                }
+                /* Else:
+                    Don't have meta data for this file locally. File must have been uploaded, and deleted by other device(s) all without syncing with this device. I don't see any point in creating local meta data for the file given that I'd just need to mark it as deleted.
+                */
+            }
+            else {
+                // File not deleted on the server, i.e., this is a download not a download-deletion case.
+                
+                Assert.If(nil == serverFile.version, thenPrintThisString: "No version for server file.")
+                
+                if localFile == nil {
+                    // Server file doesn't yet exist on the app/client. I'm going to create the new SMLocalFile meta data object now so that we have access to this meta data when we need to give the callback to the client.
+                    
+                    // SMServerFile must include mimeType, remoteFileName, version and appFileType if on server.
+                    Assert.If(nil == serverFile.mimeType, thenPrintThisString: "mimeType not given by server!")
+                    Assert.If(nil == serverFile.remoteFileName, thenPrintThisString: "remoteFileName not given by server!")
+            
+                    let localFile = SMLocalFile.newObject() as! SMLocalFile
+                    localFile.syncState = .InitialDownload
+                    localFile.uuid = serverFile.uuid.UUIDString
+                    localFile.mimeType = serverFile.mimeType
+                    localFile.appFileType = serverFile.appFileType
+                    localFile.remoteFileName = serverFile.remoteFileName
+                    
+                    // .localVersion must remain nil until just before callback that download is finished (syncServerDownloadsComplete)
+                    localFile.localVersion = nil
+                
+                    let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile)
+                    downloadFile.serverVersion = serverFile.version
+                    downloadOperations.addObject(downloadFile)
+                    fileDownloads += 1
+                }
+                else {
+                    let serverVersion = serverFile.version
+                    let localVersion = localFile!.localVersion!.integerValue
+                    
+                    if serverVersion == localVersion {
+                        // No update. No need to download. [1].
+                        continue
+                    }
+                    else if serverVersion > localVersion {
+                        // Server file is updated version of that on app/client.
+                        // Server version is greater. Need to download.
+                        let downloadFile = SMDownloadFile.newObject(fromServerFile: serverFile, andLocalFileMetaData: localFile!)
+                        downloadFile.serverVersion = serverVersion
+                        downloadOperations.addObject(downloadFile)
+                        fileDownloads += 1
+                        
+                        // Handle conflict cases: These are only relevant when downloading an updated version from the server. If the server version hasn't changed (as in [1] above), and we have a pending upload or pending upload-deletion, then this does not indicate a conflict.
+                        var downloadConflict:SMSyncServerConflict.ClientOperation?
+                        
+                        // I'm prioritizing deletion as a conflict. Because deletion is final, and a choice has to be made if we only issue a single conflict per file per round of downloads.
+                        if localFile!.pendingUploadDeletion() {
+                            downloadConflict = .UploadDeletion
+                        }
+                        else if localFile!.pendingUpload() {
+                            downloadConflict = .FileUpload
+                        }
+                        
+                        if downloadConflict != nil {
+                            downloadFile.conflictType = downloadConflict
+                        }
+                    } else { // serverVersion < localVersion
+                        Assert.badMojo(alwaysPrintThisString: "This should never happen.")
+                    }
+                }
+            }
+        } // End-for
+        
+        if downloadOperations.count > 0 {
+            let downloadStartup = SMDownloadStartup.newObject() as! SMDownloadStartup
+            
+            if fileDownloads == 0 {
+                // We don't have any files to downloads: Only download-deletions and possibly download-conflicts.
+                downloadStartup.startupStage = .NoFileDownloads
+            }
+            
+            downloadOperations.addObject(downloadStartup)
+            
+            SMQueues.current().beingDownloaded = downloadOperations
+        }
+        else {
+            SMQueues.current().beingDownloaded = nil
+        }
+        
+        CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
 }
 

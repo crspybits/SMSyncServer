@@ -116,12 +116,55 @@ public class TestBasics {
     // It's possible we'll check and another device with our same userId (same cloud storage creds) will have a lock-- so be willing to try this a number of times.
     private let maxNumberCheckFileSizeAttempts = 10
     
-    // Make sure the file size we got on cloud storage was what we expected.
-    public func checkFileSize(uuid:String, size:Int, finish:()->()) {
-        self.checkFileSizeAux(1, uuid: uuid, size: size, finish: finish)
+    // Check if a file exists on the server.
+    public func checkForFileOnServer(uuid:String, fileExists:(Bool)->()) {
+        self.checkForFileOnServer(1, uuid: uuid, fileExists: fileExists)
     }
     
-    private func checkFileSizeAux(attemptNumber:Int, uuid:String, size:Int, finish:()->()) {
+    private func checkForFileOnServer(attemptNumber:Int, uuid:String, fileExists:(Bool)->()) {
+        if attemptNumber > maxNumberCheckFileSizeAttempts {
+            self.failure!()
+            return
+        }
+        
+        SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
+            if apiResult.error == nil {
+                let result = fileIndex!.filter({
+                    $0.uuid.UUIDString == uuid
+                })
+                if result.count == 1 {
+                    if result[0].deleted == nil || !result[0].deleted! {
+                        fileExists(true)
+                    }
+                    else {
+                        fileExists(false)
+                    }
+                }
+                else {
+                    Log.error("Found \(result.count) files")
+                    self.failure!()
+                }
+            }
+            else if apiResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
+                let attempt = attemptNumber+1
+                
+                SMServerNetworking.exponentialFallback(forAttempt: attempt) {
+                    self.checkForFileOnServer(attempt, uuid: uuid, fileExists: fileExists)
+                }
+            }
+            else {
+                Log.error("checkFileSize: Got an error: \(apiResult.error)")
+                self.failure!()
+            }
+        }
+    }
+    
+    // Make sure the file size we got on cloud storage was what we expected.
+    public func checkFileSize(uuid:String, size:Int, finish:()->()) {
+        self.checkFileSize(1, uuid: uuid, size: size, finish: finish)
+    }
+    
+    private func checkFileSize(attemptNumber:Int, uuid:String, size:Int, finish:()->()) {
         Log.msg("getFileIndex from checkFileSizeAux")
         
         if attemptNumber > maxNumberCheckFileSizeAttempts {
@@ -152,7 +195,7 @@ public class TestBasics {
                 let attempt = attemptNumber+1
                 
                 SMServerNetworking.exponentialFallback(forAttempt: attempt) {
-                    self.checkFileSizeAux(attempt, uuid: uuid, size: size, finish: finish)
+                    self.checkFileSize(attempt, uuid: uuid, size: size, finish: finish)
                 }
             }
             else {

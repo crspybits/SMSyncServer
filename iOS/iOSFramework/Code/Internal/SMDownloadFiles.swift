@@ -384,7 +384,7 @@ internal class SMDownloadFiles : NSObject {
     }
 
     private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile], completion:()->()) {
-        var downloaded = [(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)]()
+        var downloaded = [(NSURL, SMSyncAttributes, SMSyncServerConflict?)]()
         
         for downloadFile in fileDownloads {
             let localFile = downloadFile.localFile!
@@ -394,7 +394,35 @@ internal class SMDownloadFiles : NSObject {
             attr.mimeType = localFile.mimeType
             attr.remoteFileName = localFile.remoteFileName
             attr.deleted = false
-            downloaded.append((downloadFile.fileURL!, attr, downloadFile.conflictType))
+            
+            var conflict:SMSyncServerConflict?
+            if downloadFile.conflictType != nil {
+                Log.special("FileDownload conflict: \(downloadFile.conflictType!)")
+
+                conflict = SMSyncServerConflict(conflictType: downloadFile.conflictType) { resolution in
+                
+                    // Only in the case of deleting the client operation do we have to do something. If we're keeping the client operation, we do nothing. If we're removing the operations, then we have to either remove the file-upload(s) or upload-deletion.
+                    if resolution == .DeleteConflictingClientOperations {
+                        switch downloadFile.conflictType! {
+                        case .FileUpload:
+                            // Need to remove all pending file uploads for this SMLocalFile. See SMLocalFile pendingUpload() method
+                            let pendingUploads = downloadFile.localFile!.pendingSMUploadFiles()
+                            Assert.If(pendingUploads == nil, thenPrintThisString: "Should have uploads!")
+                            for upload in pendingUploads! {
+                                upload.removeObject()
+                            }
+                            
+                        case .UploadDeletion:
+                            // Need to remove pending upload-deletions. There should only ever be one because we don't allow multiple upload-deletions for the same file..
+                            let pendingUploadDeletion = downloadFile.localFile!.pendingSMUploadDeletion()
+                            Assert.If(pendingUploadDeletion == nil, thenPrintThisString: "Should have a pending upload deletion!")
+                            pendingUploadDeletion!.removeObject()
+                        }
+                    }
+                }
+            }
+            
+            downloaded.append((downloadFile.fileURL!, attr, conflict))
         
             if localFile.syncState == .InitialDownload {
                 localFile.syncState = .AfterInitialSync
@@ -405,7 +433,7 @@ internal class SMDownloadFiles : NSObject {
         }
 
         NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerDownloadsComplete(downloaded) {
+            self.syncServerDelegate?.syncServerDownloads(downloaded) {
                 SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
             }
             completion()
@@ -414,15 +442,46 @@ internal class SMDownloadFiles : NSObject {
     
     private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
             
-        var deletions = [(NSUUID, SMSyncServerDownloadDeletionConflict?)]()
+        var deletions = [(NSUUID, SMSyncServerConflict?)]()
         
         for fileToDelete in fileDeletions {
-            let deletion = (NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, fileToDelete.conflictType)
+            var conflict:SMSyncServerConflict?
+            
+            if fileToDelete.conflictType != nil {
+                Assert.If(fileToDelete.conflictType != .FileUpload, thenPrintThisString: "Didn't have a .FileUpload conflict!")
+                
+                Log.special("DownloadDeletion conflict: \(fileToDelete.conflictType!)")
+                
+                conflict = SMSyncServerConflict(conflictType: fileToDelete.conflictType) { resolution in
+
+                    let pendingUploads = fileToDelete.localFile!.pendingSMUploadFiles()
+                    Assert.If(pendingUploads == nil, thenPrintThisString: "Should have uploads!")
+                    
+                    switch resolution {
+                    case .DeleteConflictingClientOperations:
+                        // Need to remove all pending file uploads for this SMLocalFile. See SMLocalFile pendingUpload() method
+                        for upload in pendingUploads! {
+                            let uploadQueue = upload.queue
+                            upload.removeObject()
+                            
+                            // Need to check to see if, after this removal, the queue that the SMUploadFile object was in has any more actual upload operations-- if not, can remove that that queue. Otherwise, can get spurious attempts to upload.
+                            uploadQueue!.removeIfNoFileOperations()
+                        }
+                        
+                    case .KeepConflictingClientOperations:
+                        // Need to mark at least the first upload pending to force an undelete of the server file.
+                        // I think the first item in the pending uploads will be the first SMUploadFile to get uploaded (for this local file).
+                        pendingUploads![0].undeleteServerFile = true
+                    }
+                }
+            }
+            
+            let deletion = (NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, conflict)
             deletions.append(deletion)
         }
         
         NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerClientShouldDeleteFiles(deletions) {
+            self.syncServerDelegate?.syncServerDownloadDeletions(deletions) {
                 SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
                 completion()
             }

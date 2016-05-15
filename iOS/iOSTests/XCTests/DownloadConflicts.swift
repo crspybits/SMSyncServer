@@ -24,12 +24,10 @@ class DownloadConflicts: BaseClass {
         super.tearDown()
     }
     
-    // Rejection of a download conflict: Push your conflicting change up to the server instead.
-    // Acceptance of a download conflict: Client will remove its conflicting change.
-    
     // MARK: Download deletion conflicts
 
-    func setupDownloadDeletionLocalUploadConflict(fileName fileName: String, handleConflict:(testFile:TestFile, ack:()->())->()) {
+    func setupDownloadDeletionLocalUploadConflict(fileName fileName: String, keepConflicting:Bool, handleConflict:(conflict: SMSyncServerConflict,
+            testFile:TestFile, ack:()->())->()) {
         let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
         let commitCompleteUpload = self.expectationWithDescription("Commit Complete Upload")
         let idleExpectationUpload = self.expectationWithDescription("Idle Upload")
@@ -39,15 +37,25 @@ class DownloadConflicts: BaseClass {
         let idleExpectationDeletion = self.expectationWithDescription("Idle Deletion")
 
         let idleAfterShouldDeleteFiles = self.expectationWithDescription("Idle After Should Delete")
+        
+        var commitCompleteUpload2:XCTestExpectation?
+        var upload2:XCTestExpectation?
+        
+        if keepConflicting {
+            commitCompleteUpload2 = self.expectationWithDescription("Commit Complete Upload")
+            upload2 = self.expectationWithDescription("Commit Complete Upload")
+        }
 
         self.extraServerResponseTime = 60
         
         self.waitUntilSyncServerUserSignin() {
-            let testFile = TestBasics.session.createTestFile(fileName)
+            var testFile = TestBasics.session.createTestFile(fileName)
             
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
+                let newFileContents = "Some new file contents"
+
                 self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
@@ -55,27 +63,63 @@ class DownloadConflicts: BaseClass {
                     
                     // Our current situation is that, when we next do a sync with the server, there will be a download-deletion.
                     // To generate a LocalUpload conflict, we need to now do an upload for this file.
-                    let newFileContents = "Some new file contents".dataUsingEncoding(NSUTF8StringEncoding)
-                    SMSyncServer.session.uploadData(newFileContents!, withDataAttributes: testFile.attr)
+                    let newFileContentsData = newFileContents.dataUsingEncoding(NSUTF8StringEncoding)
+                    SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile.attr)
                     
                     self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
                         let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == .LocalUpload)
+                        XCTAssert(conflict != nil)
+                        XCTAssert(conflict!.conflictType == .FileUpload)
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        handleConflict(testFile:testFile, ack: acknowledgement)
+                        handleConflict(conflict:conflict!, testFile:testFile, ack: acknowledgement)
                     }
                     
+                    // The .Idle callback gets called first
                     self.idleCallbacks.append() {
-                        idleAfterShouldDeleteFiles.fulfill()
+                        if keepConflicting {
+                            idleAfterShouldDeleteFiles.fulfill()
+                        }
+                        else {
+                            // Delete conflicting client operations.
+                            
+                            let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                            Assert.If(attr == nil, thenPrintThisString: "Yikes: Nil attr")
+                            Assert.If(!attr!.deleted!, thenPrintThisString: "Yikes: not deleted!")
+                            
+                            TestBasics.session.checkForFileOnServer(testFile.uuidString) { fileExists in
+                                XCTAssert(!fileExists)
+                                testFile.remove()
+                                idleAfterShouldDeleteFiles.fulfill()
+                            }
+                        }
                     }
                     
-                    SMSyncControl.session.nextSyncOperation()
+                    if keepConflicting {
+                        self.singleUploadCallbacks.append() { uuid in
+                            XCTAssert(uuid.UUIDString == testFile.uuidString)
+                            upload2!.fulfill()
+                        }
+            
+                        // Followed by the commit complete callback.
+                        self.commitCompleteCallbacks.append() { numberUploads in
+                            XCTAssert(numberUploads == 1)
+                            testFile.sizeInBytes = newFileContents.characters.count
+                            self.checkFileSizes([testFile]) {
+                                let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                                Assert.If(attr == nil, thenPrintThisString: "Yikes: Nil attr")
+                                Assert.If(attr!.deleted!, thenPrintThisString: "Yikes: deleted!")
+                                commitCompleteUpload2!.fulfill()
+                            }
+                        }
+                    }
+                    
+                    SMSyncServer.session.commit()
                 }
             }
         }
@@ -83,30 +127,37 @@ class DownloadConflicts: BaseClass {
         self.waitForExpectations()
     }
 
-    func testThatDownloadDeletionLocalUploadAcceptWorks() {
-        // We should get the idle callback in setupDownloadDeletionLocalUploadConflict after ack is called, so shouldn't need another expectation here.
+    func testThatDownloadDeletionLocalUploadResolveConflictByKeepWorks() {
+        // We should get the idle callback in setupDownloadDeletionLocalUploadConflict after ack is called, so shouldn't need another expectation here. We won't get idle callback, and that fulfilled expectation, without the call to ack() below.
         
-        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadAccept") { testFile, ack in
-            
-            testFile.remove()
+        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByKeep", keepConflicting: true) { conflict, testFile, ack in
+        
+            conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
+            ack()
+        }
+    }
+
+    func testThatDownloadDeletionLocalUploadResolveConflictByDeleteWorks() {
+        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByDelete", keepConflicting: false) { conflict, testFile, ack in
+            conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
+            // Need to assert that, after all the server operations have completed, the file has been deleted on server, and is marked as deleted in sync server meta data.
             ack()
         }
     }
     
-    func testThatDownloadDeletionLocalUploadRejectWorks() {
-    }
+    // TODO: Download-deletion, a conflict where there are two files being uploaded. Do both accept and reject.
     
     // MARK: Download file conflicts
     
-    func testThatDownloadFileLocalUploadDeletionAcceptWorks() {
+    func testThatDownloadFileLocalUploadDeletionKeepWorks() {
     }
     
-    func testThatDownloadFileLocalUploadDeletionRejectWorks() {
+    func testThatDownloadFileLocalUploadDeletionDeleteWorks() {
     }
 
-    func testThatDownloadFileLocalUploadAcceptWorks() {
+    func testThatDownloadFileLocalUploadKeepWorks() {
     }
     
-    func testThatDownloadFileLocalUploadRejectWorks() {
+    func testThatDownloadFileLocalUploadDeleteWorks() {
     }
 }

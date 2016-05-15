@@ -24,14 +24,14 @@ class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
         case AppCallback
     }
     
-    var conflictType: SMSyncServerFileDownloadConflict? {
+    var conflictType: SMSyncServerConflict.ClientOperation? {
         set {
             self.internalConflictType = newValue == nil ? nil : newValue!.rawValue
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
         get {
             return self.internalConflictType == nil ?
-                nil : SMSyncServerFileDownloadConflict(rawValue: self.internalConflictType!)
+                nil : SMSyncServerConflict.ClientOperation(rawValue: self.internalConflictType!)
         }
     }
     

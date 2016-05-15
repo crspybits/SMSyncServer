@@ -358,6 +358,7 @@ internal class SMUploadFiles : NSObject {
         
             if SMTest.If.success(apiResult.error, context: .RemoveOperationId) {
                 self.serverOperationId = nil // [4]
+
                 SMQueues.current().beingUploaded!.removeChanges(.UploadWrapup)
                 
                 // Fully done the upload-- can return to SMSyncControl now.
@@ -425,7 +426,7 @@ internal class SMUploadFiles : NSObject {
         var filesToUpload = [SMServerFile]()
 
         let uploadChanges = SMQueues.current().beingUploaded!.getChanges(
-                .UploadFile, operationStage:.ServerUpload) as? [SMUploadFile]
+                .UploadFile, operationStage: .ServerUpload) as? [SMUploadFile]
         
         if uploadChanges == nil {
             return (filesToUpload:nil, error:nil)
@@ -455,8 +456,8 @@ internal class SMUploadFiles : NSObject {
                     return (filesToUpload:nil, error: .InternalError(Error.Create("Server file version \(currentServerFile!.version) not the same as local file version \(localVersion)")))
                 }
                 
-                if currentServerFile!.deleted!.boolValue {
-                    return (filesToUpload:nil, error: .InternalError(Error.Create("The server file you are attempting to upload was already deleted!")))
+                if currentServerFile!.deleted!.boolValue && fileChange.undeleteServerFile == nil {
+                    return (filesToUpload:nil, error: .InternalError(Error.Create("The server file you are attempting to upload was already deleted, and you hadn't forced undeletion!")))
                 }
                 
                 uploadServerFile = fileChange.convertToServerFile()
@@ -471,7 +472,7 @@ internal class SMUploadFiles : NSObject {
     }
     
     // Given that the uploads and/or upload-deletions of files was successful (i.e., both server upload and cloud storage operations have been done), update the local meta data to reflect the success.
-    // Returns the number of uploads and upload-deletions that happened.
+    // Returns the combined number of uploads and upload-deletions that happened.
     private func updateMetaDataForSuccessfulUploads() -> Int {
         var numberUpdates = 0
         var numberNewFiles = 0
@@ -497,6 +498,11 @@ internal class SMUploadFiles : NSObject {
                 if uploadFile.deleteLocalFileAfterUpload!.boolValue {
                     let fileWasDeleted = FileStorage.deleteFileWithPath(uploadFile.fileURL)
                     Assert.If(!fileWasDeleted, thenPrintThisString: "File could not be deleted")
+                }
+                
+                // Special case for undeletion: Need to mark files that were undeleted on server as not deleted here locally.
+                if uploadFile.undeleteServerFile != nil && uploadFile.undeleteServerFile! {
+                    localFile.deletedOnServer = false
                 }
                 
                 if localFile.syncState == .InitialUpload {

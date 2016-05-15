@@ -17,7 +17,7 @@ class SMUploadFileOperation: SMUploadOperation {
         // 1) Upload, when the operation needs to be queued in our server
         case ServerUpload
         
-        // 2) When the file needs to be uploaded to cloud storage or deleted from cloud storage
+        // 2) When the file needs to be transferred to cloud storage or deleted from cloud storage
         case CloudStorage
     }
     

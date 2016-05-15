@@ -12,14 +12,16 @@ import SMCoreLib
 
 class SMDownloadDeletion: SMDownloadFileOperation, CoreDataModel {
 
-    var conflictType: SMSyncServerDownloadDeletionConflict? {
+    // This conflict can only be .FileUpload or nil.
+    var conflictType: SMSyncServerConflict.ClientOperation? {
         set {
+            Assert.If(newValue == .UploadDeletion, thenPrintThisString: "Bad value!")
             self.internalConflictType = newValue == nil ? nil : newValue!.rawValue
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
         get {
             return self.internalConflictType == nil ?
-                nil : SMSyncServerDownloadDeletionConflict(rawValue: self.internalConflictType!)
+                nil : SMSyncServerConflict.ClientOperation(rawValue: self.internalConflictType!)
         }
     }
     

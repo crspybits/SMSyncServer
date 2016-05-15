@@ -10,8 +10,9 @@ SMSyncServer has the following general goals:
 
 1. Giving end-users permanent access to their mobile app data,  
 1. Synchronizing mobile app data across end-user devices,  
-1. Reducing data storage costs for app developers/publishers, and  
-1. Allowing sharing of data with other users. 
+1. Reducing data storage costs for app developers/publishers,  
+1. Allowing sharing of data with other users, and
+1. Cross-platform synchronization (e.g., iOS, Android).
 
 More detailed characteristics of the SMSyncServer:
 

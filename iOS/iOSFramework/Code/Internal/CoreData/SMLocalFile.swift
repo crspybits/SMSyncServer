@@ -110,37 +110,47 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         return self.pendingUploads!.count > 0;
     }
     
-    // Returns true if any of the .pendingUploads are SMUploadFile's
-    func pendingUpload() -> Bool {
-        var result:Bool = false
+    func pendingSMUploadFiles() -> [SMUploadFile]? {
+        var result = [SMUploadFile]()
         
         if self.pendingUploads != nil {
             for fileChange in self.pendingUploads! {
                 if fileChange is SMUploadFile {
-                    result = true
-                    break
+                    result.append(fileChange as! SMUploadFile)
                 }
             }
         }
         
-        return result
+        return result.count == 0 ? nil : result
     }
     
-    // There is a pending upload-deletion if *any* of the SMUploadFileChange's in the .pendingUploads is an SMUploadDeletion.
-    func pendingUploadDeletion(excepting excepting:SMUploadDeletion?=nil) -> Bool {
-        var result:Bool = false
+    // Returns true if any of the .pendingUploads are SMUploadFile's
+    func pendingUpload() -> Bool {
+        let uploadFiles = self.pendingSMUploadFiles()
+        return uploadFiles == nil ? false : true
+    }
+    
+    func pendingSMUploadDeletion(excepting excepting:SMUploadDeletion?=nil) -> SMUploadDeletion? {
+        var result = [SMUploadDeletion]()
         
         if self.pendingUploads != nil {
             for fileChange in self.pendingUploads! {
                 if let deletion = fileChange as? SMUploadDeletion {
                     if excepting == nil || !excepting!.isEqual(deletion) {
-                        result = true
-                        break
+                        result.append(deletion)
                     }
                 }
             }
         }
         
-        return result
+        Assert.If(result.count > 1, thenPrintThisString: "Yikes: have more than one pending upload deletion!")
+        
+        return result.count == 0 ? nil : result[0]
+    }
+    
+    // There is a pending upload-deletion if *any* of the SMUploadFileChange's in the .pendingUploads is an SMUploadDeletion.
+    func pendingUploadDeletion(excepting excepting:SMUploadDeletion?=nil) -> Bool {
+        let deletion = self.pendingSMUploadDeletion(excepting: excepting)
+        return deletion == nil ? false : true
     }
 }

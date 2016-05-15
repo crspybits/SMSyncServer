@@ -48,11 +48,11 @@ class BaseClass: XCTestCase {
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
     
-    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)])->()
+    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)])->()
     var downloadsCompleteSequenceNumber = 0
     var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
 
-    typealias clientShouldDeleteFilesCallback = (deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->())->()
+    typealias clientShouldDeleteFilesCallback = (deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->())->()
     var clientShouldDeleteFilesSequenceNumber = 0
     var clientShouldDeleteFilesCallbacks:[clientShouldDeleteFilesCallback]!
 
@@ -113,14 +113,14 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement:()->()) {
-        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloadedFiles)
+    func syncServerDownloads(downloads:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)], acknowledgement:()->()) {
+        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloads)
         self.downloadsCompleteSequenceNumber += 1
         acknowledgement()
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
+    func syncServerDownloadDeletions(deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->()) {
         self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
         self.clientShouldDeleteFilesSequenceNumber += 1
     }

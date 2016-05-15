@@ -140,4 +140,12 @@ class SMUploadQueue: NSManagedObject, CoreDataModel {
             queue!.removeObject()
         }
     }
+    
+    func removeIfNoFileOperations() {
+        let uploadFiles = self.getChanges(.UploadFile) as? [SMUploadFile]
+        let uploadDeletions = self.getChanges(.UploadDeletion) as? [SMUploadDeletion]
+        if uploadFiles == nil && uploadDeletions == nil {
+            self.removeObject()
+        }
+    }
 }
