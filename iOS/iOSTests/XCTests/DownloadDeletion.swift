@@ -88,9 +88,6 @@ class DownloadDeletion: BaseClass {
         let commitCompleteDelete = self.expectationWithDescription("Commit Complete Download")
         let idleExpectationDeletion = self.expectationWithDescription("Idle Deletion")
 
-        let clientShouldDeleteFilesExpectation = self.expectationWithDescription("Should Delete Files")
-
-        let commitCompleteDelete2 = self.expectationWithDescription("Commit Complete Download2")
         let idleExpectationDeletion2 = self.expectationWithDescription("Idle Deletion2")
 
         self.extraServerResponseTime = 60
@@ -107,6 +104,7 @@ class DownloadDeletion: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
+                    /*
                     self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
                         let uuid = deletions[0]
@@ -118,11 +116,12 @@ class DownloadDeletion: BaseClass {
                         
                         clientShouldDeleteFilesExpectation.fulfill()
                         acknowledgement()
-                    }
+                    }*/
                     
-                    // What should happen here? Right now, an upload deletion will be triggered-- but this will occur *after* the download deletion, since downloads get priority. What will happen on the following upload deletion? It should be treated like a recovery case: It shouldn't do anything, and shouldn't return an error.
+                    // What should happen here? Right now, an upload deletion will be triggered-- but this will occur *after* the download deletion, since downloads get priority. What will happen on the following upload deletion? The shouldDoDeletions doesn't get triggered because the download deletion notices that there is a pending upload deletion, and removes the pending upload deletion-- because it's not needed anymore.
                     // Note that the commit that triggers the expected download deletion is in this call to self.deleteFile.
-                    self.deleteFiles([testFile], deletionExpectation: nil, commitComplete: commitCompleteDelete2, idleExpectation: idleExpectationDeletion2)
+                    // Don't expect a commit here-- because the upload deletion will be removed.
+                    self.deleteFiles([testFile], deletionExpectation: nil, commitComplete: nil, idleExpectation: idleExpectationDeletion2)
                 }
             }
         }

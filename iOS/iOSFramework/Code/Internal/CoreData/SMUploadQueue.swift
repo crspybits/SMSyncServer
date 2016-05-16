@@ -11,7 +11,7 @@ import CoreData
 import SMCoreLib
 
 class SMUploadQueue: NSManagedObject, CoreDataModel {
-
+    
     class func entityName() -> String {
         return "SMUploadQueue"
     }
@@ -119,7 +119,7 @@ class SMUploadQueue: NSManagedObject, CoreDataModel {
         CoreData.sessionNamed(SMCoreData.name).saveContext()
     }
     
-    func removeObject() {
+    func removeObject() {        
         let operations = NSOrderedSet(orderedSet: self.operations!)
         for elem in operations {
             let uploadOperation = elem as? SMUploadOperation

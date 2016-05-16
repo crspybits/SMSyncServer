@@ -428,14 +428,23 @@ internal class SMDownloadFiles : NSObject {
                             let pendingUploads = downloadFile.localFile!.pendingSMUploadFiles()
                             Assert.If(pendingUploads == nil, thenPrintThisString: "Should have uploads!")
                             for upload in pendingUploads! {
+                                let queue = upload.queue
                                 upload.removeObject()
+                                
+                                // Remove the containing queue if no more upload operations after this.
+                                queue!.removeIfNoFileOperations()
                             }
                             
                         case .UploadDeletion:
                             // Need to remove pending upload-deletions. There should only ever be one because we don't allow multiple upload-deletions for the same file..
                             let pendingUploadDeletion = downloadFile.localFile!.pendingSMUploadDeletion()
                             Assert.If(pendingUploadDeletion == nil, thenPrintThisString: "Should have a pending upload deletion!")
+                            
+                            let queue = pendingUploadDeletion!.queue
                             pendingUploadDeletion!.removeObject()
+                            
+                            // Remove the containing queue if no more upload operations after this.
+                            queue!.removeIfNoFileOperations()
                         }
                     }
                     
@@ -514,11 +523,11 @@ internal class SMDownloadFiles : NSObject {
                     case .DeleteConflictingClientOperations:
                         // Need to remove all pending file uploads for this SMLocalFile. See SMLocalFile pendingUpload() method
                         for upload in pendingUploads! {
-                            let uploadQueue = upload.queue
+                            let queue = upload.queue
                             upload.removeObject()
                             
-                            // Need to check to see if, after this removal, the queue that the SMUploadFile object was in has any more actual upload operations-- if not, can remove that that queue. Otherwise, can get spurious attempts to upload.
-                            uploadQueue!.removeIfNoFileOperations()
+                            // Remove the containing queue if no more upload operations after this.
+                            queue!.removeIfNoFileOperations()
                         }
                         
                     case .KeepConflictingClientOperations:

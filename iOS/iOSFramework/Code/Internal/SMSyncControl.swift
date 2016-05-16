@@ -446,21 +446,27 @@ internal class SMSyncControl {
                             // We were trying to upload a deletion to the server, but someone else got there first.
                             // We can remove the pending upload deletion.
                             let deletion = localFile!.pendingSMUploadDeletion()
+                            
+                            let queue = deletion!.queue
                             deletion!.removeObject()
+                            
+                            // Remove the containing queue if no more upload operations after this.
+                            queue!.removeIfNoFileOperations()
+                            
                             // And we can mark the file as deleted on server.
                             localFile!.deletedOnServer = true
                             CoreData.sessionNamed(SMCoreData.name).saveContext()
                             // And we don't have to process this as a SMDownloadDeletion object because the client app already knows about the deletion.
-                            continue;
                         }
-                        
-                        let downloadDeletion = SMDownloadDeletion.newObject( withLocalFileMetaData: localFile!)
-                        downloadOperations.addObject(downloadDeletion)
-                        
-                        // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The caller should do it at a time that will preserve the atomic nature of the operation.
-                        // Has the download-deletion file been modified (not deleted) locally?
-                        if localFile!.pendingUpload() {
-                            downloadDeletion.conflictType = .FileUpload
+                        else {
+                            let downloadDeletion = SMDownloadDeletion.newObject( withLocalFileMetaData: localFile!)
+                            downloadOperations.addObject(downloadDeletion)
+                            
+                            // The caller will be responsible for updating local meta data for this file, to mark it as deleted. The caller should do it at a time that will preserve the atomic nature of the operation.
+                            // Has the download-deletion file been modified (not deleted) locally?
+                            if localFile!.pendingUpload() {
+                                downloadDeletion.conflictType = .FileUpload
+                            }
                         }
                     }
                     // Else: The local meta data indicates we've already know about the server deletion. No need to locally delete again.

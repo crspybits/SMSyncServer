@@ -261,7 +261,7 @@ extension BaseClass : SMSyncServerDelegate {
         }
     }
     
-    func deleteFiles(testFiles:[TestFile], deletionExpectation:XCTestExpectation?, commitComplete:XCTestExpectation, idleExpectation:XCTestExpectation,
+    func deleteFiles(testFiles:[TestFile], deletionExpectation:XCTestExpectation?, commitComplete:XCTestExpectation?, idleExpectation:XCTestExpectation,
         complete:(()->())?=nil) {
         
         for testFileIndex in 0...testFiles.count-1 {
@@ -287,19 +287,25 @@ extension BaseClass : SMSyncServerDelegate {
         }
         
         // Followed by the commit complete.
-        self.commitCompleteCallbacks.append() { numberDeletions in
-            if deletionExpectation != nil {
-                XCTAssert(numberDeletions == testFiles.count)
+        if commitComplete == nil  {
+            // I'm going to require that complete is nil too-- since that callback is called below, in the "else".
+            Assert.If(complete != nil, thenPrintThisString: "complete not nil!")
+        }
+        else {
+            self.commitCompleteCallbacks.append() { numberDeletions in
+                if deletionExpectation != nil {
+                    XCTAssert(numberDeletions == testFiles.count)
+                }
+                
+                for testFile in testFiles {
+                    let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                    XCTAssert(fileAttr != nil)
+                    XCTAssert(fileAttr!.deleted!)
+                }
+                
+                commitComplete!.fulfill()
+                complete?()
             }
-            
-            for testFile in testFiles {
-                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
-                XCTAssert(fileAttr != nil)
-                XCTAssert(fileAttr!.deleted!)
-            }
-            
-            commitComplete.fulfill()
-            complete?()
         }
         
         SMSyncServer.session.commit()

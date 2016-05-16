@@ -83,7 +83,7 @@
         <element name="SMUploadFile" positionX="-432" positionY="590" width="128" height="105"/>
         <element name="SMUploadFileOperation" positionX="-333" positionY="482" width="153" height="75"/>
         <element name="SMUploadOperation" positionX="-225" positionY="372" width="128" height="58"/>
-        <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="103"/>
+        <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="105"/>
         <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
     </elements>
 </model>

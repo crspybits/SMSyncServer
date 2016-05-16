@@ -160,7 +160,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
             NSLog("self.uploadsBeingPrepared: \(self.uploadsBeingPrepared)")
             NSLog("self.uploadsBeingPrepared!.operations: \(self.uploadsBeingPrepared!.operations)")
             
-            // Remove any prior upload changes in the same queue with the same uuid
+            // Remove any prior upload changes in the same queue with the same uuid.
             let operations = NSOrderedSet(orderedSet: self.uploadsBeingPrepared!.operations!)
             for elem in operations {
                 if let uploadFileChange = elem as? SMUploadFile {

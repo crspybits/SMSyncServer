@@ -136,6 +136,7 @@ internal class SMUploadFiles : NSObject {
     
     // Returns true if there were deletions to do (which will be in process asynchronously), and false if there were no deletions to do. Nil is returned in the case of an error.
     private func doUploadDeletions() -> Bool? {
+        Log.msg("\(SMQueues.current().beingUploaded)")
         var deletionChanges = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
         if deletionChanges == nil {
             return false
