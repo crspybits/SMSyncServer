@@ -78,7 +78,7 @@ public enum SMSyncServerEvent {
 
 // If you receive a non-nil conflict in a callback method, you must resolve the conflict by calling resolveConflict.
 public class SMSyncServerConflict {
-    // Because downloads are higher-priority with the SMSyncServer, all conflicts effectively originate from a server operation: A download-deletion or a file-upload. The type of server operation will be apparent from the context.
+
     
     internal typealias callbackType = ((resolution:ResolutionType)->())!
     
@@ -90,7 +90,8 @@ public class SMSyncServerConflict {
         self.resolutionCallback = resolutionCallback
     }
     
-    // And the conflict is between the server operation and a local, client operation.
+    // Because downloads are higher-priority (than uploads) with the SMSyncServer, all conflicts effectively originate from a server operation: A download-deletion or a file-download. The type of server operation will be apparent from the context.
+    // And the conflict is between the server operation and a local, client operation:
     public enum ClientOperation : String {
         case UploadDeletion
         case FileUpload
@@ -99,7 +100,11 @@ public class SMSyncServerConflict {
     public var conflictType:ClientOperation!
     
     public enum ResolutionType {
+        // E.g., suppose a download-deletion and a file-upload (ClientOperation.FileUpload) are conflicting.
+        // Example continued: The client chooses to delete the conflicting file-upload and accept the download-deletion by using this resolution.
         case DeleteConflictingClientOperations
+        
+        // Example continued: The client chooses to keep the conflicting file-upload, and override the download-deletion, by using this resolution.
         case KeepConflictingClientOperations
     }
     
@@ -125,15 +130,15 @@ public protocol SMSyncServerDelegate : class {
     // For any given download only one of the following two delegate methods will be called. I.e., either there is a conflict or is not a conflict for a given download.
     func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ())
     
-    // The client has to decide how to resolve the conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
+    // The client has to decide how to resolve the file-download conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
     func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)])
     
     // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
     func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->())
 
-    // The client has to decide how to resolve the conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
-    // Server conflicts will not include UploadDeletion.
+    // The client has to decide how to resolve the download-deletion conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
+    // Conflicts will not include UploadDeletion.
     func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)])
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
