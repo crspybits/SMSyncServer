@@ -39,6 +39,15 @@
             </BuildableReference>
             <SkippedTests>
                <Test
+                  Identifier = "DownloadConflicts/testThatDownloadFileLocalUploadDeleteWorks()">
+               </Test>
+               <Test
+                  Identifier = "DownloadConflicts/testThatDownloadFileLocalUploadDeletionDeleteWorks()">
+               </Test>
+               <Test
+                  Identifier = "DownloadConflicts/testThatDownloadFileLocalUploadKeepWorks()">
+               </Test>
+               <Test
                   Identifier = "DownloadDeletionRecovery/testThatDownloadDeletionOfASingleFileThatExistsCrashBeforeAcknowledgeWorks()">
                </Test>
                <Test

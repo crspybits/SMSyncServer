@@ -410,6 +410,7 @@ public class SMSyncServer : NSObject {
             return
         }
         
+        // TODO: Is there any kind of a race condition here? Can an upload currently being processed change the syncState of the local file meta data?
         if localFileMetaData!.syncState == .InitialUpload {
             // A new file was queued for upload, and before upload was deleted. We'll just mark the file as deleted, and return. The file will never be uploaded to the server (so the .deletedOnServer naming is incorrect in this case).
             localFileMetaData!.deletedOnServer = true
@@ -417,7 +418,9 @@ public class SMSyncServer : NSObject {
             let uploads = NSOrderedSet(orderedSet: localFileMetaData!.pendingUploads!)
             for managedObject in uploads {
                 let uploadFile = managedObject as! SMUploadFile
+                let queue = uploadFile.queue
                 uploadFile.removeObject()
+                queue!.removeIfNoFileOperations()
             }
             
             CoreData.sessionNamed(SMCoreData.name).saveContext()
@@ -455,6 +458,9 @@ public class SMSyncServer : NSObject {
         
         // For meta data indicating file is deleted, now marks file as not deleted.
         case Undelete
+        
+        // Go back to a version 1 earlier
+        case DecrementVersion
     }
     
     // Reset/clear meta data in SMSyncServer. E.g., useful for testing downloads so that files will now need to be downloaded from server. If you just want to reset for a single file, pass the UUID of that file. Does not result directly with interaction with the server.
@@ -478,6 +484,9 @@ public class SMSyncServer : NSObject {
                     
                 case .Some(.Undelete):
                     localFile.deletedOnServer = false
+                    
+                case .Some(.DecrementVersion):
+                    localFile.localVersion = localFile.localVersion!.integerValue - 1
                 }
             }
         }

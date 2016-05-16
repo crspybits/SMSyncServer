@@ -87,6 +87,7 @@ class BaseClass: XCTestCase {
         self.deletionCallbacks = [deletionCallback]()
         self.singleDownload = [singleDownloadType]()
         self.shouldSaveDownloads = [shouldSaveDownloadsCallback]()
+        self.shouldSaveDownloadsSequenceNumber = 0
         self.shouldResolveDownloadConflicts = [shouldResolveDownloadConflictsCallback]()
         self.shouldResolveDownloadConflictsSequenceNumber = 0
         self.shouldResolveDeletionConflicts = [shouldResolveDeletionConflictsCallback]()
@@ -126,24 +127,28 @@ class BaseClass: XCTestCase {
 extension BaseClass : SMSyncServerDelegate {
 
     func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
-        self.shouldSaveDownloads[self.shouldSaveDownloadsSequenceNumber](downloads: downloads, acknowledgement:acknowledgement)
+        let sequenceNumber = self.shouldSaveDownloadsSequenceNumber
         self.shouldSaveDownloadsSequenceNumber += 1
+        self.shouldSaveDownloads[sequenceNumber](downloads: downloads, acknowledgement:acknowledgement)
     }
     
     func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
-        self.shouldResolveDownloadConflicts[self.shouldResolveDownloadConflictsSequenceNumber](conflicts: conflicts)
+        let sequenceNumber = self.shouldResolveDownloadConflictsSequenceNumber
         self.shouldResolveDownloadConflictsSequenceNumber += 1
+        self.shouldResolveDownloadConflicts[sequenceNumber](conflicts: conflicts)
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
     func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
-        self.shouldDoDeletions[self.shouldDoDeletionsSequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
+        let sequenceNumber = self.shouldDoDeletionsSequenceNumber
         self.shouldDoDeletionsSequenceNumber += 1
+        self.shouldDoDeletions[sequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
     }
         
     func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
-        self.shouldResolveDeletionConflicts[self.shouldResolveDeletionConflictsSequenceNumber](conflicts: conflicts)
+        let sequenceNumber = self.shouldResolveDeletionConflictsSequenceNumber
         self.shouldResolveDeletionConflictsSequenceNumber += 1
+        self.shouldResolveDeletionConflicts[sequenceNumber](conflicts: conflicts)
     }
     
     // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
@@ -166,8 +171,9 @@ extension BaseClass : SMSyncServerDelegate {
             break
         
         case .NonRecoverableError, .ClientAPIError, .InternalError:
-            self.errorCallbacks[self.errorSequenceNumber]()
+            let sequenceNumber = self.errorSequenceNumber
             self.errorSequenceNumber += 1
+            self.errorCallbacks[sequenceNumber]()
         }
     }
     
@@ -175,16 +181,19 @@ extension BaseClass : SMSyncServerDelegate {
     func syncServerEventOccurred(event:SMSyncServerEvent) {
         switch event {
         case .DeletionsSent(uuids: let uuids):
-            self.deletionCallbacks[self.deletionSequenceNumber](uuids: uuids)
+            let sequenceNumber = self.deletionSequenceNumber
             self.deletionSequenceNumber += 1
-        
+            self.deletionCallbacks[sequenceNumber](uuids: uuids)
+            
         case .SingleUploadComplete(uuid: let uuid):
-            self.singleUploadCallbacks[self.singleUploadSequenceNumber](uuid: uuid)
+            let sequenceNumber = self.singleUploadSequenceNumber
             self.singleUploadSequenceNumber += 1
+            self.singleUploadCallbacks[sequenceNumber](uuid: uuid)
             
         case .OutboundTransferComplete(numberOperations: let numberOperations):
-            self.commitCompleteCallbacks[self.commitCompleteSequenceNumber](numberUploads: numberOperations)
+            let sequenceNumber = self.commitCompleteSequenceNumber
             self.commitCompleteSequenceNumber += 1
+            self.commitCompleteCallbacks[sequenceNumber](numberUploads: numberOperations)
         
         case .NoFilesToDownload:
             if nil != self.singleNoDownloadsCallback {
@@ -196,8 +205,9 @@ extension BaseClass : SMSyncServerDelegate {
             break
             
         case .SingleDownloadComplete(url: let url, attr: let attr):
-            self.singleDownload[self.singleDownloadSequenceNumber](localFile: url, attr: attr)
+            let sequenceNumber = self.singleDownloadSequenceNumber
             self.singleDownloadSequenceNumber += 1
+            self.singleDownload[sequenceNumber](localFile: url, attr: attr)
             
         case .InboundTransferComplete(numberOperations: let numberOperations):
             if self.singleInboundTransferCallback != nil {
@@ -261,7 +271,7 @@ extension BaseClass : SMSyncServerDelegate {
         }
     }
     
-    func deleteFiles(testFiles:[TestFile], deletionExpectation:XCTestExpectation?, commitComplete:XCTestExpectation?, idleExpectation:XCTestExpectation,
+    func deleteFiles(testFiles:[TestFile], deletionExpectation:XCTestExpectation?, commitCompleteExpectation:XCTestExpectation?, idleExpectation:XCTestExpectation,
         complete:(()->())?=nil) {
         
         for testFileIndex in 0...testFiles.count-1 {
@@ -283,16 +293,16 @@ extension BaseClass : SMSyncServerDelegate {
         
         // The .Idle callback gets called first
         self.idleCallbacks.append() {
+            if commitCompleteExpectation == nil  {
+                complete?()
+            }
             idleExpectation.fulfill()
         }
         
         // Followed by the commit complete.
-        if commitComplete == nil  {
-            // I'm going to require that complete is nil too-- since that callback is called below, in the "else".
-            Assert.If(complete != nil, thenPrintThisString: "complete not nil!")
-        }
-        else {
+        if commitCompleteExpectation != nil  {
             self.commitCompleteCallbacks.append() { numberDeletions in
+                Log.msg("commitCompleteCallbacks: deleteFiles")
                 if deletionExpectation != nil {
                     XCTAssert(numberDeletions == testFiles.count)
                 }
@@ -303,7 +313,7 @@ extension BaseClass : SMSyncServerDelegate {
                     XCTAssert(fileAttr!.deleted!)
                 }
                 
-                commitComplete!.fulfill()
+                commitCompleteExpectation!.fulfill()
                 complete?()
             }
         }

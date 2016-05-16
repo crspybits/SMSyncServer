@@ -50,7 +50,7 @@ class DownloadDeletionRecovery: BaseClass {
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
@@ -118,7 +118,7 @@ class DownloadDeletionRecovery: BaseClass {
                 self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                     // Upload done: Now idle
                     
-                    self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                    self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                         // Deletion done: Now idle.
                         
                         // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.

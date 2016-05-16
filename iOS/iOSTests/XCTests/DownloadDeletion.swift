@@ -45,7 +45,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.
@@ -99,7 +99,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
@@ -121,7 +121,7 @@ class DownloadDeletion: BaseClass {
                     // What should happen here? Right now, an upload deletion will be triggered-- but this will occur *after* the download deletion, since downloads get priority. What will happen on the following upload deletion? The shouldDoDeletions doesn't get triggered because the download deletion notices that there is a pending upload deletion, and removes the pending upload deletion-- because it's not needed anymore.
                     // Note that the commit that triggers the expected download deletion is in this call to self.deleteFile.
                     // Don't expect a commit here-- because the upload deletion will be removed.
-                    self.deleteFiles([testFile], deletionExpectation: nil, commitComplete: nil, idleExpectation: idleExpectationDeletion2)
+                    self.deleteFiles([testFile], deletionExpectation: nil, commitCompleteExpectation: nil, idleExpectation: idleExpectationDeletion2)
                 }
             }
         }
@@ -150,7 +150,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid)
@@ -192,7 +192,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile1, testFile2], uploadExpectations: [singleUploadExpectation1, singleUploadExpectation2], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile1, testFile2], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile1, testFile2], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.
@@ -261,7 +261,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile1, testFile2], uploadExpectations: [singleUploadExpectation1, singleUploadExpectation2], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile1], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile1], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid, resetType: .Undelete)
@@ -332,7 +332,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.
@@ -405,7 +405,7 @@ class DownloadDeletion: BaseClass {
             self.uploadFiles([testFile1], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
                 // Upload done: Now idle
                 
-                self.deleteFiles([testFile1], deletionExpectation: deletionExpectation, commitComplete: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                self.deleteFiles([testFile1], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
                     // Deletion done: Now idle.
                     
                     // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.

@@ -314,7 +314,7 @@ internal class SMUploadFiles : NSObject {
                     self.uploadControl()
                     
                 case SMServerConstants.rcOperationStatusSuccessfulCompletion:
-                    Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
+                    Log.msg("Upload operation succeeded: \(operationResult!.count) cloud storage operations performed")
                     self.numberRevertBackToOutboundTransfer = 0
                     let numberUploads = self.updateMetaDataForSuccessfulUploads()
                     Log.msg("number server operations: \(operationResult!.count); numberUploads: \(numberUploads)")
@@ -502,7 +502,7 @@ internal class SMUploadFiles : NSObject {
                 }
                 
                 // Special case for undeletion: Need to mark files that were undeleted on server as not deleted here locally.
-                if uploadFile.undeleteServerFile != nil && uploadFile.undeleteServerFile! {
+                if uploadFile.undeleteServerFile ?? false {
                     localFile.deletedOnServer = false
                 }
                 

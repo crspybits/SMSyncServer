@@ -232,7 +232,7 @@ internal class SMDownloadFiles : NSObject {
                                 numberOperations:operationResult!.count))
                     }
                     
-                    Log.msg("Operation succeeded: \(operationResult!.count) cloud storage operations performed")
+                    Log.msg("Download operation succeeded: \(operationResult!.count) cloud storage operations performed")
         
                     startUp!.startupStage = .RemoveOperationId
                     self.downloadControl()
@@ -332,6 +332,8 @@ internal class SMDownloadFiles : NSObject {
             .DownloadDeletion) as? [SMDownloadDeletion] {
             Log.msg("\(fileDeletions.count) file deletions")
             
+            // There is an interesting problem that comes up here. While conceptually, we might want to delay marking the .deletedOnServer property to indicate deleted, for conflicts, this generates a cycle of behavior between the client and the server. If the client resolves the conflict by keeping client operations, then this will generate an upload request, which before that processes will do a download. Then, without the file marked as .deletedOnServer as true, to be consistent with the server, generates another download-deletion-- hence a cycle.
+            // Hence, we'll set .deletedOnServer as true here, and with conflicts if the client chooses "Keep", the file will get .deletedOnServer set to false in updateMetaDataForSuccessfulUploads in SMUploadFiles.swift.
             for downloadDeletion in fileDeletions {
                 Assert.If(downloadDeletion.localFile == nil, thenPrintThisString: "No localFile for SMDownloadDeletion")
                 downloadDeletion.localFile!.deletedOnServer = true
@@ -531,6 +533,7 @@ internal class SMDownloadFiles : NSObject {
                         }
                         
                     case .KeepConflictingClientOperations:
+                        // Since the only conflicting operation that we can have are file-uploads, and we are keeping that/those, don't need to change .deletedOnServer property.
                         // Need to mark at least the first upload pending to force an undelete of the server file.
                         // I think the first item in the pending uploads will be the first SMUploadFile to get uploaded (for this local file).
                         pendingUploads![0].undeleteServerFile = true

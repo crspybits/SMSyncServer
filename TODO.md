@@ -17,7 +17,7 @@
 
 1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData. (How does this relate to the appFileType we already have planned? What if we changed that from appFileType to appDataType?).
 
-1. Add Dropbox to cloud storage systems. Needs work on both server side and client side.
+1. Add Dropbox to cloud storage systems. Needs work on both server side and client side. Need to figure out how to do something like inheritance in Javascript so I can have a superclass definition of the interface for a generic cloud storage system, which will hopefully make it easier to implement interfaces to new specific cloud storage systems.
 
 1. Improve performance/reliability of file upload and download by breaking up files into blocks and transmitting/receiving those blocks. E.g., 100K blocks. Have already sketched with NSManagedObject descriptions. While this can be considered a performance issue, it's also a functionality issue: In the case of having a lower speed network connection, or larger files, it's possible that without this change, uploads/downloads would never complete-- they would always fail (e.g., when the user gets frustrated with progress) and restart from the beginning and never complete overall.
 
@@ -27,7 +27,7 @@
 
 1. Create an Android client.
 
-1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible.
+1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
 
 1. Lock breaking on the server: It is possible that a client will not be able to remove a lock. E.g., if the client obtains a lock, fails, and then never gains access to the network again. To implement lock breaking, we need at minimum a means to know if an ongoing transfer is still ongoing. What I'd like to do is break a lock if it has not been removed by the owner, after some fixed period of time after an ongoing transfer has completed. Or after that fixed period of time if an ongoing transfer has not been initiated.
 
