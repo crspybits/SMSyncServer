@@ -111,12 +111,12 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(numberDownloads == 1)
                 XCTAssert(downloadedFiles.count == 1)
-                let (_, _, conflict) = downloadedFiles[0]
-                XCTAssert(conflict == nil)
+                let (_, _) = downloadedFiles[0]
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -264,14 +264,9 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(numberDownloads == 2)
                 XCTAssert(downloadedFiles.count == 2)
-                
-                let (_, _, conflict0) = downloadedFiles[0]
-                XCTAssert(conflict0 == nil)
-                let (_, _, conflict1) = downloadedFiles[1]
-                XCTAssert(conflict1 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
@@ -282,6 +277,7 @@ class Download: BaseClass {
                 XCTAssert(!fileAttr2!.deleted!)
                 
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -384,12 +380,9 @@ class Download: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(numberDownloads == 1)
                 XCTAssert(downloadedFiles.count == 1)
-                
-                let (_, _, conflict0) = downloadedFiles[0]
-                XCTAssert(conflict0 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
@@ -398,6 +391,7 @@ class Download: BaseClass {
                 expectSecondUpload = true
                 
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -507,14 +501,9 @@ class Download: BaseClass {
                 singleDownloadExpectation2.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(numberDownloads == 2)
                 XCTAssert(downloadedFiles.count == 2)
-                
-                let (_, _, conflict0) = downloadedFiles[0]
-                XCTAssert(conflict0 == nil)
-                let (_, _, conflict1) = downloadedFiles[1]
-                XCTAssert(conflict1 == nil)
                 
                 let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                 XCTAssert(fileAttr1 != nil)
@@ -527,6 +516,7 @@ class Download: BaseClass {
                 expectThirdUpload = true
                 
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             self.singleUploadCallbacks.append() { uuid in

@@ -93,11 +93,19 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         }
     }
     
-    func syncServerDownloads(downloads: [(NSURL, SMSyncAttributes, SMSyncServerConflict?)], acknowledgement: () -> ()) {
+    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+        failTest()
+    }
+    
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+        failTest()
+    }
+    
+    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
         failTest()
     }
 
-    func syncServerDownloadDeletions(deletions: [(NSUUID, SMSyncServerConflict?)], acknowledgement: () -> ()) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
         failTest()
     }
     

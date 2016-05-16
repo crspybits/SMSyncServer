@@ -48,13 +48,21 @@ class BaseClass: XCTestCase {
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
     
-    typealias downloadsCompletedCallback = (downloadedFiles:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)])->()
-    var downloadsCompleteSequenceNumber = 0
-    var downloadsCompleteCallbacks:[downloadsCompletedCallback]!
+    typealias shouldSaveDownloadsCallback = (downloads:[(NSURL, SMSyncAttributes)], acknowledgement:()->())->()
+    var shouldSaveDownloadsSequenceNumber = 0
+    var shouldSaveDownloads:[shouldSaveDownloadsCallback]!
 
-    typealias clientShouldDeleteFilesCallback = (deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->())->()
-    var clientShouldDeleteFilesSequenceNumber = 0
-    var clientShouldDeleteFilesCallbacks:[clientShouldDeleteFilesCallback]!
+    typealias shouldResolveDownloadConflictsCallback = (conflicts:[(NSURL, SMSyncAttributes, SMSyncServerConflict)])->()
+    var shouldResolveDownloadConflictsSequenceNumber = 0
+    var shouldResolveDownloadConflicts:[shouldResolveDownloadConflictsCallback]!
+    
+    typealias shouldDoDeletionsCallback = (deletions:[NSUUID], acknowledgement:()->())->()
+    var shouldDoDeletionsSequenceNumber = 0
+    var shouldDoDeletions:[shouldDoDeletionsCallback]!
+    
+    typealias shouldResolveDeletionConflictsCallback = (conflicts:[(NSUUID, SMSyncServerConflict)])->()
+    var shouldResolveDeletionConflictsSequenceNumber = 0
+    var shouldResolveDeletionConflicts:[shouldResolveDeletionConflictsCallback]!
 
     typealias errorCallback = ()->()
     var errorSequenceNumber = 0
@@ -78,13 +86,17 @@ class BaseClass: XCTestCase {
         self.singleUploadCallbacks = [singleUploadCallback]()
         self.deletionCallbacks = [deletionCallback]()
         self.singleDownload = [singleDownloadType]()
-        self.downloadsCompleteCallbacks = [downloadsCompletedCallback]()
+        self.shouldSaveDownloads = [shouldSaveDownloadsCallback]()
+        self.shouldResolveDownloadConflicts = [shouldResolveDownloadConflictsCallback]()
+        self.shouldResolveDownloadConflictsSequenceNumber = 0
+        self.shouldResolveDeletionConflicts = [shouldResolveDeletionConflictsCallback]()
+        self.shouldResolveDeletionConflictsSequenceNumber = 0
         self.idleCallbacks = [idleCallback]()
         self.singleRecoveryCallback = nil
         self.numberOfRecoverySteps = 0
         self.numberOfNoDownloadsCallbacks = 0
-        self.clientShouldDeleteFilesSequenceNumber = 0
-        self.clientShouldDeleteFilesCallbacks = [clientShouldDeleteFilesCallback]()
+        self.shouldDoDeletionsSequenceNumber = 0
+        self.shouldDoDeletions = [shouldDoDeletionsCallback]()
         self.processModeChanges = false
         
         TestBasics.session.failure = {
@@ -113,16 +125,25 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerDownloads(downloads:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)], acknowledgement:()->()) {
-        self.downloadsCompleteCallbacks[self.downloadsCompleteSequenceNumber](downloadedFiles: downloads)
-        self.downloadsCompleteSequenceNumber += 1
-        acknowledgement()
+    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+        self.shouldSaveDownloads[self.shouldSaveDownloadsSequenceNumber](downloads: downloads, acknowledgement:acknowledgement)
+        self.shouldSaveDownloadsSequenceNumber += 1
+    }
+    
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+        self.shouldResolveDownloadConflicts[self.shouldResolveDownloadConflictsSequenceNumber](conflicts: conflicts)
+        self.shouldResolveDownloadConflictsSequenceNumber += 1
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerDownloadDeletions(deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->()) {
-        self.clientShouldDeleteFilesCallbacks[self.clientShouldDeleteFilesSequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
-        self.clientShouldDeleteFilesSequenceNumber += 1
+    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+        self.shouldDoDeletions[self.shouldDoDeletionsSequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
+        self.shouldDoDeletionsSequenceNumber += 1
+    }
+        
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+        self.shouldResolveDeletionConflicts[self.shouldResolveDeletionConflictsSequenceNumber](conflicts: conflicts)
+        self.shouldResolveDeletionConflictsSequenceNumber += 1
     }
     
     // Reports mode changes including errors. Generally useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.

@@ -384,7 +384,24 @@ internal class SMDownloadFiles : NSObject {
     }
 
     private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile], completion:()->()) {
-        var downloaded = [(NSURL, SMSyncAttributes, SMSyncServerConflict?)]()
+        var downloads = [(NSURL, SMSyncAttributes)]()
+        var conflicts = [(NSURL, SMSyncAttributes, SMSyncServerConflict)]()
+
+        var shouldSaveDownloadsDone = false
+        var calledCompletion = false
+        
+        func checkIfDone() {
+            let unresolvedConflicts = conflicts.filter() {(_, _, conflict) in
+                !conflict.conflictResolved
+            }
+            
+            if !calledCompletion && shouldSaveDownloadsDone &&
+                    unresolvedConflicts.count == 0 {
+                SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
+                calledCompletion = true
+                completion()
+            }
+        }
         
         for downloadFile in fileDownloads {
             let localFile = downloadFile.localFile!
@@ -395,12 +412,14 @@ internal class SMDownloadFiles : NSObject {
             attr.remoteFileName = localFile.remoteFileName
             attr.deleted = false
             
-            var conflict:SMSyncServerConflict?
-            if downloadFile.conflictType != nil {
+            if downloadFile.conflictType == nil {
+                downloads.append((downloadFile.fileURL!, attr))
+            }
+            else {
                 Log.special("FileDownload conflict: \(downloadFile.conflictType!)")
-
-                conflict = SMSyncServerConflict(conflictType: downloadFile.conflictType) { resolution in
                 
+                let conflict = SMSyncServerConflict(conflictType: downloadFile.conflictType!) { resolution in
+
                     // Only in the case of deleting the client operation do we have to do something. If we're keeping the client operation, we do nothing. If we're removing the operations, then we have to either remove the file-upload(s) or upload-deletion.
                     if resolution == .DeleteConflictingClientOperations {
                         switch downloadFile.conflictType! {
@@ -419,10 +438,12 @@ internal class SMDownloadFiles : NSObject {
                             pendingUploadDeletion!.removeObject()
                         }
                     }
-                }
+                    
+                    checkIfDone()
+                } // End conflict closure
+                
+                conflicts.append((downloadFile.fileURL!, attr, conflict))
             }
-            
-            downloaded.append((downloadFile.fileURL!, attr, conflict))
         
             if localFile.syncState == .InitialDownload {
                 localFile.syncState = .AfterInitialSync
@@ -432,27 +453,59 @@ internal class SMDownloadFiles : NSObject {
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
 
-        NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerDownloads(downloaded) {
-                SMQueues.current().removeBeingDownloadedChanges(.DownloadFile)
+        if downloads.count > 0 {
+            NSThread.runSyncOnMainThread() {
+                self.syncServerDelegate?.syncServerShouldSaveDownloads(downloads) {
+                    shouldSaveDownloadsDone = true
+                    checkIfDone()
+                }
             }
-            completion()
+        }
+        else {
+            shouldSaveDownloadsDone = true
+        }
+        
+        if conflicts.count > 0 {
+            NSThread.runSyncOnMainThread() {
+                self.syncServerDelegate?.syncServerShouldResolveDownloadConflicts(conflicts)
+            }
+        }
+        else {
+            checkIfDone()
         }
     }
     
     private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
             
-        var deletions = [(NSUUID, SMSyncServerConflict?)]()
+        var deletions = [NSUUID]()
+        var conflicts = [(NSUUID, SMSyncServerConflict)]()
+
+        var shouldResolveDeletionConflictsDone = false
+        var calledCompletion = false
+        
+        func checkIfDone() {
+            let unresolvedConflicts = conflicts.filter() {(_, conflict) in
+                !conflict.conflictResolved
+            }
+            
+            if !calledCompletion && shouldResolveDeletionConflictsDone && unresolvedConflicts.count == 0 {
+            
+                SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
+                calledCompletion = true
+                completion()
+            }
+        }
         
         for fileToDelete in fileDeletions {
-            var conflict:SMSyncServerConflict?
-            
-            if fileToDelete.conflictType != nil {
+            if fileToDelete.conflictType == nil {
+                deletions.append(NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
+            }
+            else {
                 Assert.If(fileToDelete.conflictType != .FileUpload, thenPrintThisString: "Didn't have a .FileUpload conflict!")
                 
                 Log.special("DownloadDeletion conflict: \(fileToDelete.conflictType!)")
                 
-                conflict = SMSyncServerConflict(conflictType: fileToDelete.conflictType) { resolution in
+                let conflict = SMSyncServerConflict(conflictType: fileToDelete.conflictType!) { resolution in
 
                     let pendingUploads = fileToDelete.localFile!.pendingSMUploadFiles()
                     Assert.If(pendingUploads == nil, thenPrintThisString: "Should have uploads!")
@@ -473,18 +526,33 @@ internal class SMDownloadFiles : NSObject {
                         // I think the first item in the pending uploads will be the first SMUploadFile to get uploaded (for this local file).
                         pendingUploads![0].undeleteServerFile = true
                     }
-                }
+                    
+                    checkIfDone()
+                } // End conflict closure
+                
+                conflicts.append((NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, conflict))
             }
-            
-            let deletion = (NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, conflict)
-            deletions.append(deletion)
         }
         
-        NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerDownloadDeletions(deletions) {
-                SMQueues.current().removeBeingDownloadedChanges(.DownloadDeletion)
-                completion()
+        if deletions.count > 0 {
+            NSThread.runSyncOnMainThread() {
+                self.syncServerDelegate?.syncServerShouldDoDeletions(deletions) {
+                    shouldResolveDeletionConflictsDone = true
+                    checkIfDone()
+                }
             }
+        }
+        else {
+            shouldResolveDeletionConflictsDone = true
+        }
+        
+        if conflicts.count > 0 {
+            NSThread.runSyncOnMainThread() {
+                self.syncServerDelegate?.syncServerShouldResolveDeletionConflicts(conflicts)
+            }
+        }
+        else {
+            checkIfDone()
         }
     }
     

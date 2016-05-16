@@ -53,18 +53,17 @@ class DownloadDeletion: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.idleCallbacks.append() {
@@ -108,18 +107,17 @@ class DownloadDeletion: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     // What should happen here? Right now, an upload deletion will be triggered-- but this will occur *after* the download deletion, since downloads get priority. What will happen on the following upload deletion? It should be treated like a recovery case: It shouldn't do anything, and shouldn't return an error.
@@ -204,13 +202,11 @@ class DownloadDeletion: BaseClass {
                     SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid, resetType: .Undelete)
                     SMSyncServer.session.resetMetaData(forUUID: testFile2.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 2)
                         // The ordering here isn't well defined, but assume its the same as uploaded/deleted.
-                        let (uuid0, conflict0) = deletions[0]
-                        let (uuid1, conflict1) = deletions[1]
-                        XCTAssert(conflict0 == nil)
-                        XCTAssert(conflict1 == nil)
+                        let uuid0 = deletions[0]
+                        let uuid1 = deletions[1]
 
                         XCTAssert(uuid0.UUIDString == testFile1.uuidString)
                         XCTAssert(uuid1.UUIDString == testFile2.uuidString)
@@ -223,8 +219,8 @@ class DownloadDeletion: BaseClass {
                         XCTAssert(fileAttr2 != nil)
                         XCTAssert(fileAttr2!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.idleCallbacks.append() {
@@ -272,10 +268,9 @@ class DownloadDeletion: BaseClass {
                     SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid, resetType: .Undelete)
                     SMSyncServer.session.resetMetaData(forUUID: testFile2.uuid)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
 
                         XCTAssert(uuid.UUIDString == testFile1.uuidString)
                         
@@ -283,8 +278,8 @@ class DownloadDeletion: BaseClass {
                         XCTAssert(fileAttr1 != nil)
                         XCTAssert(fileAttr1!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
@@ -294,15 +289,14 @@ class DownloadDeletion: BaseClass {
                         singleDownloadExpectation.fulfill()
                     }
                     
-                    self.downloadsCompleteCallbacks.append() { downloadedFiles in
-                        XCTAssert(downloadedFiles.count == 1)
+                    self.shouldSaveDownloads.append() { downloads, ack in
+                        XCTAssert(downloads.count == 1)
                         
-                        let (_, attr, conflict) = downloadedFiles[0]
-                        XCTAssert(conflict == nil)
+                        let (_, attr) = downloads[0]
                         XCTAssert(attr.uuid!.UUIDString == testFile2.uuidString)
                         XCTAssert(!attr.deleted!)
-
                         downloadsCompleteExpectation.fulfill()
+                        ack()
                     }
                     
                     self.idleCallbacks.append() {
@@ -347,10 +341,9 @@ class DownloadDeletion: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
 
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
@@ -358,8 +351,8 @@ class DownloadDeletion: BaseClass {
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.idleCallbacks.append() {
@@ -421,10 +414,9 @@ class DownloadDeletion: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile1.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
 
                         XCTAssert(uuid.UUIDString == testFile1.uuidString)
                         
@@ -432,8 +424,8 @@ class DownloadDeletion: BaseClass {
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.idleCallbacks.append() {

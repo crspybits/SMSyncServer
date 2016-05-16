@@ -77,8 +77,18 @@ public enum SMSyncServerEvent {
 // MARK: Conflict management
 
 // If you receive a non-nil conflict in a callback method, you must resolve the conflict by calling resolveConflict.
-public struct SMSyncServerConflict {
+public class SMSyncServerConflict {
     // Because downloads are higher-priority with the SMSyncServer, all conflicts effectively originate from a server operation: A download-deletion or a file-upload. The type of server operation will be apparent from the context.
+    
+    internal typealias callbackType = ((resolution:ResolutionType)->())!
+    
+    internal var conflictResolved:Bool = false
+    internal var resolutionCallback:((resolution:ResolutionType)->())!
+    
+    internal init(conflictType: ClientOperation, resolutionCallback:callbackType) {
+        self.conflictType = conflictType
+        self.resolutionCallback = resolutionCallback
+    }
     
     // And the conflict is between the server operation and a local, client operation.
     public enum ClientOperation : String {
@@ -92,8 +102,12 @@ public struct SMSyncServerConflict {
         case DeleteConflictingClientOperations
         case KeepConflictingClientOperations
     }
-
-    public var resolveConflict:((resolution:ResolutionType)->())!
+    
+    public func resolveConflict(resolution resolution:ResolutionType) {
+        Assert.If(self.conflictResolved, thenPrintThisString: "Already resolved!")
+        self.conflictResolved = true
+        self.resolutionCallback(resolution: resolution)
+    }
 }
 
 // MARK: Delegate
@@ -102,18 +116,25 @@ public struct SMSyncServerConflict {
 public protocol SMSyncServerDelegate : class {
     // "class" to make the delegate weak.
 
+    // For all four of the following delegate callbacks, it is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file. i.e., if the client is modifying any of the files referenced.
+    
     // Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
     // The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
-    // With no conflict, the recommended action is for the client to replace their existing data with that from the files. With a conflict, the client has to decide how to manage the conflict.
-    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files, and any conflicts.
-    // It is up to the callee to check to determine if any modification conflict is occuring for a particular downloaded file. i.e., if the client is modifying any of the files referenced.
-    func syncServerDownloads(downloads:[(NSURL, SMSyncAttributes, SMSyncServerConflict?)], acknowledgement:()->())
+    // The recommended action is for the client to replace their existing data with that from the files.
+    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
+    // For any given download only one of the following two delegate methods will be called. I.e., either there is a conflict or is not a conflict for a given download.
+    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ())
     
-    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. With no conflict, the recommended action is for the client to delete the files represented by the UUID's. With a conflict, the client has to decide how to manage the conflict.
-    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files, and any conflicts.
-    // It is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file. i.e., if the client is modifying any of the files referenced.
+    // The client has to decide how to resolve the conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)])
+    
+    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+    // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
+    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->())
+
+    // The client has to decide how to resolve the conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
     // Server conflicts will not include UploadDeletion.
-    func syncServerDownloadDeletions(deletions:[(NSUUID, SMSyncServerConflict?)], acknowledgement:()->())
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)])
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
     func syncServerModeChange(newMode:SMSyncServerMode)
@@ -279,6 +300,7 @@ public class SMSyncServer : NSObject {
     }
 
     // Analogous to the above, but the data is given in an NSData object not a file.
+    // TODO: Enable the data argument to be nil.
     public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         

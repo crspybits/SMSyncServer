@@ -90,71 +90,91 @@ class ViewController: UIViewController {
 }
 
 extension ViewController : SMSyncServerDelegate {
-    func syncServerDownloadsComplete(downloadedFiles: [(NSURL, SMSyncAttributes, SMSyncServerFileDownloadConflict?)], acknowledgement: () -> ()) {
-        for (url, attr, conflict) in downloadedFiles {
-            // TODO: Need to deal with conflict
+    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+        for (url, attr) in downloads {
             Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
         }
         
         acknowledgement()
     }
-    /*
-        let dmp = DiffMatchPatch()
-        let firstString = "Hello friend, there is my world"
-        let secondString = "Hello friend, is my world\nWhat's going on"
-        let resultPatchArray = dmp.patch_makeFromOldString(firstString, andNewString: secondString) as [AnyObject]
-        print("\(resultPatchArray)")
-        let patchedResult = dmp.patch_apply(resultPatchArray, toString: firstString)
-        print("\(patchedResult[0])")
-    */
     
-    private func handleFileDownloadConflicts(downloadedFiles:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
-        if deletions.count > 0 {
-            let remainingDeletions = Array(deletions[1..<deletions.count])
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+        self.resolveDownloadConflicts(conflicts)
+    }
+    
+    private func resolveDownloadConflicts(conflicts:[(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+    
+        if conflicts.count > 0 {
+            let remainingConflicts = Array(conflicts[1..<conflicts.count])
             
-            let (uuid, _) = deletions[0]
-            let note = Note.fetch(withUUID: uuid)
+            let (url, attr, conflict) = conflicts[0]
+            let note = Note.fetch(withUUID: attr.uuid)
             Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
             
             // If we had useful remote names for files, we could show it to them...
             // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
             
-            let alert = UIAlertController(title: "Someone else has deleted a note.", message: nil, preferredStyle: .Alert)
+            var message:String
+            switch conflict.conflictType! {
+            case .UploadDeletion:
+                message = "deletion"
+                
+            case .FileUpload:
+                message = "upload"
+            }
             
-            alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
-                note?.removeObject()
-                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            let alert = UIAlertController(title: "Your \(message) is conflicting with a download!", message: nil, preferredStyle: .Alert)
+            
+            alert.addAction(UIAlertAction(title: "Accept the download (removes your \(message)).", style: .Default) {[unowned self] action in
+                conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
+                Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
+                self.resolveDownloadConflicts(remainingConflicts)
             })
             
-            alert.addAction(UIAlertAction(title: "Don't delete it.", style: .Destructive) { action in
-                note?.upload()
-                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+            alert.addAction(UIAlertAction(title: "Keep your \(message)", style: .Default) { action in
+                conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
+                self.resolveDownloadConflicts(remainingConflicts)
             })
-        }
-        else {
-            acknowledgement()
+            
+            // If the conflict is an upload, ask them if they want to merge.
+            // The two conflicting pieces of info are: (a) the contents of the local Note, and (b) the update from the download.
+            if conflict.conflictType == .UploadDeletion {
+                alert.addAction(UIAlertAction(title: "Merge your update with the download?", style: .Default) { action in
+                
+                    // Delete the conflicting operations because we don't want our prior upload. We want to create a merged upload.
+                    conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
+                    
+                    note!.merge(withDownloadedNoteContents: url)
+                    
+                    self.resolveDownloadConflicts(remainingConflicts)
+                })
+            }
         }
     }
     
-    func syncServerClientShouldDeleteFiles(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
-        self.handleDeletionConflicts(deletions, acknowledgement: acknowledgement)
+    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+        for uuid in deletions {
+            let note = Note.fetch(withUUID: uuid)
+            Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
+            note!.removeObject()
+        }
+        
+        acknowledgement()
+    }
+
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+        self.resolveDeletionConflicts(conflicts)
     }
     
-    private func handleDeletionConflicts(deletions:[(NSUUID, SMSyncServerDownloadDeletionConflict?)], acknowledgement:()->()) {
-        if deletions.count > 0 {
-            let remainingDeletions = Array(deletions[1..<deletions.count])
-            let (uuid, conflict) = deletions[0]
+    private func resolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+        if conflicts.count > 0 {
+            let remainingConflicts = Array(conflicts[1..<conflicts.count])
+            let (uuid, conflict) = conflicts[0]
+            
+            Assert.If(conflict.conflictType != .FileUpload, thenPrintThisString: "Didn't get upload conflict")
             
             let note = Note.fetch(withUUID: uuid)
             Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
-            
-            if conflict == nil {
-                // No conflict. Silently delete the note.
-                // TODO: Need to deal with modification locks.
-                note?.removeObject()
-                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
-                return
-            }
             
             // If we had useful remote names for files, we could show it to them...
             // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
@@ -163,16 +183,14 @@ extension ViewController : SMSyncServerDelegate {
             
             alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
                 note?.removeObject()
-                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+                conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
+                self.resolveDeletionConflicts(remainingConflicts)
             })
             
             alert.addAction(UIAlertAction(title: "Keep your update.", style: .Destructive) { action in
-                note?.upload()
-                self.handleDeletionConflicts(remainingDeletions, acknowledgement: acknowledgement)
+                conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
+                self.resolveDeletionConflicts(remainingConflicts)
             })
-        }
-        else {
-            acknowledgement()
         }
     }
     

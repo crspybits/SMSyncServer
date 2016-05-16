@@ -27,7 +27,7 @@ class DownloadConflicts: BaseClass {
     // MARK: Download deletion conflicts
 
     func setupDownloadDeletionLocalUploadConflict(fileName fileName: String, keepConflicting:Bool, handleConflict:(conflict: SMSyncServerConflict,
-            testFile:TestFile, ack:()->())->()) {
+            testFile:TestFile)->()) {
         let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
         let commitCompleteUpload = self.expectationWithDescription("Commit Complete Upload")
         let idleExpectationUpload = self.expectationWithDescription("Idle Upload")
@@ -66,18 +66,17 @@ class DownloadConflicts: BaseClass {
                     let newFileContentsData = newFileContents.dataUsingEncoding(NSUTF8StringEncoding)
                     SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile.attr)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
-                        XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict != nil)
-                        XCTAssert(conflict!.conflictType == .FileUpload)
+                    self.shouldResolveDeletionConflicts.append() { conflicts in
+                        XCTAssert(conflicts.count == 1)
+                        let (uuid, conflict) = conflicts[0]
+                        XCTAssert(conflict.conflictType == .FileUpload)
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        handleConflict(conflict:conflict!, testFile:testFile, ack: acknowledgement)
+                        handleConflict(conflict:conflict, testFile:testFile)
                     }
                     
                     // The .Idle callback gets called first
@@ -130,18 +129,15 @@ class DownloadConflicts: BaseClass {
     func testThatDownloadDeletionLocalUploadResolveConflictByKeepWorks() {
         // We should get the idle callback in setupDownloadDeletionLocalUploadConflict after ack is called, so shouldn't need another expectation here. We won't get idle callback, and that fulfilled expectation, without the call to ack() below.
         
-        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByKeep", keepConflicting: true) { conflict, testFile, ack in
-        
+        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByKeep", keepConflicting: true) { conflict, testFile in
             conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
-            ack()
         }
     }
 
     func testThatDownloadDeletionLocalUploadResolveConflictByDeleteWorks() {
-        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByDelete", keepConflicting: false) { conflict, testFile, ack in
+        self.setupDownloadDeletionLocalUploadConflict(fileName: "DownloadDeletionLocalUploadResolveConflictByDelete", keepConflicting: false) { conflict, testFile in
             conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
             // Need to assert that, after all the server operations have completed, the file has been deleted on server, and is marked as deleted in sync server meta data.
-            ack()
         }
     }
     

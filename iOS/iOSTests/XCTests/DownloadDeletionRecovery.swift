@@ -55,18 +55,17 @@ class DownloadDeletionRecovery: BaseClass {
                     
                     SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                     
-                    self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let (uuid, conflict) = deletions[0]
-                        XCTAssert(conflict == nil)
+                        let uuid = deletions[0]
                         XCTAssert(uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
                         XCTAssert(fileAttr!.deleted!)
                         
-                        acknowledgement()
                         clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
                     }
                     
                     self.idleCallbacks.append() {
@@ -127,7 +126,7 @@ class DownloadDeletionRecovery: BaseClass {
                         
                         SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
                         
-                        self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+                        self.shouldDoDeletions.append() { deletions, acknowledgement in
                             // Crash without calling acknowledgement
                             SMTest.session.crash()
                         }
@@ -143,18 +142,17 @@ class DownloadDeletionRecovery: BaseClass {
 
             let testFile = TestBasics.session.recreateTestFile(fromUUID: DownloadDeletionRecovery.crashUUIDString1.stringValue)
             
-            self.clientShouldDeleteFilesCallbacks.append() { deletions, acknowledgement in
+            self.shouldDoDeletions.append() { deletions, acknowledgement in
                 XCTAssert(deletions.count == 1)
-                let (uuid, conflict) = deletions[0]
-                XCTAssert(conflict == nil)
+                let uuid = deletions[0]
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
                 
                 let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)
                 XCTAssert(fileAttr!.deleted!)
                 
-                acknowledgement()
                 clientShouldDeleteFilesExpectation.fulfill()
+                acknowledgement()
             }
             
             self.idleCallbacks.append() {

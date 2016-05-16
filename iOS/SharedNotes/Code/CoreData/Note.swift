@@ -32,6 +32,7 @@ class Note: NSManagedObject {
         }
     }
     
+    // TODO: Allow self.text to be nil.
     func upload() {
         guard self.text != nil else { return }
         if let data = self.text!.dataUsingEncoding(NSUTF8StringEncoding) {
@@ -63,6 +64,29 @@ class Note: NSManagedObject {
         }
         
         CoreData.sessionNamed(CoreDataSession.name).saveContext()
+    }
+    
+    // Also spawns off an upload with the new note contents.
+    func merge(withDownloadedNoteContents downloadedNoteContents:NSURL) {
+        guard
+            let data = NSData(contentsOfURL: downloadedNoteContents),
+            let newNoteContents = String(data: data, encoding: NSUTF8StringEncoding)
+        else {
+            Assert.badMojo(alwaysPrintThisString: "Could not get note contents!")
+            return
+        }
+        
+        let dmp = DiffMatchPatch()
+
+        let resultPatchArray = dmp.patch_makeFromOldString(self.text!, andNewString: newNoteContents) as [AnyObject]
+        // print("\(resultPatchArray)")
+        let patchedResult = dmp.patch_apply(resultPatchArray, toString: self.text!)
+        
+        let mergedResult = patchedResult[0]
+        print("mergedResult: \(mergedResult)")
+        
+        // The assignment to .text will also spawn off an upload.
+        self.text = (mergedResult as! String)
     }
     
     private func updateText(text:String?) {

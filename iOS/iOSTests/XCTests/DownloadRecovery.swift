@@ -85,7 +85,7 @@ class DownloadRecovery: BaseClass {
                 }
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in                
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 // With .CheckOperationStatus server API failure, the "recovery" process consists of just trying to check the operation status again, which doesn't get reflected in the number of recovery steps.
                 if testContext != .CheckOperationStatus {
                     XCTAssert(self.numberOfRecoverySteps >= 1)
@@ -95,6 +95,7 @@ class DownloadRecovery: BaseClass {
                     XCTAssert(numberInboundTransfers >= 1)
                 }
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -233,10 +234,11 @@ class DownloadRecovery: BaseClass {
                 }
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberInboundTransfers >= 1)
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -369,9 +371,10 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 allDownloadsCompleteExpectation.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -481,10 +484,11 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation!.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 XCTAssert(numberInboundTransfers >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -574,9 +578,10 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation!.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -703,9 +708,10 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation2!.fulfill()
             }
             
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 allDownloadsCompleteExpectation!.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
@@ -821,9 +827,10 @@ class DownloadRecovery: BaseClass {
                 self.numberOfRecoverySteps += 1
             }
 
-            self.downloadsCompleteCallbacks.append() { downloadedFiles in
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
                 XCTAssert(self.numberOfRecoverySteps >= 1)
                 downloadsComplete!.fulfill()
+                ack()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
