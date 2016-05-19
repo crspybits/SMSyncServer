@@ -90,7 +90,7 @@ class ViewController: UIViewController {
 }
 
 extension ViewController : SMSyncServerDelegate {
-    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
         for (url, attr) in downloads {
             Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
         }
@@ -98,11 +98,11 @@ extension ViewController : SMSyncServerDelegate {
         acknowledgement()
     }
     
-    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         self.resolveDownloadConflicts(conflicts)
     }
     
-    private func resolveDownloadConflicts(conflicts:[(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+    private func resolveDownloadConflicts(conflicts:[(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
     
         if conflicts.count > 0 {
             let remainingConflicts = Array(conflicts[1..<conflicts.count])
@@ -136,8 +136,7 @@ extension ViewController : SMSyncServerDelegate {
                 self.resolveDownloadConflicts(remainingConflicts)
             })
             
-            // If the conflict is an upload, ask them if they want to merge.
-            // The two conflicting pieces of info are: (a) the contents of the local Note, and (b) the update from the download.
+            // If the conflict is between a file-download and a file-upload, ask them if they want to merge. The two conflicting pieces of info that can be merged are: (a) the contents of the local Note, and (b) the update from the download.
             if conflict.conflictType == .UploadDeletion {
                 alert.addAction(UIAlertAction(title: "Merge your update with the download?", style: .Default) { action in
                 
@@ -152,7 +151,7 @@ extension ViewController : SMSyncServerDelegate {
         }
     }
     
-    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+    func syncServerShouldDoDeletions(downloadDeletions deletions:[NSUUID], acknowledgement:()->()) {
         for uuid in deletions {
             let note = Note.fetch(withUUID: uuid)
             Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
@@ -162,11 +161,11 @@ extension ViewController : SMSyncServerDelegate {
         acknowledgement()
     }
 
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
         self.resolveDeletionConflicts(conflicts)
     }
     
-    private func resolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+    private func resolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
         if conflicts.count > 0 {
             let remainingConflicts = Array(conflicts[1..<conflicts.count])
             let (uuid, conflict) = conflicts[0]

@@ -85,7 +85,7 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         SMSyncControl.session.nextSyncOperation()
     }
     
-    override func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    override func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return
@@ -97,7 +97,7 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         acknowledgement()
     }
 
-    override func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+    override func syncServerShouldDoDeletions(downloadDeletions deletions:[NSUUID], acknowledgement:()->()) {
         if self.isMaster {
             self.failTest()
             return

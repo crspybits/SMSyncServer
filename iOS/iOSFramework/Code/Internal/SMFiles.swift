@@ -50,5 +50,13 @@ class SMFiles {
         let file2Data = NSData(contentsOfURL: file2)
         return file1Data!.isEqualToData(file2Data!)
     }
+    
+    // Returns true iff the files are bytewise identical.
+    class func compareFile(file file:NSURL, andString string:String) -> Bool {
+        // Not the best (consumes lots of RAM), but good enough for now.
+        let fileData = NSData(contentsOfURL: file)
+        let stringData = string.dataUsingEncoding(NSUTF8StringEncoding)
+        return fileData!.isEqualToData(stringData!)
+    }
 #endif
 }

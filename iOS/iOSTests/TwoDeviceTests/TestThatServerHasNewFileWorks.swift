@@ -46,7 +46,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
         SMSyncServer.session.commit()
     }
     
-    override func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    override func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
         if self.isMaster {
             self.failTest()
             return

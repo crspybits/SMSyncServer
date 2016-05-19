@@ -432,9 +432,172 @@ class DownloadConflicts: BaseClass {
         }
     }
 
-    func testThatDownloadFileLocalUploadKeepWorks() {
+    func setupDownloadFileLocalUploadConflict(fileName fileName: String, keepConflicting:Bool, handleConflict:(conflict: SMSyncServerConflict,
+            url:NSURL, testFile:TestFile)->()) {
+        let singleUploadExpectation1 = self.expectationWithDescription("Single Upload Complete1")
+        let commitCompleteUpload1 = self.expectationWithDescription("Commit Complete Upload1")
+        let idleExpectationUpload1 = self.expectationWithDescription("Idle Upload1")
+
+        let singleUploadExpectation2 = self.expectationWithDescription("Single Upload Complete2")
+        let commitCompleteUpload2 = self.expectationWithDescription("Commit Complete Upload2")
+        let idleExpectationUpload2 = self.expectationWithDescription("Idle Upload2")
+
+        let idleAfterUpload = self.expectationWithDescription("Idle After Upload")
+        let commitCompleteUpload3 = self.expectationWithDescription("Commit Complete Upload3")
+        let singleDownloadExpectation = self.expectationWithDescription("Single Download")
+       
+        let idleExpectationUpload3 = self.expectationWithDescription("Idle Upload3")
+        var commitComplete:XCTestExpectation?
+        var uploadExpectation:XCTestExpectation?
+        
+        if keepConflicting {
+            commitComplete = self.expectationWithDescription("Commit Complete Upload")
+            uploadExpectation = self.expectationWithDescription("Single Upload Complete")
+        }
+
+        self.extraServerResponseTime = 90
+        
+        self.waitUntilSyncServerUserSignin() {
+            var testFile = TestBasics.session.createTestFile(fileName)
+            
+            self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation1], commitComplete: commitCompleteUpload1, idleExpectation: idleExpectationUpload1) {
+                // Upload done: Now idle
+                
+                let downloadNewFileContents = "New file contents for download"
+                let uploadNewFileContents = "*** NEW FILE contents for upload"
+                
+                let downloadData = downloadNewFileContents.dataUsingEncoding(NSUTF8StringEncoding)!
+                if !downloadData.writeToURL(testFile.url, atomically: true) {
+                    Assert.badMojo(alwaysPrintThisString: "Could not write to file")
+                }
+                
+                // Upload the file with contents: downloadNewFileContents
+                testFile.sizeInBytes = downloadNewFileContents.characters.count
+                
+                // This second upload of the same file will force an increment of the version number of the file on the server.
+                self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation2], commitComplete: commitCompleteUpload2, idleExpectation: idleExpectationUpload2) {
+                    // Upload done: Now idle
+                    
+                    // Decrement the version locally.
+                    SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .DecrementVersion)
+                    
+                    // Our current situation is that because the server has a higher version number, with the next sync, we'll do a download-file (contents: downloadNewFileContents).
+                    
+                    // That download file will need the following two callbacks:
+                    self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                        Log.msg("singleDownload callback")
+
+                        XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile.uuidString)
+                        let filesAreTheSame = SMFiles.compareFile(file: downloadedFile, andString: downloadNewFileContents)
+                        XCTAssert(filesAreTheSame)
+                        singleDownloadExpectation.fulfill()
+                    }
+            
+                    self.singleInboundTransferCallback = { numberOperations in
+                        Log.msg("singleInboundTransferCallback: For download")
+
+                        XCTAssert(numberOperations >= 1)
+                        commitCompleteUpload3.fulfill()
+                    }
+                    
+                    self.shouldResolveDownloadConflicts.append() { conflicts in
+                        Log.msg("shouldResolveDownloadConflicts")
+                        XCTAssert(conflicts.count == 1)
+                        let (url, attr, conflict) = conflicts[0]
+                        XCTAssert(conflict.conflictType == .FileUpload)
+                        XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
+                        
+                        let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                        XCTAssert(fileAttr != nil)
+                        
+                        // At this point in execution, we have a pending file-download and a pending file-upload (i.e., these two combined are generating the conflict).
+                        XCTAssert(!fileAttr!.deleted!)
+                        
+                        handleConflict(conflict:conflict, url:url, testFile:testFile)
+                    }
+                    
+                    // Instead of calling SMSyncServer.session.sync(), I'll do an uploadFiles (which creates a file-upload), which will call a commit, which will internally do a sync. The .Idle callback will be dealt with inside of the .uploadFiles call. The download, however, will occur first.
+                    let uploadExpectationArray:[XCTestExpectation]? = uploadExpectation == nil ? nil : [uploadExpectation!]
+                    
+                    let uploadData = uploadNewFileContents.dataUsingEncoding(NSUTF8StringEncoding)!
+                    if !uploadData.writeToURL(testFile.url, atomically: true) {
+                        Assert.badMojo(alwaysPrintThisString: "Could not write to file")
+                    }
+                    
+                    testFile.sizeInBytes = uploadNewFileContents.characters.count
+                    
+                    // Create the conflicting file-upload with contents: uploadNewFileContents
+                    self.uploadFiles([testFile], uploadExpectations: uploadExpectationArray, commitComplete: commitComplete, idleExpectation: idleExpectationUpload3) {
+                    
+                        let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                        Assert.If(attr == nil, thenPrintThisString: "Yikes: Nil attr")
+                        Assert.If(attr!.deleted!, thenPrintThisString: "Yikes: unexpected deleted value")
+                        
+                        var expectedFileContents:String
+                        if keepConflicting {
+                            expectedFileContents = uploadNewFileContents
+                        }
+                        else {
+                            expectedFileContents = downloadNewFileContents
+                        }
+                        
+                        let filesAreTheSame = SMFiles.compareFile(file: testFile.url, andString: expectedFileContents)
+                        XCTAssert(filesAreTheSame)
+                        
+                        TestBasics.session.checkForFileOnServer(testFile.uuidString) { fileExists in
+                            XCTAssert(fileExists)
+                            idleAfterUpload.fulfill()
+                        }
+                    }
+                }
+            }
+        }
+        
+        self.waitForExpectations()
     }
     
-    func testThatDownloadFileLocalUploadDeleteWorks() {
+    func testThatDownloadFileLocalUploadResolveConflictByKeepWorks() {
+        self.setupDownloadFileLocalUploadConflict(fileName: "DownloadFileLocalUploadResolveConflictByKeep", keepConflicting: true) {
+            (conflict, downloadURL, testFile) in
+            
+            conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
+        }
+    }
+    
+    func testThatDownloadFileLocalUploadResolveConflictByDeleteWorks() {
+        self.setupDownloadFileLocalUploadConflict(fileName: "DownloadFileLocalUploadResolveConflictByDelete", keepConflicting: false) {
+            (conflict, downloadURL, testFile) in
+            
+            // Why is there no other shouldSaveDownloads so far in the DownloadConflicts tests?
+            /*
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
+                XCTAssert(downloadedFiles.count == 1)
+                let (downloadedFileURL, downloadedFileAttr) = downloadedFiles[0]
+                expectShouldSaveDownloads.fulfill()
+                ack()
+            }*/
+            // AHA! There will be no shouldSaveDownloads callbacks here -- because the download conflict will be the final callback. If you resolve the conflict by using .DeleteConflictingClientOperations, you have to, during the syncServerShouldResolveDownloadConflicts callback, save the file.
+            
+            // move file at the downloadURL to the testFile.url
+            
+            let mgr = NSFileManager.defaultManager()
+            
+            // Remove existing file first. Otherwise we get an error on moveItemAtURL.
+            do {
+                try mgr.removeItemAtURL(testFile.url)
+            } catch (let err) {
+                Log.error("removeItemAtURL: \(err)")
+            }
+
+            do {
+                try mgr.moveItemAtURL(downloadURL, toURL: testFile.url)
+            } catch (let err) {
+                let errorString = "moveItemAtURL: \(err)"
+                Log.error(errorString)
+                XCTFail()
+            }
+            
+            conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
+        }
     }
 }

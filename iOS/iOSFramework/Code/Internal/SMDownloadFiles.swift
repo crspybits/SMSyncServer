@@ -386,8 +386,8 @@ internal class SMDownloadFiles : NSObject {
     }
 
     private func callSyncServerDownloadsComplete(fileDownloads:[SMDownloadFile], completion:()->()) {
-        var downloads = [(NSURL, SMSyncAttributes)]()
-        var conflicts = [(NSURL, SMSyncAttributes, SMSyncServerConflict)]()
+        var downloads = [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)]()
+        var conflicts = [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]()
 
         var shouldSaveDownloadsDone = false
         var calledCompletion = false
@@ -415,7 +415,7 @@ internal class SMDownloadFiles : NSObject {
             attr.deleted = false
             
             if downloadFile.conflictType == nil {
-                downloads.append((downloadFile.fileURL!, attr))
+                downloads.append((downloadedFile: downloadFile.fileURL!, downloadedFileAttributes: attr))
             }
             else {
                 Log.special("FileDownload conflict: \(downloadFile.conflictType!)")
@@ -438,7 +438,7 @@ internal class SMDownloadFiles : NSObject {
                             }
                             
                         case .UploadDeletion:
-                            // Need to remove pending upload-deletions. There should only ever be one because we don't allow multiple upload-deletions for the same file..
+                            // Need to remove pending upload-deletions. There should only ever be one because we don't allow multiple upload-deletions for the same file.
                             let pendingUploadDeletion = downloadFile.localFile!.pendingSMUploadDeletion()
                             Assert.If(pendingUploadDeletion == nil, thenPrintThisString: "Should have a pending upload deletion!")
                             
@@ -452,8 +452,8 @@ internal class SMDownloadFiles : NSObject {
                     
                     checkIfDone()
                 } // End conflict closure
-                
-                conflicts.append((downloadFile.fileURL!, attr, conflict))
+
+                conflicts.append((downloadedFile: downloadFile.fileURL!, downloadedFileAttributes: attr, uploadConflict: conflict))
             }
         
             if localFile.syncState == .InitialDownload {
@@ -487,9 +487,11 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
-            
+        
+        //     func syncServerShouldDoDeletions(downloadDeletions:[NSUUID], acknowledgement:()->())
+
         var deletions = [NSUUID]()
-        var conflicts = [(NSUUID, SMSyncServerConflict)]()
+        var conflicts = [(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]()
 
         var shouldResolveDeletionConflictsDone = false
         var calledCompletion = false
@@ -542,13 +544,13 @@ internal class SMDownloadFiles : NSObject {
                     checkIfDone()
                 } // End conflict closure
                 
-                conflicts.append((NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, conflict))
+                conflicts.append((downloadDeletion: NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, uploadConflict: conflict))
             }
         }
         
         if deletions.count > 0 {
             NSThread.runSyncOnMainThread() {
-                self.syncServerDelegate?.syncServerShouldDoDeletions(deletions) {
+                self.syncServerDelegate?.syncServerShouldDoDeletions(downloadDeletions:deletions) {
                     shouldResolveDeletionConflictsDone = true
                     checkIfDone()
                 }

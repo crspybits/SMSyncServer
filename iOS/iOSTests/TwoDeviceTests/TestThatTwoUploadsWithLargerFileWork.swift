@@ -49,10 +49,10 @@ class SMTwoDeviceTestThatTwoUploadsWithLargerFileWork : TwoDeviceTestCase {
         self.uploadFile()
     }
     
-    override func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    override func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
     }
     
-    override func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+    override func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[NSUUID], acknowledgement:()->()) {
     }
     
     override func syncServerModeChange(newMode:SMSyncServerMode) {

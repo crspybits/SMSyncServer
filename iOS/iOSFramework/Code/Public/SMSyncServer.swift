@@ -78,8 +78,6 @@ public enum SMSyncServerEvent {
 
 // If you receive a non-nil conflict in a callback method, you must resolve the conflict by calling resolveConflict.
 public class SMSyncServerConflict {
-
-    
     internal typealias callbackType = ((resolution:ResolutionType)->())!
     
     internal var conflictResolved:Bool = false
@@ -90,7 +88,7 @@ public class SMSyncServerConflict {
         self.resolutionCallback = resolutionCallback
     }
     
-    // Because downloads are higher-priority (than uploads) with the SMSyncServer, all conflicts effectively originate from a server operation: A download-deletion or a file-download. The type of server operation will be apparent from the context.
+    // Because downloads are higher-priority (than uploads) with the SMSyncServer, all conflicts effectively originate from a server download operation: A download-deletion or a file-download. The type of server operation will be apparent from the context.
     // And the conflict is between the server operation and a local, client operation:
     public enum ClientOperation : String {
         case UploadDeletion
@@ -128,18 +126,18 @@ public protocol SMSyncServerDelegate : class {
     // The recommended action is for the client to replace their existing data with that from the files.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
     // For any given download only one of the following two delegate methods will be called. I.e., either there is a conflict or is not a conflict for a given download.
-    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ())
+    func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ())
     
     // The client has to decide how to resolve the file-download conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
-    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)])
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])
     
     // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
-    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->())
+    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[NSUUID], acknowledgement:()->())
 
     // The client has to decide how to resolve the download-deletion conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
     // Conflicts will not include UploadDeletion.
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)])
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)])
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
     func syncServerModeChange(newMode:SMSyncServerMode)
@@ -295,17 +293,19 @@ public class SMSyncServer : NSObject {
     
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
     // This operation persists across app launches, as long as the the call itself completes. If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. This operation does not access the server, and thus runs quickly and synchronously.
+    // TODO: Test what happens if the file is empty.
     public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
     }
     
     // The same as above, but ownership of the file referenced is passed to this class, and once the upload operation succeeds, the file will be deleted.
+    // TODO: Test what happens if the file is empty.
     public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL,withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
     }
 
     // Analogous to the above, but the data is given in an NSData object not a file.
-    // TODO: Enable the data argument to be nil.
+    // TODO: Enable the data argument to be nil. i.e., empty file.
     public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
@@ -520,9 +520,13 @@ public class SMSyncServer : NSObject {
     public func commit() -> Bool? {
         // Testing for network availability is done by the SMServerNetworking class accessed indirectly through SMSyncControl, so I'm not going to do that here. ALSO: Our intent is to enable the client API to queue up uploads and upload-deletions independent of network access.
         
-        Log.msg("Attempting to commit")
+        // 5/18/16; There are some problems with optional chaining combined with equality/inequality tests. E.g., SMQueues.current().uploadsBeingPrepared?.operations!.count == 0
+        // See http://stackoverflow.com/questions/31460395/does-anybody-know-the-rationale-behind-nil-0-true-and-nil-0-tr
+        // And that's why I'm not using them.
+        
+        Log.msg("Attempting to commit: \(SMQueues.current().uploadsBeingPrepared)")
 
-        if SMQueues.current().uploadsBeingPrepared!.operations!.count == 0 {
+        if SMQueues.current().uploadsBeingPrepared == nil || SMQueues.current().uploadsBeingPrepared!.operations!.count == 0 {
             Log.msg("Attempting to commit: But there were no changed files!")
             NSThread.runSyncOnMainThread() {
                 self.delegate?.syncServerEventOccurred(.NoFilesToUpload)

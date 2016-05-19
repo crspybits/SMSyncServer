@@ -137,7 +137,7 @@ internal class SMUploadFiles : NSObject {
     // Returns true if there were deletions to do (which will be in process asynchronously), and false if there were no deletions to do. Nil is returned in the case of an error.
     private func doUploadDeletions() -> Bool? {
         Log.msg("\(SMQueues.current().beingUploaded)")
-        var deletionChanges = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
+        var deletionChanges = SMQueues.current().beingUploaded?.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
         if deletionChanges == nil {
             return false
         }
@@ -243,7 +243,7 @@ internal class SMUploadFiles : NSObject {
     
     private func getWrapup(stage:SMUploadWrapup.WrapupStage?) -> SMUploadWrapup? {
         
-        if let wrapUpArray = SMQueues.current().beingUploaded!.getChanges(.UploadWrapup) as? [SMUploadWrapup] {
+        if let wrapUpArray = SMQueues.current().beingUploaded?.getChanges(.UploadWrapup) as? [SMUploadWrapup] {
             Assert.If(wrapUpArray.count != 1, thenPrintThisString: "Not exactly one wrapup object")
             
             let wrapUp = wrapUpArray[0]
@@ -426,7 +426,7 @@ internal class SMUploadFiles : NSObject {
         
         var filesToUpload = [SMServerFile]()
 
-        let uploadChanges = SMQueues.current().beingUploaded!.getChanges(
+        let uploadChanges = SMQueues.current().beingUploaded?.getChanges(
                 .UploadFile, operationStage: .ServerUpload) as? [SMUploadFile]
         
         if uploadChanges == nil {
@@ -479,7 +479,7 @@ internal class SMUploadFiles : NSObject {
         var numberNewFiles = 0
         var numberDeletions = 0
         
-        if let uploadDeletions = SMQueues.current().beingUploaded!.getChanges(.UploadDeletion) as? [SMUploadDeletion] {
+        if let uploadDeletions = SMQueues.current().beingUploaded?.getChanges(.UploadDeletion) as? [SMUploadDeletion] {
             for uploadDeletion in uploadDeletions {
                 let deletedLocalFile:SMLocalFile = uploadDeletion.localFile!
                 
@@ -492,7 +492,7 @@ internal class SMUploadFiles : NSObject {
             SMQueues.current().beingUploaded!.removeChanges(.UploadDeletion)
         }
         
-        if let uploadFiles = SMQueues.current().beingUploaded!.getChanges(.UploadFile) as? [SMUploadFile] {
+        if let uploadFiles = SMQueues.current().beingUploaded?.getChanges(.UploadFile) as? [SMUploadFile] {
             for uploadFile in uploadFiles {
                 let localFile:SMLocalFile = uploadFile.localFile!
                 
@@ -535,7 +535,7 @@ internal class SMUploadFiles : NSObject {
 extension SMUploadFiles : SMServerAPIUploadDelegate {
     internal func smServerAPIFileUploaded(serverFile : SMServerFile) {
         // Switch over the operation stage for the change to .CloudStorage (and don't delete the upload) so that we still have the info to later, once the outbound transfer has completed, to send delegate callbacks to the app using the api.
-        let change:SMUploadFileOperation? = SMQueues.current().beingUploaded!.getChange(forUUID:serverFile.uuid.UUIDString)
+        let change:SMUploadFileOperation? = SMQueues.current().beingUploaded?.getChange(forUUID:serverFile.uuid.UUIDString)
         Assert.If(change == nil, thenPrintThisString: "Yikes: Couldn't get upload for uuid \(serverFile.uuid.UUIDString)")
         change!.operationStage = .CloudStorage
         

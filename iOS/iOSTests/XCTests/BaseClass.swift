@@ -48,11 +48,11 @@ class BaseClass: XCTestCase {
     var singleDownloadSequenceNumber = 0
     var singleDownload:[singleDownloadType]!
     
-    typealias shouldSaveDownloadsCallback = (downloads:[(NSURL, SMSyncAttributes)], acknowledgement:()->())->()
+    typealias shouldSaveDownloadsCallback = (downloads:[(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement:()->())->()
     var shouldSaveDownloadsSequenceNumber = 0
     var shouldSaveDownloads:[shouldSaveDownloadsCallback]!
 
-    typealias shouldResolveDownloadConflictsCallback = (conflicts:[(NSURL, SMSyncAttributes, SMSyncServerConflict)])->()
+    typealias shouldResolveDownloadConflictsCallback = (conflicts:[(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])->()
     var shouldResolveDownloadConflictsSequenceNumber = 0
     var shouldResolveDownloadConflicts:[shouldResolveDownloadConflictsCallback]!
     
@@ -60,7 +60,7 @@ class BaseClass: XCTestCase {
     var shouldDoDeletionsSequenceNumber = 0
     var shouldDoDeletions:[shouldDoDeletionsCallback]!
     
-    typealias shouldResolveDeletionConflictsCallback = (conflicts:[(NSUUID, SMSyncServerConflict)])->()
+    typealias shouldResolveDeletionConflictsCallback = (conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)])->()
     var shouldResolveDeletionConflictsSequenceNumber = 0
     var shouldResolveDeletionConflicts:[shouldResolveDeletionConflictsCallback]!
 
@@ -126,26 +126,26 @@ class BaseClass: XCTestCase {
 
 extension BaseClass : SMSyncServerDelegate {
 
-    func syncServerShouldSaveDownloads(downloads: [(NSURL, SMSyncAttributes)], acknowledgement: () -> ()) {
+    func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
         let sequenceNumber = self.shouldSaveDownloadsSequenceNumber
         self.shouldSaveDownloadsSequenceNumber += 1
         self.shouldSaveDownloads[sequenceNumber](downloads: downloads, acknowledgement:acknowledgement)
     }
     
-    func syncServerShouldResolveDownloadConflicts(conflicts: [(NSURL, SMSyncAttributes, SMSyncServerConflict)]) {
+    func syncServerShouldResolveDownloadConflicts(conflicts: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         let sequenceNumber = self.shouldResolveDownloadConflictsSequenceNumber
         self.shouldResolveDownloadConflictsSequenceNumber += 1
         self.shouldResolveDownloadConflicts[sequenceNumber](conflicts: conflicts)
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerShouldDoDeletions(deletions:[NSUUID], acknowledgement:()->()) {
+    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[NSUUID], acknowledgement:()->()) {
         let sequenceNumber = self.shouldDoDeletionsSequenceNumber
         self.shouldDoDeletionsSequenceNumber += 1
-        self.shouldDoDeletions[sequenceNumber](deletions: deletions, acknowledgement:acknowledgement)
+        self.shouldDoDeletions[sequenceNumber](deletions: downloadDeletions, acknowledgement:acknowledgement)
     }
         
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(NSUUID, SMSyncServerConflict)]) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
         let sequenceNumber = self.shouldResolveDeletionConflictsSequenceNumber
         self.shouldResolveDeletionConflictsSequenceNumber += 1
         self.shouldResolveDeletionConflicts[sequenceNumber](conflicts: conflicts)
@@ -225,31 +225,38 @@ extension BaseClass : SMSyncServerDelegate {
         }
     }
 
-    func uploadFiles(testFiles:[TestFile], uploadExpectations:[XCTestExpectation], commitComplete:XCTestExpectation, idleExpectation:XCTestExpectation,
+    func uploadFiles(testFiles:[TestFile], uploadExpectations:[XCTestExpectation]?, commitComplete:XCTestExpectation?, idleExpectation:XCTestExpectation,
         complete:(()->())?) {
         
         for testFileIndex in 0...testFiles.count-1 {
             let testFile = testFiles[testFileIndex]
-            let uploadExpectation = uploadExpectations[testFileIndex]
+            let uploadExpectation:XCTestExpectation? = uploadExpectations?[testFileIndex]
         
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
-            self.singleUploadCallbacks.append() { uuid in
-                XCTAssert(uuid.UUIDString == testFile.uuidString)
-                uploadExpectation.fulfill()
+            if uploadExpectation != nil {
+                self.singleUploadCallbacks.append() { uuid in
+                    XCTAssert(uuid.UUIDString == testFile.uuidString)
+                    uploadExpectation!.fulfill()
+                }
             }
         }
 
         // The .Idle callback gets called first
         self.idleCallbacks.append() {
+            if commitComplete == nil {
+                complete?()
+            }
             idleExpectation.fulfill()
         }
         
-        // Followed by the commit complete callback.
-        self.commitCompleteCallbacks.append() { numberUploads in
-            XCTAssert(numberUploads == testFiles.count)
-            commitComplete.fulfill()
-            self.checkFileSizes(testFiles, complete: complete)
+        if commitComplete != nil {
+            // Followed by the commit complete callback.
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == testFiles.count)
+                commitComplete!.fulfill()
+                self.checkFileSizes(testFiles, complete: complete)
+            }
         }
         
         SMSyncServer.session.commit()

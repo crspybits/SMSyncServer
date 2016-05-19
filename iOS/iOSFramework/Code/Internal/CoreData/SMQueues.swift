@@ -101,7 +101,7 @@ class SMQueues: NSManagedObject, CoreDataModel {
     
     // Adds the .uploadsBeingPrepared property to the .committedUploads property and resets the .uploadsBeingPrepared property. No effect if .uploadsBeingPrepared is empty.
     func moveBeingPreparedToCommitted() {
-        if self.uploadsBeingPrepared!.operations!.count > 0 {
+        if self.uploadsBeingPrepared != nil && self.uploadsBeingPrepared!.operations!.count > 0 {
             // Don't use self.committedUploads below, but instead use self.internalCommittedUploads. Because self.committedUploads will return nil when self.internalCommittedUploads has 0 elements. 
             let updatedCommitted = NSMutableOrderedSet(orderedSet: self.internalCommittedUploads!)
             
@@ -145,6 +145,10 @@ class SMQueues: NSManagedObject, CoreDataModel {
     // For uploads and upload-deletions, also causes any other upload change for the same file in the same queue to be removed. (This occurs both when you are adding uploads and upload-deletions). Uploads in already committed queues are not modified and should never be modified-- e.g., a new upload in the being prepared queue never overrides an already commmitted upload. Assumes that the .changedFile property of this change has been set.
     // Returns false for uploads and upload-deletions iff the file has already been deleted locally, or already marked for deletion. In this case, the change has not been added.
     func addToUploadsBeingPrepared(operation:SMUploadOperation) -> Bool {
+        if self.uploadsBeingPrepared == nil {
+            self.uploadsBeingPrepared = (SMUploadQueue.newObject() as! SMUploadQueue)
+        }
+        
         if let change = operation as? SMUploadFileOperation  {
             Assert.If(change.localFile == nil, thenPrintThisString: "changedFile property not set!")
             let localFileMetaData:SMLocalFile = change.localFile!
