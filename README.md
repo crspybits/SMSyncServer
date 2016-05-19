@@ -13,7 +13,7 @@ SMSyncServer has the following general goals:
 1. Reducing data storage costs for app developers/publishers,  
 1. Allowing sharing of data with other users, and
 1. Cross-platform synchronization (e.g., iOS, Android).
-1. Synchronized devices must only be [Occasionally Connected](https://msdn.microsoft.com/en-us/library/ff650163.aspx) to a network.
+1. Synchronized devices need only be [Occasionally Connected](https://msdn.microsoft.com/en-us/library/ff650163.aspx) to a network.
 
 More detailed characteristics of the SMSyncServer:
 
