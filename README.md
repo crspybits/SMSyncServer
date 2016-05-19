@@ -13,6 +13,7 @@ SMSyncServer has the following general goals:
 1. Reducing data storage costs for app developers/publishers,  
 1. Allowing sharing of data with other users, and
 1. Cross-platform synchronization (e.g., iOS, Android).
+1. Synchronized devices must only be [Occasionally Connected](https://msdn.microsoft.com/en-us/library/ff650163.aspx) to a network.
 
 More detailed characteristics of the SMSyncServer:
 
@@ -20,7 +21,6 @@ More detailed characteristics of the SMSyncServer:
 1. Client apps can operate offline. The client API queues operations (e.g., uploads) until network access is available.
 1. Interrupted operations are retried. For example, if network access is lost during a series of file uploads, then those uploads are retried when network access is available.
 1. Uploads (and downloads) are performed in a locked (a.k.a., transactional) manner. For example, if you queue a series uploads using `uploadImmutableFile` followed by a `commit`, those upload operations are carried out in an atomic manner, and are only available for download by other SMSyncServer client apps (using the same cloud storage credentials) when the entire set of files has been uploaded.
-1. SMSyncServer has an iOS client written in Swift and a server written in Javascript/Node.js. You must call the iOS client from Swift, not Objective-C, because the iOS API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
 
 See the blog articles:
 
@@ -35,15 +35,16 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 # Development Status
 
-* The SMSyncServer project is in "alpha" and supports uploading, upload-deletion, downloading, and download-deletion. Conflict management for downloaded files is pending.
+* The SMSyncServer project is in "beta" and supports uploading, upload-deletion, downloading, download-deletion, and conflict management.
 * Currently only Google Drive is supported in terms of cloud storage systems.
 * Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
+1. SMSyncServer has an iOS client written in Swift and a server written in Javascript/Node.js. You must call the iOS client from Swift, not Objective-C, because the iOS API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
 * [TODO development list](./TODO.md)
 
 # Installation
 ## 1) Create Google Developer Credentials
 
-* Create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests app or in your app making use of the iOSFramework. See
+* To enable access to user Google Drive accounts, you must create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests app or in your app making use of the iOSFramework. See
 <https://developers.google.com/identity/sign-in/ios/>
 
 ## 2) MongoDb installation
@@ -73,7 +74,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 	
 Each entry in the `CloudStorageServices` dictionary must abide by the structure required for the particular cloud storage service. For Google Drive, see [Google Sign In](https://developers.google.com/identity/sign-in/ios/).
 
-* The SMSyncServer server is written in Node.js. Current tests are using Node.js v5.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
+* The SMSyncServer server is written in Node.js. Current tests are using Node.js v6.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
 
 * A startup script to run the SMSyncServer Node.js on your local Mac OS X system is `Server/Code/Scripts/startServer.sh`.
 

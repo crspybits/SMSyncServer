@@ -2,10 +2,10 @@
 
 ## FUNCTIONALITY
 
-1. In Progress. Conflict management: Dealing with downloads that conflict with local modifications.
+1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
 1. DONE. What about conflicts where the local app is modifying some data. It seems like there should be some kind of lock that can be set by an app to prevent modification while modifying the data. E.g., in the Shared Notes app, a user might be in the midst of making a change to a note. Don't want that note overwritten without taking their changes into account. Presumably these locks should not span launches of the app. e.g., to deal with the case where the app crashes or loses CPU. DECISION: I decided not to deal with app level modification locks within the SMSyncServer. [For the rationale for that choice see this link](http://www.spasticmuffin.biz/blog/2016/05/11/conflict-management-in-the-smsyncserver/)
 
-1. DONE. Make sure the client upload operations have the documented property: If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. (Note: This had previously been implemented).
+1. DONE. Make sure the client upload operations have the documented property: If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. (NOTE: This had previously been implemented).
 
 1. Add ability to upload a zero length file or a nil NSData. It should be possible to have an empty file on cloud storage.
 
@@ -18,6 +18,8 @@
 1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData. (How does this relate to the appFileType we already have planned? What if we changed that from appFileType to appDataType?).
 
 1. Add Dropbox to cloud storage systems. Needs work on both server side and client side. Need to figure out how to do something like inheritance in Javascript so I can have a superclass definition of the interface for a generic cloud storage system, which will hopefully make it easier to implement interfaces to new specific cloud storage systems.
+
+1. Need to use SMSyncServer within published/deployed apps.
 
 1. Improve performance/reliability of file upload and download by breaking up files into blocks and transmitting/receiving those blocks. E.g., 100K blocks. Have already sketched with NSManagedObject descriptions. While this can be considered a performance issue, it's also a functionality issue: In the case of having a lower speed network connection, or larger files, it's possible that without this change, uploads/downloads would never complete-- they would always fail (e.g., when the user gets frustrated with progress) and restart from the beginning and never complete overall.
 
