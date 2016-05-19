@@ -174,7 +174,7 @@ class DownloadRecovery: BaseClass {
             singleDownloadExpectation2 = self.expectationWithDescription("Single Download2 Complete")
         }
         
-        self.extraServerResponseTime = 30
+        self.extraServerResponseTime = 60
         var numberInboundTransfers = 0
         
         self.waitUntilSyncServerUserSignin() {
@@ -331,6 +331,7 @@ class DownloadRecovery: BaseClass {
         let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
         let singleDownloadExpectation = self.expectationWithDescription("Single Download Complete")
         let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation = self.expectationWithDescription("Idle Expectation")
 
         self.extraServerResponseTime = 30
         var shouldDoNetworkFailure = true
@@ -350,13 +351,6 @@ class DownloadRecovery: BaseClass {
             
             self.singleRecoveryCallback =  { mode in
                 self.numberOfRecoverySteps += 1
-            }
-            
-            self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssert(numberUploads == 1)
-                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
-                    uploadCompleteCallbackExpectation.fulfill()
-                }
             }
             
             self.singleInboundTransferCallback = { numberOperations in
@@ -379,11 +373,18 @@ class DownloadRecovery: BaseClass {
             
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
-                    
-                // Now, forget locally about that uploaded file so we can download it.
-                SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
-                    
-                SMSyncControl.session.nextSyncOperation()
+                idleExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                    uploadCompleteCallbackExpectation.fulfill()
+                
+                    // Now, forget locally about that uploaded file so we can download it.
+                    SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                    SMSyncControl.session.nextSyncOperation()
+                }
             }
             
             SMSyncServer.session.commit()

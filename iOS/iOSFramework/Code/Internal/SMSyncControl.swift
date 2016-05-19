@@ -357,7 +357,7 @@ internal class SMSyncControl {
             }
             else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
                 // Not really an error.
-                Log.special("Lock already held by another userId")
+                Log.special("Lock already held (by another userId?)")
                 // In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
                 self.stopOperating()
                 self.syncControlModeChange(.Idle)
