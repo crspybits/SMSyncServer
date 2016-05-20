@@ -125,7 +125,7 @@ extension ViewController : SMSyncServerDelegate {
             
             let alert = UIAlertController(title: "Your \(message) is conflicting with a download!", message: nil, preferredStyle: .Alert)
             
-            alert.addAction(UIAlertAction(title: "Accept the download (removes your \(message)).", style: .Default) {[unowned self] action in
+            alert.addAction(UIAlertAction(title: "Accept the download", style: .Default) {[unowned self] action in
                 conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
                 Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
                 self.resolveDownloadConflicts(remainingConflicts)
@@ -137,7 +137,7 @@ extension ViewController : SMSyncServerDelegate {
             })
             
             // If the conflict is between a file-download and a file-upload, ask them if they want to merge. The two conflicting pieces of info that can be merged are: (a) the contents of the local Note, and (b) the update from the download.
-            if conflict.conflictType == .UploadDeletion {
+            if conflict.conflictType == .FileUpload {
                 alert.addAction(UIAlertAction(title: "Merge your update with the download?", style: .Default) { action in
                 
                     // Delete the conflicting operations because we don't want our prior upload. We want to create a merged upload.
@@ -148,6 +148,8 @@ extension ViewController : SMSyncServerDelegate {
                     self.resolveDownloadConflicts(remainingConflicts)
                 })
             }
+            
+            self.presentViewController(alert, animated: true, completion: nil)
         }
     }
     
@@ -190,6 +192,8 @@ extension ViewController : SMSyncServerDelegate {
                 conflict.resolveConflict(resolution: .KeepConflictingClientOperations)
                 self.resolveDeletionConflicts(remainingConflicts)
             })
+            
+            self.presentViewController(alert, animated: true, completion: nil)
         }
     }
     

@@ -77,16 +77,11 @@ class Note: NSManagedObject {
         }
         
         let dmp = DiffMatchPatch()
-
-        let resultPatchArray = dmp.patch_makeFromOldString(self.text!, andNewString: newNoteContents) as [AnyObject]
-        // print("\(resultPatchArray)")
-        let patchedResult = dmp.patch_apply(resultPatchArray, toString: self.text!)
-        
-        let mergedResult = patchedResult[0]
+        let mergedResult = dmp.diff_simpleMerge(firstString: self.text!, secondString: newNoteContents)
         print("mergedResult: \(mergedResult)")
         
         // The assignment to .text will also spawn off an upload.
-        self.text = (mergedResult as! String)
+        self.text = mergedResult
     }
     
     private func updateText(text:String?) {

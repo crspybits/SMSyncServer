@@ -29,6 +29,7 @@
 		83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83973A1D1CD98C8000FD8520 /* GoogleService-Info.plist */; };
 		83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */; };
 		83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */; };
+		83CF346E1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */; };
 		83E064361CE51C880088BE37 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064331CE51C880088BE37 /* CoreDataSession.swift */; };
 		83E064371CE51C880088BE37 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064341CE51C880088BE37 /* Note.swift */; };
 		83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */; };
@@ -120,6 +121,7 @@
 		83973A2D1CD99C9900FD8520 /* SharedNotes-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SharedNotes-Bridging-Header.h"; sourceTree = "<group>"; };
 		83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditNoteViewController.swift; sourceTree = "<group>"; };
 		83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
+		83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DiffMatchPatch+Extras.swift"; sourceTree = "<group>"; };
 		83E064331CE51C880088BE37 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = CoreData/CoreDataSession.swift; sourceTree = "<group>"; };
 		83E064341CE51C880088BE37 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = CoreData/Note.swift; sourceTree = "<group>"; };
 		83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "CoreData/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 				839739CC1CD96D7400FD8520 /* AppDelegate.swift */,
 				83973A501CDAE73800FD8520 /* NoteTableViewCell.swift */,
 				839739CE1CD96D7D00FD8520 /* ViewController.swift */,
+				83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */,
 				83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */,
 				839739E11CD96F7800FD8520 /* SyncSpinner.swift */,
 				83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */,
@@ -635,6 +638,7 @@
 				83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */,
 				834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */,
 				83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */,
+				83CF346E1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift in Sources */,
 				83E064D71CE534030088BE37 /* NSString+UriCompatibility.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
