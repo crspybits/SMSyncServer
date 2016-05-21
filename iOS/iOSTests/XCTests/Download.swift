@@ -75,6 +75,11 @@ class Download: BaseClass {
         self.downloadOneFile(testFile)
     }
     
+    func testThatDownloadOfAnEmptyFileWorks() {
+        let testFile = TestBasics.session.createTestFile("DownloadOfAnEmptyFile", withContents: "")
+        self.downloadOneFile(testFile)
+    }
+    
     func downloadOneFile(testFile:TestFile) {
 
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")

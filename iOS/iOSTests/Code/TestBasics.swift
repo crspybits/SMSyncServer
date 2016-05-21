@@ -79,9 +79,13 @@ public class TestBasics {
         return file
     }
     
-    public func createFile(withName fileName: String) -> (file:AppFile, fileSizeInBytes:Int) {
+    public func createFile(withName fileName: String, andContents contents:String?=nil) -> (file:AppFile, fileSizeInBytes:Int) {
         let file = self.makeNewFile(withFileName: fileName)
-        let fileContents:NSString = fileName + "123" // sample data
+        var fileContents:NSString = fileName + "123" // sample data
+        if contents != nil {
+            fileContents = contents!
+        }
+        
         let fileSizeBytes = fileContents.length
         
         do {
@@ -93,8 +97,8 @@ public class TestBasics {
         return (file, fileSizeBytes)
     }
     
-    public func createTestFile(fileName:String) -> TestFile {
-        let (file, fileSizeBytes) = self.createFile(withName: fileName)
+    public func createTestFile(fileName:String, withContents contents:String?=nil) -> TestFile {
+        let (file, fileSizeBytes) = self.createFile(withName: fileName, andContents: contents)
         var result = TestFile()
         result.appFile = file
         result.sizeInBytes = fileSizeBytes

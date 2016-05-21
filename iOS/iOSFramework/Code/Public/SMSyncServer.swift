@@ -293,20 +293,19 @@ public class SMSyncServer : NSObject {
     
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
     // This operation persists across app launches, as long as the the call itself completes. If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. This operation does not access the server, and thus runs quickly and synchronously.
-    // TODO: Test what happens if the file is empty.
+    // File can be empty.
     public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
     }
     
     // The same as above, but ownership of the file referenced is passed to this class, and once the upload operation succeeds, the file will be deleted.
-    // TODO: Test what happens if the file is empty.
+    // File can be empty.
     public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL,withFileAttributes attr: SMSyncAttributes) {
         self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
     }
 
-    // Analogous to the above, but the data is given in an NSData object not a file.
-    // TODO: Enable the data argument to be nil. i.e., empty file.
-    public func uploadData(data:NSData, withDataAttributes attr: SMSyncAttributes) {
+    // Analogous to the above, but the data is given in an NSData object not a file. Giving nil data means you are indicating a file with 0 bytes.
+    public func uploadData(data:NSData?, withDataAttributes attr: SMSyncAttributes) {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
         let localFile = SMFiles.createTemporaryRelativeFile()
@@ -317,7 +316,15 @@ public class SMSyncServer : NSObject {
             return
         }
         
-        if !data.writeToURL(localFile!, atomically: true) {
+        var dataToWrite:NSData
+        if data == nil {
+            dataToWrite = NSData()
+        }
+        else {
+            dataToWrite = data!
+        }
+        
+        if !dataToWrite.writeToURL(localFile!, atomically: true) {
             self.callSyncServerModeChange(
                 .InternalError(Error.Create("Could not write data to temporary file!")))
             return

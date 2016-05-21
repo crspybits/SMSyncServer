@@ -40,7 +40,8 @@ class Upload: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatSingleFileUploadWorks() {
+    // Give nil fileContents to use default contents.
+    func singleFileUpload(fileName fileName:String, fileContents:String?=nil) {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let idleExpectation = self.expectationWithDescription("Idle")
@@ -48,7 +49,7 @@ class Upload: BaseClass {
         self.extraServerResponseTime = 30
         
         self.waitUntilSyncServerUserSignin() {
-            let testFile = TestBasics.session.createTestFile("SingleFileUpload")
+            let testFile = TestBasics.session.createTestFile(fileName, withContents: fileContents)
             
             SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
@@ -77,6 +78,14 @@ class Upload: BaseClass {
         }
         
         self.waitForExpectations()
+    }
+    
+    func testThatSingleFileUploadWorks() {
+        self.singleFileUpload(fileName: "SingleFileUpload")
+    }
+    
+    func testThatEmptyFileUploadWorks() {
+        self.singleFileUpload(fileName: "EmptyFileUpload", fileContents: "")
     }
     
     func testThatSingleTemporaryFileUploadWorks() {
@@ -124,7 +133,7 @@ class Upload: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatSingleDataUploadWorks() {
+    func singleDataUpload(fileName fileName:String, strData:String?) {
         let uploadCompleteCallbackExpectation = self.expectationWithDescription("Upload Complete")
         let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let idleExpectation = self.expectationWithDescription("Idle")
@@ -133,15 +142,19 @@ class Upload: BaseClass {
 
         self.waitUntilSyncServerUserSignin() {
             
-            let cloudStorageFileName = "SingleDataUpload"
+            let cloudStorageFileName = fileName
             let fileUUIDString = UUID.make()
             let fileUUID = NSUUID(UUIDString: fileUUIDString)!
             let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
             
-            let strData: NSString = "SingleDataUpload file contents"
-            let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
+            var dataLength = 0
+            var data:NSData?
+            if strData != nil {
+                dataLength = strData!.characters.count
+                data = strData!.dataUsingEncoding(NSUTF8StringEncoding)
+            }
             
-            SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
+            SMSyncServer.session.uploadData(data, withDataAttributes: fileAttributes)
             
             var tempFiles1:NSArray!
             var tempFiles2:NSArray!
@@ -162,7 +175,7 @@ class Upload: BaseClass {
                 tempFiles2 = FileStorage.filesInHomeDirectory("Documents/" + SMAppConstants.tempDirectory)
                 XCTAssert(tempFiles1.count == tempFiles2.count + 1)
                 
-                TestBasics.session.checkFileSize(fileUUIDString!, size: strData.length) {
+                TestBasics.session.checkFileSize(fileUUIDString!, size: dataLength) {
                     uploadCompleteCallbackExpectation.fulfill()
                     
                     let fileAttr = SMSyncServer.session.localFileStatus(fileUUID)
@@ -180,6 +193,14 @@ class Upload: BaseClass {
         }
         
         self.waitForExpectations()
+    }
+    
+    func testThatSingleDataUploadWorks() {
+        self.singleDataUpload(fileName: "SingleDataUpload", strData: "SingleDataUpload file contents")
+    }
+    
+    func testThatNilDataUploadWorks() {
+        self.singleDataUpload(fileName: "NilDataUpload", strData: nil)
     }
     
     func testThatPNGFileUploadWorks() {
