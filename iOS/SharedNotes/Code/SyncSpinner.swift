@@ -10,14 +10,17 @@ import Foundation
 import UIKit
 
 class SyncSpinner : UIView {
+    let normalImage = "SyncSpinner"
+    let yellowImage = "SyncSpinnerYellow"
+    let redImage = "SyncSpinnerRed"
+    
     private var icon = UIImageView()
     private var animating = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        let image = UIImage(named: "SyncSpinner")
-        self.icon.image = image
+        self.setImage(usingBackgroundColor: .Clear)
         self.icon.contentMode = .ScaleAspectFit
         self.icon.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
         var iconFrame = frame;
@@ -25,6 +28,29 @@ class SyncSpinner : UIView {
         self.icon.frame = iconFrame
         self.addSubview(self.icon)
         self.stop()
+    }
+    
+    enum BackgroundColor {
+        case Clear
+        case Yellow
+        case Red
+    }
+    
+    private func setImage(usingBackgroundColor color:BackgroundColor) {
+        var imageName:String
+        switch color {
+        case .Clear:
+            imageName = self.normalImage
+            
+        case .Yellow:
+            imageName = self.yellowImage
+            
+        case .Red:
+            imageName = self.redImage
+        }
+        
+        let image = UIImage(named: imageName)
+        self.icon.image = image
     }
     
     // Dealing with issue: Spinner started when view is not displayed. When view finally gets displayed, spinner graphic is displayed but it's not animating.
@@ -42,6 +68,7 @@ class SyncSpinner : UIView {
     private let animationKey = "rotationAnimation"
     
     func start() {
+        self.setImage(usingBackgroundColor: .Clear)
         self.animating = true
         self.hidden = false
         let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation.z")
@@ -55,9 +82,14 @@ class SyncSpinner : UIView {
         self.icon.layer.MB_setCurrentAnimationsPersistent()
     }
     
-    func stop() {
+    func stop(withBackgroundColor color:BackgroundColor = .Clear) {
         self.animating = false
-        self.hidden = true
+        
+        self.setImage(usingBackgroundColor: color)
+
+        // Make the spinner hidden when stopping iff background is clear
+        self.hidden = (color == .Clear)
+        
         self.icon.layer.removeAllAnimations()
     }
 }

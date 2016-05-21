@@ -15,7 +15,7 @@
 
 @interface CoreDataSource() <NSFetchedResultsControllerDelegate>
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
-@property (strong, nonatomic) NSIndexPath *indexPathForDeletion;
+//@property (strong, nonatomic) NSIndexPath *indexPathForDeletion;
 @property (nonatomic, weak) id<CoreDataSourceDelegate> delegate;
 @end
 
@@ -40,7 +40,10 @@
 
 - (void) deleteObjectAtIndexPath: (NSIndexPath *) indexPath;
 {
-    NSManagedObject *objectToDeleted = [self.fetchedResultsController objectAtIndexPath:self.indexPathForDeletion];
+    // 5/20/16; Fixed bug. This used to use a property called self.indexPathForDeletion, which was never assigned!
+    NSManagedObject *objectToDeleted = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    SPASLogDetail(@"objectToDeleted: %@", objectToDeleted);
+
     [[self.delegate coreDataSourceContext:self] deleteObject:objectToDeleted];
     [self saveContext];
 }
@@ -75,7 +78,8 @@
                 [self.delegate coreDataSource:self objectWasUpdated:indexPath];
             }
             break;
-            
+        
+        // 5/20/6; Odd. This gets called when an object is updated, sometimes. It may be because the sorting key I'm using in the fetched results controller changed.
         case NSFetchedResultsChangeMove:
             if ([self.delegate respondsToSelector:@selector(coreDataSource:objectWasMovedFrom:to:)]) {
                 [self.delegate coreDataSource:self objectWasMovedFrom:indexPath to:newIndexPath];

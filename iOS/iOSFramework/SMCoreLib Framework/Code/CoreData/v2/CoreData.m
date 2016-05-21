@@ -510,6 +510,7 @@ static CoreData* s_sharedInstance = nil;
 
 - (void) removeObject: (NSManagedObject * _Nonnull) managedObject;
 {
+    SPASLogDetail(@"managedObject: %@", managedObject);
     [self.context deleteObject: managedObject];
 }
 

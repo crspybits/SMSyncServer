@@ -18,6 +18,13 @@ class EditNoteViewController : UIViewController {
         super.viewDidLoad()
         self.textView.delegate = self
         
+        // I want to set the font size of the text view in relation to the size of the screen real-estate we have.
+        let baselineMinSize:CGFloat = 500.0
+        let baselineFontSize:CGFloat = 30.0
+        let minSize = min(self.view.frameWidth, self.view.frameHeight)
+        let fontSize = (minSize/baselineMinSize)*baselineFontSize
+        self.textView.font = UIFont.systemFontOfSize(fontSize)
+        
         let toolbar = UIToolbar(frame: CGRectMake(0, 0, self.view.frame.size.width, 50))
         toolbar.barStyle = UIBarStyle.Default
         toolbar.items = [
@@ -38,6 +45,9 @@ class EditNoteViewController : UIViewController {
 
 extension EditNoteViewController : UITextViewDelegate {
     func textViewDidEndEditing(textView: UITextView) {
-        self.note!.text = textView.text
+        // Only update if the text has changed, because the update will generate an upload.
+        if textView.text != self.note!.text {
+            self.note!.text = textView.text
+        }
     }
 }

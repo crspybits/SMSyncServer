@@ -12,6 +12,7 @@ import SMCoreLib
 
 class ViewController: UIViewController {
     private let spinner = SyncSpinner(frame: CGRect(x: 0, y: 0, width: 25, height: 25))
+    private var barButtonSpinner:UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var signInOrOut: UIBarButtonItem!
     private var coreDataSource:CoreDataSource!
@@ -25,8 +26,8 @@ class ViewController: UIViewController {
         
         SMSyncServer.session.delegate = self
         
-        let barButtonSpinner = UIBarButtonItem(customView: spinner)
-        self.navigationItem.leftBarButtonItem = barButtonSpinner
+        self.barButtonSpinner = UIBarButtonItem(customView: spinner)
+        self.navigationItem.leftBarButtonItem = self.barButtonSpinner
         
         self.coreDataSource = CoreDataSource(delegate: self)
         
@@ -43,6 +44,29 @@ class ViewController: UIViewController {
         self.refreshControl.activityIndicatorViewColor = UIColor.clearColor()
         
         self.refreshControl.addTarget(self, action: #selector(refreshTableViewAction), forControlEvents: .ValueChanged)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(spinnerTapGestureAction))
+        self.spinner.addGestureRecognizer(tapGesture)
+    }
+    
+    // Enable a reset from error when needed.
+    @objc private func spinnerTapGestureAction() {
+        Log.msg("spinner tapped")
+       
+        switch  SMSyncServer.session.mode {
+        case .Idle, .NetworkNotConnected, .Synchronizing:
+            break
+        
+        case .ClientAPIError, .NonRecoverableError, .InternalError:
+            let alert = UIAlertController(title: "Reset error?", message: nil, preferredStyle: .ActionSheet)
+            alert.addAction(UIAlertAction(title: "Reset", style: .Destructive) { action in
+                SMSyncServer.session.resetFromError()
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .Default) { action in
+            })
+            alert.popoverPresentationController!.barButtonItem = self.barButtonSpinner
+            self.presentViewController(alert, animated: true, completion: nil)
+        }
     }
     
     @objc private func refreshTableViewAction() {
@@ -197,16 +221,22 @@ extension ViewController : SMSyncServerDelegate {
         }
     }
     
-    func syncServerModeChange(newMode: SMSyncServerMode) {        
+    func syncServerModeChange(newMode: SMSyncServerMode) {
         switch newMode {
         case .Synchronizing:
             self.spinner.start()
-            self.spinner.setNeedsLayout()
+        
+        case .ClientAPIError:
+            self.spinner.stop(withBackgroundColor: .Yellow)
             
-        case .Idle, .NetworkNotConnected, .ClientAPIError, .NonRecoverableError, .InternalError:
+        case .NonRecoverableError, .InternalError:
+            self.spinner.stop(withBackgroundColor: .Red)
+            
+        case .Idle, .NetworkNotConnected:
             self.spinner.stop()
-            self.spinner.setNeedsLayout()
         }
+        
+        self.spinner.setNeedsLayout()
     }
     
     func syncServerEventOccurred(event: SMSyncServerEvent) {
@@ -229,7 +259,7 @@ extension ViewController : CoreDataSourceDelegate {
     }
     
     func coreDataSource(cds: CoreDataSource!, objectWasDeleted indexPathOfDeletedObject: NSIndexPath!) {
-        self.tableView.reloadRowsAtIndexPaths([indexPathOfDeletedObject], withRowAnimation: .Automatic)
+        self.tableView.deleteRowsAtIndexPaths([indexPathOfDeletedObject], withRowAnimation: .Automatic)
     }
     
     func coreDataSource(cds: CoreDataSource!, objectWasInserted indexPathOfInsertedObject: NSIndexPath!) {
@@ -237,6 +267,11 @@ extension ViewController : CoreDataSourceDelegate {
     }
     
     func coreDataSource(cds: CoreDataSource!, objectWasUpdated indexPathOfUpdatedObject: NSIndexPath!) {
+        self.tableView.reloadData()
+    }
+    
+    // 5/20/6; Odd. This gets called when an object is updated, sometimes. It may be because the sorting key I'm using in the fetched results controller changed.
+    func coreDataSource(cds: CoreDataSource!, objectWasMovedFrom oldIndexPath: NSIndexPath!, to newIndexPath: NSIndexPath!) {
         self.tableView.reloadData()
     }
 }
@@ -248,14 +283,13 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
     
-        let cell = self.tableView.dequeueReusableCellWithIdentifier(self.cellReuseIdentifier, forIndexPath: indexPath)
+        let cell = self.tableView.dequeueReusableCellWithIdentifier(self.cellReuseIdentifier, forIndexPath: indexPath) as! NoteTableViewCell
  
         let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
         Log.msg("\(note)")
         Log.msg("\(note.uuid)")
 
-        cell.textLabel!.text = note.text
-        cell.detailTextLabel!.text = note.dateModified?.description
+        cell.configure(withNote: note)
         
         return cell
     }
@@ -263,12 +297,37 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         self.tableView.deselectRowAtIndexPath(indexPath, animated: true)
         
+        Log.msg("Editing object at row: \(indexPath.row)")
+
         if let editNoteVC = self.storyboard?.instantiateViewControllerWithIdentifier(
             "EditNoteViewController") as? EditNoteViewController {
             
             let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
             editNoteVC.note = note
             self.navigationController!.pushViewController(editNoteVC, animated: true)
+        }
+    }
+    
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return UITableViewAutomaticDimension
+    }
+
+    func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return UITableViewAutomaticDimension
+    }
+    
+    func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
+        
+        let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
+        
+        switch editingStyle {
+        case .Delete:
+            Log.msg("Deleting object from row: \(indexPath.row)")
+            //self.coreDataSource.deleteObjectAtIndexPath(indexPath)
+            note.removeObject()
+            
+        case .Insert, .None:
+            Assert.badMojo(alwaysPrintThisString: "Should not get this")
         }
     }
 }

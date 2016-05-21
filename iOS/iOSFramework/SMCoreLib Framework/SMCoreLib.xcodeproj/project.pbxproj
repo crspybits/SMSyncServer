@@ -37,6 +37,7 @@
 		83A71EAD1C8E3A6000701BCB /* UITableView+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */; };
 		83A71EAE1C8E3A6000701BCB /* UITableViewCell+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */; };
+		83CF34741CF019D300FEA292 /* Array+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83CF34731CF019D300FEA292 /* Array+Extras.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED121C4DC81000BFDA93 /* UserMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED101C4DC81000BFDA93 /* UserMessage.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83D3ED131C4DC81000BFDA93 /* UserMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 83D3ED111C4DC81000BFDA93 /* UserMessage.m */; };
@@ -167,6 +168,7 @@
 		83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableView+Extras.m"; path = "Code/Categories/v1/UITableView+Extras.m"; sourceTree = "<group>"; };
 		83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UITableViewCell+Extras.h"; path = "Code/Categories/v1/UITableViewCell+Extras.h"; sourceTree = "<group>"; };
 		83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableViewCell+Extras.m"; path = "Code/Categories/v1/UITableViewCell+Extras.m"; sourceTree = "<group>"; };
+		83CF34731CF019D300FEA292 /* Array+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Array+Extras.swift"; path = "Code/Categories/v1/Array+Extras.swift"; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D3ED031C4DC0C300BFDA93 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMCoreLib.h; sourceTree = "<group>"; };
@@ -537,6 +539,7 @@
 				83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */,
 				83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */,
 				83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */,
+				83CF34731CF019D300FEA292 /* Array+Extras.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -783,6 +786,7 @@
 				837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */,
 				83D3ED691C4DC89200BFDA93 /* SMPersistVars.swift in Sources */,
 				83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */,
+				83CF34741CF019D300FEA292 /* Array+Extras.swift in Sources */,
 				83D3ED2B1C4DC84500BFDA93 /* AFSecurityPolicy.m in Sources */,
 				83D3ED571C4DC85300BFDA93 /* UIRefreshControl+AFNetworking.m in Sources */,
 				83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */,

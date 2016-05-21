@@ -34,6 +34,7 @@ class Note: NSManagedObject {
     
     // TODO: Allow self.text to be nil.
     func upload() {
+        Log.msg("upload")
         guard self.text != nil else { return }
         if let data = self.text!.dataUsingEncoding(NSUTF8StringEncoding) {
             let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
@@ -124,9 +125,14 @@ class Note: NSManagedObject {
         return fetchRequest
     }
     
+    // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server.
     func removeObject() {
+        let uuid = self.uuid
         CoreData.sessionNamed(CoreDataSession.name).removeObject(self)
-        CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        if CoreData.sessionNamed(CoreDataSession.name).saveContext() {
+            SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
+            SMSyncServer.session.commit()
+        }
     }
     
     // Returns nil if no Note found.
