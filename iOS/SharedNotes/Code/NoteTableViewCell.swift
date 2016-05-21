@@ -23,7 +23,7 @@ class NoteTableViewCell : UITableViewCell {
         self.textLabel!.numberOfLines = 0
         self.detailTextLabel!.numberOfLines = 0
         
-        if let noteText = note.text {
+        if note.text != nil && note.text!.characters.count > 0 {
         
             // Using Dynamic Type
             
@@ -37,12 +37,14 @@ class NoteTableViewCell : UITableViewCell {
             let titleAttributes = [NSFontAttributeName: UIFont.preferredFontForTextStyle(fontStyleForTitle), NSForegroundColorAttributeName: UIColor.purpleColor()]
             let remainingLinesAttributes = [NSFontAttributeName: UIFont.preferredFontForTextStyle(UIFontTextStyleBody)]
 
-            let (firstLine, remainingLines) = self.splitIntoFirstAndRemainingLines(noteText)
+            let (firstLine, remainingLines) = self.splitIntoFirstAndRemainingLines(note.text!)
 
-            let titleString = NSMutableAttributedString(string: "\(firstLine)\n", attributes: titleAttributes)
-            let subtitleString = NSAttributedString(string: remainingLines, attributes: remainingLinesAttributes)
+            let titleString = NSMutableAttributedString(string: "\(firstLine)", attributes: titleAttributes)
             
-            titleString.appendAttributedString(subtitleString)
+            if remainingLines != nil {
+                let subtitleString = NSAttributedString(string: "\n" + remainingLines!, attributes: remainingLinesAttributes)
+                titleString.appendAttributedString(subtitleString)
+            }
             
             self.textLabel!.attributedText = titleString
         }
@@ -53,22 +55,26 @@ class NoteTableViewCell : UITableViewCell {
         self.detailTextLabel!.text = note.dateModified?.description
     }
     
-    private func splitIntoFirstAndRemainingLines(text:String) -> (firstLine: String, remainingLines:String){
+    private func splitIntoFirstAndRemainingLines(text:String) -> (firstLine: String, remainingLines:String?) {
         // This is kind of gnarly
         // http://stackoverflow.com/questions/25678373/swift-split-a-string-into-an-array
         let noteTextLines = text.characters.split("\n").map(String.init)
-        var tailText = ""
+        var tailText:String?
         var count = 0
         let maxRemainingLines = 4
         for line in noteTextLines.tail() {
+            if tailText == nil {
+                tailText = ""
+            }
+            
             if count >= maxRemainingLines {
-                tailText += "\n..."
+                tailText! += "\n..."
                 break
             }
             if count > 0 {
-                tailText += "\n"
+                tailText! += "\n"
             }
-            tailText += line
+            tailText! += line
             count += 1
         }
         

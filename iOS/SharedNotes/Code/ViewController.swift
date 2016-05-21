@@ -109,7 +109,7 @@ class ViewController: UIViewController {
     }
     
     @IBAction func createAction(sender: AnyObject) {
-        let _ = Note.newObjectAndMakeUUID(true)
+        let _ = Note.newObjectAndMakeUUID(makeUUIDAndUpload: true)
     }
 }
 

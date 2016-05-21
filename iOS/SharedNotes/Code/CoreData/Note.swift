@@ -32,18 +32,18 @@ class Note: NSManagedObject {
         }
     }
     
-    // TODO: Allow self.text to be nil.
+    // Allowing self.text to be nil so we can sync a new, empty, note to other devices.
     func upload() {
         Log.msg("upload")
-        guard self.text != nil else { return }
-        if let data = self.text!.dataUsingEncoding(NSUTF8StringEncoding) {
-            let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
-            SMSyncServer.session.uploadData(data, withDataAttributes: attr)
-            SMSyncServer.session.commit()
+        var uploadData:NSData?
+        if self.text != nil {
+            uploadData = self.text!.dataUsingEncoding(NSUTF8StringEncoding)
         }
-        else {
-            Log.error("Could not convert text: \(self.text)")
-        }
+        
+        let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
+        
+        SMSyncServer.session.uploadData(uploadData, withDataAttributes: attr)
+        SMSyncServer.session.commit()
     }
     
     // Call this based on sync-driven changes to the note. Creates the note if needed.
@@ -52,7 +52,7 @@ class Note: NSManagedObject {
         var note = self.fetch(withUUID: uuid)
         if note == nil {
             Log.special("Couldn't find uuid: \(uuid); creating new Note")
-            note = (Note.newObjectAndMakeUUID(false) as! Note)
+            note = (Note.newObjectAndMakeUUID(makeUUIDAndUpload: false) as! Note)
             note!.uuid = uuid.UUIDString
         }
         
@@ -95,10 +95,10 @@ class Note: NSManagedObject {
         return "Note"
     }
 
-    class func newObjectAndMakeUUID(makeUUID: Bool) -> NSManagedObject {
+    class func newObjectAndMakeUUID(makeUUIDAndUpload makeUUIDAndUpload: Bool) -> NSManagedObject {
         let note = CoreData.sessionNamed(CoreDataSession.name).newObjectWithEntityName(self.entityName()) as! Note
         
-        if makeUUID {
+        if makeUUIDAndUpload {
             note.uuid = UUID.make()
         }
         
@@ -106,11 +106,15 @@ class Note: NSManagedObject {
         
         CoreData.sessionNamed(CoreDataSession.name).saveContext()
 
+        if makeUUIDAndUpload {
+            note.upload()
+        }
+        
         return note
     }
     
     class func newObject() -> NSManagedObject {
-        return self.newObjectAndMakeUUID(false)
+        return self.newObjectAndMakeUUID(makeUUIDAndUpload: false)
     }
     
     class func fetchRequestForAllObjects() -> NSFetchRequest? {
