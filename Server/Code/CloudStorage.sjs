@@ -144,6 +144,7 @@ CloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
                 }
                 else {
                     fileProperties = {};
+                    
                     // 5/20/16; If the file we're dealing with is empty, response appears to be nil. Yikes!
                     var fileSize = 0;
                     if (isDefined(response)) {

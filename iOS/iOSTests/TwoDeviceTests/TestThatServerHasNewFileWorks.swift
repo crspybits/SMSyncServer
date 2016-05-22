@@ -68,7 +68,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     
     override func syncServerModeChange(newMode:SMSyncServerMode) {
         switch newMode {
-        case .Idle, .Synchronizing, .NetworkNotConnected:
+        case .Idle, .Synchronizing, .NetworkNotConnected, .ResettingFromError:
             break
             
         case .NonRecoverableError(let error):

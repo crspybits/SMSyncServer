@@ -79,13 +79,14 @@ public class SMSyncServerUser {
     }
     
     // Add target/selector to this to get a callback when the user sign-in process completes.
+    // An NSError? parameter is passed to each target/selector you give, which will be nil if there was no error in the sign-in process, and non-nil if there was an error in signing in.
     public var signInProcessCompleted:TargetsAndSelectors {
         get {
             return self._signInCallback
         }
     }
     
-    // So we don't have to expose the delegate publicly.
+    // Is the user signed in? (So we don't have to expose the delegate publicly.)
     public var signedIn:Bool {
         get {
             return self.delegate.syncServerUserIsSignedIn
@@ -142,7 +143,7 @@ public class SMSyncServerUser {
         if error == nil {
             self._signInCallback.forEachTargetInCallbacksDo() { (obj:AnyObject?, sel:Selector, dict:NSMutableDictionary!) in
                 if let nsObject = obj as? NSObject {
-                    nsObject.performSelector(sel)
+                    nsObject.performSelector(sel, withObject: error)
                 }
                 else {
                     Assert.badMojo(alwaysPrintThisString: "Objects should be NSObject's")

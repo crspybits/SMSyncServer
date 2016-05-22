@@ -54,7 +54,7 @@ class ViewController: UIViewController {
         Log.msg("spinner tapped")
        
         switch  SMSyncServer.session.mode {
-        case .Idle, .NetworkNotConnected, .Synchronizing:
+        case .Idle, .NetworkNotConnected, .Synchronizing, .ResettingFromError:
             break
         
         case .ClientAPIError, .NonRecoverableError, .InternalError:
@@ -223,7 +223,7 @@ extension ViewController : SMSyncServerDelegate {
     
     func syncServerModeChange(newMode: SMSyncServerMode) {
         switch newMode {
-        case .Synchronizing:
+        case .Synchronizing, .ResettingFromError:
             self.spinner.start()
         
         case .ClientAPIError:

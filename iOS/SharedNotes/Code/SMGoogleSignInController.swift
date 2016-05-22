@@ -9,6 +9,7 @@
 import Foundation
 import SMSyncServer
 import Google
+import SMCoreLib
 
 public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
     var signInButton: GIDSignInButton!
@@ -56,7 +57,14 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         SMSyncServer.session.sync()
     }
     
-    @objc private func signInCompletedAction() {
-        self.navigationController?.popViewControllerAnimated(true)
+    @objc private func signInCompletedAction(error:NSError?) {
+        if SMSyncServerUser.session.signedIn && error == nil {
+            self.navigationController?.popViewControllerAnimated(true)
+        }
+        else {
+            let alert = UIAlertController(title: "There was an error signing in!", message: nil, preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: SMUIMessages.session().OkMsg(), style: .Default) {alert in
+            })
+        }
     }
 }

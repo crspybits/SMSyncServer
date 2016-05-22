@@ -18,8 +18,8 @@ class Settings: UIViewController {
     let showLocalMetaData = UIButton(type: .System)
     
     // Must not be private
-    func signInCompletionAction() {
-        if SMSyncServerUser.session.signedIn {
+    func signInCompletionAction(error:NSError?) {
+        if SMSyncServerUser.session.signedIn && error == nil {
             print("SUCCESS signing in!")
         }
         else {

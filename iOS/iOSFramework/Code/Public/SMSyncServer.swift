@@ -176,7 +176,8 @@ public class SMSyncServer : NSObject {
     public var autoCommitIntervalSeconds:Float {
         set {
             if newValue < 0 {
-                self.callSyncServerModeChange(.NonRecoverableError(Error.Create("Yikes: Bad autoCommitIntervalSeconds")))
+                // TODO: What if the API is actually synchronizing here...? It seems odd to change the mode in this case.
+                self.callSyncServerModeChange(.ClientAPIError(Error.Create("Yikes: Bad autoCommitIntervalSeconds")))
             }
             else {
                 _autoCommitIntervalSeconds = newValue
@@ -259,14 +260,15 @@ public class SMSyncServer : NSObject {
     }
     
     // PRIVATE
-    internal func signInCompletedAction() {
+    internal func signInCompletedAction(error:NSError?) {
         Log.msg("signInCompletedAction")
-        
-        // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
-        SMSyncControl.session.nextSyncOperation()
-        
-        // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
-        Network.session().connectionStateCallbacks.addTarget!(self, withSelector: #selector(SMSyncServer.networkConnectionStateChangeAction))
+        if SMSyncServerUser.session.signedIn && error == nil {
+            // TODO: Right now this is being called after sign in is completed. That seems good. But what about the app going into the background and coming into the foreground? This can cause a server API operation to fail, and we should initiate recovery at that point too.
+            SMSyncControl.session.nextSyncOperation()
+            
+            // Leave this until now, i.e., until after sign-in, so we don't start any recovery process until after sign-in.
+            Network.session().connectionStateCallbacks.addTarget!(self, withSelector: #selector(SMSyncServer.networkConnectionStateChangeAction))
+        }
     }
     
     // PRIVATE
@@ -418,6 +420,7 @@ public class SMSyncServer : NSObject {
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
+            // TODO: This seems odd. What if internally, the mode is .Synchronizing?
             self.callSyncServerModeChange(.ClientAPIError(Error.Create("Attempt to delete a file unknown to SMSyncServer!")))
             return
         }
@@ -507,13 +510,13 @@ public class SMSyncServer : NSObject {
     }
 #endif
 
-    // Returns true iff the SMSyncServer is currently in the process of upload or download file operations. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging). This is just a synonym for self.mode == .Synchronizing
+    // Returns true iff the SMSyncServer is currently in the process of upload or download file operations, or resetting from an error. Any upload or delete operation you enqueue will wait until it is not operating. (Mostly useful for testing/debugging).
     public var isOperating: Bool {
         switch self.mode {
-        case .Synchronizing:
+        case .Synchronizing, .ResettingFromError:
             return true
             
-        default:
+        case .ClientAPIError, .Idle, .InternalError, .NetworkNotConnected, .NonRecoverableError:
             return false
         }
     }
@@ -618,7 +621,7 @@ public class SMSyncServer : NSObject {
     On normal reset operation (i.e., the reset worked properly), the callback error parameter will be nil.
     */
     public func resetFromError(completion:((error:NSError?)->())?=nil) {
-        SMSyncControl.session.resetFromError(completion)
+        SMSyncControl.session.resetFromError(completion: completion)
     }
     
     // Convenience function to get data from smSyncServerClientPlist

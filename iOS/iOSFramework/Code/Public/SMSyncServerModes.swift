@@ -16,6 +16,9 @@ public enum SMSyncServerMode {
     // SMSyncServer client is performing an operation, e.g., downloading or uploading.
     case Synchronizing
     
+    // The SMSyncServer resetFromError method was called, asynchronous operation was required, and the process of resetting from an error is occurring.
+    case ResettingFromError
+    
     // This is not an error, but indicates a loss of network connection. Normal operation will resume once the network is connected again.
     case NetworkNotConnected
     
@@ -29,6 +32,52 @@ public enum SMSyncServerMode {
     
     // An error within the SMSyncServer framework. Ooops. Please report this to the SMSyncServer developers!
     case InternalError(NSError)
+}
+
+public func ==(lhs:SMSyncServerMode, rhs:SMSyncServerMode) -> Bool {
+    switch lhs {
+    case .Idle:
+        switch rhs {
+            case .Idle: return true
+            default: return false
+        }
+
+    case .Synchronizing:
+        switch rhs {
+            case .Synchronizing: return true
+            default: return false
+        }
+        
+    case .ResettingFromError:
+        switch rhs {
+            case .ResettingFromError: return true
+            default: return false
+        }
+        
+    case .NetworkNotConnected:
+        switch rhs {
+            case .NetworkNotConnected: return true
+            default: return false
+        }
+        
+    case .ClientAPIError:
+        switch rhs {
+            case .ClientAPIError: return true
+            default: return false
+        }
+        
+    case .NonRecoverableError:
+        switch rhs {
+            case .NonRecoverableError: return true
+            default: return false
+        }
+        
+    case .InternalError:
+        switch rhs {
+            case .InternalError: return true
+            default: return false
+        }
+    }
 }
 
 internal class SMSyncServerModeWrapper : NSObject, NSCoding
@@ -48,6 +97,9 @@ internal class SMSyncServerModeWrapper : NSObject, NSCoding
             
         case "Synchronizing":
             self.mode = .Synchronizing
+            
+        case "ResettingFromError":
+            self.mode = .ResettingFromError
             
         case "NetworkNotConnected":
             self.mode = .NetworkNotConnected
@@ -82,6 +134,9 @@ internal class SMSyncServerModeWrapper : NSObject, NSCoding
         
         case .Synchronizing:
             name = "Synchronizing"
+        
+        case .ResettingFromError:
+            name = "ResettingFromError"
             
         case .NetworkNotConnected:
             name = "NetworkNotConnected"

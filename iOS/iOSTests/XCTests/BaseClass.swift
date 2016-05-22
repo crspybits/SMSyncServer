@@ -164,7 +164,7 @@ extension BaseClass : SMSyncServerDelegate {
             self.idleSequenceNumber += 1
             self.idleCallbacks[idleIndex]()
             
-        case .Synchronizing:
+        case .Synchronizing, .ResettingFromError:
             break
 
         case .NetworkNotConnected:

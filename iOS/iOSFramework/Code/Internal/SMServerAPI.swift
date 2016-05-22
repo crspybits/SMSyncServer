@@ -603,6 +603,7 @@ internal class SMServerAPI {
         }
     }
  
+    // You must have the server lock before calling.
     // Removes PSOutboundFileChange's, removes the PSLock, and removes the PSOperationId.
     // This is useful for cleaning up in the case of an error/failure during an upload/download operation.
     internal func cleanup(completion:((apiResult:SMServerAPIResult)->(Void))?) {

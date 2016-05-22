@@ -61,6 +61,7 @@ internal class SMSyncControl {
     private var numberGetFileIndexForUploadAttempts = 0
     private var numberUnlockAttempts = 0
     private var numberCleanupAttempts = 0
+    private var numberResetAttempts = 0
     
     private func resetAttempts() {
         self.numberLockAttempts = 0
@@ -68,6 +69,7 @@ internal class SMSyncControl {
         self.numberGetFileIndexForUploadAttempts = 0
         self.numberUnlockAttempts = 0
         self.numberCleanupAttempts = 0
+        self.numberResetAttempts = 0
     }
 
     internal static let session = SMSyncControl()
@@ -76,6 +78,36 @@ internal class SMSyncControl {
     private init() {
         SMUploadFiles.session.syncControlDelegate = self
         SMDownloadFiles.session.syncControlDelegate = self
+    }
+    
+    // a.k.a, startOperating()
+    private func tryLock() -> Bool {
+        var result:Bool!
+        
+        // Having an issue with locking/unlocking self.lock from different threads.
+        NSThread.runSyncOnMainThread() {
+            result = self.lock.tryLock()
+            if result! {
+                Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
+                self._operating = true
+            }
+        }
+        
+        return result
+    }
+    
+    // a.k.a, unlock
+    private func stopOperating() {
+        Assert.If(!self._operating, thenPrintThisString: "Not already operating!")
+        self._operating = false
+        NSThread.runSyncOnMainThread() {
+            self.lock.unlock()
+        }
+        
+        Log.special("Stopped operating!")
+        Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
+
+        // Callback for .Idle mode change is after the unlock (and now, after this method call) to let the idle callback acquire the lock if needed.
     }
     
     /* Call this to try to perform the next sync operation. If the thread lock can be obtained, this will perform a next sync operation if there is one. Otherwise, will just return.
@@ -100,7 +132,7 @@ internal class SMSyncControl {
     */
     internal func nextSyncOperation(completion:(()->())?=nil) {
         switch self.mode {
-        case .ClientAPIError, .InternalError, .NonRecoverableError:
+        case .ClientAPIError, .InternalError, .NonRecoverableError, .ResettingFromError:
             // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
             NSThread.runSyncOnMainThread() {
                 self.delegate?.syncServerModeChange(self.mode)
@@ -126,19 +158,8 @@ internal class SMSyncControl {
             break
         }
         
-        // Having an issue with locking/unlocking self.lock from different threads.
-        func tryLock() -> Bool {
-            var result:Bool!
-            NSThread.runSyncOnMainThread() {
-                result = self.lock.tryLock()
-            }
-            return result
-        }
-        
-        if tryLock() {
+        if self.tryLock() {
             completion?()
-            Assert.If(self._operating, thenPrintThisString: "Yikes: Already operating!")
-            self._operating = true
             self.syncControlModeChange(.Synchronizing)
             Log.special("Starting operating!")
             self.resetAttempts()
@@ -179,36 +200,31 @@ internal class SMSyncControl {
             self.next()
         }
     }
-    
-    private func stopOperating() {
-        Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
-        
-        self._operating = false
-        
-        NSThread.runSyncOnMainThread() {
-            self.lock.unlock()
-        }
-        
-        Log.special("Stopped operating!")
-        Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
 
-        // Callback for .Idle mode change is after the unlock (and now, after this method call) to let the idle callback acquire the lock if needed.
+    private func localCleanup() {
+        SMQueues.current().flush()
+        self.numberCleanupAttempts = 0
     }
-    
-    internal func resetFromError(completion:((error:NSError?)->())?=nil) {
-        func localCleanup() {
-            SMQueues.current().flush()
-            self.numberCleanupAttempts = 0
-            self.syncControlModeChange(.Idle)
-        }
+
+    // allowDebugReset is for DEBUG builds and for testing .InternalError and .NonRecoverableError reset.
+    internal func resetFromError(allowDebugReset allowDebugReset:Bool=false, completion:((error:NSError?)->())?=nil) {
+        let orignalErrorMode = self.mode
         
+        #if !DEBUG
+            Assert.If(allowDebugReset == true, thenPrintThisString: "Yikes: Attempted to do debug reset in non-debug build!")
+        #endif
+    
         switch (self.mode) {
-        case .Idle, .Synchronizing, .NetworkNotConnected:
+        case .Idle, .Synchronizing, .NetworkNotConnected, .ResettingFromError:
+            if allowDebugReset {
+                break
+            }
             completion?(error: Error.Create("Not in an error mode: \(self.mode)"))
             return
         
         case .ClientAPIError:
-            localCleanup()
+            self.localCleanup()
+            self.syncControlModeChange(.Idle)
             completion?(error: nil)
             return
             
@@ -216,33 +232,68 @@ internal class SMSyncControl {
             break
         }
         
-        // Should not be operating-- because we're in an error mode. The only time self._operating should be true is when we're in .Synchronizing mode.
-        Assert.If(self._operating, thenPrintThisString: "Should not be operating!")
+        // Should not be operating or have the lock -- because we're in an error mode.
+        
+        if !self.tryLock() {
+            Assert.badMojo(alwaysPrintThisString: "Could not get the lock!!")
+        }
+        
+        // Now: We are operating, and we have the lock.
+
+        self.syncControlModeChange(.ResettingFromError)
+        
+        self.resetFromErrorAux1(originalErrorMode:orignalErrorMode, completion: completion)
+    }
+    
+    private func resetFromErrorAux1(originalErrorMode originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
+        
+        if SMSyncControl.haveServerLock.boolValue {
+            self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+        }
+        else {
+            SMServerAPI.session.lock { (apiResult) -> (Void) in
+                if nil == apiResult.error {
+                    self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+                }
+                else {
+                    self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on obtaining lock", success: {
+                        self.resetFromErrorAux1(originalErrorMode: originalErrorMode, completion: completion)
+                    })
+                }
+            }
+        }
+    }
+    
+    private func resetFromErrorAux2(originalErrorMode originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
         
         SMServerAPI.session.cleanup() { apiResult in
             if nil == apiResult.error {
                 // One result of successfully calling cleanup is that we won't have the server lock any more.
                 SMSyncControl.haveServerLock.boolValue = false
                 
-                localCleanup()
+                // Using nextOperationLock so that no one races in, does a client commit, and the commit remains enqueued but doesn't actually do any sync operations. Either the commit will get thrown away in the cleanup, or it will operate after this cleanup/stop sequence occurs.
+                self.nextOperationLock.lock()
+                
+                self.localCleanup()
+                
+                // Since we just did the localCleanup(), which flushed the SMQueues, there is no point in calling doNextUploadOrStop() because there will not be any uploads or other queued operations.
+                
+                self.stopOperating()
+                self.nextOperationLock.unlock()
+                
+                self.syncControlModeChange(.Idle)
+
                 completion?(error: nil)
             }
             else {
-                // Retry up to a max number of times, then fail. Not using self.retry because we don't want to call next() here. Not checking Network.session().connected() because SMServerNetworking will check that and we can retry here.
-                
-                if self.numberCleanupAttempts < self.MAX_NUMBER_ATTEMPTS {
-                    self.numberCleanupAttempts += 1
-                    
-                    SMServerNetworking.exponentialFallback(forAttempt: self.numberCleanupAttempts) {
-                        NSThread.runSyncOnMainThread() {
-                            self.delegate?.syncServerEventOccurred(.Recovery)
-                        }
-                        self.resetFromError(completion)
-                    }
-                }
-                else {
+                // Not checking Network.session().connected() because SMServerNetworking will check that and we can retry here.
+                self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on server cleanup", success: {
+                    self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+                }, failure: {
+                    // Failed on resetting.
+                    self.syncControlModeChange(originalErrorMode)
                     completion?(error: apiResult.error)
-                }
+                })
             }
         }
     }
@@ -310,7 +361,9 @@ internal class SMSyncControl {
                     doUploads()
                 }
                 else {
-                    self.retry(&self.numberGetFileIndexForUploadAttempts, errorSpecifics: "attempting to get the file index for uploads")
+                    self.retry(&self.numberGetFileIndexForUploadAttempts, errorSpecifics: "attempting to get the file index for uploads", success: {
+                        self.next()
+                    })
                 }
             }
         }
@@ -351,7 +404,9 @@ internal class SMSyncControl {
                     }
                     else {
                         // We couldn't get the file index from the server. We have the lock.
-                        self.retry(&self.numberGetFileIndexAttempts, errorSpecifics: "attempting to get the file index")
+                        self.retry(&self.numberGetFileIndexAttempts, errorSpecifics: "attempting to get the file index", success: {
+                            self.next()
+                        })
                     }
                 }
             }
@@ -368,12 +423,15 @@ internal class SMSyncControl {
             else {
                 // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
                 // Not going to check for nextwork connection here because next() checks that.
-                self.retry(&self.numberLockAttempts, errorSpecifics: "attempting to get lock")
+                self.retry(&self.numberLockAttempts, errorSpecifics: "", success: {
+                    self.next()
+                })
             }
         }
     }
     
-    private func retry(inout attempts:Int, errorSpecifics:String) {
+    // If you give a failure handler, it should call syncControlModeChange.
+    private func retry(inout attempts:Int, errorSpecifics:String, success:()->(), failure:(()->())?=nil) {
         Log.special("retry: for \(errorSpecifics)")
         
         // Retry up to a max number of times, then fail.
@@ -384,11 +442,16 @@ internal class SMSyncControl {
                 NSThread.runSyncOnMainThread() {
                     self.delegate?.syncServerEventOccurred(.Recovery)
                 }
-                self.next()
+                success()
             }
         }
         else {
-            self.syncControlModeChange(.InternalError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
+            if failure == nil {
+                self.syncControlModeChange(.InternalError(Error.Create("Failed after \(self.MAX_NUMBER_ATTEMPTS) retries on \(errorSpecifics)")))
+            }
+            else {
+                failure!()
+            }
         }
     }
     
@@ -412,7 +475,9 @@ internal class SMSyncControl {
                 success()
             }
             else {
-                self.retry(&self.numberUnlockAttempts, errorSpecifics: "attempting to unlock")
+                self.retry(&self.numberUnlockAttempts, errorSpecifics: "attempting to unlock", success: {
+                    self.next()
+                })
             }
         }
     }
@@ -585,10 +650,10 @@ extension SMSyncControl : SMSyncControlDelegate {
         
         switch newMode {
         case .Idle:
-            // Don't call stopOperating(); The .Idle mode is only set from within stopOperating() itself.
+            // Don't call stopOperating(). It will have already been called.
             break
             
-        case .Synchronizing:
+        case .Synchronizing, .ResettingFromError:
             // Don't call stopOperating()-- we're most certainly operating!
             break
             

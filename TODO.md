@@ -15,6 +15,10 @@
 
 1. Improving detection of errors in file data using checksums (From Daniel Pfeiffer): "I would suggest putting some technological solutions in place to shore up your third assumption (about users messing with the files). I’ve used both Dropbox and Google Drive in some of the apps I’ve worked on and have found that I can’t trust the integrity of that data. Sometimes it wasn’t even the user’s fault. I don’t know if Dropbox still does this, but there was a point in time it was changing line endings when files were synced between different OSes—just the sort of thing to make the SyncServer stumble! Perhaps SyncServer should store an MD5 hash of the last known integral version of the file. When reading, it compares hashes. If the hashes don’t match, then SyncServer knows the file was changed somewhere else. It can try reading it, or provide the app with a warning about the file being changed."
 
+1. Need to get autocommit working-- so that can periodically initiate sync calls.
+
+1. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
+
 1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData. (How does this relate to the appFileType we already have planned? What if we changed that from appFileType to appDataType?).
 
 1. Add Dropbox to cloud storage systems. Needs work on both server side and client side. Need to figure out how to do something like inheritance in Javascript so I can have a superclass definition of the interface for a generic cloud storage system, which will hopefully make it easier to implement interfaces to new specific cloud storage systems.
@@ -25,6 +29,8 @@
 
 1. Need ability for app to change the name of a remote file. There is an obvious issue with this-- we can't tell for certain if the change will succeed. Though, after updating with any current downloads this should be possible. An alternative to this is to have have an app upload an index.html file to user cloud storage which can be opened in a browser, and map the UUID's for the files, used as remote names, to more useful user names.
 
+1. The server operation operationCleanup should also remove any entries from the PSFileTransferLog and from PSInboundFile.
+
 1. [Make it possible to logout of one cloud storage account on the client, and log into another](http://www.spasticmuffin.biz/blog/2016/04/02/design-issue-changing-cloud-storage-accounts-with-the-smsyncserver/).
 
 1. Create an Android client.
@@ -32,6 +38,8 @@
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
 
 1. Lock breaking on the server: It is possible that a client will not be able to remove a lock. E.g., if the client obtains a lock, fails, and then never gains access to the network again. To implement lock breaking, we need at minimum a means to know if an ongoing transfer is still ongoing. What I'd like to do is break a lock if it has not been removed by the owner, after some fixed period of time after an ongoing transfer has completed. Or after that fixed period of time if an ongoing transfer has not been initiated.
+
+1. Making the client API fully reentrant: I have not yet specifically taken steps to ensure that the client API is reentrant. It should be analyzed to see if multiple threads making calls on the SMSyncServer.session calls may cause synchronization problems. (Note that I have taken steps within the client-side SMSyncServer framework to deal with synchronization issues due to the asynchronous callbacks present within the client-side framework). For now, I'm assuming that the typical use case for the client API is where it is called from *only* the main thread, and this reentrancy issue should not be an issue.
 
 ## PERFORMANCE ISSUES
 
