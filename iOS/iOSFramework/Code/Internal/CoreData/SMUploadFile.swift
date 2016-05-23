@@ -52,24 +52,11 @@ class SMUploadFile: SMUploadFileOperation, CoreDataModel {
     // Returns nil if the file change indicates a deletion. Don't use self.internalRelativeLocalURL directly.
     var fileURL: SMRelativeLocalURL? {
         get {
-            if nil == self.internalRelativeLocalURL {
-                return nil
-            }
-            
-            let url = NSKeyedUnarchiver.unarchiveObjectWithData(self.internalRelativeLocalURL!) as? SMRelativeLocalURL
-            Assert.If(url == nil, thenPrintThisString: "Yikes: No URL!")
-            return url
+            return CoreData.getSMRelativeLocalURL(fromCoreDataProperty: self.internalRelativeLocalURL)
         }
         
         set {
-            if newValue == nil {
-                self.internalRelativeLocalURL = nil
-            }
-            else {
-                self.internalRelativeLocalURL = NSKeyedArchiver.archivedDataWithRootObject(newValue!)
-            }
-            
-            CoreData.sessionNamed(SMCoreData.name).saveContext()
+            CoreData.setSMRelativeLocalURL(newValue, toCoreDataProperty: &self.internalRelativeLocalURL, coreDataSessionName: SMCoreData.name)
         }
     }
     

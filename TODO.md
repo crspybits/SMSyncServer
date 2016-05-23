@@ -19,7 +19,9 @@
 
 1. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
 
-1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData. (How does this relate to the appFileType we already have planned? What if we changed that from appFileType to appDataType?).
+1. Incorporate appFileType; See SMSyncAttributes. Seems like we should change that from appFileType to appDataType to get ready for generic upload interface.
+ 
+1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData.
 
 1. Add Dropbox to cloud storage systems. Needs work on both server side and client side. Need to figure out how to do something like inheritance in Javascript so I can have a superclass definition of the interface for a generic cloud storage system, which will hopefully make it easier to implement interfaces to new specific cloud storage systems.
 

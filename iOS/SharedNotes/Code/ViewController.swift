@@ -110,13 +110,36 @@ class ViewController: UIViewController {
     
     @IBAction func createAction(sender: AnyObject) {
         let _ = Note.newObjectAndMakeUUID(makeUUIDAndUpload: true)
+        SMSyncServer.session.commit()
     }
 }
 
 extension ViewController : SMSyncServerDelegate {
     func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
         for (url, attr) in downloads {
-            Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
+            // TODO: Really need the appDataType field of attr here. It would be better to switch on this field than the mimeType
+            switch attr.mimeType! {
+            case Note.mimeType:
+                Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
+            
+            case NoteImage.mimeType:
+                let finalImageURL = FileExtras().newURLForImage()
+                let fileMgr = NSFileManager.defaultManager()
+                do {
+                    try fileMgr.moveItemAtURL(url, toURL: finalImageURL)
+                } catch (let error) {
+                    Assert.badMojo(alwaysPrintThisString: "Error moving file to URL: \(error)")
+                }
+                
+                let noteImage = NoteImage.newObjectAndMakeUUID(withURL: finalImageURL, makeUUIDAndUpload: false) as! NoteImage
+                noteImage.uuid = attr.uuid!.UUIDString
+                CoreData.sessionNamed(CoreDataSession.name).saveContext()
+
+                // TODO: Need to pull the related object out of this one and link to it. BUT: We don't know if that related object has been seen yet in this list of downloads.
+            
+            default:
+                Assert.badMojo(alwaysPrintThisString: "Unexpected mimeType: \(attr.mimeType!)")
+            }
         }
         
         acknowledgement()
@@ -167,7 +190,8 @@ extension ViewController : SMSyncServerDelegate {
                     // Delete the conflicting operations because we don't want our prior upload. We want to create a merged upload.
                     conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
                     
-                    note!.merge(withDownloadedNoteContents: url)
+                    Assert.badMojo(alwaysPrintThisString: "Need to fix merge to deal with JSON!")
+                    //note!.merge(withDownloadedNoteContents: url)
                     
                     self.resolveDownloadConflicts(remainingConflicts)
                 })
@@ -288,7 +312,7 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
         let note = self.coreDataSource.objectAtIndexPath(indexPath) as! Note
         Log.msg("\(note)")
         Log.msg("\(note.uuid)")
-
+        
         cell.configure(withNote: note)
         
         return cell

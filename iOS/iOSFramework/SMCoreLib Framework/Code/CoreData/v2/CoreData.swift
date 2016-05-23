@@ -48,4 +48,26 @@ public extension CoreData {
         
         return obj
     }
+    
+    public class func getSMRelativeLocalURL(fromCoreDataProperty coreDataProperty: NSData?) -> SMRelativeLocalURL? {
+        if nil == coreDataProperty {
+            return nil
+        }
+        
+        let url = NSKeyedUnarchiver.unarchiveObjectWithData(coreDataProperty!) as? SMRelativeLocalURL
+        Assert.If(url == nil, thenPrintThisString: "Yikes: No URL!")
+        return url
+    }
+    
+    public class func setSMRelativeLocalURL(newValue:SMRelativeLocalURL?, inout toCoreDataProperty coreDataProperty: NSData?, coreDataSessionName:String) {
+    
+        if newValue == nil {
+            coreDataProperty = nil
+        }
+        else {
+            coreDataProperty = NSKeyedArchiver.archivedDataWithRootObject(newValue!)
+        }
+        
+        CoreData.sessionNamed(coreDataSessionName).saveContext()
+    }
 }

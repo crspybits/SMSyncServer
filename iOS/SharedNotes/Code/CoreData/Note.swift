@@ -15,35 +15,35 @@ class Note: NSManagedObject {
     static let DATE_KEY = "internalDateModified"
     static let UUID_KEY = "uuid"
 
-    // Not based on server info-- just a rough idea of the time when the data changed.
+    // Not based on server info-- this is the local time when the data changed.
     var dateModified:NSDate? {
         return self.internalDateModified
     }
     
-    // Only call this to make user-driven changes to the note.
-    var text:String? {
+    // The setter does an upload, but not a commit. When using the setter, must not give a nil value.
+    var jsonData:NSData? {
         set {
-            self.updateText(newValue)
+            self.updateJSON(jsonData: newValue!)
             self.upload()
         }
         
         get {
-            return self.internalText
+            return self.internalJSONData
         }
     }
+
+    // See http://stackoverflow.com/questions/477816/what-is-the-correct-json-content-type
+    static let mimeType = "application/json"
     
-    // Allowing self.text to be nil so we can sync a new, empty, note to other devices.
-    func upload() {
-        Log.msg("upload")
-        var uploadData:NSData?
-        if self.text != nil {
-            uploadData = self.text!.dataUsingEncoding(NSUTF8StringEncoding)
-        }
+    // Does not do a commit.
+    private func upload() {
+        Log.msg("Note upload")
         
-        let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: "text/plain", andRemoteFileName: self.uuid!)
+        // Allowing self.jsonData to be nil so we can sync a new, empty, note to other devices.
         
-        SMSyncServer.session.uploadData(uploadData, withDataAttributes: attr)
-        SMSyncServer.session.commit()
+        let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: Note.mimeType, andRemoteFileName: self.uuid!)
+        
+        SMSyncServer.session.uploadData(self.jsonData, withDataAttributes: attr)
     }
     
     // Call this based on sync-driven changes to the note. Creates the note if needed.
@@ -56,9 +56,8 @@ class Note: NSManagedObject {
             note!.uuid = uuid.UUIDString
         }
         
-        if let data = NSData(contentsOfURL: fileURL),
-            let text = String(data: data, encoding: NSUTF8StringEncoding) {
-            note!.updateText(text)
+        if let jsonData = NSData(contentsOfURL: fileURL) {
+            note!.updateJSON(jsonData: jsonData)
         }
         else {
             Log.error("Problem updating note for: \(uuid)")
@@ -68,6 +67,8 @@ class Note: NSManagedObject {
     }
     
     // Also spawns off an upload with the new note contents.
+    // TODO: This merge needs to be reconsidered given the JSON structure of the data.
+    /*
     func merge(withDownloadedNoteContents downloadedNoteContents:NSURL) {
         guard
             let data = NSData(contentsOfURL: downloadedNoteContents),
@@ -83,10 +84,10 @@ class Note: NSManagedObject {
         
         // The assignment to .text will also spawn off an upload.
         self.text = mergedResult
-    }
+    }*/
     
-    private func updateText(text:String?) {
-        self.internalText = text
+    private func updateJSON(jsonData jsonData:NSData) {
+        self.internalJSONData = jsonData
         self.internalDateModified = NSDate()
         CoreData.sessionNamed(CoreDataSession.name).saveContext()
     }
@@ -102,6 +103,7 @@ class Note: NSManagedObject {
             note.uuid = UUID.make()
         }
         
+        note.images = NSSet()
         note.internalDateModified = NSDate()
         
         CoreData.sessionNamed(CoreDataSession.name).saveContext()
@@ -129,18 +131,36 @@ class Note: NSManagedObject {
         return fetchRequest
     }
     
+    // Returns nil if no Note found.
+    class func fetch(withUUID uuid:NSUUID) -> Note? {
+        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataSession.name)) as? Note
+    }
+    
+    func addImage(image:NoteImage) {
+        let mutableSet = NSMutableSet(set: self.images!)
+        mutableSet.addObject(image)
+        self.images = mutableSet
+        CoreData.sessionNamed(CoreDataSession.name).saveContext() 
+    }
+    
     // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server.
     func removeObject() {
         let uuid = self.uuid
+        
+        // Need to remove any associated images.
+        if self.images != nil {
+            let images = NSSet(set: self.images!)
+            for elem in images {
+                let image = elem as! NoteImage
+                image.removeObject()
+            }
+        }
+        
         CoreData.sessionNamed(CoreDataSession.name).removeObject(self)
+        
         if CoreData.sessionNamed(CoreDataSession.name).saveContext() {
             SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
             SMSyncServer.session.commit()
         }
-    }
-    
-    // Returns nil if no Note found.
-    class func fetch(withUUID uuid:NSUUID) -> Note? {
-        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataSession.name)) as? Note
     }
 }

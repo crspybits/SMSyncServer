@@ -1,5 +1,5 @@
 //
-//  Note+CoreDataProperties.swift
+//  NoteImage+CoreDataProperties.swift
 //  SharedNotes
 //
 //  Created by Christopher Prince on 5/22/16.
@@ -12,11 +12,10 @@
 import Foundation
 import CoreData
 
-extension Note {
+extension NoteImage {
 
-    @NSManaged var internalDateModified: NSDate?
-    @NSManaged var internalJSONData: NSData?
     @NSManaged var uuid: String?
-    @NSManaged var images: NSSet?
+    @NSManaged var internalRelativeLocalURL: NSData?
+    @NSManaged var note: Note?
 
 }

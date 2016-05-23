@@ -23,7 +23,12 @@ class NoteTableViewCell : UITableViewCell {
         self.textLabel!.numberOfLines = 0
         self.detailTextLabel!.numberOfLines = 0
         
-        if note.text != nil && note.text!.characters.count > 0 {
+        var fullText:String?
+        if note.jsonData != nil {
+            fullText = SMImageTextView.contentsAsConcatenatedString(fromJSONData: note.jsonData!)
+        }
+        
+        if fullText != nil && fullText!.characters.count > 0 {
         
             // Using Dynamic Type
             
@@ -37,7 +42,7 @@ class NoteTableViewCell : UITableViewCell {
             let titleAttributes = [NSFontAttributeName: UIFont.preferredFontForTextStyle(fontStyleForTitle), NSForegroundColorAttributeName: UIColor.purpleColor()]
             let remainingLinesAttributes = [NSFontAttributeName: UIFont.preferredFontForTextStyle(UIFontTextStyleBody)]
 
-            let (firstLine, remainingLines) = self.splitIntoFirstAndRemainingLines(note.text!)
+            let (firstLine, remainingLines) = self.splitIntoFirstAndRemainingLines(fullText!)
 
             let titleString = NSMutableAttributedString(string: "\(firstLine)", attributes: titleAttributes)
             

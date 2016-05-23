@@ -22,16 +22,6 @@
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="F8z-rj-gY9">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <prototypes>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="AEf-tc-M4r" customClass="NoteTableViewCell" customModule="SharedNotes" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="92" width="600" height="44"/>
-                                        <autoresizingMask key="autoresizingMask"/>
-                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="AEf-tc-M4r" id="Hup-05-H1I">
-                                            <rect key="frame" x="0.0" y="0.0" width="600" height="43"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                        </tableViewCellContentView>
-                                    </tableViewCell>
-                                </prototypes>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
@@ -77,7 +67,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="5EA-Zl-ldR">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="5EA-Zl-ldR" customClass="EditNoteImageTextView" customModule="SharedNotes">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -85,9 +75,15 @@
                             </textView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="CnS-gD-koo" firstAttribute="top" secondItem="5EA-Zl-ldR" secondAttribute="bottom" id="eXk-pN-C3A"/>
+                            <constraint firstItem="5EA-Zl-ldR" firstAttribute="top" secondItem="1fa-UE-XML" secondAttribute="topMargin" id="eom-qN-Ote"/>
+                            <constraint firstItem="5EA-Zl-ldR" firstAttribute="leading" secondItem="1fa-UE-XML" secondAttribute="leadingMargin" constant="-20" id="sOo-rm-dPo"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="5EA-Zl-ldR" secondAttribute="trailing" constant="-20" id="xIk-At-kB9"/>
+                        </constraints>
                     </view>
                     <connections>
-                        <outlet property="textView" destination="5EA-Zl-ldR" id="ba8-Uj-ulD"/>
+                        <outlet property="imageTextView" destination="5EA-Zl-ldR" id="3QX-0g-S9H"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="wpt-z0-LYx" userLabel="First Responder" sceneMemberID="firstResponder"/>
