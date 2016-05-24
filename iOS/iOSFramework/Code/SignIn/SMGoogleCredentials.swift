@@ -132,6 +132,7 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
             self.currentlyRefreshing = false
             
             if error == nil {
+                Log.special("refreshTokensWithHandler: Success")
                 self.idToken = auth.idToken;
             }
             else {

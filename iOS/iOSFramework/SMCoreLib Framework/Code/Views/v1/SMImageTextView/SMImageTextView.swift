@@ -171,6 +171,8 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
         set {
             let mutableAttrString = NSMutableAttributedString()
             
+            let currFont = self.font
+            
             if newValue != nil {
                 for elem in newValue! {
                     switch elem {
@@ -186,6 +188,9 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
             }
             
             self.attributedText = mutableAttrString
+            
+            // Without this, we reset back to a default font size after the insertAttributedString above.
+            self.font = currFont
         }
     }
     

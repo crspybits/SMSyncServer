@@ -194,11 +194,15 @@ UserCredentials.prototype.validate = function (callback) {
     /* Later today, I'm getting an error like:
     verifyIdToken error: Error: Token used too late, 1449373721.729 > 1449372540: {"iss":"https://accounts.google.com","at_hash":"uP9fQDUF_xrVAzy6TWLwWw","aud":"973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com","sub":"102879067671627156497","email_verified":true,"azp":"973140004732-nss95sev1cscktkds4nr8vchvbnkuh7g.apps.googleusercontent.com","email":"crspybits@gmail.com","iat":1449368640,"exp":1449372240,"name":"Christopher G. Prince","picture":"https://lh3.googleusercontent.com/-PuoGipqj3hE/AAAAAAAAAAI/AAAAAAAAAJ8/aSdvLsy51jE/s96-c/photo.jpg","given_name":"Christopher G.","family_name":"Prince","locale":"en"}
     */
-    
     /* 12/9/15; I'm still getting "UserCredentials.sjs:116 () error: Not a buffer" at times. Seems to be because of a stale IdToken.
     */
+    /*
+    5/23/16. I think I've figured out how to deal with errors like this below. They are arising because the IdToken sent from the app to the server is too old. I'm sending rcStaleUserSecurityInfo back to the app when this happens, and the *app* is refreshing the IdToken.
     
-    // An IdToken is an encrypted set of data. See http://stackoverflow.com/questions/8311836/how-to-identify-a-google-oauth2-user/13016081#13016081
+    2016-05-24T09:36:12-0600 <info> UserCredentials.sjs:102 () failed on verifyIdToken: error: Error: Token used too late, 1464104172.28 > 1464073872: {"iss":"https://accounts.google.com","at_hash":"P0o0iv_RbsZAn4bx5XSyjA","aud":"973140004732-bbgbqh5l8pmcr6lhmoh2cgggdkelh9gf.apps.googleusercontent.com","sub":"102879067671627156497","email_verified":true,"azp":"973140004732-nss95sev1cscktkds4nr8vchvbnkuh7g.apps.googleusercontent.com","email":"crspybits@gmail.com","iat":1464069972,"exp":1464073572}
+    */
+    
+    // An IdToken is an encrypted JWT. See http://stackoverflow.com/questions/8311836/how-to-identify-a-google-oauth2-user/13016081#13016081
     // The second parameter to the callback is a LoginTicket object, which is just a thin wrapper over the parsed idToken. Is the LoginTicket empty if we get back an error below?
     self.googleUserCredentials.oauth2Client.verifyIdToken(
         self.googleUserCredentials.idToken, audience, 

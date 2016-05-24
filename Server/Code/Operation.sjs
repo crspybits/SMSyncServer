@@ -82,11 +82,12 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
     
     self.validateUserAlwaysCallback(userMustBeOnSystem, function (error, staleUserSecurityInfo) {
         if (error) {
-            logger.error("Invalid user");
             if (staleUserSecurityInfo) {
+                logger.error("validateUser: Invalid user: rcStaleUserSecurityInfo");
                 self.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
             }
             else {
+                logger.error("validateUser: Invalid user: security info is not stale");
                 self.endWithErrorDetails(error);
             }
         }
