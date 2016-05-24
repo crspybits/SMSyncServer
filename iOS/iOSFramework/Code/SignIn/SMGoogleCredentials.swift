@@ -21,6 +21,9 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     
     private let serverClientID:String!
     
+    private var googleUser:GIDGoogleUser?
+    private var currentlyRefreshing = false
+    
     private var idToken:String! {
         set {
             SMGoogleCredentials.IdToken.stringValue = newValue
@@ -51,6 +54,7 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
         
         // 12/20/15; Trying to resolve my user sign in issue
         // It looks like, at least for Google Drive, calling this method is sufficient for dealing with rcStaleUserSecurityInfo. I.e., having the IdToken for Google become stale. (Note that while it deals with the IdToken becoming stale, dealing with an expired access token on the server is a different matter-- and the server seems to need to refresh the access token from the refresh token to deal with this independently).
+        // See also this on refreshing of idTokens: http://stackoverflow.com/questions/33279485/how-to-refresh-authentication-idtoken-with-gidsignin-or-gidauthentication
         GIDSignIn.sharedInstance().signInSilently()
     }
     
@@ -80,13 +84,6 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     */
     // See https://cocoapods.org/pods/GoogleSignIn for current version of GoogleSignIn
     
-    // Seems to be that hasAuthInKeychain is returning false in the cases I get the Code=-4 error.
-    // TODO: Is this method and its supermethod needed any more?
-    override public func silentSignIn() {
-        Log.msg("GIDSignIn.sharedInstance().hasAuthInKeychain: \(GIDSignIn.sharedInstance().hasAuthInKeychain())")
-        GIDSignIn.sharedInstance().signInSilently()
-    }
-    
     override public func makeSignInController() -> UIViewController! {
         return SMGoogleSignInController()
     }
@@ -111,6 +108,37 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     override public func syncServerSignOutUser() {
         GIDSignIn.sharedInstance().signOut()
     }
+    
+    // 5/23/16; I just added this to deal with the case where the app has been in the foreground for a period of time, and the IdToken has expired.
+    override public func syncServerRefreshUserCredentials() {
+        // See also this on refreshing of idTokens: http://stackoverflow.com/questions/33279485/how-to-refresh-authentication-idtoken-with-gidsignin-or-gidauthentication
+        
+        guard self.googleUser != nil
+        else {
+            return
+        }
+        
+        Synchronized.block(self) {
+            if self.currentlyRefreshing {
+                return
+            }
+            
+            self.currentlyRefreshing = true
+        }
+        
+        Log.special("refreshTokensWithHandler")
+        
+        self.googleUser!.authentication.refreshTokensWithHandler() { auth, error in
+            self.currentlyRefreshing = false
+            
+            if error == nil {
+                self.idToken = auth.idToken;
+            }
+            else {
+                Log.error("Error refreshing tokens: \(error)")
+            }
+        }
+    }
 }
 
 /* 1/24/16; I just got this:
@@ -125,6 +153,8 @@ extension SMGoogleCredentials : GIDSignInDelegate {
     public func signIn(signIn: GIDSignIn!, didSignInForUser user: GIDGoogleUser!,
         withError error: NSError!) {
             if (error == nil) {
+                self.googleUser = user
+                
                 Log.msg("Attempting to sign in to server...")
                 // Perform any operations on signed in user here.
                 // let userId = user.userID     // For client-side use only!
@@ -139,17 +169,17 @@ extension SMGoogleCredentials : GIDSignInDelegate {
                 
                 Log.msg("Attempting to sign in: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let googleUser = SMCloudStorageUser.GoogleDrive(idToken:user.authentication.idToken, authCode:user.serverAuthCode)
+                let syncServerGoogleUser = SMCloudStorageUser.GoogleDrive(idToken:user.authentication.idToken, authCode:user.serverAuthCode)
                 
                 if user.serverAuthCode == nil {
-                    SMSyncServerUser.session.checkForExistingUser(googleUser) { error in
+                    SMSyncServerUser.session.checkForExistingUser(syncServerGoogleUser) { error in
                         if nil == error {
                             self.idToken = user.authentication.idToken;
                         }
                     }
                 }
                 else {
-                    SMSyncServerUser.session.createNewUser(googleUser) { error in
+                    SMSyncServerUser.session.createNewUser(syncServerGoogleUser) { error in
                         if nil == error {
                             self.idToken = user.authentication.idToken;
                         }

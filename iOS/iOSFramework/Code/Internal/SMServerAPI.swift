@@ -265,7 +265,7 @@ internal class SMServerAPI {
     internal static let session = SMServerAPI()
     
     // Design-wise, it seems better to access a user/credentials delegate in the SMServerAPI class instead of letting this class access the SMSyncServerUser directly. This is because the SMSyncServerUser class needs to call the SMServerAPI interface (to sign a user in or create a new user), and such a direct cyclic dependency seems a poor design.
-    internal weak var userDelegate:SMUserServerParamsDelegate!
+    internal weak var userDelegate:SMServerAPIUserDelegate!
     
     internal weak var uploadDelegate: SMServerAPIUploadDelegate?
     internal weak var downloadDelegate: SMServerAPIDownloadDelegate?
@@ -322,7 +322,7 @@ internal class SMServerAPI {
     //MARK: File operations
     
     internal func lock(completion:((apiResult:SMServerAPIResult)->(Void))?) {
-        let serverParams = self.userDelegate.serverParams
+        let serverParams = self.userDelegate.userCredentialParams
         Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -336,7 +336,7 @@ internal class SMServerAPI {
     }
     
     internal func unlock(completion:((apiResult:SMServerAPIResult)->(Void))?) {
-        let serverParams = self.userDelegate.serverParams
+        let serverParams = self.userDelegate.userCredentialParams
         Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -355,7 +355,7 @@ internal class SMServerAPI {
     
         let serverOpURL = NSURL(string: self.serverURLString + "/" + SMServerConstants.operationUploadFile)!
         
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         var parameters = userParams!
@@ -418,7 +418,7 @@ internal class SMServerAPI {
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationDeleteFiles)!
         
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         var serverParams = userParams!
@@ -440,7 +440,7 @@ internal class SMServerAPI {
     
     // You must have obtained a lock beforehand, and uploaded/deleted one file after that.
     internal func startOutboundTransfer(completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -463,7 +463,7 @@ internal class SMServerAPI {
     // On success, the returned SMSyncServerFile objects will have nil localURL members.
     internal func getFileIndex(requirePreviouslyHeldLock requirePreviouslyHeldLock:Bool=false, completion:((fileIndex:[SMServerFile]?, apiResult:SMServerAPIResult)->(Void))?) {
     
-        var params = self.userDelegate.serverParams
+        var params = self.userDelegate.userCredentialParams
         Assert.If(nil == params, thenPrintThisString: "No user server params!")
         Log.msg("parameters: \(params)")
         
@@ -530,7 +530,7 @@ internal class SMServerAPI {
     // In the completion closure, operationError refers to a possible error in regards to the operation running on the server. The NSError refers to an error in communication with the server checking the operation status. Only when the NSError is nil can the other two completion handler parameters be non-nil. With a nil NSError, operationStatus will be non-nil.
     internal func checkOperationStatus(serverOperationId operationId:String, completion:((operationResult: SMOperationResult?, apiResult:SMServerAPIResult)->(Void))?) {
         
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         var parameters = userParams!
@@ -569,7 +569,7 @@ internal class SMServerAPI {
     // The Operation Id is not removed by a call to checkOperationStatus because if that method were to fail, the app would not know if the operation failed or succeeded. Use this to remove the Operation Id from the server.
     internal func removeOperationId(serverOperationId operationId:String, completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         var parameters = userParams!
@@ -587,7 +587,7 @@ internal class SMServerAPI {
     // You must have obtained a lock beforehand. The serverOperationId may be returned nil even when there is no error: Just because an operationId has not been generated on the server yet.
     internal func getOperationId(completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
     
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -608,7 +608,7 @@ internal class SMServerAPI {
     // This is useful for cleaning up in the case of an error/failure during an upload/download operation.
     internal func cleanup(completion:((apiResult:SMServerAPIResult)->(Void))?) {
 
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
 
         Log.msg("parameters: \(userParams)")
@@ -624,7 +624,7 @@ internal class SMServerAPI {
 
     internal func setupInboundTransfer(filesToTransfer: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         var serverParams = userParams!
@@ -648,7 +648,7 @@ internal class SMServerAPI {
     
     internal func startInboundTransfer(completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
     
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -671,7 +671,7 @@ internal class SMServerAPI {
     internal func inboundTransferRecovery(
         completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
 
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         Log.msg("parameters: \(userParams)")
@@ -699,7 +699,7 @@ internal class SMServerAPI {
 
         Assert.If(fileToDownload.localURL == nil, thenPrintThisString: "Didn't give localURL with file")
         
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         var serverParams = userParams!
@@ -767,7 +767,7 @@ internal class SMServerAPI {
     // I'm not going to expose this method outside of this class-- we'll just do this removal internally, after a download.
     private func removeDownloadFile(fileToRemove: SMServerFile, completion:((apiResult:SMServerAPIResult)->(Void))?) {
         
-        let userParams = self.userDelegate.serverParams
+        let userParams = self.userDelegate.userCredentialParams
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         var serverParams = userParams!
@@ -835,9 +835,8 @@ internal class SMServerAPI {
                 // 12/12/15; This is a failure of the immediate operation, but in general doesn't necessarily represent an error. E.g., we'll be here if the user already existed on the system when attempting to create a user.
                 
                 case SMServerConstants.rcStaleUserSecurityInfo:
-                    // TODO: How to handle this?
-                    // [1]. Perhaps just pass this back up to the caller and assume that they will: (a) do something useful with SMServerCredentials to refresh the stale security info, and (b) use the SMServerAPI to sign in again with the server? Will need to document this assumption too. ALTERNATIVELY, could use a delegate callback to more explicitly phrase this assumption/requirement.
-                    break
+                    // In the case of Google API creds, I believe this will kick off a network request to refresh the creds. We might get a second request to refresh quickly following on this (i.e., a second rcStaleUserSecurityInfo from the server) -- because of our recovery attempt. BUT-- we do exponential fallback with the recovery, so perhaps our delays will be enough to let the refresh occur first.
+                    self.userDelegate.refreshUserCredentials()
                     
                 case SMServerConstants.rcOperationFailed:
                     message += "Operation failed"

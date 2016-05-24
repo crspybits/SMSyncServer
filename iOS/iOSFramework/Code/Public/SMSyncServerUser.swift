@@ -25,11 +25,15 @@ public protocol SMCloudStorageUserDelegate : class {
     
     // If user is currently signed in, sign them out. No effect if not signed in.
     func syncServerSignOutUser()
+    
+    // At least OAuth2 requires that the IdToken be refreshed occaisonally.
+    func syncServerRefreshUserCredentials()
 }
 
 // "class" so its delegate var can be weak.
-internal protocol SMUserServerParamsDelegate : class {
-    var serverParams:[String:AnyObject]? {get}
+internal protocol SMServerAPIUserDelegate : class {
+    var userCredentialParams:[String:AnyObject]? {get}
+    func refreshUserCredentials()
 }
 
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
@@ -214,12 +218,16 @@ public class SMSyncServerUser {
     }
 }
 
-extension SMSyncServerUser : SMUserServerParamsDelegate {
-    var serverParams:[String:AnyObject]? {
+extension SMSyncServerUser : SMServerAPIUserDelegate {
+    var userCredentialParams:[String:AnyObject]? {
         get {
             Assert.If(!self.delegate.syncServerUserIsSignedIn, thenPrintThisString: "Yikes: There is no signed in user!")
             return self.serverParameters(self.delegate.syncServerSignedInUser!)
         }
+    }
+    
+    func refreshUserCredentials() {
+        self.delegate.syncServerRefreshUserCredentials()
     }
 }
 

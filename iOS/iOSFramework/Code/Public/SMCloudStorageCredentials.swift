@@ -28,11 +28,6 @@ public class SMCloudStorageCredentials : NSObject, SMCloudStorageUserDelegate {
         return false
     }
     
-    // Attempts to sign in, not using a UI and not interacting with the user.
-    // Use the signInCompletion handler to determine if silentSignIn was successful.
-    public func silentSignIn() {
-    }
-    
     public func makeSignInController() -> UIViewController! {
         return nil
     }
@@ -55,6 +50,9 @@ public class SMCloudStorageCredentials : NSObject, SMCloudStorageUserDelegate {
     }
     
     public func syncServerSignOutUser() {
+    }
+    
+    public func syncServerRefreshUserCredentials() {
     }
     
     // MARK: End of SMCloudStorageCredentials delegate methods

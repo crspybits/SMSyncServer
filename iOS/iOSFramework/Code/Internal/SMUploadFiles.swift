@@ -220,7 +220,7 @@ internal class SMUploadFiles : NSObject {
         }
         
         SMServerAPI.session.uploadFiles(filesToUpload) { uploadResult in
-            Log.msg("SMSyncServer.session.doUpload: \(uploadResult.error)")
+            Log.msg("Result error: \(uploadResult.error)")
             
             if SMTest.If.success(uploadResult.error, context: .UploadFiles) {
                 self.uploadControl()
@@ -263,7 +263,7 @@ internal class SMUploadFiles : NSObject {
         }
         
         SMServerAPI.session.startOutboundTransfer() { operationId, sotResult in
-            Log.msg("SMSyncServer.session.startOutboundTransfer: \(sotResult.error); operationId: \(operationId)")
+            Log.msg("Result error: \(sotResult.error); operationId: \(operationId)")
             
             if SMTest.If.success(sotResult.error, context: .OutboundTransfer) {
                 self.serverOperationId = operationId

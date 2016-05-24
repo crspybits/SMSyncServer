@@ -20,7 +20,8 @@ More detailed characteristics of the SMSyncServer:
 1. The large majority of file information (i.e., all of the file content information) is stored in end-user cloud storage accounts. Only meta data for files, locking information, and some user credentials information is stored in the MongoDb database on the server.
 1. Client apps can operate offline. The client API queues operations (e.g., uploads) until network access is available.
 1. Interrupted operations are retried. For example, if network access is lost during a series of file uploads, then those uploads are retried when network access is available.
-1. Uploads (and downloads) are performed in a locked (a.k.a., transactional) manner. For example, if you queue a series uploads using `uploadImmutableFile` followed by a `commit`, those upload operations are carried out in an atomic manner, and are only available for download by other SMSyncServer client apps (using the same cloud storage credentials) when the entire set of files has been uploaded.
+1. Uploads (and downloads) are performed in a locked (a.k.a., transactional) manner. For example, if you queue a group of uploads using `uploadImmutableFile` followed by a `commit`, those upload operations are carried out in an atomic manner, and are only available for download by other SMSyncServer client apps (using the same cloud storage credentials) when the entire group of files has been uploaded.
+1. Conflict resolution is carried out at the client-level using delegate callbacks provided by the client API. E.g., if the client is dealing with text files, it can do app-specific merge operations on those text files when there is a conflict.
 
 See the blog articles:
 

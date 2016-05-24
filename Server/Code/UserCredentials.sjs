@@ -64,8 +64,7 @@ function UserCredentials(credentialsData) {
 
 // instance methods
 
-// Returns a info suitable for storing user credentials is cloud_storage field in persistent storage.
-// See the PSUserCredentials data model.
+// Returns info suitable for storing user credentials in persistent storage. The structure of the info returned is the same as the `cloud_storage` field of the PSUserCredentials data model.
 // Returns this info, or null if it could not be obtained.
 UserCredentials.prototype.persistent = function () {
     var self = this;
@@ -199,17 +198,23 @@ UserCredentials.prototype.validate = function (callback) {
     /* 12/9/15; I'm still getting "UserCredentials.sjs:116 () error: Not a buffer" at times. Seems to be because of a stale IdToken.
     */
     
-    // The second parameter to the callback is a LoginTicket object, 
-    // which is just a thin wrapper over the parsed idToken.
+    // An IdToken is an encrypted set of data. See http://stackoverflow.com/questions/8311836/how-to-identify-a-google-oauth2-user/13016081#13016081
+    // The second parameter to the callback is a LoginTicket object, which is just a thin wrapper over the parsed idToken. Is the LoginTicket empty if we get back an error below?
     self.googleUserCredentials.oauth2Client.verifyIdToken(
         self.googleUserCredentials.idToken, audience, 
         
         function(err, loginTicket) {
             // console.log('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
             if (err) {
-                var stringMessage = "failed on verifyIdToken: error: %j"  + err;
-                if (stringMessage.indexOf("Token used too late") != -1) {
-                    logger.error("User security token is stale: %j", err);
+                var stringMessage = "failed on verifyIdToken: error: "  + err;
+                logger.info(stringMessage);
+                
+                const staleSecurityToken = "Token used too late";
+                
+                // indexOf returns -1 if the string is not found.
+                if (stringMessage.indexOf(staleSecurityToken) != -1) {
+                    // So, staleSecurityToken was found in the err.
+                    logger.info("User security token is stale: %s; loginTicket: %j", err, loginTicket);
                     callback(err, true);
                 }
                 else {

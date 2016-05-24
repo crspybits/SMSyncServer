@@ -1,5 +1,12 @@
 # TODO List: In priority order (top are more important)
 
+## Shared Notes demo app issues
+
+1. Figure out if we have a combination of adds and deletes of images if we upload the right ones and delete the right ones-- with no trash left over.
+1. Why does font go smaller when we reenter the editing VC? This appears to be because of the way I'm setting the attributed text at ranges. It stripping out the attributed properties.
+1. Should use the appDataType field of attr here-- to interpret the type of data downloaded.
+1. Encode related object of a ImageNote in the JSON. So after it's received at destination, we can relate it. HOW DO WE DO THIS: The way we are doing it so far files don't have any general meta data that apps can set. It seems we need to provide this -- e.g., a json structure would seem to be a good way to go. And make it part of the SMSyncAttributes. This could just replace the appDataType-- as it's a really just more general app specific chunk of data.
+
 ## FUNCTIONALITY
 
 1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
@@ -36,6 +43,12 @@
 1. [Make it possible to logout of one cloud storage account on the client, and log into another](http://www.spasticmuffin.biz/blog/2016/04/02/design-issue-changing-cloud-storage-accounts-with-the-smsyncserver/).
 
 1. Create an Android client.
+
+1. Create a Mac OS X client -- i.e., enable programs running on Mac OS X to sync using these tools.
+
+1. Create a Windows client-- i.e., enable programs running on the Windows Operating System to sync using these tools.
+
+1. Create a read-only client for use in a web-browser. It needs to be read-only because clients for SMSyncServer rely on persistent storage in order to perform recovery and relatively large scale persistent storage is not available in a web-browser.
 
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
 
