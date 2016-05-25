@@ -70,9 +70,9 @@ class DownloadConflicts: BaseClass {
                         Log.msg("shouldResolveDeletionConflicts")
                         
                         XCTAssert(conflicts.count == 1)
-                        let (uuid, conflict) = conflicts[0]
+                        let (attr, conflict) = conflicts[0]
                         XCTAssert(conflict.conflictType == .FileUpload)
-                        XCTAssert(uuid.UUIDString == testFile.uuidString)
+                        XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
@@ -195,9 +195,9 @@ class DownloadConflicts: BaseClass {
                     self.shouldResolveDeletionConflicts.append() { conflicts in
                         XCTAssert(conflicts.count == 2)
                         
-                        let (uuid1, conflict1) = conflicts[0]
+                        let (attr1, conflict1) = conflicts[0]
                         XCTAssert(conflict1.conflictType == .FileUpload)
-                        XCTAssert(uuid1.UUIDString == testFile1.uuidString)
+                        XCTAssert(attr1.uuid.UUIDString == testFile1.uuidString)
                         
                         let fileAttr1 = SMSyncServer.session.localFileStatus(testFile1.uuid)
                         XCTAssert(fileAttr1 != nil)
@@ -205,9 +205,9 @@ class DownloadConflicts: BaseClass {
                         // With conflicts, initially before resolving the conflict, the file will be marked as deleted. This will change if the client decides to resolve the conflict by keeping the update.
                         XCTAssert(fileAttr1!.deleted!)
                         
-                        let (uuid2, conflict2) = conflicts[1]
+                        let (attr2, conflict2) = conflicts[1]
                         XCTAssert(conflict2.conflictType == .FileUpload)
-                        XCTAssert(uuid2.UUIDString == testFile2.uuidString)
+                        XCTAssert(attr2.uuid.UUIDString == testFile2.uuidString)
                         
                         let fileAttr2 = SMSyncServer.session.localFileStatus(testFile2.uuid)
                         XCTAssert(fileAttr2 != nil)

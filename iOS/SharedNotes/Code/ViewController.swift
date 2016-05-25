@@ -201,9 +201,10 @@ extension ViewController : SMSyncServerDelegate {
         }
     }
     
-    func syncServerShouldDoDeletions(downloadDeletions deletions:[NSUUID], acknowledgement:()->()) {
-        for uuid in deletions {
-            let note = Note.fetch(withUUID: uuid)
+    func syncServerShouldDoDeletions(downloadDeletions deletions:[SMSyncAttributes], acknowledgement:()->()) {
+        for attr in deletions {
+            // TODO: Make this deletion process dependent on the type of object being deleted. This doesn't deal with deletion of images.
+            let note = Note.fetch(withUUID: attr.uuid)
             Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
             note!.removeObject()
         }
@@ -211,22 +212,23 @@ extension ViewController : SMSyncServerDelegate {
         acknowledgement()
     }
 
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         self.resolveDeletionConflicts(conflicts)
     }
     
-    private func resolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
+    private func resolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         if conflicts.count > 0 {
             let remainingConflicts = Array(conflicts[1..<conflicts.count])
-            let (uuid, conflict) = conflicts[0]
+            let (attr, conflict) = conflicts[0]
             
             Assert.If(conflict.conflictType != .FileUpload, thenPrintThisString: "Didn't get upload conflict")
             
-            let note = Note.fetch(withUUID: uuid)
+            let note = Note.fetch(withUUID: attr.uuid)
             Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
             
             // If we had useful remote names for files, we could show it to them...
             // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
+            // TODO: When we get the appMetaData attributes we could store a title name there.
             
             let alert = UIAlertController(title: "Someone else has deleted a note.", message: "But you just updated it!", preferredStyle: .Alert)
             
@@ -347,6 +349,7 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
         switch editingStyle {
         case .Delete:
             Log.msg("Deleting object from row: \(indexPath.row)")
+            // Call the note removeObject method and not the coreDataSource method so that (a) associated images get removed too, and updates get pushed to server.
             //self.coreDataSource.deleteObjectAtIndexPath(indexPath)
             note.removeObject()
             

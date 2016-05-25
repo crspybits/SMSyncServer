@@ -57,8 +57,8 @@ class DownloadDeletionRecovery: BaseClass {
                     
                     self.shouldDoDeletions.append() { deletions, acknowledgement in
                         XCTAssert(deletions.count == 1)
-                        let uuid = deletions[0]
-                        XCTAssert(uuid.UUIDString == testFile.uuidString)
+                        let attr = deletions[0]
+                        XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
                         
                         let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                         XCTAssert(fileAttr != nil)
@@ -144,8 +144,8 @@ class DownloadDeletionRecovery: BaseClass {
             
             self.shouldDoDeletions.append() { deletions, acknowledgement in
                 XCTAssert(deletions.count == 1)
-                let uuid = deletions[0]
-                XCTAssert(uuid.UUIDString == testFile.uuidString)
+                let attr = deletions[0]
+                XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
                 
                 let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(fileAttr != nil)

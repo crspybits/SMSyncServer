@@ -12,6 +12,7 @@
 		8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */; };
 		8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */; };
 		8322EB921C700F1700DF418C /* ClassExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB911C700F1700DF418C /* ClassExtras.m */; };
+		833198FF1CF5340A00810678 /* AppMetaData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833198FE1CF5340A00810678 /* AppMetaData.swift */; };
 		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
 		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */; };
 		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
@@ -61,6 +62,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		83823E601CF532FE00E28B76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 839CAE811CF144D40072C1BD;
+			remoteInfo = SMImageTextView;
+		};
+		83823E621CF532FE00E28B76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 839CAE941CF144D40072C1BD;
+			remoteInfo = SMImageTextViewUITests;
+		};
 		839739C31CD9682B00FD8520 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */;
@@ -126,6 +141,7 @@
 		8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatServerHasNewFileWorks.swift; path = TwoDeviceTests/TestThatServerHasNewFileWorks.swift; sourceTree = "<group>"; };
 		8322EB901C700F1700DF418C /* ClassExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClassExtras.h; sourceTree = "<group>"; };
 		8322EB911C700F1700DF418C /* ClassExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClassExtras.m; sourceTree = "<group>"; };
+		833198FE1CF5340A00810678 /* AppMetaData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppMetaData.swift; path = XCTests/AppMetaData.swift; sourceTree = SOURCE_ROOT; };
 		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
 		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFails.swift; path = TwoDeviceTests/TestThatOperationWithLockFails.swift; sourceTree = "<group>"; };
 		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
@@ -300,6 +316,8 @@
 			children = (
 				83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */,
 				83CA6A1F1CD967AE00047A86 /* SMCoreLibTests.xctest */,
+				83823E611CF532FE00E28B76 /* SMImageTextView.app */,
+				83823E631CF532FE00E28B76 /* SMImageTextViewUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -341,6 +359,7 @@
 		83D3E88F1C4C01E800BFDA93 /* XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				833198FE1CF5340A00810678 /* AppMetaData.swift */,
 				839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */,
 				8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */,
 				8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */,
@@ -514,6 +533,20 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		83823E611CF532FE00E28B76 /* SMImageTextView.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = SMImageTextView.app;
+			remoteRef = 83823E601CF532FE00E28B76 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83823E631CF532FE00E28B76 /* SMImageTextViewUITests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SMImageTextViewUITests.xctest;
+			remoteRef = 83823E621CF532FE00E28B76 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		839A06751C4F0CA40037AD9A /* SMSyncServer.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -716,6 +749,7 @@
 				83D3E8C71C4C079900BFDA93 /* ServerAPI.swift in Sources */,
 				83554C541C84AB88005F0C40 /* UploadRecovery.swift in Sources */,
 				83D3E8C31C4C079900BFDA93 /* BaseClass.swift in Sources */,
+				833198FF1CF5340A00810678 /* AppMetaData.swift in Sources */,
 				83D3E8C41C4C079900BFDA93 /* Deletion.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

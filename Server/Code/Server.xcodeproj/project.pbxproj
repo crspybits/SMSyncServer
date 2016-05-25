@@ -19,7 +19,6 @@
 		836F287A1C13F4B800385636 /* PSOperationId.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSOperationId.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F287B1C13F68400385636 /* PSFileIndex.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSFileIndex.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F287E1C1679C900385636 /* Common.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Common.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
-		83823E4D1CF3B99600E28B76 /* UserCredentialsExtras.sjs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = UserCredentialsExtras.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		838607841C459D7300EB2FAD /* ClientFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = ClientFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		839A069E1C5049060037AD9A /* fileStructure.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = fileStructure.txt; path = ../Docs/Code/fileStructure.txt; sourceTree = "<group>"; };
 		839A069F1C5049100037AD9A /* dataModel.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = dataModel.txt; path = ../Docs/Code/dataModel.txt; sourceTree = "<group>"; };
@@ -59,7 +58,6 @@
 		83A4F1D11C683AB30086B22F /* Cloud Storage */ = {
 			isa = PBXGroup;
 			children = (
-				83823E4D1CF3B99600E28B76 /* UserCredentialsExtras.sjs */,
 				83A4F1D21C683B0F0086B22F /* Google Drive */,
 			);
 			name = "Cloud Storage";

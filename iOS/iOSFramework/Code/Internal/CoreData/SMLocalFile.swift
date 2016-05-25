@@ -6,13 +6,15 @@
 //
 //
 
+/*
+Property notes:
+
+Storing the appMetaData in Core Data along with the SMLocalFile may not be completely necessary, but it is convenient.
+*/
+
 import Foundation
 import CoreData
 import SMCoreLib
-
-/* Property documentation:
-    `newUpload`: true only when (a) the file was created as version 0 by the local app, and (b) it has just been created and is in the process of being uploaded.
-*/
 
 @objc(SMLocalFile)
 class SMLocalFile: NSManagedObject, CoreDataModel {
@@ -48,6 +50,46 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
         }
         set {
             self.internalDeletedOnServer = newValue
+            CoreData.sessionNamed(SMCoreData.name).saveContext()
+        }
+    }
+    
+    var appMetaData:SMAppMetaData? {
+        get {
+            if self.internalAppMetaData == nil {
+                return nil
+            }
+            else {
+                var result:SMAppMetaData?
+
+                do {
+                    try result = NSJSONSerialization.JSONObjectWithData(self.internalAppMetaData!, options: NSJSONReadingOptions(rawValue: 0)) as? SMAppMetaData
+                } catch (let error) {
+                    Log.error("Error converting JSON data: \(error)")
+                    return nil
+                }
+                
+                Log.msg("SMLocalFile.appMetaData: \(result)")
+                
+                return result
+            }
+        }
+        
+        set {
+            if newValue == nil {
+                self.internalAppMetaData = nil
+            }
+            else {
+                var jsonData:NSData?
+
+                do {
+                    try jsonData = NSJSONSerialization.dataWithJSONObject(newValue!, options: NSJSONWritingOptions(rawValue: 0))
+                } catch (let error) {
+                    Log.error("Error serializing to JSON data: \(error)")
+                }
+                self.internalAppMetaData = jsonData
+            }
+            
             CoreData.sessionNamed(SMCoreData.name).saveContext()
         }
     }

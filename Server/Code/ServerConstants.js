@@ -124,8 +124,8 @@ function define(name, value) {
     // TODO: Give a list of allowable MIME types. We have to restrict this because otherwise, there could be some injection error of the REST interface user creating a Google Drive folder or other special GD object.
     
     // Key:
-	define("appFileTypeKey", "AppFileType");
-    // Value: An (optional) app-dependent file type for the file.
+	define("appMetaDataKey", "AppMetaData");
+    // Value: Optional app-dependent meta data for the file.
     
     // Optional key that can be given with operationUploadFile-- used to resolve conflicts where file has been deleted on the server, but where the local app wants to override that with an update.
     // Key:
@@ -199,7 +199,7 @@ function define(name, value) {
 	define("fileIndexFileId", "fileId");
 	define("fileIndexCloudFileName", "cloudFileName");
 	define("fileIndexMimeType", "mimeType");
-	define("fileIndexAppFileType", "appFileType");
+	define("fileIndexAppMetaData", "appMetaData");
 	define("fileIndexDeleted", "deleted");
 	define("fileIndexFileVersion", "fileVersion");
 	define("fileIndexLastModified", "lastModified");
@@ -227,8 +227,7 @@ function define(name, value) {
 	define("rcUndefinedOperation", 1);
 	define("rcOperationFailed", 2);
     
-    // TODO: What happens when we get this return code back from the server? Can we do a (silent) sign in again and refresh this? Not currently dealing with this. See, however, [1] in Settings.swift, and [1] in SMServerAPI.swift
-    // TODO: Create a test case that tests this situation-- though it seems like it's not that easy to do WRT to automated testing: Because it involves a large time delay, on the order of a day to get the Google Drive security info to go stale.
+    // The IdToken was stale and needs to be refreshed.
 	define("rcStaleUserSecurityInfo", 3);
     
     // An error due to the way the server API was used. This error is *not* recoverable in the sense that the server API caller should not try to use operationFileChangesRecovery or other such recovery operations to just repeat the request because without changes the operation will just fail again.

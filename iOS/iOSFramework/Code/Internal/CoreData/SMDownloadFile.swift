@@ -151,7 +151,7 @@ class SMDownloadFile: SMDownloadFileOperation, CoreDataModel {
         let localVersion:Int = self.serverVersion!.integerValue
         Log.msg("Local file version: \(localVersion)")
         
-        let serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!, remoteFileName: localFile.remoteFileName!, mimeType: localFile.mimeType!, appFileType: localFile.appFileType, version: localVersion)
+        let serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!, remoteFileName: localFile.remoteFileName!, mimeType: localFile.mimeType!, appMetaData: localFile.appMetaData, version: localVersion)
 
         serverFile.localFile = localFile
         serverFile.localURL = self.fileURL!

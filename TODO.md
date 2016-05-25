@@ -17,6 +17,8 @@
 
 1. DONE 5/20/16. Add ability to upload a zero length file or a nil NSData. It should be possible to have an empty file on cloud storage.
 
+1. The syncServerShouldDoDeletions delegate method should pass back SMSyncAttributes and not just NSUUID's. This is so that the app can know the type of object it's deleting. E.g., in the case of SharedNotes: images vs. text notes.
+            
 1. Improve robustness of recovering from errors in network/server access. I've been encountering some failures in server access where (I think) due to a poor network connection (a) I don't detect that the network is down, but (b) the connection to the server fails. Right now what happens is that the server API call is retried several times, then the client goes into a failure mode. Instead, upon such a server API failure, it should be treated the same as a network loss. Even if the server was down, I think this is the right way to handle this issue. With the server down, we'd need to restart the server, and the app should later retry. TESTING: Add manual tests which shut down the network at certain points. In that way, the network will be up, but the server will be unresponsive.
 
 1. Some calls to SMServerAPI break down into multiple server calls. Need to change this because I think it's interfering with recovery ability of client.

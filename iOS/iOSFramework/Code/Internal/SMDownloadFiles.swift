@@ -409,7 +409,7 @@ internal class SMDownloadFiles : NSObject {
             let localFile = downloadFile.localFile!
             
             let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: localFile.uuid!)!)
-            attr.appFileType = localFile.appFileType
+            attr.appMetaData = localFile.appMetaData
             attr.mimeType = localFile.mimeType
             attr.remoteFileName = localFile.remoteFileName
             attr.deleted = false
@@ -487,11 +487,9 @@ internal class SMDownloadFiles : NSObject {
     }
     
     private func callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions:[SMDownloadDeletion], completion:()->()) {
-        
-        //     func syncServerShouldDoDeletions(downloadDeletions:[NSUUID], acknowledgement:()->())
 
-        var deletions = [NSUUID]()
-        var conflicts = [(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]()
+        var deletions = [SMSyncAttributes]()
+        var conflicts = [(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]()
 
         var shouldResolveDeletionConflictsDone = false
         var calledCompletion = false
@@ -510,8 +508,14 @@ internal class SMDownloadFiles : NSObject {
         }
         
         for fileToDelete in fileDeletions {
+            let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
+            attr.appMetaData = fileToDelete.localFile!.appMetaData
+            attr.mimeType = fileToDelete.localFile!.mimeType
+            attr.remoteFileName = fileToDelete.localFile!.remoteFileName
+            attr.deleted = false
+            
             if fileToDelete.conflictType == nil {
-                deletions.append(NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!)
+                deletions.append(attr)
             }
             else {
                 Assert.If(fileToDelete.conflictType != .FileUpload, thenPrintThisString: "Didn't have a .FileUpload conflict!")
@@ -544,7 +548,7 @@ internal class SMDownloadFiles : NSObject {
                     checkIfDone()
                 } // End conflict closure
                 
-                conflicts.append((downloadDeletion: NSUUID(UUIDString: fileToDelete.localFile!.uuid!)!, uploadConflict: conflict))
+                conflicts.append((downloadDeletion: attr, uploadConflict: conflict))
             }
         }
         
@@ -588,7 +592,8 @@ extension SMDownloadFiles : SMServerAPIDownloadDelegate {
         downloadedFile!.operationStage = .AppCallback
         
         let attr = SMSyncAttributes(withUUID: file.uuid)
-        attr.appFileType = file.appFileType
+        attr.appMetaData = file.appMetaData
+        Log.msg("file.appMetaData: \(file.appMetaData)")
         attr.mimeType = file.mimeType
         attr.remoteFileName = file.remoteFileName
         

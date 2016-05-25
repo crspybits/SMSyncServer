@@ -78,7 +78,7 @@ class ServerAPI: BaseClass {
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()
                 
-                let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appFileType: nil, version: 0)
+                let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             
                 SMServerAPI.session.lock() { lockResult in
                     XCTAssert(lockResult.error == nil)
@@ -110,7 +110,7 @@ class ServerAPI: BaseClass {
 
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("DoubleUploadOfASingleFile")
-            let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appFileType: nil, version: 0)
+            let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             serverFile.localURL = testFile.url
             
             SMServerAPI.session.lock() { lockResult in

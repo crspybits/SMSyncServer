@@ -94,6 +94,7 @@ class EditNoteViewController : UIViewController {
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
         
+        // Pushing to the image picker causes viewDidAppear to be called. Don't want to load contents again when popping back from that.
         if !self.initialLoadOfJSONData {
             self.initialLoadOfJSONData = true
             
@@ -104,16 +105,19 @@ class EditNoteViewController : UIViewController {
 }
 
 extension EditNoteViewController : SMImageTextViewDelegate {
+    // Delete an image.
     func smImageTextView(imageTextView:SMImageTextView, imageDeleted uuid:NSUUID?) {
         Log.msg("UUID of image: \(uuid)")
         
         if let noteImage = NoteImage.fetch(withUUID: uuid!) {
             noteImage.removeObject()
+            // TODO: Does this, as a side effect, cause textViewDidEndEditing to be called. I.e., does the updated note text get uploaded?
         }
         
         Log.error("Could not fetch image for uuid: \(uuid)")
     }
     
+    // Fetch an image from a file given a UUID
     func smImageTextView(imageTextView: SMImageTextView, imageForUUID uuid: NSUUID) -> UIImage? {
         if let noteImage = NoteImage.fetch(withUUID: uuid),
             let image = UIImage(contentsOfFile: noteImage.fileURL!.path!) {

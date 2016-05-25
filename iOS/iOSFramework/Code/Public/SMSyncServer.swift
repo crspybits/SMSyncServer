@@ -13,108 +13,6 @@
 import Foundation
 import SMCoreLib
 
-public class SMSyncAttributes {
-    // The identifier for the file/data item.
-    public var uuid:NSUUID!
-    
-    // Must be provided when uploading for a new uuid. (If you give a remoteFileName for an existing uuid it *must* match that already present in cloud storage). Will be provided when a file is downloaded from the server.
-    public var remoteFileName:String?
-    
-    // Must be provided when uploading for a new uuid; optional after that.
-    public var mimeType:String?
-    
-    // TODO: Optionally provides the app with some app-specific type information about the file.
-    public var appFileType:String?
-    
-    // Only used by SMSyncServer fileStatus method. true indicates that the file was deleted on the server.
-    public var deleted:Bool?
-    
-    // TODO: An optional app-specific identifier for a logical group or category that the file/data item belongs to. The intent behind this identifier is to make downloading logical groups of files easier. E.g., so that not all changed files need to be downloaded at once.
-    //public var appGroupId:NSUUID?
-    
-    public init(withUUID id:NSUUID) {
-        self.uuid = id
-    }
-    
-    public init(withUUID theUUID:NSUUID, mimeType theMimeType:String, andRemoteFileName theRemoteFileName:String) {
-        self.mimeType = theMimeType
-        self.uuid = theUUID
-        self.remoteFileName = theRemoteFileName
-    }
-}
-
-// MARK: Events
-
-public enum SMSyncServerEvent {
-    // Deletion operations have been sent to the SyncServer. All pending deletion operations are sent as a group. Deletion of the file from cloud storage hasn't yet occurred.
-    case DeletionsSent(uuids:[NSUUID])
-    
-    // A single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
-    case SingleUploadComplete(uuid:NSUUID)
-    
-    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
-    case SingleDownloadComplete(url:SMRelativeLocalURL, attr:SMSyncAttributes)
-    
-    // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
-    case OutboundTransferComplete(numberOperations:Int?)
-    
-    // Similarly, for inbound transfers of files from cloud storage to the sync server. The numberOperations value has the same heuristic meaning.
-    case InboundTransferComplete(numberOperations:Int?)
-    
-    // The client polled the server and found that there were no files available to download or files that needed deletion.
-    case NoFilesToDownload
-
-    // Commit was called, but there were no files to upload and no upload-deletions to send to the server.
-    case NoFilesToUpload
-    
-    // Attempted to do an operation but a lock was already held. This can occur both at the local app level and with the server lock.
-    case LockAlreadyHeld
-    
-    // Internal error recovery event.
-    case Recovery
-}
-
-// MARK: Conflict management
-
-// If you receive a non-nil conflict in a callback method, you must resolve the conflict by calling resolveConflict.
-public class SMSyncServerConflict {
-    internal typealias callbackType = ((resolution:ResolutionType)->())!
-    
-    internal var conflictResolved:Bool = false
-    internal var resolutionCallback:((resolution:ResolutionType)->())!
-    
-    internal init(conflictType: ClientOperation, resolutionCallback:callbackType) {
-        self.conflictType = conflictType
-        self.resolutionCallback = resolutionCallback
-    }
-    
-    // Because downloads are higher-priority (than uploads) with the SMSyncServer, all conflicts effectively originate from a server download operation: A download-deletion or a file-download. The type of server operation will be apparent from the context.
-    // And the conflict is between the server operation and a local, client operation:
-    public enum ClientOperation : String {
-        case UploadDeletion
-        case FileUpload
-    }
-    
-    public var conflictType:ClientOperation!
-    
-    public enum ResolutionType {
-        // E.g., suppose a download-deletion and a file-upload (ClientOperation.FileUpload) are conflicting.
-        // Example continued: The client chooses to delete the conflicting file-upload and accept the download-deletion by using this resolution.
-        case DeleteConflictingClientOperations
-        
-        // Example continued: The client chooses to keep the conflicting file-upload, and override the download-deletion, by using this resolution.
-        case KeepConflictingClientOperations
-    }
-    
-    public func resolveConflict(resolution resolution:ResolutionType) {
-        Assert.If(self.conflictResolved, thenPrintThisString: "Already resolved!")
-        self.conflictResolved = true
-        self.resolutionCallback(resolution: resolution)
-    }
-}
-
-// MARK: Delegate
-
 // These delegate methods are called on the main thread.
 public protocol SMSyncServerDelegate : class {
     // "class" to make the delegate weak.
@@ -131,13 +29,13 @@ public protocol SMSyncServerDelegate : class {
     // The client has to decide how to resolve the file-download conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
     func syncServerShouldResolveDownloadConflicts(conflicts: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])
     
-    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
+    // Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files reference by the SMSyncAttributes's (i.e., the UUID's).
     // The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
-    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[NSUUID], acknowledgement:()->())
+    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[SMSyncAttributes], acknowledgement:()->())
 
     // The client has to decide how to resolve the download-deletion conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
     // Conflicts will not include UploadDeletion.
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)])
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])
     
     // Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
     func syncServerModeChange(newMode:SMSyncServerMode)
@@ -285,7 +183,8 @@ public class SMSyncServer : NSObject {
             fileAttr = SMSyncAttributes(withUUID: uuid)
             fileAttr!.mimeType = localFileMetaData.mimeType
             fileAttr!.remoteFileName = localFileMetaData.remoteFileName
-            fileAttr!.appFileType = localFileMetaData.appFileType
+            fileAttr!.appMetaData = localFileMetaData.appMetaData
+            Log.msg("localFileMetaData.appMetaData: \(localFileMetaData.appMetaData)")
             fileAttr!.deleted = localFileMetaData.deletedOnServer
             Log.msg("localFileMetaData.deletedOnServer: \(localFileMetaData.deletedOnServer)")
         }
@@ -359,7 +258,7 @@ public class SMSyncServer : NSObject {
             
             localFileMetaData!.mimeType = attr.mimeType
             
-            localFileMetaData!.appFileType = attr.appFileType
+            localFileMetaData!.appMetaData = attr.appMetaData
             
             if nil == attr.remoteFileName {
                 let error = Error.Create("remoteFileName not given!")

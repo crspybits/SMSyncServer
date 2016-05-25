@@ -101,11 +101,11 @@ class TwoDeviceTestCase : NSObject, SMSyncServerDelegate {
         failTest()
     }
     
-    func syncServerShouldDoDeletions(downloadDeletions deletions:[NSUUID], acknowledgement:()->()) {
+    func syncServerShouldDoDeletions(downloadDeletions deletions:[SMSyncAttributes], acknowledgement:()->()) {
         failTest()
     }
 
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         failTest()
     }
     

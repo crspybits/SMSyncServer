@@ -556,7 +556,7 @@ internal class SMSyncControl {
                     localFile.syncState = .InitialDownload
                     localFile.uuid = serverFile.uuid.UUIDString
                     localFile.mimeType = serverFile.mimeType
-                    localFile.appFileType = serverFile.appFileType
+                    localFile.appMetaData = serverFile.appMetaData
                     localFile.remoteFileName = serverFile.remoteFileName
                     
                     // .localVersion must remain nil until just before callback that download is finished (syncServerDownloadsComplete)

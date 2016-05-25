@@ -190,7 +190,7 @@ FileTransfers.prototype.finishSendFile = function (err, remainingSendAttempts, c
             mimeType:outboundFileChange.mimeType,
             deleted: outboundFileChange.toDelete,
             fileVersion: outboundFileChange.fileVersion,
-            appFileType: outboundFileChange.appFileType
+            appMetaData: outboundFileChange.appMetaData
         };
         
         // Don't have this when deleting.

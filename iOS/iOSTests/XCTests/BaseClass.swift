@@ -56,11 +56,11 @@ class BaseClass: XCTestCase {
     var shouldResolveDownloadConflictsSequenceNumber = 0
     var shouldResolveDownloadConflicts:[shouldResolveDownloadConflictsCallback]!
     
-    typealias shouldDoDeletionsCallback = (deletions:[NSUUID], acknowledgement:()->())->()
+    typealias shouldDoDeletionsCallback = (deletions:[SMSyncAttributes], acknowledgement:()->())->()
     var shouldDoDeletionsSequenceNumber = 0
     var shouldDoDeletions:[shouldDoDeletionsCallback]!
     
-    typealias shouldResolveDeletionConflictsCallback = (conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)])->()
+    typealias shouldResolveDeletionConflictsCallback = (conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])->()
     var shouldResolveDeletionConflictsSequenceNumber = 0
     var shouldResolveDeletionConflicts:[shouldResolveDeletionConflictsCallback]!
 
@@ -139,13 +139,13 @@ extension BaseClass : SMSyncServerDelegate {
     }
     
     // Called when deletion indications have been received from the server. I.e., these files has been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[NSUUID], acknowledgement:()->()) {
+    func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[SMSyncAttributes], acknowledgement:()->()) {
         let sequenceNumber = self.shouldDoDeletionsSequenceNumber
         self.shouldDoDeletionsSequenceNumber += 1
         self.shouldDoDeletions[sequenceNumber](deletions: downloadDeletions, acknowledgement:acknowledgement)
     }
         
-    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: NSUUID, uploadConflict: SMSyncServerConflict)]) {
+    func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
         let sequenceNumber = self.shouldResolveDeletionConflictsSequenceNumber
         self.shouldResolveDeletionConflictsSequenceNumber += 1
         self.shouldResolveDeletionConflicts[sequenceNumber](conflicts: conflicts)

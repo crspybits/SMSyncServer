@@ -39,7 +39,7 @@ class SMUploadFileOperation: SMUploadOperation {
         let localVersion:Int = localFile.localVersion!.integerValue
         Log.msg("Local file version: \(localVersion)")
         
-        let serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!, remoteFileName: localFile.remoteFileName!, mimeType: localFile.mimeType!, appFileType: localFile.appFileType, version: localVersion)
+        let serverFile = SMServerFile(uuid: NSUUID(UUIDString: localFile.uuid!)!, remoteFileName: localFile.remoteFileName!, mimeType: localFile.mimeType!, appMetaData: localFile.appMetaData, version: localVersion)
         
         var deleted = false
         if let _ = self as? SMUploadDeletion {

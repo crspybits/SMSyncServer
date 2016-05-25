@@ -625,8 +625,8 @@ function addToOutboundFileChanges(op, clientFile, deleteIfTrue, callback) {
         fileVersion: clientFile[ServerConstants.fileVersionKey]
     };
     
-    if (isDefined(clientFile[ServerConstants.appFileTypeKey])) {
-        fileMetaData.appFileType = clientFile[ServerConstants.appFileTypeKey];
+    if (isDefined(clientFile[ServerConstants.appMetaDataKey])) {
+        fileMetaData.appMetaData = clientFile[ServerConstants.appMetaDataKey];
     }
 
     var outboundFileChange = null;

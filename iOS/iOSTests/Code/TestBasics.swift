@@ -18,6 +18,7 @@ public struct TestFile {
     public var mimeType:String!
     public var fileName:String! // local
     public var remoteFileName:String?
+    public var appMetaData:SMAppMetaData?
     
     public var uuid:NSUUID {
         return NSUUID(UUIDString: self.appFile.uuid!)!
@@ -36,7 +37,9 @@ public struct TestFile {
     }
     
     public var attr:SMSyncAttributes {
-        return SMSyncAttributes(withUUID: self.uuid, mimeType: self.mimeType, andRemoteFileName: self.remoteFile)
+        let attr = SMSyncAttributes(withUUID: self.uuid, mimeType: self.mimeType, andRemoteFileName: self.remoteFile)
+        attr.appMetaData = appMetaData
+        return attr
     }
     
     public var url:SMRelativeLocalURL {

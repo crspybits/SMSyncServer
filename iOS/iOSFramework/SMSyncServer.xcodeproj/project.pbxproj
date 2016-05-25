@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E23531C8126AE0054D97C /* SMSyncServerModes.swift */; };
+		830E23541C8126AE0054D97C /* SMSyncServerTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */; };
 		83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */; };
 		832ADADC1CB10D7300FFDD4C /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 832ADADB1CB10D7300FFDD4C /* README.txt */; };
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
@@ -60,6 +60,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		83823E571CF52D0E00E28B76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 839CAE811CF144D40072C1BD;
+			remoteInfo = SMImageTextView;
+		};
+		83823E591CF52D0E00E28B76 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 839CAE941CF144D40072C1BD;
+			remoteInfo = SMImageTextViewUITests;
+		};
 		83CA6A081CD966C400047A86 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83D3EDD11C4DD2C300BFDA93 /* SMCoreLib.xcodeproj */;
@@ -77,7 +91,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		830E23531C8126AE0054D97C /* SMSyncServerModes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerModes.swift; path = Code/Public/SMSyncServerModes.swift; sourceTree = "<group>"; };
+		830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerTypes.swift; path = Code/Public/SMSyncServerTypes.swift; sourceTree = "<group>"; };
 		83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadWrapup+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadWrapup+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		832ADADB1CB10D7300FFDD4C /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = Code/Internal/CoreData/README.txt; sourceTree = "<group>"; };
 		832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SMUploadBlock.swift; path = Code/Internal/CoreData/SMUploadBlock.swift; sourceTree = "<group>"; };
@@ -171,6 +185,8 @@
 			children = (
 				83CA6A091CD966C400047A86 /* SMCoreLib.framework */,
 				83CA6A0B1CD966C400047A86 /* SMCoreLibTests.xctest */,
+				83823E581CF52D0E00E28B76 /* SMImageTextView.app */,
+				83823E5A1CF52D0E00E28B76 /* SMImageTextViewUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -216,7 +232,7 @@
 			children = (
 				839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */,
 				83D3E9791C4C84A600BFDA93 /* SMSyncServer.swift */,
-				830E23531C8126AE0054D97C /* SMSyncServerModes.swift */,
+				830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */,
 				83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */,
 			);
 			name = Public;
@@ -369,6 +385,20 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		83823E581CF52D0E00E28B76 /* SMImageTextView.app */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.application;
+			path = SMImageTextView.app;
+			remoteRef = 83823E571CF52D0E00E28B76 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		83823E5A1CF52D0E00E28B76 /* SMImageTextViewUITests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = SMImageTextViewUITests.xctest;
+			remoteRef = 83823E591CF52D0E00E28B76 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		83CA6A091CD966C400047A86 /* SMCoreLib.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -443,7 +473,7 @@
 				83E55CE91CBA07DB00F204E0 /* SMDownloadFile+CoreDataProperties.swift in Sources */,
 				83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */,
 				83E55CF01CBA07DB00F204E0 /* SMDownloadFileOperation.swift in Sources */,
-				830E23541C8126AE0054D97C /* SMSyncServerModes.swift in Sources */,
+				830E23541C8126AE0054D97C /* SMSyncServerTypes.swift in Sources */,
 				83D3EDD01C4DD0F200BFDA93 /* SMUploadFile.swift in Sources */,
 				832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */,
 				83E55CF21CBA07DB00F204E0 /* SMDownloadDeletion.swift in Sources */,

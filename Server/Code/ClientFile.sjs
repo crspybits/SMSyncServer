@@ -8,7 +8,7 @@ var ServerConstants = require('./ServerConstants');
 
 const requiredProps = [ServerConstants.cloudFileNameKey, ServerConstants.fileUUIDKey, ServerConstants.fileVersionKey, ServerConstants.fileMIMEtypeKey];
 var props = requiredProps.slice(0);
-props.push(ServerConstants.appFileTypeKey);
+props.push(ServerConstants.appMetaDataKey);
 
 // Constructor
 // properties in fileData can include other properties not in props.
@@ -24,7 +24,7 @@ function ClientFile(fileData, requiredPropsParam) {
     var onlyFileDataProps = Common.extractPropsFrom(fileData, props);
     //logger.debug("onlyFileDataProps: %j", onlyFileDataProps);
     Common.assignPropsTo(self, onlyFileDataProps, props);
-    //logger.debug("self: %j", self);
+    logger.debug("ClientFile: %j", self);
 
     for (var index in requiredPropsParam) {
         var key = requiredPropsParam[index];

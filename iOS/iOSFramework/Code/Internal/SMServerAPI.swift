@@ -50,8 +50,8 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     // This optional for the case of transfering files from cloud storage where only a UUID is needed.
     internal var mimeType:String?
     
-    // An app-dependent type, so that the app can know, when it downloads a file from the SyncServer, how to process the file. This is optional as the app may or may not want to use it.
-    internal var appFileType:String?
+    // App-dependent meta data, e.g., so that the app can know, when it downloads a file from the SyncServer, how to process the file. This is optional as the app may or may not want to use it.
+    internal var appMetaData:SMAppMetaData?
     
     // Files newly uploaded to the server (i.e., their UUID doesn't exist yet there) must have version 0. Updated files must have a version equal to +1 of that on the server currently.
     // This optional for the case of transfering files from cloud storage where only a UUID is needed.
@@ -73,12 +73,12 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     }
     
     // Does not initialize localURL.
-    internal init(uuid fileUUID:NSUUID, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appFileType fileType:String?=nil, version fileVersion:Int?=nil) {
+    internal init(uuid fileUUID:NSUUID, remoteFileName fileName:String?=nil, mimeType fileMIMEType:String?=nil, appMetaData:SMAppMetaData?=nil, version fileVersion:Int?=nil) {
         self.remoteFileName = fileName
         self.uuid = fileUUID
         self.version = fileVersion
         self.mimeType = fileMIMEType
-        self.appFileType = fileType
+        self.appMetaData = appMetaData
     }
     
     func encodeWithCoder(aCoder: NSCoder) {
@@ -86,7 +86,10 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
         aCoder.encodeObject(self.localURL, forKey: "localURL")
         aCoder.encodeObject(self.remoteFileName, forKey: "remoteFileName")
         aCoder.encodeObject(self.mimeType, forKey: "mimeType")
-        aCoder.encodeObject(self.appFileType, forKey: "appFileType")
+        
+        // Since the appMetaData is JSON serializable, it should be encodable, right?
+        aCoder.encodeObject(self.appMetaData, forKey: "appMetaData")
+        
         aCoder.encodeObject(self.version, forKey: "version")
         aCoder.encodeObject(self.sizeBytes, forKey: "sizeBytes")
         aCoder.encodeObject(self.deleted, forKey: "deleted")
@@ -99,7 +102,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
         self.localURL = aDecoder.decodeObjectForKey("localURL") as? SMRelativeLocalURL
         self.remoteFileName = aDecoder.decodeObjectForKey("remoteFileName") as? String
         self.mimeType = aDecoder.decodeObjectForKey("mimeType") as? String
-        self.appFileType = aDecoder.decodeObjectForKey("appFileType") as? String
+        self.appMetaData = aDecoder.decodeObjectForKey("appMetaData") as? [String:AnyObject]
         self.version = aDecoder.decodeObjectForKey("version") as? Int
         self.sizeBytes = aDecoder.decodeObjectForKey("sizeBytes") as? Int
         self.deleted = aDecoder.decodeObjectForKey("deleted") as? Bool
@@ -111,7 +114,10 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
         copy.remoteFileName = self.remoteFileName
         copy.uuid = self.uuid
         copy.mimeType = self.mimeType
-        copy.appFileType = self.appFileType
+        
+        // This is not a deep copy.
+        copy.appMetaData = self.appMetaData
+        
         copy.version = self.version
         
         // Not creating a copy of localFile because it's a CoreData object and a copy doesn't make sense-- it refers to the same persistent object.
@@ -124,7 +130,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
     
     override internal var description: String {
         get {
-            return "localURL: \(self.localURL); remoteFileName: \(self.remoteFileName); uuid: \(self.uuid); version: \(self.version); mimeType: \(self.mimeType); appFileType: \(self.appFileType)"
+            return "localURL: \(self.localURL); remoteFileName: \(self.remoteFileName); uuid: \(self.uuid); version: \(self.version); mimeType: \(self.mimeType); appFileType: \(self.appMetaData)"
         }
     }
     
@@ -180,11 +186,11 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
             newObj.deleted = Bool(fileDeleted!)
         }
         
-        if let fileType = dict[SMServerConstants.fileIndexAppFileType] as? String {
-            newObj.appFileType = fileType
+        if let appMetaData = dict[SMServerConstants.fileIndexAppMetaData] as? SMAppMetaData {
+            newObj.appMetaData = appMetaData
         }
         else {
-            Log.msg("Didn't get a String for appfileType")
+            Log.msg("Didn't get JSON for appMetaData")
         }
         
         let sizeBytes = SMServerAPI.getIntFromServerResponse(dict[SMServerConstants.fileSizeBytes])
@@ -217,8 +223,8 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
                 result[SMServerConstants.fileMIMEtypeKey] = self.mimeType
             }
             
-            if self.appFileType != nil {
-                result[SMServerConstants.appFileTypeKey] = self.appFileType
+            if self.appMetaData != nil {
+                result[SMServerConstants.appMetaDataKey] = self.appMetaData
             }
             
             return result

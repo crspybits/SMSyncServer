@@ -10,7 +10,7 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "FileIndex";
 
 // These must match those properties given in the data model below. Callers of this class don't supply lastModified. lastModified is added by this class.
-const props = ["_id", "userId", ServerConstants.fileIndexFileId, ServerConstants.fileIndexCloudFileName, ServerConstants.fileIndexMimeType, ServerConstants.fileIndexAppFileType, ServerConstants.fileIndexDeleted, ServerConstants.fileIndexFileVersion, ServerConstants.fileIndexLastModified, ServerConstants.fileSizeBytes];
+const props = ["_id", "userId", ServerConstants.fileIndexFileId, ServerConstants.fileIndexCloudFileName, ServerConstants.fileIndexMimeType, ServerConstants.fileIndexAppMetaData, ServerConstants.fileIndexDeleted, ServerConstants.fileIndexFileVersion, ServerConstants.fileIndexLastModified, ServerConstants.fileSizeBytes];
 
 // Note that the same names used across some of the properties in this class and PSOutboundFileChanges are important and various dependencies exist.
 
@@ -30,7 +30,7 @@ It seems like this could get confusing.
         
 		cloudFileName: (String), // name of the file on the cloud storage system (without path)
         mimeType: (String), // MIME type of the file
-        appFileType: (String), // App-dependent file type
+        appMetaData: (JSON structure), // App-dependent meta data
 		deleted: (true | false),
         
         // Intended to allow the app/client determine if a change has happened to the file.

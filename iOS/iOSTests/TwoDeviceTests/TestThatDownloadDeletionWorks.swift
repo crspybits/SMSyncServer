@@ -97,7 +97,7 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         acknowledgement()
     }
 
-    override func syncServerShouldDoDeletions(downloadDeletions deletions:[NSUUID], acknowledgement:()->()) {
+    override func syncServerShouldDoDeletions(downloadDeletions deletions:[SMSyncAttributes], acknowledgement:()->()) {
         if self.isMaster {
             self.failTest()
             return

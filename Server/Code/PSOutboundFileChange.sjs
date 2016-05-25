@@ -13,7 +13,7 @@ var ServerConstants = require('./ServerConstants');
 const collectionName = "OutboundFileChanges";
 
 // These must exactly match those properties given in the data model below.
-const props = ["_id", "fileId", "userId", "deviceId", "toDelete", "cloudFileName", "mimeType", "appFileType", "fileVersion", "committed"];
+const props = ["_id", "fileId", "userId", "deviceId", "toDelete", "cloudFileName", "mimeType", "appMetaData", "fileVersion", "committed"];
 
 // Note that same names used across some of the properties in this class and PSFileIndex are important and various dependencies exist.
 
@@ -34,7 +34,7 @@ const props = ["_id", "fileId", "userId", "deviceId", "toDelete", "cloudFileName
         cloudFileName: (String), // name of the file in cloud storage excluding the folder path.
  
         mimeType: (String), // MIME type of the file
-        appFileType: (String), // App-specific file type
+        appMetaData: (JSON structure), // App-specific meta data
         
 		fileVersion: (Integer value), // values must be >= 0.
         
@@ -87,7 +87,7 @@ PSOutboundFileChange.prototype.convertToFileIndex = function () {
     fileIndexData[ServerConstants.fileIndexMimeType] = self.mimeType;
     fileIndexData[ServerConstants.fileIndexFileVersion] = self.fileVersion;
     fileIndexData[ServerConstants.fileIndexDeleted] = self.toDelete;
-    fileIndexData[ServerConstants.fileIndexAppFileType] = self.appFileType;
+    fileIndexData[ServerConstants.fileIndexAppMetaData] = self.appMetaData;
     
     return fileIndexData;
 }
