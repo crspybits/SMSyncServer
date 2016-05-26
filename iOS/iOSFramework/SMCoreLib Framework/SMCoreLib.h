@@ -32,6 +32,7 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/KeyChain.h>
 #import <SMCoreLib/AFNetworking.h>
 #import <SMCoreLib/UIKit+AFNetworking.h>
+#import <SMCoreLib/UIImage+AFNetworking.h>
 #import <SMCoreLib/SMAssert.h>
 #import <SMCoreLib/SMIdentifiers2.h>
 #import <SMCoreLib/SMUIMessages.h>
