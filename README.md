@@ -37,8 +37,8 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 # Development Status
 
 * The SMSyncServer project is in "beta" and supports uploading, upload-deletion, downloading, download-deletion, and conflict management.
-* Currently only an iOS client (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [See also this SO link](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)) has been implemented.
-* Currently only Google Drive is supported in terms of cloud storage systems.
+* Currently an iOS client has been implemented (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [see also this SO post](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)).
+* Currently Google Drive is supported in terms of cloud storage systems.
 * No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
 * Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
 * [TODO development list](./TODO.md)
@@ -216,20 +216,35 @@ Downloads are caused by other devices uploading files, and these are initiated b
     
 ## 6) SMSyncServer.session.delegate
 
+	// These delegate methods are called on the main thread.
 	public protocol SMSyncServerDelegate : class {
+		// "class" to make the delegate weak.
+
+		// For all four of the following delegate callbacks, it is up to the callee to check to determine if any modification conflict is occuring for a particular deleted file. i.e., if the client is modifying any of the files referenced.
+	
 		// Called at the end of all downloads, on non-error conditions. Only called when there was at least one download.
 		// The callee owns the files referenced by the NSURL's after this call completes. These files are temporary in the sense that they will not be backed up to iCloud, could be removed when the device or app is restarted, and should be moved to a more permanent location. See [1] for a design note about this delegate method. This is received/called in an atomic manner: This reflects the current state of files on the server.
+		// The recommended action is for the client to replace their existing data with that from the files.
 		// The callee must call the acknowledgement callback when it has finished dealing with (e.g., persisting) the list of downloaded files.
-		func syncServerDownloadsComplete(downloadedFiles:[(NSURL, SMSyncAttributes)], acknowledgement:()->())
-		
-		// Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects the current state of files on the server. The recommended action is for the client to delete the files represented by the UUID's.
-		// The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
-		func syncServerClientShouldDeleteFiles(uuids:[NSUUID], acknowledgement:()->())
+		// For any given download only one of the following two delegate methods will be called. I.e., either there is a conflict or is not a conflict for a given download.
+		func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ())
 	
-		// Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss the app until server operations have completed.
+		// The client has to decide how to resolve the file-download conflicts. The resolveConflict method of each SMSyncServerConflict must be called. The above statements apply for the NSURL's.
+		func syncServerShouldResolveDownloadConflicts(conflicts: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])
+	
+		// Called when deletion indications have been received from the server. I.e., these files have been deleted on the server. This is received/called in an atomic manner: This reflects a snapshot state of files on the server. The recommended action is for the client to delete the files reference by the SMSyncAttributes's (i.e., the UUID's).
+		// The callee must call the acknowledgement callback when it has finished dealing with (e.g., carrying out deletions for) the list of deleted files.
+		func syncServerShouldDoDeletions(downloadDeletions downloadDeletions:[SMSyncAttributes], acknowledgement:()->())
+
+		// The client has to decide how to resolve the download-deletion conflicts. The resolveConflict method of each SMSyncServerConflict must be called.
+		// Conflicts will not include UploadDeletion.
+		func syncServerShouldResolveDeletionConflicts(conflicts:[(downloadDeletion: SMSyncAttributes, uploadConflict: SMSyncServerConflict)])
+	
+		// Reports mode changes including errors. Can be useful for presenting a graphical user-interface which indicates ongoing server/networking operations. E.g., so that the user doesn't close or otherwise the dismiss a client app until server operations have completed.
 		func syncServerModeChange(newMode:SMSyncServerMode)
 	
 		// Reports events. Useful for testing and debugging.
 		func syncServerEventOccurred(event:SMSyncServerEvent)
 	}
+
 
