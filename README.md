@@ -37,9 +37,10 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 # Development Status
 
 * The SMSyncServer project is in "beta" and supports uploading, upload-deletion, downloading, download-deletion, and conflict management.
+* Currently only an iOS client (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [See also this SO link](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)) has been implemented.
 * Currently only Google Drive is supported in terms of cloud storage systems.
+* No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
 * Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
-1. SMSyncServer has an iOS client written in Swift and a server written in Javascript/Node.js. You must call the iOS client from Swift, not Objective-C, because the iOS API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
 * [TODO development list](./TODO.md)
 
 # Installation
@@ -116,6 +117,8 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 ## 5) Adding the iOSFramework into your own Xcode project 
 
+* You must call the iOS client from Swift, not Objective-C, because the iOS client API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
+ 
 * Drag the file `iOSFramework/Code/Signin/SMGoogleCredentials.swift` into your Xcode project. This .swift file depends on the Google Sign In Framework (see next step), which is not linked into the SMSyncServer framework, and so isn't explicitly part of the SMSyncServer framework.
 
 * You need most of the code in your App Delegate from the example AppDelegate.swift file-- all of it except for that using Core Data. See the method `didFinishLaunchingWithOptions` and the method:

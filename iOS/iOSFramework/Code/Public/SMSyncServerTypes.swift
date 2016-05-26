@@ -24,7 +24,7 @@ public class SMSyncAttributes {
     // Must be provided when uploading for a new uuid; optional after that.
     public var mimeType:String?
     
-    // Optionally provides the app with app-specific meta information about the file. This must be encodable to JSON for upload/download to the server. This is stored on the SMSyncServer server (not the users cloud storage), so you may want to be careful about not making this too large. If you use numbers as values for dictionaries or elements of arrays, they will come back quoted as strings from the server.
+    // Optionally provides the app with app-specific meta information about the file. This must be encodable to JSON for upload/download to the server. This is stored on the SMSyncServer server (not the users cloud storage), so you may want to be careful about not making this too large. If you use numbers as values for dictionaries or elements of arrays, they will come back quoted as strings from the server. See [1] for the reason for this.
     public var appMetaData:SMAppMetaData?
     
     // Only used by SMSyncServer fileStatus method. true indicates that the file was deleted on the server.
@@ -266,3 +266,8 @@ internal class SMSyncServerModeWrapper : NSObject, NSCoding
         }
     }
 }
+
+/* [1]. I'm using AFNetworking internally, and it is uploading numbers in JSON as quoted strings. I'm not sure why. Other people have seen this (e.g., http://stackoverflow.com/questions/20136567/afnetworking-json-serialization-problems). In the upload server API call, the JSON arrives this way. My app-local JSON serialization (see SMLocalFile.swift) doesn't appear to do this. This doesn't seem to be due to use of AFHTTPRequestSerializer vs. AFJSONRequestSerializer. I should put in a question to the AFNetworking folks about this. HOWEVER, I should, before that, try a simple example where I use Postman or cURL to upload, and a simple Node.js backend to see what is received on the server with something sent like {"Test" : 1}. It could be that something on the server side is decoding the JSON in the body of the HTTP request in this way.
+
+    See also the question I just posted: https://stackoverflow.com/questions/37449472/afnetworking-v3-1-0-multipartformrequestwithmethod-uploads-json-numeric-values-w
+*/

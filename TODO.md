@@ -3,10 +3,14 @@
 ## Shared Notes demo app issues
 
 1. DONE: 5/23/16; Why does font go smaller when we reenter the editing VC? This appears to be because of the way I'm setting the attributed text at ranges. It stripping out the attributed properties. [YES-- that was it!]
-1. Bug/Crash: I just did a pull-down refresh on SharedNotes when I hadn't  used the app for about 10 hours, and I got a persistent stale credentials issue. While I thought I'd been getting these errors on a server lock before, I thought they'd been resolving themselves. This gave the "red" error spinner on the app. When I tapped on the red spinner, the app crashed. This is an interesting bug. The purpose of tapping on the red spinner button is to do a clean up on the server. However, a cleanup will not be possible because of the credentials/authorization problem. 5/23/16: I think I've fixed the stale creds issue. Still need some way to test the red spinner reset.
-1. Figure out if we have a combination of adds and deletes of images if we upload the right ones and delete the right ones-- with no trash left over.
-1. Should use the appDataType field of attr here-- to interpret the type of data downloaded.
+
+1. Should use the appMetaData field of attr here-- to interpret the type of data downloaded.
+
 1. Encode related object of a ImageNote in the JSON. So after it's received at destination, we can relate it. HOW DO WE DO THIS? The way we are doing it so far files don't have any general meta data that apps can set. It seems we need to provide this -- e.g., a json structure would seem to be a good way to go. And make it part of the SMSyncAttributes. This could just replace the appDataType-- as it's a really just more general app specific chunk of data. This is important for deletion-- without knowing the images related to a note, when we delete the note, the images will not also actually get deleted.
+
+1. Bug/Crash: I just did a pull-down refresh on SharedNotes when I hadn't  used the app for about 10 hours, and I got a persistent stale credentials issue. While I thought I'd been getting these errors on a server lock before, I thought they'd been resolving themselves. This gave the "red" error spinner on the app. When I tapped on the red spinner, the app crashed. This is an interesting bug. The purpose of tapping on the red spinner button is to do a clean up on the server. However, a cleanup will not be possible because of the credentials/authorization problem. 5/23/16: I think I've fixed the stale creds issue. Still need some way to test the red spinner reset.
+
+1. Figure out if we have a combination of adds and deletes of images if we upload the right ones and delete the right ones-- with no trash left over.
 
 ## FUNCTIONALITY
 
@@ -17,8 +21,10 @@
 
 1. DONE 5/20/16. Add ability to upload a zero length file or a nil NSData. It should be possible to have an empty file on cloud storage.
 
-1. The syncServerShouldDoDeletions delegate method should pass back SMSyncAttributes and not just NSUUID's. This is so that the app can know the type of object it's deleting. E.g., in the case of SharedNotes: images vs. text notes.
-            
+1. DONE 5/24/16. The syncServerShouldDoDeletions delegate method should pass back SMSyncAttributes and not just NSUUID's. This is so that the app can know the type of object it's deleting. E.g., in the case of SharedNotes: images vs. text notes.
+
+1. DONE 5/24/16. Incorporate appFileType; See SMSyncAttributes. Seems like we should change that from appFileType to appDataType to get ready for generic upload interface. [Actual implementation amounted to adding more general appMetaData property and removing appFileType].
+  
 1. Improve robustness of recovering from errors in network/server access. I've been encountering some failures in server access where (I think) due to a poor network connection (a) I don't detect that the network is down, but (b) the connection to the server fails. Right now what happens is that the server API call is retried several times, then the client goes into a failure mode. Instead, upon such a server API failure, it should be treated the same as a network loss. Even if the server was down, I think this is the right way to handle this issue. With the server down, we'd need to restart the server, and the app should later retry. TESTING: Add manual tests which shut down the network at certain points. In that way, the network will be up, but the server will be unresponsive.
 
 1. Some calls to SMServerAPI break down into multiple server calls. Need to change this because I think it's interfering with recovery ability of client.
@@ -28,8 +34,6 @@
 1. Need to get autocommit working-- so that can periodically initiate sync calls.
 
 1. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
-
-1. Incorporate appFileType; See SMSyncAttributes. Seems like we should change that from appFileType to appDataType to get ready for generic upload interface.
  
 1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData.
 

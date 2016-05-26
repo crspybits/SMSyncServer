@@ -423,7 +423,7 @@ internal class SMSyncControl {
             else {
                 // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
                 // Not going to check for nextwork connection here because next() checks that.
-                self.retry(&self.numberLockAttempts, errorSpecifics: "", success: {
+                self.retry(&self.numberLockAttempts, errorSpecifics: "SMServerAPI.session.lock", success: {
                     self.next()
                 })
             }
