@@ -16,11 +16,14 @@ class UploadRecovery: BaseClass {
     // To enable 2nd part of recovery test after app crash.
     static let recoveryAfterAppCrash1 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash1", initialBoolValue: true, persistType: .UserDefaults)
     static let recoveryAfterAppCrash2 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash2", initialBoolValue: true, persistType: .UserDefaults)
-        
+    static let recoveryAfterAppCrash3 = SMPersistItemBool(name: "SMNetDbTestsRecoveryAfterAppCrash3", initialBoolValue: true, persistType: .UserDefaults)
+
     // Flag so I can get ordering of expectations right.
     var doneRecovery = false
     
     private static var crashUUIDString1 = SMPersistItemString(name: "SMUploadFiles.crashUUIDString1", initialStringValue: "", persistType: .UserDefaults)
+
+    private static var crashUUIDString3 = SMPersistItemString(name: "SMUploadFiles.crashUUIDString3", initialStringValue: "", persistType: .UserDefaults)
 
     override func setUp() {
         super.setUp()
@@ -489,6 +492,64 @@ class UploadRecovery: BaseClass {
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    /* 5/26/16. Just found a bug, and want to add the problem in as a test case so (a) that I can be assured that I can reproduce the bug, and (b) that once the bug is fixed I can make sure it's gone. The bug occurs in the following manner:
+    1) An upload is occuring, but not yet complete. There are still Core Data objects in the SMQueues for the upload-- i.e., the .beingUploaded queue is not empty. The upload is nearly finished, however. The server lock has been released (automatically by the server), but the haveServerLock flag in the framework hasn't yet been set to false.
+    2) For some reason, the app crashes (this crash is not specifically part of this issue, but is just a problem, say, in the client code using the SMSyncServer framework).
+    3) When the app restarts, with the still pending objects in the .beingUploaded queue, processPendingUploads gets called in SMSyncControl.
+    4) In processPendingUploads, the server API method getFileIndex gets called.
+    5) The lock has already been released on the server, but getFileIndex in this context expects that the lock is held-- hence we get a failure.
+    (a) I'm now able to reproduce the bug.
+    */
+    func testThatRecoveryAfterCrashImmediatelyAfterLockReleasedWorks() {
+        let fileName = "RecoveryAfterCrashImmediatelyAfterLockReleased"
+        
+        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let idleExpectation = self.expectationWithDescription("Idle")
+        let commitCompleteExpectation = self.expectationWithDescription("Commit Complete")
+        
+        self.extraServerResponseTime = 30
+
+        if UploadRecovery.recoveryAfterAppCrash3.boolValue {
+            UploadRecovery.recoveryAfterAppCrash3.boolValue = false
+            
+            self.waitUntilSyncServerUserSignin() {
+                let testFile = TestBasics.session.createTestFile(fileName)
+                UploadRecovery.crashUUIDString3.stringValue = testFile.uuid.UUIDString
+                
+                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+                
+                self.singleUploadCallbacks.append() { uuid in
+                    XCTAssert(uuid.UUIDString == testFile.uuidString)
+                    singleUploadExpectation.fulfill()
+                }
+                
+                self.useFrameworkUploadMetaDataUpdated = true
+                self.frameworkUploadMetaDataUpdatedCallbacks.append() {
+                    SMTest.session.crash()
+                }
+                
+                SMSyncServer.session.commit()
+            }
+            
+        }
+        else {
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
+            let testFile = TestBasics.session.recreateTestFile(fromUUID: UploadRecovery.crashUUIDString3.stringValue)
+
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                    commitCompleteExpectation.fulfill()
+                }
             }
         }
         

@@ -43,6 +43,9 @@ class Note: NSManagedObject {
         
         let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: Note.mimeType, andRemoteFileName: self.uuid!)
         
+        attr.appMetaData = SMAppMetaData()
+        attr.appMetaData![CoreDataExtras.objectDataTypeKey] = CoreDataExtras.objectDataTypeNote
+        
         SMSyncServer.session.uploadData(self.jsonData, withDataAttributes: attr)
     }
     
@@ -63,7 +66,7 @@ class Note: NSManagedObject {
             Log.error("Problem updating note for: \(uuid)")
         }
         
-        CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
     }
     
     // Also spawns off an upload with the new note contents.
@@ -89,7 +92,7 @@ class Note: NSManagedObject {
     private func updateJSON(jsonData jsonData:NSData) {
         self.internalJSONData = jsonData
         self.internalDateModified = NSDate()
-        CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
     }
     
     class func entityName() -> String {
@@ -97,7 +100,7 @@ class Note: NSManagedObject {
     }
 
     class func newObjectAndMakeUUID(makeUUIDAndUpload makeUUIDAndUpload: Bool) -> NSManagedObject {
-        let note = CoreData.sessionNamed(CoreDataSession.name).newObjectWithEntityName(self.entityName()) as! Note
+        let note = CoreData.sessionNamed(CoreDataExtras.sessionName).newObjectWithEntityName(self.entityName()) as! Note
         
         if makeUUIDAndUpload {
             note.uuid = UUID.make()
@@ -106,7 +109,7 @@ class Note: NSManagedObject {
         note.images = NSSet()
         note.internalDateModified = NSDate()
         
-        CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
 
         if makeUUIDAndUpload {
             note.upload()
@@ -121,7 +124,7 @@ class Note: NSManagedObject {
     
     class func fetchRequestForAllObjects() -> NSFetchRequest? {
         var fetchRequest: NSFetchRequest?
-        fetchRequest = CoreData.sessionNamed(CoreDataSession.name).fetchRequestWithEntityName(self.entityName(), modifyingFetchRequestWith: nil)
+        fetchRequest = CoreData.sessionNamed(CoreDataExtras.sessionName).fetchRequestWithEntityName(self.entityName(), modifyingFetchRequestWith: nil)
         
         if fetchRequest != nil {
             let sortDescriptor = NSSortDescriptor(key: DATE_KEY, ascending: false)
@@ -133,18 +136,11 @@ class Note: NSManagedObject {
     
     // Returns nil if no Note found.
     class func fetch(withUUID uuid:NSUUID) -> Note? {
-        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataSession.name)) as? Note
+        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? Note
     }
     
-    func addImage(image:NoteImage) {
-        let mutableSet = NSMutableSet(set: self.images!)
-        mutableSet.addObject(image)
-        self.images = mutableSet
-        CoreData.sessionNamed(CoreDataSession.name).saveContext() 
-    }
-    
-    // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server.
-    func removeObject() {
+    // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server. In some cases, though the server doesn't need to be updated-- e.g., on a download-deletion.
+    func removeObject(andUpdateServer updateServer:Bool) {
         let uuid = self.uuid
         
         // Need to remove any associated images.
@@ -152,15 +148,17 @@ class Note: NSManagedObject {
             let images = NSSet(set: self.images!)
             for elem in images {
                 let image = elem as! NoteImage
-                image.removeObject()
+                image.removeObject(andUpdateServer: updateServer)
             }
         }
         
-        CoreData.sessionNamed(CoreDataSession.name).removeObject(self)
+        CoreData.sessionNamed(CoreDataExtras.sessionName).removeObject(self)
         
-        if CoreData.sessionNamed(CoreDataSession.name).saveContext() {
-            SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
-            SMSyncServer.session.commit()
+        if CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext() {
+            if updateServer {
+                SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
+                SMSyncServer.session.commit()
+            }
         }
     }
 }

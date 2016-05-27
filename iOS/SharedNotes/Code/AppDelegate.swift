@@ -27,7 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             CoreDataSqlliteFileName: "SharedNotes.sqlite"
         ]);
         
-        CoreData.registerSession(coreDataSession, forName: CoreDataSession.name)
+        CoreData.registerSession(coreDataSession, forName: CoreDataExtras.sessionName)
 
         let (serverURLString, cloudFolderPath, googleServerClientId) = SMSyncServer.getDataFromPlist(syncServerClientPlistFileName: smSyncServerClientPlist)
         

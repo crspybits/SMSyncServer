@@ -116,13 +116,20 @@ class ViewController: UIViewController {
 
 extension ViewController : SMSyncServerDelegate {
     func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
+    
+        var imagesOwners = [(image: NoteImage, noteOwnerUUID:String)]()
+    
         for (url, attr) in downloads {
-            // TODO: Really need the appDataType field of attr here. It would be better to switch on this field than the mimeType
-            switch attr.mimeType! {
-            case Note.mimeType:
+            let objectDataType = attr.appMetaData![CoreDataExtras.objectDataTypeKey] as! String
+            
+            switch objectDataType {
+            case CoreDataExtras.objectDataTypeNote:
                 Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
             
-            case NoteImage.mimeType:
+            case CoreDataExtras.objectDataTypeNoteImage:
+                let ownedByNoteUUID = attr.appMetaData![CoreDataExtras.ownedByNoteUUIDKey] as! String
+                // Since we don't know if the owning note has been downloaded yet, lets save this and we'll assign the owning notes after this loop.
+                
                 let finalImageURL = FileExtras().newURLForImage()
                 let fileMgr = NSFileManager.defaultManager()
                 do {
@@ -133,15 +140,23 @@ extension ViewController : SMSyncServerDelegate {
                 
                 let noteImage = NoteImage.newObjectAndMakeUUID(withURL: finalImageURL, makeUUIDAndUpload: false) as! NoteImage
                 noteImage.uuid = attr.uuid!.UUIDString
-                CoreData.sessionNamed(CoreDataSession.name).saveContext()
 
-                // TODO: Need to pull the related object out of this one and link to it. BUT: We don't know if that related object has been seen yet in this list of downloads.
+                imagesOwners.append((image: noteImage, noteOwnerUUID:ownedByNoteUUID))
             
             default:
                 Assert.badMojo(alwaysPrintThisString: "Unexpected mimeType: \(attr.mimeType!)")
             }
         }
         
+        for imageOwner in imagesOwners {
+            let (image: noteImage, noteOwnerUUID:ownedByNoteUUID) = imageOwner
+            let note = Note.fetch(withUUID: NSUUID(UUIDString: ownedByNoteUUID)!)
+            Assert.If(note == nil, thenPrintThisString: "Couldn't find owning note!")
+            noteImage.note = note
+        }
+        
+        CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
+
         acknowledgement()
     }
     
@@ -203,10 +218,32 @@ extension ViewController : SMSyncServerDelegate {
     
     func syncServerShouldDoDeletions(downloadDeletions deletions:[SMSyncAttributes], acknowledgement:()->()) {
         for attr in deletions {
-            // TODO: Make this deletion process dependent on the type of object being deleted. This doesn't deal with deletion of images.
-            let note = Note.fetch(withUUID: attr.uuid)
-            Assert.If(note == nil, thenPrintThisString: "Could not find the note!")
-            note!.removeObject()
+            let objectDataType = attr.appMetaData![CoreDataExtras.objectDataTypeKey] as! String
+            
+
+            switch objectDataType {
+            case CoreDataExtras.objectDataTypeNote:
+                // Note deletion should remove associated images. We don't know the order that they'll arrive in though.
+                if let note = Note.fetch(withUUID: attr.uuid) {
+                    // No need to update server here because the server already knows about this deletion.
+                    note.removeObject(andUpdateServer: false)
+                }
+                else {
+                    Log.warning("Could not find Note to delete: \(attr.uuid); was it deleted already?")
+                }
+            
+            case CoreDataExtras.objectDataTypeNoteImage:
+                if let noteImage = NoteImage.fetch(withUUID: attr.uuid) {
+                    // As above. Server already knows about the deletion.
+                    noteImage.removeObject(andUpdateServer: false)
+                }
+                else {
+                    Log.warning("Could not find NoteImage to delete: \(attr.uuid); was it deleted already?")
+                }
+
+            default:
+                Assert.badMojo(alwaysPrintThisString: "Yikes: Unknown object type: \(objectDataType)")
+            }
         }
         
         acknowledgement()
@@ -233,7 +270,7 @@ extension ViewController : SMSyncServerDelegate {
             let alert = UIAlertController(title: "Someone else has deleted a note.", message: "But you just updated it!", preferredStyle: .Alert)
             
             alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
-                note?.removeObject()
+                note?.removeObject(andUpdateServer: false)
                 conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
                 self.resolveDeletionConflicts(remainingConflicts)
             })
@@ -276,12 +313,12 @@ extension ViewController : CoreDataSourceDelegate {
     }
     
     func coreDataSourceContext(cds: CoreDataSource!) -> NSManagedObjectContext! {
-        return CoreData.sessionNamed(CoreDataSession.name).context
+        return CoreData.sessionNamed(CoreDataExtras.sessionName).context
     }
     
     // Should return YES iff the context save was successful.
     func coreDataSourceSaveContext(cds: CoreDataSource!) -> Bool {
-        return CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        return CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
     }
     
     func coreDataSource(cds: CoreDataSource!, objectWasDeleted indexPathOfDeletedObject: NSIndexPath!) {
@@ -351,7 +388,8 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
             Log.msg("Deleting object from row: \(indexPath.row)")
             // Call the note removeObject method and not the coreDataSource method so that (a) associated images get removed too, and updates get pushed to server.
             //self.coreDataSource.deleteObjectAtIndexPath(indexPath)
-            note.removeObject()
+            // This is a user request for a deletion. Update the server.
+            note.removeObject(andUpdateServer: true)
             
         case .Insert, .None:
             Assert.badMojo(alwaysPrintThisString: "Should not get this")

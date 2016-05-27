@@ -44,11 +44,17 @@ class NoteTableViewCell : UITableViewCell {
 
             let (firstLine, remainingLines) = self.splitIntoFirstAndRemainingLines(fullText!)
 
-            let titleString = NSMutableAttributedString(string: "\(firstLine)", attributes: titleAttributes)
+            var titleString:NSMutableAttributedString?
+            // Can still have a nil firstLine-- when there is only white space I think.
+            if firstLine != nil {
+                titleString = NSMutableAttributedString(string: "\(firstLine)", attributes: titleAttributes)
+            }
             
             if remainingLines != nil {
                 let subtitleString = NSAttributedString(string: "\n" + remainingLines!, attributes: remainingLinesAttributes)
-                titleString.appendAttributedString(subtitleString)
+                
+                // If there are remainingLines, then there must have been a firstLine.
+                titleString!.appendAttributedString(subtitleString)
             }
             
             self.textLabel!.attributedText = titleString
@@ -60,7 +66,7 @@ class NoteTableViewCell : UITableViewCell {
         self.detailTextLabel!.text = note.dateModified?.description
     }
     
-    private func splitIntoFirstAndRemainingLines(text:String) -> (firstLine: String, remainingLines:String?) {
+    private func splitIntoFirstAndRemainingLines(text:String) -> (firstLine: String?, remainingLines:String?) {
         // This is kind of gnarly
         // http://stackoverflow.com/questions/25678373/swift-split-a-string-into-an-array
         let noteTextLines = text.characters.split("\n").map(String.init)
@@ -83,6 +89,6 @@ class NoteTableViewCell : UITableViewCell {
             count += 1
         }
         
-        return (firstLine: noteTextLines[0], remainingLines: tailText)
+        return (firstLine: noteTextLines.count > 0 ? noteTextLines[0] : nil, remainingLines: tailText)
     }
 }

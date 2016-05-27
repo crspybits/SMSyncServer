@@ -47,8 +47,8 @@ internal class SMSyncControl {
     // Dealing with a race condition between starting a next operation and ending the current operation.
     private let nextOperationLock = NSLock()
 
-    // For now, we're assuming that there is no server lock breaking. I.e., once we get the server lock, we have it until we release it. We only obtain the server lock in the process of checking for downloads, and we don't release it until the next() method has no work to do. We're storing this persistently because having or not having the server lock persists across launches of the app.
-    private static let haveServerLock = SMPersistItemBool(name: "SMSyncControl.haveServerLock", initialBoolValue: false, persistType: .UserDefaults)
+    // For now, we're assuming that there is no server lock breaking. I.e., once we get the server lock, we have it until we release it. We only obtain the server lock in the process of checking for downloads, and we don't release it until the next() method has no work to do. ORIGINALLY, I was storing this persistently because having or not having the server lock persists across launches of the app. HOWEVER, we then have a race condition between releasing the lock on the server, and the app crashing (for some reason; e.g., see test case testThatRecoveryAfterCrashImmediatelyAfterLockReleasedWorks in UploadRecovery.swift), and setting this persistent flag. SO, I'm going to change this strategy to (a) being transient (non-persistent), and (b) when the app starts up, I'll check with the server to attempt to obtain the lock. Since this will only happen once a launch, it seems reasonable.
+    private var  haveServerLock = false
     
     private var serverFileIndex:[SMServerFile]?
     
@@ -105,7 +105,7 @@ internal class SMSyncControl {
         }
         
         Log.special("Stopped operating!")
-        Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
+        Log.msg("self.haveServerLock: \(self.haveServerLock)")
 
         // Callback for .Idle mode change is after the unlock (and now, after this method call) to let the idle callback acquire the lock if needed.
     }
@@ -247,19 +247,16 @@ internal class SMSyncControl {
     
     private func resetFromErrorAux1(originalErrorMode originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
         
-        if SMSyncControl.haveServerLock.boolValue {
-            self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
-        }
-        else {
-            SMServerAPI.session.lock { (apiResult) -> (Void) in
-                if nil == apiResult.error {
-                    self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
-                }
-                else {
-                    self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on obtaining lock", success: {
-                        self.resetFromErrorAux1(originalErrorMode: originalErrorMode, completion: completion)
-                    })
-                }
+        // Don't bother checking for the lock. It's simpler if we just go for it. If we already have the lock, we won't fail. Plus, resets will be infrequent.
+
+        SMServerAPI.session.lock { apiResult in
+            if nil == apiResult.error {
+                self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+            }
+            else {
+                self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on obtaining lock", success: {
+                    self.resetFromErrorAux1(originalErrorMode: originalErrorMode, completion: completion)
+                })
             }
         }
     }
@@ -269,7 +266,7 @@ internal class SMSyncControl {
         SMServerAPI.session.cleanup() { apiResult in
             if nil == apiResult.error {
                 // One result of successfully calling cleanup is that we won't have the server lock any more.
-                SMSyncControl.haveServerLock.boolValue = false
+                self.haveServerLock = false
                 
                 // Using nextOperationLock so that no one races in, does a client commit, and the commit remains enqueued but doesn't actually do any sync operations. Either the commit will get thrown away in the cleanup, or it will operate after this cleanup/stop sequence occurs.
                 self.nextOperationLock.lock()
@@ -303,44 +300,76 @@ internal class SMSyncControl {
         Assert.If(!self._operating, thenPrintThisString: "Yikes: Not operating!")
 
         if Network.session().connected() {
-            Log.msg("SMSyncControl.haveServerLock.boolValue: \(SMSyncControl.haveServerLock.boolValue)")
+            Log.msg("self.haveServerLock: \(self.haveServerLock)")
             
-            if SMQueues.current().beingDownloaded != nil  {
-                Log.special("SMSyncControl: Process pending downloads")
-                Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock (downloads)!")
-                SMDownloadFiles.session.doDownloadOperations()
-            }
-            else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
-                // Uploads are really the bottom priority. See [1] also.
-                Log.special("SMSyncControl: Process pending uploads")
-                Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock (uploads)!")
-                self.processPendingUploads()
-            }
-            else if !SMSyncControl.haveServerLock.boolValue
-                    || !self.checkedForServerFileIndex {
-                Log.special("SMSyncControl: checkServerForDownloads")
-                // No pending uploads or pending downloads. See if the server has any new files that need downloading.
-                self.checkServerForDownloads()
-            }
-            else if SMQueues.current().committedUploads != nil {
-                Log.special("SMSyncControl: moveOneCommittedQueueToBeingUploaded")
-                // If there are committed uploads, make a queue of them pending uploads.
-                SMQueues.current().moveOneCommittedQueueToBeingUploaded()
-                // Use recursion to process the pending uploads.
-                self.next()
-            }
-            else {
-                // No work to do! Need to release the server lock if needed.
-                Log.special("SMSyncControl: No work to do!")
-
-                if SMSyncControl.haveServerLock.boolValue {
+            func nextAux() {
+                if SMQueues.current().beingDownloaded != nil  {
+                    Log.special("SMSyncControl: Process pending downloads")
+                    SMDownloadFiles.session.doDownloadOperations()
+                }
+                else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
+                    // Uploads are really the bottom priority. See [1] also.
+                    Log.special("SMSyncControl: Process pending uploads")
+                    self.processPendingUploads()
+                }
+                else if !self.checkedForServerFileIndex {
+                    Log.special("SMSyncControl: checkServerForDownloads")
+                    // No pending uploads or pending downloads. See if the server has any new files that need downloading.
+                    self.checkServerForDownloads()
+                }
+                else if SMQueues.current().committedUploads != nil {
+                    Log.special("SMSyncControl: moveOneCommittedQueueToBeingUploaded")
+                    // If there are committed uploads, make a queue of them pending uploads.
+                    SMQueues.current().moveOneCommittedQueueToBeingUploaded()
+                    // Use recursion to jump back and processPendingUploads.
+                    self.next()
+                }
+                else {
+                    // No work to do! Need to release the server lock.
+                    Log.special("SMSyncControl: No work to do!")
                     self.releaseServerLock()
                 }
+            }
+            
+            if self.haveServerLock {
+                nextAux()
+            }
+            else {
+                self.getServerLock(success: {
+                    nextAux()
+                })
             }
         }
         else {
             self.syncControlModeChange(.NetworkNotConnected)
         }
+    }
+    
+    private func getServerLock(success success:()->()) {
+        SMServerAPI.session.lock() { lockResult in
+            if SMTest.If.success(lockResult.error, context: .Lock) {
+                self.haveServerLock = true
+                self.numberLockAttempts = 0
+                success()
+            }
+            else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
+                // Not really an error.
+                Log.special("Lock already held (by another userId?)")
+                // In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
+                self.stopOperating()
+                self.syncControlModeChange(.Idle)
+                NSThread.runSyncOnMainThread() {
+                    self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
+                }
+            }
+            else {
+                // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
+                // Not going to check for nextwork connection here because next() checks that.
+                self.retry(&self.numberLockAttempts, errorSpecifics: "SMServerAPI.session.lock", success: {
+                    self.next()
+                })
+            }
+		}
     }
     
     private func processPendingUploads() {
@@ -378,58 +407,33 @@ internal class SMSyncControl {
     private func checkServerForDownloads() {
         // Set this to false to deal with situation where (a) we get the lock, but (b) we fail on getFileIndex-- this will ensure we do a retryon getFileIndex.
         self.checkedForServerFileIndex = false
-        
-        SMServerAPI.session.lock() { lockResult in
-            if SMTest.If.success(lockResult.error, context: .Lock) {
+
+        Log.msg("getFileIndex within checkServerForDownloads")
+        SMServerAPI.session.getFileIndex(requirePreviouslyHeldLock: true) { (fileIndex, gfiResult) in
+            if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
             
-                SMSyncControl.haveServerLock.boolValue = true
-                self.numberLockAttempts = 0
+                self.serverFileIndex = fileIndex
+                self.checkedForServerFileIndex = true
+                self.numberGetFileIndexAttempts = 0
                 
-                Log.msg("getFileIndex within checkServerForDownloads")
-                SMServerAPI.session.getFileIndex(requirePreviouslyHeldLock: true) { (fileIndex, gfiResult) in
-                    if SMTest.If.success(gfiResult.error, context: .GetFileIndex) {
-                    
-                        self.serverFileIndex = fileIndex
-                        self.checkedForServerFileIndex = true
-                        self.numberGetFileIndexAttempts = 0
-                        
-                        SMSyncControl.checkForDownloads(fromServerFileIndex: fileIndex!)
-                        if nil == SMQueues.current().beingDownloaded {
-                            NSThread.runSyncOnMainThread() {
-                                self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
-                            }
-                        }
-                        
-                        self.next()
-                    }
-                    else {
-                        // We couldn't get the file index from the server. We have the lock.
-                        self.retry(&self.numberGetFileIndexAttempts, errorSpecifics: "attempting to get the file index", success: {
-                            self.next()
-                        })
+                SMSyncControl.checkForDownloads(fromServerFileIndex: fileIndex!)
+                if nil == SMQueues.current().beingDownloaded {
+                    NSThread.runSyncOnMainThread() {
+                        self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
                     }
                 }
-            }
-            else if lockResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
-                // Not really an error.
-                Log.special("Lock already held (by another userId?)")
-                // In some sense this is expected, or normal operation, and we haven't been able to check for downloads (due to a lock), so the check for downloads will be done again later when, hopefully, a lock will not be held.
-                self.stopOperating()
-                self.syncControlModeChange(.Idle)
-                NSThread.runSyncOnMainThread() {
-                    self.delegate?.syncServerEventOccurred(.LockAlreadyHeld)
-                }
+                
+                self.next()
             }
             else {
-                // No need to do recovery since we just started. HOWEVER, it is also possible that the lock is actually held at this point, but we just failed on getting the return code from the server.
-                // Not going to check for nextwork connection here because next() checks that.
-                self.retry(&self.numberLockAttempts, errorSpecifics: "SMServerAPI.session.lock", success: {
+                // We couldn't get the file index from the server. We have the lock.
+                self.retry(&self.numberGetFileIndexAttempts, errorSpecifics: "attempting to get the file index", success: {
                     self.next()
                 })
             }
         }
     }
-    
+
     // If you give a failure handler, it should call syncControlModeChange.
     private func retry(inout attempts:Int, errorSpecifics:String, success:()->(), failure:(()->())?=nil) {
         Log.special("retry: for \(errorSpecifics)")
@@ -458,7 +462,7 @@ internal class SMSyncControl {
     private func releaseServerLock() {
         func success() {
             Log.msg("Have released lock!")
-            SMSyncControl.haveServerLock.boolValue = false
+            self.haveServerLock = false
             self.checkedForServerFileIndex = false
             self.numberUnlockAttempts = 0
             
@@ -627,7 +631,7 @@ internal class SMSyncControl {
 extension SMSyncControl : SMSyncControlDelegate {
     // After uploads are complete, there will be no server lock held (because the server lock automatically gets released by the server after outbound transfers finish), *and* we'll be at the bottom priority of our list in [1].
     func syncControlUploadsFinished() {
-        SMSyncControl.haveServerLock.boolValue = false
+        self.haveServerLock = false
         
         // Because we don't have the lock and we're at the bottom priority, and we just released the lock, don't call self.next(). That would just cause another server check for downloads, and since we just released the lock, and had checked for downloads initially, there can't be downloads straight away.
         // HOWEVER, there may be additional uploads to process. I.e., there may be other committed uploads.
@@ -638,7 +642,7 @@ extension SMSyncControl : SMSyncControlDelegate {
     // Again, after downloads are complete, there will be no server lock held. But, we'll not be at the bottom of the priority list.
     func syncControlDownloadsFinished() {
         Log.msg("syncControlDownloadsFinished")
-        SMSyncControl.haveServerLock.boolValue = false
+        self.haveServerLock = false
 
         // Since we're not at the bottom of the priority list, call next(). This will (unfortunately) result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
         self.next()

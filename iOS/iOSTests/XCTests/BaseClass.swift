@@ -31,6 +31,11 @@ class BaseClass: XCTestCase {
     
     typealias inboundTransferCallback = (numberOperations:Int)->()
     var singleInboundTransferCallback:inboundTransferCallback?
+
+    typealias frameworkUploadMetaDataUpdatedCallback = ()->()
+    var frameworkUploadMetaDataUpdatedCallbackSequenceNumber = 0
+    var frameworkUploadMetaDataUpdatedCallbacks:[frameworkUploadMetaDataUpdatedCallback]!
+    var useFrameworkUploadMetaDataUpdated = false
     
     typealias commitCompleteCallback = (numberUploads:Int?)->()
     var commitCompleteSequenceNumber = 0
@@ -99,6 +104,9 @@ class BaseClass: XCTestCase {
         self.shouldDoDeletionsSequenceNumber = 0
         self.shouldDoDeletions = [shouldDoDeletionsCallback]()
         self.processModeChanges = false
+        self.frameworkUploadMetaDataUpdatedCallbackSequenceNumber = 0
+        self.frameworkUploadMetaDataUpdatedCallbacks = [frameworkUploadMetaDataUpdatedCallback]()
+        self.useFrameworkUploadMetaDataUpdated = false
         
         TestBasics.session.failure = {
             XCTFail()
@@ -189,8 +197,16 @@ extension BaseClass : SMSyncServerDelegate {
             let sequenceNumber = self.singleUploadSequenceNumber
             self.singleUploadSequenceNumber += 1
             self.singleUploadCallbacks[sequenceNumber](uuid: uuid)
+        
+        case .FrameworkUploadMetaDataUpdated:
+            if !self.useFrameworkUploadMetaDataUpdated {
+                return
+            }
+            let sequenceNumber = self.frameworkUploadMetaDataUpdatedCallbackSequenceNumber
+            self.frameworkUploadMetaDataUpdatedCallbackSequenceNumber += 1
+            self.frameworkUploadMetaDataUpdatedCallbacks[sequenceNumber]()
             
-        case .OutboundTransferComplete(numberOperations: let numberOperations):
+        case .AllUploadsComplete(numberOperations: let numberOperations):
             let sequenceNumber = self.commitCompleteSequenceNumber
             self.commitCompleteSequenceNumber += 1
             self.commitCompleteCallbacks[sequenceNumber](numberUploads: numberOperations)

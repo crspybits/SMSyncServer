@@ -106,7 +106,7 @@ internal class SMUploadFiles : NSObject {
         // TODO: This may change once we have a websockets server-client communication method in place. If using websockets the server can communicate with assuredness to the client app that the outbound transfer is done, then the server may not have to release the lock.
         self.syncControlDelegate?.syncControlUploadsFinished()
         NSThread.runSyncOnMainThread() {
-            self.syncServerDelegate?.syncServerEventOccurred(.OutboundTransferComplete(numberOperations: numberOperations))
+            self.syncServerDelegate?.syncServerEventOccurred(.AllUploadsComplete(numberOperations: numberOperations))
         }
     }
     
@@ -475,7 +475,7 @@ internal class SMUploadFiles : NSObject {
     // Given that the uploads and/or upload-deletions of files was successful (i.e., both server upload and cloud storage operations have been done), update the local meta data to reflect the success.
     // Returns the combined number of uploads and upload-deletions that happened.
     private func updateMetaDataForSuccessfulUploads() -> Int {
-        var numberUpdates = 0
+        var numberVersionIncrements = 0
         var numberNewFiles = 0
         var numberDeletions = 0
         
@@ -513,7 +513,7 @@ internal class SMUploadFiles : NSObject {
                 else {
                     localFile.localVersion = localFile.localVersion!.integerValue + 1
                     Log.msg("New local file version: \(localFile.localVersion)")
-                    numberUpdates += 1
+                    numberVersionIncrements += 1
                 }
             }
             
@@ -522,11 +522,15 @@ internal class SMUploadFiles : NSObject {
         
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
-        Log.msg("Number updates: \(numberUpdates)")
+        NSThread.runSyncOnMainThread() {
+            self.syncServerDelegate?.syncServerEventOccurred(.FrameworkUploadMetaDataUpdated)
+        }
+        
+        Log.msg("Number version increments: \(numberVersionIncrements)")
         Log.msg("Number new files: \(numberNewFiles)")
         Log.msg("Number deletions: \(numberDeletions)")
         
-        return numberUpdates + numberNewFiles + numberDeletions
+        return numberVersionIncrements + numberNewFiles + numberDeletions
     }
 }
 

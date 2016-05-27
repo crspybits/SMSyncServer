@@ -105,12 +105,13 @@ class EditNoteViewController : UIViewController {
 }
 
 extension EditNoteViewController : SMImageTextViewDelegate {
-    // Delete an image.
+    // User has requested deletion of an image.
     func smImageTextView(imageTextView:SMImageTextView, imageDeleted uuid:NSUUID?) {
         Log.msg("UUID of image: \(uuid)")
         
         if let noteImage = NoteImage.fetch(withUUID: uuid!) {
-            noteImage.removeObject()
+            // Since this is a user request for a deletion, update the server.
+            noteImage.removeObject(andUpdateServer: true)
             // TODO: Does this, as a side effect, cause textViewDidEndEditing to be called. I.e., does the updated note text get uploaded?
         }
         
@@ -138,8 +139,7 @@ extension EditNoteViewController : SMAcquireImageDelegate {
         Log.msg("newImageURL \(newImageURL); \(newImageURL.path!)")
         
         if let image = UIImage(contentsOfFile: newImageURL.path!) {
-            let newNoteImage = NoteImage.newObjectAndMakeUUID(withURL: newImageURL, makeUUIDAndUpload: true) as! NoteImage
-            self.note!.addImage(newNoteImage)
+            let newNoteImage = NoteImage.newObjectAndMakeUUID(withURL: newImageURL, ownedBy: self.note!, makeUUIDAndUpload: true) as! NoteImage
             self.imageTextView.insertImageAtCursorLocation(image, imageId: NSUUID(UUIDString: newNoteImage.uuid!))
             self.imageTextView.commitChanges()
         }

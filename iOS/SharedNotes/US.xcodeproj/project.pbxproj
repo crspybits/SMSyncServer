@@ -32,7 +32,7 @@
 		83B854EE1CF263F900629C05 /* NoteImage+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B854EC1CF263F900629C05 /* NoteImage+CoreDataProperties.swift */; };
 		83B854EF1CF263F900629C05 /* NoteImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B854ED1CF263F900629C05 /* NoteImage.swift */; };
 		83CF346E1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */; };
-		83E064361CE51C880088BE37 /* CoreDataSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064331CE51C880088BE37 /* CoreDataSession.swift */; };
+		83E064361CE51C880088BE37 /* CoreDataExtras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064331CE51C880088BE37 /* CoreDataExtras.swift */; };
 		83E064371CE51C880088BE37 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064341CE51C880088BE37 /* Note.swift */; };
 		83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */; };
 		83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 83E064C71CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c */; };
@@ -102,7 +102,7 @@
 		834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "CALayer+MBAnimationPersistence.m"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.m"; sourceTree = SOURCE_ROOT; };
 		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
 		8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ODRefreshControl.m; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.m; sourceTree = "<group>"; };
-		8369D3101CD1C792006DA33C /* SharedNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SharedNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8369D3101CD1C792006DA33C /* US.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = US.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesTests.swift; sourceTree = "<group>"; };
 		8369D32D1CD1C79E006DA33C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -126,7 +126,7 @@
 		83B854EC1CF263F900629C05 /* NoteImage+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "NoteImage+CoreDataProperties.swift"; path = "CoreData/NoteImage+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83B854ED1CF263F900629C05 /* NoteImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = NoteImage.swift; path = CoreData/NoteImage.swift; sourceTree = "<group>"; };
 		83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DiffMatchPatch+Extras.swift"; sourceTree = "<group>"; };
-		83E064331CE51C880088BE37 /* CoreDataSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataSession.swift; path = CoreData/CoreDataSession.swift; sourceTree = "<group>"; };
+		83E064331CE51C880088BE37 /* CoreDataExtras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataExtras.swift; path = CoreData/CoreDataExtras.swift; sourceTree = "<group>"; };
 		83E064341CE51C880088BE37 /* Note.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Note.swift; path = CoreData/Note.swift; sourceTree = "<group>"; };
 		83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Note+CoreDataProperties.swift"; path = "CoreData/Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83E064C41CE533FB0088BE37 /* DiffMatchPatch_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiffMatchPatch_Prefix.pch; path = "SDKs/DiffPatchPatch/google-diff-match-patch-Objective-C/DiffMatchPatch_Prefix.pch"; sourceTree = "<group>"; };
@@ -225,7 +225,7 @@
 		8369D3111CD1C792006DA33C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8369D3101CD1C792006DA33C /* SharedNotes.app */,
+				8369D3101CD1C792006DA33C /* US.app */,
 				8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */,
 				8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */,
 			);
@@ -282,7 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				839739D91CD96E3F00FD8520 /* SharedNotes.xcdatamodel */,
-				83E064331CE51C880088BE37 /* CoreDataSession.swift */,
+				83E064331CE51C880088BE37 /* CoreDataExtras.swift */,
 				83E064341CE51C880088BE37 /* Note.swift */,
 				83B854ED1CF263F900629C05 /* NoteImage.swift */,
 				83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */,
@@ -389,9 +389,9 @@
 			productReference = 8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		8369D30F1CD1C792006DA33C /* SharedNotes */ = {
+		8369D30F1CD1C792006DA33C /* US */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */;
+			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "US" */;
 			buildPhases = (
 				989193649A92E3A252ADEEBF /* Check Pods Manifest.lock */,
 				8369D30C1CD1C792006DA33C /* Sources */,
@@ -406,9 +406,9 @@
 			dependencies = (
 				83973A061CD986DA00FD8520 /* PBXTargetDependency */,
 			);
-			name = SharedNotes;
+			name = US;
 			productName = SharedNotes;
-			productReference = 8369D3101CD1C792006DA33C /* SharedNotes.app */;
+			productReference = 8369D3101CD1C792006DA33C /* US.app */;
 			productType = "com.apple.product-type.application";
 		};
 		8369D3261CD1C79E006DA33C /* SharedNotesTests */ = {
@@ -455,7 +455,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "SharedNotes" */;
+			buildConfigurationList = 8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "US" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -474,7 +474,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				8369D30F1CD1C792006DA33C /* SharedNotes */,
+				8369D30F1CD1C792006DA33C /* US */,
 				8369D3261CD1C79E006DA33C /* SharedNotesTests */,
 				8329795E1CE03FAB00508783 /* SharedNotesUITests */,
 			);
@@ -633,7 +633,7 @@
 				83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */,
 				83E064371CE51C880088BE37 /* Note.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
-				83E064361CE51C880088BE37 /* CoreDataSession.swift in Sources */,
+				83E064361CE51C880088BE37 /* CoreDataExtras.swift in Sources */,
 				83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */,
 				83E064D41CE534030088BE37 /* DiffMatchPatch.m in Sources */,
 				83E064D51CE534030088BE37 /* NSString+JavaSubstring.m in Sources */,
@@ -664,12 +664,12 @@
 /* Begin PBXTargetDependency section */
 		832979651CE03FAC00508783 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
+			target = 8369D30F1CD1C792006DA33C /* US */;
 			targetProxy = 832979641CE03FAC00508783 /* PBXContainerItemProxy */;
 		};
 		8369D3291CD1C79E006DA33C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
+			target = 8369D30F1CD1C792006DA33C /* US */;
 			targetProxy = 8369D3281CD1C79E006DA33C /* PBXContainerItemProxy */;
 		};
 		83973A061CD986DA00FD8520 /* PBXTargetDependency */ = {
@@ -817,7 +817,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = US;
 				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -834,7 +834,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = US;
 				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
 			};
 			name = Release;
@@ -877,7 +877,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "SharedNotes" */ = {
+		8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "US" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8369D32E1CD1C79E006DA33C /* Debug */,
@@ -886,7 +886,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */ = {
+		8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "US" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8369D3311CD1C79E006DA33C /* Debug */,

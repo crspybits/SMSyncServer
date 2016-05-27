@@ -22,7 +22,7 @@ class MainPageVC : UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         self.coreDataSource = CoreDataSource(delegate: self)
         self.coreDataSource.fetchData()
         

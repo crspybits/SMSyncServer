@@ -303,7 +303,7 @@ public class SMSyncServer : NSObject {
         
         // This also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted (uploadFile)!")))
             return
         }
         
@@ -351,7 +351,7 @@ public class SMSyncServer : NSObject {
         // Also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             change.removeObject()
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted!")))
+            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted (deleteFile)!")))
             return
         }
         

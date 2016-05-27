@@ -20,7 +20,7 @@ class NoteImage: NSManagedObject {
         }
         
         set {
-            CoreData.setSMRelativeLocalURL(newValue, toCoreDataProperty: &self.internalRelativeLocalURL, coreDataSessionName: CoreDataSession.name)
+            CoreData.setSMRelativeLocalURL(newValue, toCoreDataProperty: &self.internalRelativeLocalURL, coreDataSessionName: CoreDataExtras.sessionName)
         }
     }
     
@@ -37,20 +37,25 @@ class NoteImage: NSManagedObject {
         // See https://www.sitepoint.com/web-foundations/mime-types-complete-list/
         let attr = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.uuid!)!, mimeType: NoteImage.mimeType, andRemoteFileName: self.uuid! + ".jpg")
         
+        attr.appMetaData = SMAppMetaData()
+        attr.appMetaData![CoreDataExtras.objectDataTypeKey] = CoreDataExtras.objectDataTypeNoteImage
+        attr.appMetaData![CoreDataExtras.ownedByNoteUUIDKey] = self.note!.uuid!
+
         SMSyncServer.session.uploadImmutableFile(self.fileURL!, withFileAttributes: attr)
     }
     
     // Does not do a commit.
-    class func newObjectAndMakeUUID(withURL url: SMRelativeLocalURL?=nil, makeUUIDAndUpload: Bool) -> NSManagedObject {
-        let noteImage = CoreData.sessionNamed(CoreDataSession.name).newObjectWithEntityName(self.entityName()) as! NoteImage
+    class func newObjectAndMakeUUID(withURL url: SMRelativeLocalURL?=nil, ownedBy note:Note?=nil, makeUUIDAndUpload: Bool) -> NSManagedObject {
+        let noteImage = CoreData.sessionNamed(CoreDataExtras.sessionName).newObjectWithEntityName(self.entityName()) as! NoteImage
         
         if makeUUIDAndUpload {
             noteImage.uuid = UUID.make()
         }
         
         noteImage.fileURL = url
+        noteImage.note = note
         
-        CoreData.sessionNamed(CoreDataSession.name).saveContext()
+        CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
 
         if makeUUIDAndUpload {
             noteImage.upload()
@@ -65,17 +70,17 @@ class NoteImage: NSManagedObject {
     
     // Returns nil if no NoteImage found.
     class func fetch(withUUID uuid:NSUUID) -> NoteImage? {
-        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataSession.name)) as? NoteImage
+        return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? NoteImage
     }
 
-    // Also removes the file at the fileURL. Does not do a SMSyncServer commit.
-    func removeObject() {
+    // Also removes the file at the fileURL. Does not do a SMSyncServer commit when updateServer is true.
+    func removeObject(andUpdateServer updateServer:Bool) {
         let uuid = self.uuid!
         let fileURL = self.fileURL!
         
-        CoreData.sessionNamed(CoreDataSession.name).removeObject(self)
+        CoreData.sessionNamed(CoreDataExtras.sessionName).removeObject(self)
         
-        if CoreData.sessionNamed(CoreDataSession.name).saveContext() {
+        if CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext() {
         
             let fileMgr = NSFileManager.defaultManager()
             do {
@@ -84,7 +89,9 @@ class NoteImage: NSManagedObject {
                 Log.error("Error removing file: \(error)")
             }
             
-            SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid)!)
+            if updateServer {
+                SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid)!)
+            }
         }
     }
 }

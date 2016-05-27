@@ -148,7 +148,7 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
                 self.assertIf(self.deletionPhase, thenFailAndGiveMessage: "In deletion phase")
                 self.assertIf(testFile.uuidString != uuid.UUIDString, thenFailAndGiveMessage: "Didn't get same UUID")
             
-            case .OutboundTransferComplete:
+            case .AllUploadsComplete:
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)
                     self.assertIf(fileAttr == nil, thenFailAndGiveMessage: "fileAttr is nil")

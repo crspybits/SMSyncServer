@@ -103,7 +103,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             self.assertIf(self.numberUploads > 2, thenFailAndGiveMessage: "More than two upload")
             self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
             
-        case .OutboundTransferComplete:
+        case .AllUploadsComplete:
             self.commitComplete()
                
         case .NoFilesToDownload, .LockAlreadyHeld:

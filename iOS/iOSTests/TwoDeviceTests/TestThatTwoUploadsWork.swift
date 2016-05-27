@@ -53,7 +53,7 @@ class SMTwoDeviceTestThatTwoUploadsWork : TwoDeviceTestCase {
             self.assertIf(self.numberUploads > 1, thenFailAndGiveMessage: "More than one upload")
             self.assertIf(uuid.UUIDString != self.testFile.uuidString, thenFailAndGiveMessage: "Unexpected UUID")
             
-        case .OutboundTransferComplete:
+        case .AllUploadsComplete:
             Assert.If(numberUploads != 1, thenPrintThisString: "More than one upload")
             TestBasics.session.checkFileSize(self.testFile.uuidString, size: self.testFile.sizeInBytes) {
                 let fileAttr = SMSyncServer.session.localFileStatus(self.testFile.uuid)

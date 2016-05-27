@@ -53,14 +53,17 @@ public enum SMSyncServerEvent {
     // A single file/item has been uploaded to the SyncServer. Transfer of the file to cloud storage hasn't yet occurred.
     case SingleUploadComplete(uuid:NSUUID)
     
-    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
-    case SingleDownloadComplete(url:SMRelativeLocalURL, attr:SMSyncAttributes)
+    // This was introduced to allow for a specific test case internally.
+    case FrameworkUploadMetaDataUpdated
     
-    // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation was done at this point.
-    case OutboundTransferComplete(numberOperations:Int?)
-    
+    // Server has finished performing the outbound transfers of files to cloud storage/deletions to cloud storage. numberOperations is a heuristic value that includes upload and upload-deletion operations. It is heuristic in that it includes retries if retries occurred due to error/recovery handling. We used to call this the "committed" or "CommitComplete" event because the SMSyncServer commit operation is done at this point.
+    case AllUploadsComplete(numberOperations:Int?)
+
     // Similarly, for inbound transfers of files from cloud storage to the sync server. The numberOperations value has the same heuristic meaning.
     case InboundTransferComplete(numberOperations:Int?)
+    
+    // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
+    case SingleDownloadComplete(url:SMRelativeLocalURL, attr:SMSyncAttributes)
     
     // The client polled the server and found that there were no files available to download or files that needed deletion.
     case NoFilesToDownload
