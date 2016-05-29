@@ -44,7 +44,7 @@ class Download: BaseClass {
             }
             
             self.commitCompleteCallbacks.append() { numberUploads in
-                XCTAssert(numberUploads == 1)
+                XCTAssert(numberUploads >= 1)
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     uploadCompleteCallbackExpectation.fulfill()
                 }

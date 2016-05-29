@@ -163,7 +163,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
             return nil
         }
         
-        newObj.version = SMServerAPI.getIntFromServerResponse(dict[SMServerConstants.fileIndexFileVersion])
+        newObj.version = SMExtras.getIntFromDictValue(dict[SMServerConstants.fileIndexFileVersion])
         if nil == newObj.version {
             Log.msg("Didn't get an Int for fileVersion: \(dict[SMServerConstants.fileIndexFileVersion].dynamicType)")
             return nil
@@ -177,7 +177,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
             return nil
         }
         
-        let fileDeleted = SMServerAPI.getIntFromServerResponse(dict[SMServerConstants.fileIndexDeleted])
+        let fileDeleted = SMExtras.getIntFromDictValue(dict[SMServerConstants.fileIndexDeleted])
         if nil == fileDeleted {
             Log.msg("Didn't get an Int for fileDeleted: \(dict[SMServerConstants.fileIndexDeleted].dynamicType)")
             return nil
@@ -193,7 +193,7 @@ internal class SMServerFile : NSObject, NSCopying, NSCoding {
             Log.msg("Didn't get JSON for appMetaData")
         }
         
-        let sizeBytes = SMServerAPI.getIntFromServerResponse(dict[SMServerConstants.fileSizeBytes])
+        let sizeBytes = SMExtras.getIntFromDictValue(dict[SMServerConstants.fileSizeBytes])
         if nil == sizeBytes {
             Log.msg("Didn't get an Int for sizeInBytes: \(dict[SMServerConstants.fileSizeBytes].dynamicType)")
         }
@@ -534,6 +534,7 @@ internal class SMServerAPI {
     
     // Call this for an operation that has been successfully committed to see if it has subsequently completed and if it was successful.
     // In the completion closure, operationError refers to a possible error in regards to the operation running on the server. The NSError refers to an error in communication with the server checking the operation status. Only when the NSError is nil can the other two completion handler parameters be non-nil. With a nil NSError, operationStatus will be non-nil.
+    // Does not require a server lock be held before the call.
     internal func checkOperationStatus(serverOperationId operationId:String, completion:((operationResult: SMOperationResult?, apiResult:SMServerAPIResult)->(Void))?) {
         
         let userParams = self.userDelegate.userCredentialParams
@@ -550,13 +551,13 @@ internal class SMServerAPI {
             if (nil == result.error) {
                 var operationResult = SMOperationResult()
                 
-                operationResult.status = SMServerAPI.getIntFromServerResponse(serverResponse![SMServerConstants.resultOperationStatusCodeKey])
+                operationResult.status = SMExtras.getIntFromDictValue(serverResponse![SMServerConstants.resultOperationStatusCodeKey])
                 if nil == operationResult.status {
                     completion?(operationResult: nil, apiResult:SMServerAPIResult(returnCode: result.returnCode, error: Error.Create("Didn't get an operation status code from server")))
                     return
                 }
                 
-                operationResult.count = SMServerAPI.getIntFromServerResponse(serverResponse![SMServerConstants.resultOperationStatusCountKey])
+                operationResult.count = SMExtras.getIntFromDictValue(serverResponse![SMServerConstants.resultOperationStatusCountKey])
                 if nil == operationResult.count {
                     completion?(operationResult: nil, apiResult:SMServerAPIResult(returnCode: result.returnCode, error: Error.Create("Didn't get an operation status count from server")))
                     return
@@ -628,6 +629,7 @@ internal class SMServerAPI {
         }
     }
 
+    // Must have server lock.
     internal func setupInboundTransfer(filesToTransfer: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
     
         let userParams = self.userDelegate.userCredentialParams
@@ -652,6 +654,7 @@ internal class SMServerAPI {
         }
     }
     
+    // Must have server lock or operationId.
     internal func startInboundTransfer(completion:((serverOperationId:String?, apiResult:SMServerAPIResult)->(Void))?) {
     
         let userParams = self.userDelegate.userCredentialParams
@@ -790,37 +793,6 @@ internal class SMServerAPI {
             let result = self.initialServerResponseProcessing(serverResponse, error: error)
             completion?(apiResult: result)
         }
-    }
-    
-    /* Running into an issue here when I try to convert the fileVersion out of the dictionary directly to an Int:
-    
-    2015-12-10 07:17:32 +0000: [fg0,0,255;Didn't get an Int for fileVersion: Optional<AnyObject>[; [create(fromDictionary:) in SMSyncServer.swift, line 69]
-    2015-12-10 07:17:32 +0000: [fg0,0,255;Error: Optional(Error Domain= Code=0 "Bad file index object!" UserInfo={NSLocalizedDescription=Bad file index object!})[; [getFileIndexAction() in Settings.swift, line 82]
-    
-    Apparently, an Int is not an object in Swift http://stackoverflow.com/questions/25449080/swift-anyobject-is-not-convertible-to-string-int
-    And actually, despite the way it looks:
-    {
-        cloudFileName = "upload.txt";
-        deleted = 0;
-        fileId = "ADB50CE8-E254-44A0-B8C4-4A3A8240CCB5";
-        fileVersion = 8;
-        lastModified = "2015-12-09T04:55:05.866Z";
-        mimeType = "text/plain";
-    }
-    fileVersion is really a string in the dictionary. Odd. http://stackoverflow.com/questions/32616309/convert-anyobject-to-an-int
-    */
-    private class func getIntFromServerResponse(responseValue:AnyObject?) -> Int? {
-        // Don't know why but sometimes I'm getting a NSString value back from the server, and sometimes I'm getting an NSNumber value back. Try both.
-        
-        if let intString = responseValue as? NSString {
-            return intString.integerValue
-        }
-        
-        if let intNumber = responseValue as? NSNumber {
-            return intNumber.integerValue
-        }
-        
-        return nil
     }
     
     private func initialServerResponseProcessing(serverResponse:[String:AnyObject]?, error:NSError?) -> SMServerAPIResult {

@@ -74,9 +74,26 @@ internal class SMUploadFiles : NSObject {
         self.numberRemoveOperationIdAttempts = 0
         self.numberRevertBackToOutboundTransfer = 0
     }
+    
+    enum OperationState {
+        case Some
+        case None
+    }
+    
+    enum OperationNeeds {
+        case ServerLock
+        case ServerFileIndex
+        case Nothing
+    }
+    
+    enum SyncOperationResult {
+        // OperationNeeds given only for Some OperationState
+        case Operation(OperationState, OperationNeeds?)
+        case Error
+    }
 
     // Operations and their priority.
-    private var uploadOperations:[()-> Bool?]!
+    private var uploadOperations:[((checkIfOperations:Bool)-> Bool?, OperationNeeds)]!
     
     private override init() {
         super.init()
@@ -85,11 +102,11 @@ internal class SMUploadFiles : NSObject {
 
         // Putting deletions as first priority just because deletions should be fast.
         self.uploadOperations = [
-            unownedSelf.doUploadDeletions,
-            unownedSelf.doUploadFiles,
-            unownedSelf.doOutboundTransfer,
-            unownedSelf.startToPollForOperationFinish,
-            unownedSelf.removeOperationId
+            (unownedSelf.doUploadDeletions, .ServerFileIndex),
+            (unownedSelf.doUploadFiles, .ServerFileIndex),
+            (unownedSelf.doOutboundTransfer, .ServerLock),
+            (unownedSelf.startToPollForOperationFinish, .Nothing),
+            (unownedSelf.removeOperationId, .Nothing)
         ]
     }
     
@@ -115,17 +132,34 @@ internal class SMUploadFiles : NSObject {
     }
     
     // MARK: End: Methods that call delegate methods
-    
-    func doUploadOperations(serverFileIndex:[SMServerFile]) {
+
+    // The serverFileIndex is optional to accomodate the possiblity that not all possible upload oeprations are necessarily being executed. i.e., checkIfOperationsNeedLock was called prior to this.
+    func doUploadOperations(serverFileIndex:[SMServerFile]?) {
         self.resetAttempts()
         self.serverFileIndex = serverFileIndex
         self.uploadControl()
     }
 
+    // Check if there are operations that need to be done, and if they need a lock. Doesn't start any operation.
+    func checkWhatOperationsNeed() -> SyncOperationResult {
+        for (uploadOperation, operationNeeds) in self.uploadOperations {
+            if let operationsToDo = uploadOperation(checkIfOperations: true) {
+                if operationsToDo {
+                    return .Operation(.Some, operationNeeds)
+                }
+            }
+            else {
+                return .Error
+            }
+        }
+        
+        return .Operation(.None, nil)
+    }
+    
     // Control for operations. Each call to this control method does at most one of the asynchronous operations.
-    private func uploadControl() {
-        for uploadOperation in self.uploadOperations {
-            let successfulOperation = uploadOperation()
+    private func uploadControl(checkIfOperations:Bool=false) {
+        for (uploadOperation, _) in self.uploadOperations {
+            let successfulOperation = uploadOperation(checkIfOperations: false)
             
             // If there was an error (nil), or if the operation was successful, then we're done with this go-around. The operations run asynchronously, when successful, and will callback as needed to uploadControl() to do the next operation.
             if successfulOperation == nil || successfulOperation! {
@@ -135,11 +169,15 @@ internal class SMUploadFiles : NSObject {
     }
     
     // Returns true if there were deletions to do (which will be in process asynchronously), and false if there were no deletions to do. Nil is returned in the case of an error.
-    private func doUploadDeletions() -> Bool? {
+    private func doUploadDeletions(checkIfOperations:Bool=false) -> Bool? {
         Log.msg("\(SMQueues.current().beingUploaded)")
         var deletionChanges = SMQueues.current().beingUploaded?.getChanges(.UploadDeletion, operationStage:.ServerUpload) as! [SMUploadDeletion]?
         if deletionChanges == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         var serverFileDeletions:[SMServerFile]?
@@ -147,10 +185,6 @@ internal class SMUploadFiles : NSObject {
         if let error = self.errorCheckingForDeletion(self.serverFileIndex!, deletionChanges: &deletionChanges) {
             self.callSyncControlModeChange(error)
             return nil
-        }
-        
-        if deletionChanges == nil {
-            return false
         }
         
         serverFileDeletions = SMUploadFileOperation.convertToServerFiles(deletionChanges!)
@@ -207,16 +241,23 @@ internal class SMUploadFiles : NSObject {
         }
     }
 
-    private func doUploadFiles() -> Bool? {
-        let (filesToUpload, error) = self.filesToUpload(self.serverFileIndex!)
+    private func doUploadFiles(checkIfOperations:Bool=false) -> Bool? {
+        let uploadChanges = SMQueues.current().beingUploaded?.getChanges(
+                .UploadFile, operationStage: .ServerUpload) as? [SMUploadFile]
+
+        if checkIfOperations {
+            return uploadChanges != nil
+        }
+        
+        if uploadChanges == nil {
+            return false
+        }
+        
+        let (filesToUpload, error) = self.filesToUpload(self.serverFileIndex, uploadChanges: uploadChanges!)
         
         if error != nil {
             self.callSyncControlModeChange(error!)
             return nil
-        }
-        
-        if filesToUpload == nil {
-            return false
         }
         
         SMServerAPI.session.uploadFiles(filesToUpload) { uploadResult in
@@ -256,10 +297,14 @@ internal class SMUploadFiles : NSObject {
         return nil
     }
     
-    private func doOutboundTransfer() -> Bool? {
+    private func doOutboundTransfer(checkIfOperations:Bool=false) -> Bool? {
         let wrapUp = self.getWrapup(.OutboundTransfer)
         if wrapUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         SMServerAPI.session.startOutboundTransfer() { operationId, sotResult in
@@ -281,10 +326,14 @@ internal class SMUploadFiles : NSObject {
     }
     
     // Start timer to poll the server to check if our operation has succeeded. That check will update our local file meta data if/when the file sync completes successfully.
-    private func startToPollForOperationFinish() -> Bool? {
+    private func startToPollForOperationFinish(checkIfOperations:Bool=false) -> Bool? {
         let wrapUp = self.getWrapup(.OutboundTransferWait)
         if wrapUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         self.checkIfUploadOperationFinishedTimer = RepeatingTimer(interval: SMUploadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: #selector(SMUploadFiles.pollIfFileOperationFinished), andTarget: self)
@@ -348,10 +397,14 @@ internal class SMUploadFiles : NSObject {
         }
     }
     
-    private func removeOperationId() -> Bool? {
+    private func removeOperationId(checkIfOperations:Bool=false) -> Bool {
         let wrapUp = self.getWrapup(.RemoveOperationId)
         if wrapUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         // Now that we know we succeeded, we can remove the Operation Id from the server. In some sense it's not a big deal if this fails. HOWEVER, since we set self.serverOperationId to nil on completion (see [4]), it is a big deal: I just ran into an apparent race condition where in testThatTwoSeriesFileUploadWorks(), I got a crash because self.serverOperationId was nil. Seems like this crash occurred because the removeOperationId completion handler for the first upload was called *after* the second call to startFileChanges completed. To avoid this race condition, I'm going to delay the syncServerCommitComplete callback until removeOperationId completes.
@@ -422,18 +475,13 @@ internal class SMUploadFiles : NSObject {
     }
     
     // If non-nil, the return value will be one of the errors in SMSyncServerMode.
-    internal func filesToUpload(serverFileIndex:[SMServerFile]) -> (filesToUpload:[SMServerFile]?, error:SMSyncServerMode?) {
+    internal func filesToUpload(serverFileIndex:[SMServerFile]?, uploadChanges:[SMUploadFile]) -> (filesToUpload:[SMServerFile]?, error:SMSyncServerMode?) {
         
         var filesToUpload = [SMServerFile]()
-
-        let uploadChanges = SMQueues.current().beingUploaded?.getChanges(
-                .UploadFile, operationStage: .ServerUpload) as? [SMUploadFile]
         
-        if uploadChanges == nil {
-            return (filesToUpload:nil, error:nil)
-        }
+        Assert.If(serverFileIndex == nil, thenPrintThisString: "serverFileIndex should not be nil!")
         
-        for fileChange:SMUploadFile in uploadChanges! {
+        for fileChange:SMUploadFile in uploadChanges {
             Log.msg("\(fileChange)")
             
             let localFile = fileChange.localFile!

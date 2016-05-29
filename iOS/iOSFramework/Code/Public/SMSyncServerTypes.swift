@@ -21,10 +21,10 @@ public class SMSyncAttributes {
     // Must be provided when uploading for a new uuid. (If you give a remoteFileName for an existing uuid it *must* match that already present in cloud storage). Will be provided when a file is downloaded from the server.
     public var remoteFileName:String?
     
-    // Must be provided when uploading for a new uuid; optional after that.
+    // Must be provided when uploading for a new uuid; optional after that. The mimeType of an uploaded object must be consistent across its lifetime.
     public var mimeType:String?
     
-    // Optionally provides the app with app-specific meta information about the file. This must be encodable to JSON for upload/download to the server. This is stored on the SMSyncServer server (not the users cloud storage), so you may want to be careful about not making this too large. If you use numbers as values for dictionaries or elements of arrays, they will come back quoted as strings from the server. See [1] for the reason for this.
+    // When uploading or downloading, optionally provides the app with app-specific meta information about the object. This must be encodable to JSON for upload/download to the server. This is stored on the SMSyncServer server (not the users cloud storage), so you may want to be careful about not making this too large. If you use numbers as values for dictionaries or elements of arrays, they will come back quoted as strings from the server. See [1] for the reason for this. On each upload, you can alter this.
     public var appMetaData:SMAppMetaData?
     
     // Only used by SMSyncServer fileStatus method. true indicates that the file was deleted on the server.

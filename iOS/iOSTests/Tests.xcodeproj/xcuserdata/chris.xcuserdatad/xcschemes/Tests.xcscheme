@@ -74,6 +74,9 @@
                <Test
                   Identifier = "UploadRecovery/testThatRecoveryAfterAppCrashWorks()">
                </Test>
+               <Test
+                  Identifier = "UploadRecovery/testThatRecoveryAfterCrashImmediatelyAfterLockReleasedWorks()">
+               </Test>
             </SkippedTests>
          </TestableReference>
       </Testables>

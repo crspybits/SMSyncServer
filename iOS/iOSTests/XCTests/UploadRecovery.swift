@@ -509,7 +509,6 @@ class UploadRecovery: BaseClass {
     func testThatRecoveryAfterCrashImmediatelyAfterLockReleasedWorks() {
         let fileName = "RecoveryAfterCrashImmediatelyAfterLockReleased"
         
-        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
         let idleExpectation = self.expectationWithDescription("Idle")
         let commitCompleteExpectation = self.expectationWithDescription("Commit Complete")
         
@@ -526,7 +525,6 @@ class UploadRecovery: BaseClass {
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile.uuidString)
-                    singleUploadExpectation.fulfill()
                 }
                 
                 self.useFrameworkUploadMetaDataUpdated = true
@@ -539,6 +537,9 @@ class UploadRecovery: BaseClass {
             
         }
         else {
+            // Restart after crash.
+            self.processModeChanges = true
+
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()
             }

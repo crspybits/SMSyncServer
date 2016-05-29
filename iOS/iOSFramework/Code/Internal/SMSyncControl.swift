@@ -302,42 +302,117 @@ internal class SMSyncControl {
         if Network.session().connected() {
             Log.msg("self.haveServerLock: \(self.haveServerLock)")
             
-            func nextAux() {
-                if SMQueues.current().beingDownloaded != nil  {
-                    Log.special("SMSyncControl: Process pending downloads")
-                    SMDownloadFiles.session.doDownloadOperations()
+            // In the following: We peek into the operations in the queues (checkWhatOperationsNeed methods) and determine if a particular operation needs a server lock. And if it does, then we get the server lock unless we know we have it. This is especially relevant for recovery where not all upload/download operations need the server lock.
+            
+            if SMQueues.current().beingDownloaded != nil  {
+                Log.special("SMSyncControl: Process pending downloads")
+                
+                let syncOperationResult = SMDownloadFiles.session.checkWhatOperationsNeed()
+                var getServerLock = false
+                var error = false
+                
+                switch syncOperationResult {
+                case .Operation(.Some, let operationNeeds):
+                    switch operationNeeds {
+                    case .None:
+                        Assert.badMojo(alwaysPrintThisString: "Should not get here")
+                        
+                    case .Some(.ServerLock):
+                        if !self.haveServerLock {
+                            getServerLock = true
+                        }
+
+                    case .Some(.Nothing), .Some(.ServerLockOptional):
+                        break
+                    }
+                
+                case .Operation(.None, _):
+                    Assert.badMojo(alwaysPrintThisString: "Should not get here")
+                
+                case .Error:
+                    error = true
                 }
-                else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
-                    // Uploads are really the bottom priority. See [1] also.
-                    Log.special("SMSyncControl: Process pending uploads")
-                    self.processPendingUploads()
+                
+                if !error {
+                    if getServerLock {
+                        self.getServerLock(success: {
+                            SMDownloadFiles.session.doDownloadOperations()
+                        })
+                    }
+                    else {
+                        SMDownloadFiles.session.doDownloadOperations()
+                    }
                 }
-                else if !self.checkedForServerFileIndex {
-                    Log.special("SMSyncControl: checkServerForDownloads")
-                    // No pending uploads or pending downloads. See if the server has any new files that need downloading.
+            }
+            else if SMQueues.current().beingUploaded != nil && SMQueues.current().beingUploaded!.operations!.count > 0 {
+                // Uploads are really the bottom priority. See [1] also.
+                Log.special("SMSyncControl: Process pending uploads")
+
+                let syncOperationResult = SMUploadFiles.session.checkWhatOperationsNeed()
+                
+                var getServerLock = false
+                var getServerFileIndex = false
+                var error = false
+                
+                switch syncOperationResult {
+                case .Operation(.Some, let operationNeeds):
+                    switch operationNeeds {
+                    case .None:
+                        Assert.badMojo(alwaysPrintThisString: "Should not get here")
+                        
+                    case .Some(.ServerLock):
+                        if !self.haveServerLock {
+                            getServerLock = true
+                        }
+                        
+                    case .Some(.ServerFileIndex):
+                        getServerFileIndex = true
+                        
+                    case .Some(.Nothing):
+                        break
+                    }
+                
+                case .Operation(.None, _):
+                    Assert.badMojo(alwaysPrintThisString: "Should not get here")
+                
+                case .Error:
+                    error = true
+                }
+                
+                if !error {
+                    if getServerLock || getServerFileIndex {
+                        self.getServerLock(success: {
+                            self.processPendingUploads(getFileIndex: getServerFileIndex)
+                        })
+                    }
+                    else {
+                        self.processPendingUploads(getFileIndex: false)
+                    }
+                }
+            }
+            else if !self.haveServerLock || !self.checkedForServerFileIndex {
+                Log.special("SMSyncControl: checkServerForDownloads")
+                // No pending uploads or pending downloads. See if the server has any new files that need downloading.
+                if self.haveServerLock {
                     self.checkServerForDownloads()
                 }
-                else if SMQueues.current().committedUploads != nil {
-                    Log.special("SMSyncControl: moveOneCommittedQueueToBeingUploaded")
-                    // If there are committed uploads, make a queue of them pending uploads.
-                    SMQueues.current().moveOneCommittedQueueToBeingUploaded()
-                    // Use recursion to jump back and processPendingUploads.
-                    self.next()
-                }
                 else {
-                    // No work to do! Need to release the server lock.
-                    Log.special("SMSyncControl: No work to do!")
-                    self.releaseServerLock()
+                    self.getServerLock(success: {
+                        self.checkServerForDownloads()
+                    })
                 }
             }
-            
-            if self.haveServerLock {
-                nextAux()
+            else if SMQueues.current().committedUploads != nil {
+                Log.special("SMSyncControl: moveOneCommittedQueueToBeingUploaded")
+                // If there are committed uploads, make a queue of them pending uploads.
+                SMQueues.current().moveOneCommittedQueueToBeingUploaded()
+                // Use recursion to jump back and processPendingUploads.
+                self.next()
             }
             else {
-                self.getServerLock(success: {
-                    nextAux()
-                })
+                // No work to do! Need to release the server lock.
+                Log.special("SMSyncControl: No work to do!")
+                self.releaseServerLock()
             }
         }
         else {
@@ -372,12 +447,17 @@ internal class SMSyncControl {
 		}
     }
     
-    private func processPendingUploads() {
-        // Every time we process uploads, we need a fresh server file index. This is because the upload process itself changes the server file index on the server. (I could simulate this server file index change process locally, but since upload is expensive and getting the file index is cheap, it doesn't seem worthwhile).
+    private func processPendingUploads(getFileIndex getFileIndex:Bool=false) {
+        // With some upload operations, we need a fresh server file index. This is because the upload process itself changes the server file index on the server. (I could simulate this server file index change process locally, but since upload is expensive and getting the file index is cheap, it doesn't seem worthwhile).
         
         func doUploads() {
-            SMUploadFiles.session.doUploadOperations(self.serverFileIndex!)
+            SMUploadFiles.session.doUploadOperations(self.serverFileIndex)
             self.serverFileIndex = nil
+        }
+        
+        if !getFileIndex {
+            doUploads()
+            return
         }
         
         if nil == self.serverFileIndex {

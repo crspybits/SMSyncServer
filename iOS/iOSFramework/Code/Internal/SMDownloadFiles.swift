@@ -60,9 +60,26 @@ internal class SMDownloadFiles : NSObject {
     
     // This is a singleton because we need centralized control over the file download operations.
     internal static let session = SMDownloadFiles()
+
+    enum OperationState {
+        case Some
+        case None
+    }
+    
+    enum OperationNeeds {
+        case ServerLock
+        case ServerLockOptional // Needs server lock except for recovery.
+        case Nothing
+    }
+    
+    enum SyncOperationResult {
+        // OperationNeeds given only for Some OperationState
+        case Operation(OperationState, OperationNeeds?)
+        case Error
+    }
     
     // Operations and their priority.
-    private var downloadOperations:[()-> Bool?]!
+    private var downloadOperations:[((checkIfOperations: Bool)-> Bool?, OperationNeeds)]!
     
     override private init() {
         super.init()
@@ -76,13 +93,13 @@ internal class SMDownloadFiles : NSObject {
         */
         self.downloadOperations = [
             // I've separated Setup and Start to make recovery easier.
-            unownedSelf.doSetupInboundTransfers,
-            unownedSelf.doStartInboundTransfers,
+            (unownedSelf.doSetupInboundTransfers, .ServerLock),
+            (unownedSelf.doStartInboundTransfers, .ServerLockOptional),
             
-            unownedSelf.startToPollForOperationFinish,
-            unownedSelf.removeOperationId,
-            unownedSelf.doFileDownloads,
-            unownedSelf.doCallbacks
+            (unownedSelf.startToPollForOperationFinish, .Nothing),
+            (unownedSelf.removeOperationId, .Nothing),
+            (unownedSelf.doFileDownloads, .Nothing),
+            (unownedSelf.doCallbacks, .Nothing)
         ]
     }
     
@@ -93,28 +110,31 @@ internal class SMDownloadFiles : NSObject {
         SMServerAPI.session.downloadDelegate = self
     }
 
+    // Check if there are operations that need to be done, and if they need a lock. Doesn't start any operation.
+    func checkWhatOperationsNeed() -> SyncOperationResult {
+        for (downloadOperation, operationNeeds) in self.downloadOperations {
+            if let operationsToDo = downloadOperation(checkIfOperations: true) {
+                if operationsToDo {
+                    return .Operation(.Some, operationNeeds)
+                }
+            }
+            else {
+                return .Error
+            }
+        }
+        
+        return .Operation(.None, nil)
+    }
+    
     func doDownloadOperations() {
         self.resetAttempts()
         self.downloadControl()
     }
-    
-    /*
-    private func processPendingDownloads() {
-        Assert.badMojo(alwaysPrintThisString: "TO BE IMPLEMENTED!")
-        
-        if let conflicts = SMQueues.current().downloadConflicts() {
-            Assert.If(!SMSyncControl.haveServerLock.boolValue, thenPrintThisString: "Don't have server lock!")
-            self.processPendingConflicts(conflicts)
-        }
-        
-        // Process other download too!!
-    }
-    */
-    
+
     // Control for operations. Each call to this control method does at most one of the asynchronous operations.
     private func downloadControl() {
-        for downloadOperation in self.downloadOperations {
-            let successfulOperation = downloadOperation()
+        for (downloadOperation, _) in self.downloadOperations {
+            let successfulOperation = downloadOperation(checkIfOperations: false)
             
             // If there was an error (nil), or if the operation was successful, then we're done with this go-around. Most of the the operations run asynchronously, when successful, and will callback as needed to downloadControl() to do the next operation.
             if successfulOperation == nil || successfulOperation! {
@@ -123,11 +143,15 @@ internal class SMDownloadFiles : NSObject {
         }
     }
     
-    private func doSetupInboundTransfers() -> Bool? {
+    private func doSetupInboundTransfers(checkIfOperations:Bool) -> Bool? {
         let inboundTransfers = SMQueues.current().getBeingDownloadedChanges(
             .DownloadFile, operationStage: .CloudStorage) as? [SMDownloadFile]
         if nil == inboundTransfers {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         let inboundTransferServerFiles = SMDownloadFile.convertToServerFiles(inboundTransfers!)
@@ -157,10 +181,14 @@ internal class SMDownloadFiles : NSObject {
         return true
     }
     
-    private func doStartInboundTransfers() -> Bool? {
+    private func doStartInboundTransfers(checkIfOperations:Bool) -> Bool? {
         let startUp = self.getStartup(.StartInboundTransfer)
         if startUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         SMServerAPI.session.startInboundTransfer() { (theServerOperationId, sitResult) in
@@ -197,10 +225,14 @@ internal class SMDownloadFiles : NSObject {
     }
     
     // Start timer to poll the server to check if our operation has succeeded. That check will update our local file meta data if/when the file sync completes successfully.
-    private func startToPollForOperationFinish() -> Bool? {
+    private func startToPollForOperationFinish(checkIfOperations:Bool) -> Bool? {
         let startUp = self.getStartup(.InboundTransferWait)
         if startUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         self.checkIfInboundTransferOperationFinishedTimer = RepeatingTimer(interval: SMDownloadFiles.TIME_INTERVAL_TO_CHECK_IF_OPERATION_SUCCEEDED_S, selector: #selector(SMDownloadFiles.pollIfFileOperationFinished), andTarget: self)
@@ -255,10 +287,14 @@ internal class SMDownloadFiles : NSObject {
         }
     }
     
-    private func removeOperationId() -> Bool? {
+    private func removeOperationId(checkIfOperations:Bool) -> Bool? {
         let startUp = self.getStartup(.RemoveOperationId)
         if startUp == nil {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         SMServerAPI.session.removeOperationId(serverOperationId: self.serverOperationId!) { roiResult in
@@ -279,11 +315,15 @@ internal class SMDownloadFiles : NSObject {
         return true
     }
 
-    private func doFileDownloads() -> Bool? {
+    private func doFileDownloads(checkIfOperations:Bool) -> Bool? {
         let filesToDownload = SMQueues.current().getBeingDownloadedChanges(
             .DownloadFile, operationStage: .ServerDownload) as? [SMDownloadFile]
         if nil == filesToDownload {
             return false
+        }
+        
+        if checkIfOperations {
+            return true
         }
         
         let serverFilesToDownload = SMDownloadFile.convertToServerFiles(filesToDownload!)
@@ -309,7 +349,7 @@ internal class SMDownloadFiles : NSObject {
     }
     
     // File download, file deletion, and file conflict callbacks.
-    private func doCallbacks() -> Bool? {
+    private func doCallbacks(checkIfOperations:Bool) -> Bool? {
         let startUp = self.getStartup(.NoFileDownloads)
         if startUp != nil {
             startUp!.removeObject()
@@ -323,14 +363,22 @@ internal class SMDownloadFiles : NSObject {
             .DownloadFile, operationStage: .AppCallback) as? [SMDownloadFile] {
             Log.msg("\(fileDownloads.count) file downloads")
             
+            if checkIfOperations {
+                return true
+            }
+            
             self.callSyncServerDownloadsComplete(fileDownloads) {
-                self.doCallbacks()
+                self.doCallbacks(checkIfOperations)
             }
             result = true
         }
         else if let fileDeletions = SMQueues.current().getBeingDownloadedChanges(
             .DownloadDeletion) as? [SMDownloadDeletion] {
             Log.msg("\(fileDeletions.count) file deletions")
+            
+            if checkIfOperations {
+                return true
+            }
             
             // There is an interesting problem that comes up here. While conceptually, we might want to delay marking the .deletedOnServer property to indicate deleted, for conflicts, this generates a cycle of behavior between the client and the server. If the client resolves the conflict by keeping client operations, then this will generate an upload request, which before that processes will do a download. Then, without the file marked as .deletedOnServer as true, to be consistent with the server, generates another download-deletion-- hence a cycle.
             // Hence, we'll set .deletedOnServer as true here, and with conflicts if the client chooses "Keep", the file will get .deletedOnServer set to false in updateMetaDataForSuccessfulUploads in SMUploadFiles.swift.
@@ -342,11 +390,15 @@ internal class SMDownloadFiles : NSObject {
             CoreData.sessionNamed(SMCoreData.name).saveContext()
             
             self.callSyncServerSyncServerClientShouldDeleteFiles(fileDeletions) {
-                self.doCallbacks()
+                self.doCallbacks(checkIfOperations)
             }
             result = true
         }
         else {
+            if checkIfOperations {
+                return false
+            }
+            
             Log.msg("Downloads finished.")
             self.callSyncServerDownloadsFinished()
         }
@@ -465,6 +517,7 @@ internal class SMDownloadFiles : NSObject {
         }
 
         if downloads.count > 0 {
+            Log.special("syncServerShouldSaveDownloads")
             NSThread.runSyncOnMainThread() {
                 self.syncServerDelegate?.syncServerShouldSaveDownloads(downloads) {
                     shouldSaveDownloadsDone = true

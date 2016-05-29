@@ -258,8 +258,6 @@ public class SMSyncServer : NSObject {
             
             localFileMetaData!.mimeType = attr.mimeType
             
-            localFileMetaData!.appMetaData = attr.appMetaData
-            
             if nil == attr.remoteFileName {
                 let error = Error.Create("remoteFileName not given!")
                 Log.error("\(error)")
@@ -275,6 +273,8 @@ public class SMSyncServer : NSObject {
         else {
             // Existing file
             
+            // TODO: Make sure the mimeType of the file is consistent with that used last time. Make sure the server is checking for this too.
+            
             // This should never occur: How could we get the UUID locally for a file that's being downloaded?
             Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
             
@@ -285,6 +285,8 @@ public class SMSyncServer : NSObject {
                 return
             }
         }
+        
+        localFileMetaData!.appMetaData = attr.appMetaData
         
         // TODO: Compute an MD5 hash of the file and store that in the meta data. This needs to be shipped up to the server too so that when the file is downloaded the receiving client can verify the hash. 
         

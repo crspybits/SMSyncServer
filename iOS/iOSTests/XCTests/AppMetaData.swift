@@ -153,4 +153,41 @@ class AppMetaData: BaseClass {
             }
         }
     }
+    
+    func testThatSecondUploadCanChangeMetaData() {
+        let uploadExpectation1 = self.expectationWithDescription("Upload1")
+        let commitComplete1 = self.expectationWithDescription("Commit Complete1")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let uploadExpectation2 = self.expectationWithDescription("Upload2")
+        let commitComplete2 = self.expectationWithDescription("Commit Complete2")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+        
+        var testFile = TestBasics.session.createTestFile(
+            "SecondUploadCanChangeMetaData")
+        testFile.appMetaData = ["Test" : 1]
+        
+        self.waitUntilSyncServerUserSignin() {
+            self.uploadFiles([testFile], uploadExpectations: [uploadExpectation1], commitComplete: commitComplete1, idleExpectation: idleExpectation1) {
+                let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                XCTAssert(attr != nil)
+                XCTAssert(attr!.appMetaData != nil)
+                
+                let number = SMExtras.getIntFromDictValue(attr!.appMetaData!["Test"])
+                XCTAssert(number == 1)
+                
+                testFile.appMetaData = ["Test" : 2]
+                
+                 self.uploadFiles([testFile], uploadExpectations: [uploadExpectation2], commitComplete: commitComplete2, idleExpectation: idleExpectation2) {
+                    let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                    XCTAssert(attr != nil)
+                    XCTAssert(attr!.appMetaData != nil)
+                    
+                    let number = SMExtras.getIntFromDictValue(attr!.appMetaData!["Test"])
+                    XCTAssert(number == 2)
+                }
+            }
+        }
+        
+        self.waitForExpectations()  
+    }
 }
