@@ -15,6 +15,7 @@ class CoreDataExtras {
     // Data type values
     static let objectDataTypeNote = "Note"
     static let objectDataTypeNoteImage = "NoteImage"
+    static let objectDataTypeReadme = "Readme"
 
     static let ownedByNoteUUIDKey = "OwnedBy"
     // Value is a UUID string

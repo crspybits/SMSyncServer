@@ -11,6 +11,10 @@
 		832979621CE03FAC00508783 /* SharedNotesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832979611CE03FAC00508783 /* SharedNotesUITests.swift */; };
 		834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */; };
 		8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */; };
+		8346E1F51CFBC832006C2637 /* Readme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1F31CFBC832006C2637 /* Readme.swift */; };
+		8346E1F61CFBC832006C2637 /* Readme+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1F41CFBC832006C2637 /* Readme+CoreDataProperties.swift */; };
+		8346E1F81CFBC918006C2637 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8346E1F71CFBC918006C2637 /* README.txt */; };
+		8346E1FA1CFCB42D006C2637 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1F91CFCB42D006C2637 /* Misc.swift */; };
 		8369D32C1CD1C79E006DA33C /* SharedNotesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */; };
 		839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CC1CD96D7400FD8520 /* AppDelegate.swift */; };
 		839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739CE1CD96D7D00FD8520 /* ViewController.swift */; };
@@ -102,6 +106,10 @@
 		834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "CALayer+MBAnimationPersistence.m"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.m"; sourceTree = SOURCE_ROOT; };
 		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
 		8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ODRefreshControl.m; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.m; sourceTree = "<group>"; };
+		8346E1F31CFBC832006C2637 /* Readme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Readme.swift; path = CoreData/Readme.swift; sourceTree = "<group>"; };
+		8346E1F41CFBC832006C2637 /* Readme+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Readme+CoreDataProperties.swift"; path = "CoreData/Readme+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		8346E1F71CFBC918006C2637 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = CoreData/README.txt; sourceTree = "<group>"; };
+		8346E1F91CFCB42D006C2637 /* Misc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Misc.swift; sourceTree = "<group>"; };
 		8369D3101CD1C792006DA33C /* US.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = US.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesTests.swift; sourceTree = "<group>"; };
@@ -240,6 +248,7 @@
 				839739CE1CD96D7D00FD8520 /* ViewController.swift */,
 				83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */,
 				83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */,
+				8346E1F91CFCB42D006C2637 /* Misc.swift */,
 				839739E11CD96F7800FD8520 /* SyncSpinner.swift */,
 				83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */,
 				83973A121CD987F800FD8520 /* SMGoogleSignInController.swift */,
@@ -282,11 +291,14 @@
 			isa = PBXGroup;
 			children = (
 				839739D91CD96E3F00FD8520 /* SharedNotes.xcdatamodel */,
+				8346E1F31CFBC832006C2637 /* Readme.swift */,
+				8346E1F71CFBC918006C2637 /* README.txt */,
 				83E064331CE51C880088BE37 /* CoreDataExtras.swift */,
 				83E064341CE51C880088BE37 /* Note.swift */,
 				83B854ED1CF263F900629C05 /* NoteImage.swift */,
 				83E064351CE51C880088BE37 /* Note+CoreDataProperties.swift */,
 				83B854EC1CF263F900629C05 /* NoteImage+CoreDataProperties.swift */,
+				8346E1F41CFBC832006C2637 /* Readme+CoreDataProperties.swift */,
 			);
 			name = "Core Data";
 			sourceTree = "<group>";
@@ -507,6 +519,7 @@
 				839739E01CD96E5500FD8520 /* Main.storyboard in Resources */,
 				83973A1E1CD98C8000FD8520 /* GoogleService-Info.plist in Resources */,
 				839739DF1CD96E5500FD8520 /* LaunchScreen.storyboard in Resources */,
+				8346E1F81CFBC918006C2637 /* README.txt in Resources */,
 				83973A1C1CD98AEF00FD8520 /* SMSyncServer-client.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -629,10 +642,12 @@
 				83E064D81CE534030088BE37 /* NSMutableDictionary+DMPExtensions.m in Sources */,
 				83973A131CD987F800FD8520 /* SMGoogleSignInController.swift in Sources */,
 				83973A0C1CD9872E00FD8520 /* SMGoogleCredentials.swift in Sources */,
+				8346E1F61CFBC832006C2637 /* Readme+CoreDataProperties.swift in Sources */,
 				839739CF1CD96D7D00FD8520 /* ViewController.swift in Sources */,
 				83973A4F1CDADCBF00FD8520 /* EditNoteViewController.swift in Sources */,
 				83E064371CE51C880088BE37 /* Note.swift in Sources */,
 				839739CD1CD96D7400FD8520 /* AppDelegate.swift in Sources */,
+				8346E1FA1CFCB42D006C2637 /* Misc.swift in Sources */,
 				83E064361CE51C880088BE37 /* CoreDataExtras.swift in Sources */,
 				83E064381CE51C880088BE37 /* Note+CoreDataProperties.swift in Sources */,
 				83E064D41CE534030088BE37 /* DiffMatchPatch.m in Sources */,
@@ -642,6 +657,7 @@
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
 				83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */,
+				8346E1F51CFBC832006C2637 /* Readme.swift in Sources */,
 				834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */,
 				83973A511CDAE73800FD8520 /* NoteTableViewCell.swift in Sources */,
 				83CF346E1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift in Sources */,

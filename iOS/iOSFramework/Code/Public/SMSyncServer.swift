@@ -70,12 +70,13 @@ public class SMSyncServer : NSObject {
         }
     }
 
+    // I've commented this out in the hopes that by the time I actually need it setters/getters in Swift will be able to throw errors.
+    /*
     // If autoCommit is true, then this is the interval that changes are automatically committed. The interval is timed from the last change enqueued with this class. If no changes are queued, then no commit is done.
     public var autoCommitIntervalSeconds:Float {
         set {
             if newValue < 0 {
-                // TODO: What if the API is actually synchronizing here...? It seems odd to change the mode in this case.
-                self.callSyncServerModeChange(.ClientAPIError(Error.Create("Yikes: Bad autoCommitIntervalSeconds")))
+                throw SMSyncClientAPIError.BadAutoCommitInterval
             }
             else {
                 _autoCommitIntervalSeconds = newValue
@@ -86,7 +87,9 @@ public class SMSyncServer : NSObject {
             return _autoCommitIntervalSeconds
         }
     }
+    */
     
+    /* Commented out until we actually implement autoCommit feature.
     // Set this to false if you want to call commit yourself, and true if you want to automatically periodically commit. Default is false.
     public var autoCommit:Bool {
         set {
@@ -103,7 +106,9 @@ public class SMSyncServer : NSObject {
             return _autoCommit
         }
     }
+    */
     
+    /* Commented out until we actually implement autoCommit feature.
     private func startNormalTimer() {
         switch self.mode {
         case .Idle:
@@ -120,10 +125,7 @@ public class SMSyncServer : NSObject {
             }
         }
     }
-    
-    private func setMode(mode:SMSyncServerMode) {
-        SMSyncControl.session.mode = mode
-    }
+    */
     
     public var mode:SMSyncServerMode {
         return SMSyncControl.session.mode
@@ -195,26 +197,24 @@ public class SMSyncServer : NSObject {
     // Enqueue a local immutable file for subsequent upload. Immutable files are assumed to not change (at least until after the upload has completed). This immutable characteristic is not enforced by this class but needs to be enforced by the caller of this class.
     // This operation persists across app launches, as long as the the call itself completes. If there is a file with the same uuid, which has been enqueued but not yet committed, it will be replaced by the given file. This operation does not access the server, and thus runs quickly and synchronously.
     // File can be empty.
-    public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) {
-        self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
+    public func uploadImmutableFile(localFile:SMRelativeLocalURL, withFileAttributes attr: SMSyncAttributes) throws {
+        try self.uploadFile(localFile, ofType: .Immutable, withFileAttributes: attr)
     }
     
     // The same as above, but ownership of the file referenced is passed to this class, and once the upload operation succeeds, the file will be deleted.
     // File can be empty.
-    public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL,withFileAttributes attr: SMSyncAttributes) {
-        self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
+    public func uploadTemporaryFile(temporaryLocalFile:SMRelativeLocalURL,withFileAttributes attr: SMSyncAttributes) throws {
+        try self.uploadFile(temporaryLocalFile, ofType: .Temporary, withFileAttributes: attr)
     }
 
     // Analogous to the above, but the data is given in an NSData object not a file. Giving nil data means you are indicating a file with 0 bytes.
-    public func uploadData(data:NSData?, withDataAttributes attr: SMSyncAttributes) {
+    public func uploadData(data:NSData?, withDataAttributes attr: SMSyncAttributes) throws {
         // Write the data to a temporary file. Seems better this way: So that (a) large NSData objects don't overuse RAM, and (b) we can rely on the same general code that uploads files-- it should make testing/debugging/maintenance easier.
         
         let localFile = SMFiles.createTemporaryRelativeFile()
         
         if localFile == nil {
-            self.callSyncServerModeChange(
-                .InternalError(Error.Create("Yikes: Could not create file!")))
-            return
+            throw SMSyncClientAPIError.CouldNotCreateTemporaryFile
         }
         
         var dataToWrite:NSData
@@ -226,12 +226,12 @@ public class SMSyncServer : NSObject {
         }
         
         if !dataToWrite.writeToURL(localFile!, atomically: true) {
-            self.callSyncServerModeChange(
-                .InternalError(Error.Create("Could not write data to temporary file!")))
-            return
+            let mgr = NSFileManager.defaultManager()
+            _ = try? mgr.removeItemAtURL(localFile!)
+            throw SMSyncClientAPIError.CouldNotWriteToTemporaryFile
         }
 
-        self.uploadFile(localFile!, ofType: .Temporary, withFileAttributes: attr)
+        try self.uploadFile(localFile!, ofType: .Temporary, withFileAttributes: attr)
     }
     
     private enum TypeOfUploadFile {
@@ -239,7 +239,7 @@ public class SMSyncServer : NSObject {
         case Temporary
     }
     
-    private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) {
+    private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) throws {
         // Check to see if we already know about this file in our SMLocalFile meta data.
         var localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
         
@@ -251,18 +251,13 @@ public class SMSyncServer : NSObject {
             localFileMetaData!.uuid = attr.uuid.UUIDString
             
             if nil == attr.mimeType {
-                self.callSyncServerModeChange(
-                    .NonRecoverableError(Error.Create("mimeType not given!")))
-                return
+                throw SMSyncClientAPIError.MimeTypeNotGiven
             }
             
             localFileMetaData!.mimeType = attr.mimeType
             
             if nil == attr.remoteFileName {
-                let error = Error.Create("remoteFileName not given!")
-                Log.error("\(error)")
-                self.callSyncServerModeChange(.NonRecoverableError(error))
-                return
+                throw SMSyncClientAPIError.RemoteFileNameNotGiven
             }
             
             localFileMetaData!.remoteFileName = attr.remoteFileName
@@ -279,10 +274,7 @@ public class SMSyncServer : NSObject {
             Assert.If(localFileMetaData!.syncState == .InitialDownload, thenPrintThisString: "This file is being downloaded!")
             
             if attr.remoteFileName != nil &&  (localFileMetaData!.remoteFileName! != attr.remoteFileName) {
-                let error = Error.Create("You gave a different remote file name than was present on the server!")
-                Log.error("\(error)")
-                self.callSyncServerModeChange(.NonRecoverableError(error))
-                return
+                throw SMSyncClientAPIError.DifferentRemoteFileNameThanOnServer
             }
         }
         
@@ -305,25 +297,22 @@ public class SMSyncServer : NSObject {
         
         // This also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted (uploadFile)!")))
-            return
+            throw SMSyncClientAPIError.FileWasAlreadyDeleted(specificLocation: "When uploading")
         }
         
         // The localVersion property of the SMLocalFile object will get updated, if needed, when we sync this file meta data to the server meta data.
         
-        self.startNormalTimer()
+        // self.startNormalTimer()
     }
     
     // Enqueue a deletion operation. The operation persists across app launches. It is an error to try again later to upload, download, or delete the data/file referenced by this UUID. You can only delete files that are already known to the SMSyncServer (e.g., that you've uploaded). Any previous queued uploads for this uuid are expunged-- only the delete is carried out.
-    public func deleteFile(uuid:NSUUID) {
+    public func deleteFile(uuid:NSUUID) throws {
         // We must already know about this file in our SMLocalFile meta data.
         let localFileMetaData = SMLocalFile.fetchObjectWithUUID(uuid.UUIDString)
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
         if (nil == localFileMetaData) {
-            // TODO: This seems odd. What if internally, the mode is .Synchronizing?
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("Attempt to delete a file unknown to SMSyncServer!")))
-            return
+            throw SMSyncClientAPIError.DeletingUnknownFile
         }
         
         // TODO: Is there any kind of a race condition here? Can an upload currently being processed change the syncState of the local file meta data?
@@ -353,11 +342,10 @@ public class SMSyncServer : NSObject {
         // Also checks the .deletedOnServer property.
         if !SMQueues.current().addToUploadsBeingPrepared(change) {
             change.removeObject()
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("File was already deleted (deleteFile)!")))
-            return
+            throw SMSyncClientAPIError.FileWasAlreadyDeleted(specificLocation: "deleteFile")
         }
         
-        self.startNormalTimer()
+        // self.startNormalTimer()
     }
 
 #if DEBUG
@@ -428,7 +416,7 @@ public class SMSyncServer : NSObject {
     // If there is currently a commit operation in progress, the commit will be carried out after the current one (unless an error is reported by the syncServerError delegate method).
     // There must be a user signed to the cloud storage system when you call this method.
     // If you do a commit and no files have changed (i.e., no uploads or deletes have been enqueued), then the commit does nothing (and false is returned). (No delegate methods are called in this case).
-    public func commit() -> Bool? {
+    public func commit() throws -> Bool  {
         // Testing for network availability is done by the SMServerNetworking class accessed indirectly through SMSyncControl, so I'm not going to do that here. ALSO: Our intent is to enable the client API to queue up uploads and upload-deletions independent of network access.
         
         // 5/18/16; There are some problems with optional chaining combined with equality/inequality tests. E.g., SMQueues.current().uploadsBeingPrepared?.operations!.count == 0
@@ -446,8 +434,7 @@ public class SMSyncServer : NSObject {
         }
         
         if !SMSyncServerUser.session.delegate.syncServerUserIsSignedIn {
-            self.callSyncServerModeChange(.ClientAPIError(Error.Create("There is no user signed in")))
-            return nil
+            throw SMSyncClientAPIError.UserNotSignedIn
         }
         
         // Add a wrapup to the uploadsBeingPrepared, then we're ready for the commit.
@@ -467,17 +454,6 @@ public class SMSyncServer : NSObject {
     public func sync() {
         SMSyncControl.session.nextSyncOperation()
     }
-    
-    // MARK: Functions calling delegate methods
-    
-    private func callSyncServerModeChange(mode:SMSyncServerMode) {
-        self.setMode(mode)
-        NSThread.runSyncOnMainThread() {
-            self.delegate?.syncServerModeChange(mode)
-        }
-    }
-    
-    // MARK: End calling delegate methods
 
 #if DEBUG
     public func getFileIndex() {

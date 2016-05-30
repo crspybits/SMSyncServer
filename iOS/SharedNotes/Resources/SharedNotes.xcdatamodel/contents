@@ -11,8 +11,12 @@
         <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
         <relationship name="note" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="images" inverseEntity="Note" syncable="YES"/>
     </entity>
+    <entity name="Readme" representedClassName=".Readme" syncable="YES">
+        <attribute name="uuid" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
     <elements>
         <element name="Note" positionX="-63" positionY="-18" width="128" height="105"/>
         <element name="NoteImage" positionX="-63" positionY="9" width="128" height="90"/>
+        <element name="Readme" positionX="-54" positionY="27" width="128" height="60"/>
     </elements>
 </model>

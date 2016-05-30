@@ -16,7 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    // MARK: Developers making use of SharedNotes demo app need to change the contents of this file.
+    // MARK: Developers making use of SharedNotes demo app need to change the contents of this plist file.
     private let smSyncServerClientPlist = "SMSyncServer-client.plist"
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {

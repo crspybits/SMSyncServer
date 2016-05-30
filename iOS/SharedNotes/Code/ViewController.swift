@@ -47,6 +47,16 @@ class ViewController: UIViewController {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(spinnerTapGestureAction))
         self.spinner.addGestureRecognizer(tapGesture)
+        
+        SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(userSignedInAction))
+    }
+    
+    @objc private func userSignedInAction() {
+        do {
+            try Readme.createAndUploadIfNeeded()
+        } catch (let error) {
+            Misc.showAlert(fromParentViewController: self, title: "Error uploading README!", message: "\(error)")
+        }
     }
     
     // Enable a reset from error when needed.
@@ -109,8 +119,14 @@ class ViewController: UIViewController {
     }
     
     @IBAction func createAction(sender: AnyObject) {
-        let _ = Note.newObjectAndMakeUUID(makeUUIDAndUpload: true)
-        SMSyncServer.session.commit()
+        if SMSyncServerUser.session.signedIn {
+            do {
+                let _ = try Note.newObjectAndMakeUUID(makeUUIDAndUpload: true)
+                try SMSyncServer.session.commit()
+            } catch (let error) {
+                Misc.showAlert(fromParentViewController: self, title: "Error uploading new  note!", message: "\(error)")
+            }
+        }
     }
 }
 
@@ -123,6 +139,9 @@ extension ViewController : SMSyncServerDelegate {
             let objectDataType = attr.appMetaData![CoreDataExtras.objectDataTypeKey] as! String
             
             switch objectDataType {
+            case CoreDataExtras.objectDataTypeReadme:
+                try! Readme.createAndUploadIfNeeded(downloadedUUID: attr.uuid!.UUIDString)
+                
             case CoreDataExtras.objectDataTypeNote:
                 Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
             
@@ -138,7 +157,7 @@ extension ViewController : SMSyncServerDelegate {
                     Assert.badMojo(alwaysPrintThisString: "Error moving file to URL: \(error)")
                 }
                 
-                let noteImage = NoteImage.newObjectAndMakeUUID(withURL: finalImageURL, makeUUIDAndUpload: false) as! NoteImage
+                let noteImage = try! NoteImage.newObjectAndMakeUUID(withURL: finalImageURL, makeUUIDAndUpload: false) as! NoteImage
                 noteImage.uuid = attr.uuid!.UUIDString
 
                 imagesOwners.append((image: noteImage, noteOwnerUUID:ownedByNoteUUID))
@@ -226,7 +245,7 @@ extension ViewController : SMSyncServerDelegate {
                 // Note deletion should remove associated images. We don't know the order that they'll arrive in though.
                 if let note = Note.fetch(withUUID: attr.uuid) {
                     // No need to update server here because the server already knows about this deletion.
-                    note.removeObject(andUpdateServer: false)
+                    try! note.removeObject(andUpdateServer: false)
                 }
                 else {
                     Log.warning("Could not find Note to delete: \(attr.uuid); was it deleted already?")
@@ -235,7 +254,7 @@ extension ViewController : SMSyncServerDelegate {
             case CoreDataExtras.objectDataTypeNoteImage:
                 if let noteImage = NoteImage.fetch(withUUID: attr.uuid) {
                     // As above. Server already knows about the deletion.
-                    noteImage.removeObject(andUpdateServer: false)
+                    try! noteImage.removeObject(andUpdateServer: false)
                 }
                 else {
                     Log.warning("Could not find NoteImage to delete: \(attr.uuid); was it deleted already?")
@@ -270,7 +289,7 @@ extension ViewController : SMSyncServerDelegate {
             let alert = UIAlertController(title: "Someone else has deleted a note.", message: "But you just updated it!", preferredStyle: .Alert)
             
             alert.addAction(UIAlertAction(title: "Accept the deletion.", style: .Default) {[unowned self] action in
-                note?.removeObject(andUpdateServer: false)
+                try! note?.removeObject(andUpdateServer: false)
                 conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
                 self.resolveDeletionConflicts(remainingConflicts)
             })
@@ -389,7 +408,11 @@ extension ViewController : UITableViewDataSource, UITableViewDelegate {
             // Call the note removeObject method and not the coreDataSource method so that (a) associated images get removed too, and updates get pushed to server.
             //self.coreDataSource.deleteObjectAtIndexPath(indexPath)
             // This is a user request for a deletion. Update the server.
-            note.removeObject(andUpdateServer: true)
+            do {
+                try note.removeObject(andUpdateServer: true)
+            } catch (let error) {
+                Misc.showAlert(fromParentViewController: self, title: "Error removing note!", message: "\(error)")
+            }
             
         case .Insert, .None:
             Assert.badMojo(alwaysPrintThisString: "Should not get this")

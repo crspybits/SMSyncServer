@@ -31,7 +31,7 @@ class NoteImage: NSManagedObject {
     static let mimeType = "image/jpeg"
 
     // Does not do a commit.
-    func upload() {
+    func upload() throws {
         Log.msg("NoteImage upload")
         
         // See https://www.sitepoint.com/web-foundations/mime-types-complete-list/
@@ -41,11 +41,11 @@ class NoteImage: NSManagedObject {
         attr.appMetaData![CoreDataExtras.objectDataTypeKey] = CoreDataExtras.objectDataTypeNoteImage
         attr.appMetaData![CoreDataExtras.ownedByNoteUUIDKey] = self.note!.uuid!
 
-        SMSyncServer.session.uploadImmutableFile(self.fileURL!, withFileAttributes: attr)
+        try SMSyncServer.session.uploadImmutableFile(self.fileURL!, withFileAttributes: attr)
     }
     
-    // Does not do a commit.
-    class func newObjectAndMakeUUID(withURL url: SMRelativeLocalURL?=nil, ownedBy note:Note?=nil, makeUUIDAndUpload: Bool) -> NSManagedObject {
+    // Does not do a commit. Only can throw if makeUUIDAndUpload is true
+    class func newObjectAndMakeUUID(withURL url: SMRelativeLocalURL?=nil, ownedBy note:Note?=nil, makeUUIDAndUpload: Bool) throws -> NSManagedObject {
         let noteImage = CoreData.sessionNamed(CoreDataExtras.sessionName).newObjectWithEntityName(self.entityName()) as! NoteImage
         
         if makeUUIDAndUpload {
@@ -58,14 +58,14 @@ class NoteImage: NSManagedObject {
         CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
 
         if makeUUIDAndUpload {
-            noteImage.upload()
+            try noteImage.upload()
         }
         
         return noteImage
     }
     
     class func newObject() -> NSManagedObject {
-        return self.newObjectAndMakeUUID(makeUUIDAndUpload: false)
+        return try! self.newObjectAndMakeUUID(makeUUIDAndUpload: false)
     }
     
     // Returns nil if no NoteImage found.
@@ -73,8 +73,8 @@ class NoteImage: NSManagedObject {
         return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? NoteImage
     }
 
-    // Also removes the file at the fileURL. Does not do a SMSyncServer commit when updateServer is true.
-    func removeObject(andUpdateServer updateServer:Bool) {
+    // Also removes the file at the fileURL. Does not do a SMSyncServer commit when updateServer is true. Only can throw if updateServer is true
+    func removeObject(andUpdateServer updateServer:Bool) throws {
         let uuid = self.uuid!
         let fileURL = self.fileURL!
         
@@ -90,7 +90,7 @@ class NoteImage: NSManagedObject {
             }
             
             if updateServer {
-                SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid)!)
+                try SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid)!)
             }
         }
     }

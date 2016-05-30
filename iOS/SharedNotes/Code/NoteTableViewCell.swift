@@ -47,7 +47,7 @@ class NoteTableViewCell : UITableViewCell {
             var titleString:NSMutableAttributedString?
             // Can still have a nil firstLine-- when there is only white space I think.
             if firstLine != nil {
-                titleString = NSMutableAttributedString(string: "\(firstLine)", attributes: titleAttributes)
+                titleString = NSMutableAttributedString(string: "\(firstLine!)", attributes: titleAttributes)
             }
             
             if remainingLines != nil {

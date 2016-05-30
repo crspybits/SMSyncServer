@@ -15,11 +15,25 @@ public class EditNoteImageTextView : SMImageTextView {
     var didChange = false
     var note:Note?
     var acquireImage:SMAcquireImage?
+    weak var parentViewController:UIViewController!
     
     func commitChanges() {
-        self.note!.jsonData = self.contentsToData()
-        SMSyncServer.session.commit()
-        self.didChange = false
+        if SMSyncServerUser.session.signedIn {
+            
+            // We should not get an error in the commit now. But might on the setJSONData.
+            do {
+                try self.note!.setJSONData(self.contentsToData()!)
+                try SMSyncServer.session.commit()
+            } catch (let error) {
+                Misc.showAlert(fromParentViewController: self.parentViewController, title: "Error on commit!", message: "\(error)")
+                return
+            }
+            
+            self.didChange = false
+        }
+        else {
+            Misc.showAlert(fromParentViewController: self.parentViewController, title: "You have not signed in!", message: "Please sign in.")
+        }
     }
     
     // MARK: UITextView delegate methods; SMImageTextView declares delegate conformance and assigns delegate property.
@@ -76,6 +90,7 @@ class EditNoteViewController : UIViewController {
         self.acquireImage.delegate = self
         
         self.imageTextView.acquireImage = self.acquireImage
+        self.imageTextView.parentViewController = self
     }
     
     @objc private func dismissKeyboardAction() {
@@ -111,7 +126,12 @@ extension EditNoteViewController : SMImageTextViewDelegate {
         
         if let noteImage = NoteImage.fetch(withUUID: uuid!) {
             // Since this is a user request for a deletion, update the server.
-            noteImage.removeObject(andUpdateServer: true)
+            do {
+                try noteImage.removeObject(andUpdateServer: true)
+            } catch (let error) {
+                Misc.showAlert(fromParentViewController: self, title: "Error removing image!", message: "\(error)")
+            }
+            
             // TODO: Does this, as a side effect, cause textViewDidEndEditing to be called. I.e., does the updated note text get uploaded?
         }
         
@@ -139,9 +159,16 @@ extension EditNoteViewController : SMAcquireImageDelegate {
         Log.msg("newImageURL \(newImageURL); \(newImageURL.path!)")
         
         if let image = UIImage(contentsOfFile: newImageURL.path!) {
-            let newNoteImage = NoteImage.newObjectAndMakeUUID(withURL: newImageURL, ownedBy: self.note!, makeUUIDAndUpload: true) as! NoteImage
-            self.imageTextView.insertImageAtCursorLocation(image, imageId: NSUUID(UUIDString: newNoteImage.uuid!))
-            self.imageTextView.commitChanges()
+            var newNoteImage:NoteImage?
+            do {
+                try newNoteImage = (NoteImage.newObjectAndMakeUUID(withURL: newImageURL, ownedBy: self.note!, makeUUIDAndUpload: true) as! NoteImage)
+            } catch (let error) {
+                Misc.showAlert(fromParentViewController: self, title: "Error adding image!", message: "\(error)")
+            }
+            if newNoteImage != nil {
+                self.imageTextView.insertImageAtCursorLocation(image, imageId: NSUUID(UUIDString: newNoteImage!.uuid!))
+                self.imageTextView.commitChanges()
+            }
         }
         else {
             Log.error("Error creating image from file: \(newImageURL)")

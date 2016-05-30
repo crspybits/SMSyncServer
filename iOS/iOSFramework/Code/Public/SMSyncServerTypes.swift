@@ -6,10 +6,22 @@
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 
-// Misc utility types for SMSyncServer
+// Misc public utility types for SMSyncServer
 
 import Foundation
 import SMCoreLib
+
+public enum SMSyncClientAPIError: ErrorType {
+    case BadAutoCommitInterval
+    case CouldNotCreateTemporaryFile
+    case CouldNotWriteToTemporaryFile
+    case MimeTypeNotGiven
+    case RemoteFileNameNotGiven
+    case DifferentRemoteFileNameThanOnServer
+    case FileWasAlreadyDeleted(specificLocation: String)
+    case DeletingUnknownFile
+    case UserNotSignedIn
+}
 
 public typealias SMAppMetaData = [String:AnyObject]
 

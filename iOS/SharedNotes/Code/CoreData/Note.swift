@@ -20,23 +20,22 @@ class Note: NSManagedObject {
         return self.internalDateModified
     }
     
-    // The setter does an upload, but not a commit. When using the setter, must not give a nil value.
+    // Does an upload, but not a commit.
+    // Not using computed property here because cannot throw from setter/getter
+    func setJSONData(data:NSData) throws {
+        self.updateJSON(jsonData: data)
+        try self.upload()
+    }
+    
     var jsonData:NSData? {
-        set {
-            self.updateJSON(jsonData: newValue!)
-            self.upload()
-        }
-        
-        get {
-            return self.internalJSONData
-        }
+        return self.internalJSONData
     }
 
     // See http://stackoverflow.com/questions/477816/what-is-the-correct-json-content-type
     static let mimeType = "application/json"
     
     // Does not do a commit.
-    private func upload() {
+    private func upload() throws {
         Log.msg("Note upload")
         
         // Allowing self.jsonData to be nil so we can sync a new, empty, note to other devices.
@@ -46,7 +45,7 @@ class Note: NSManagedObject {
         attr.appMetaData = SMAppMetaData()
         attr.appMetaData![CoreDataExtras.objectDataTypeKey] = CoreDataExtras.objectDataTypeNote
         
-        SMSyncServer.session.uploadData(self.jsonData, withDataAttributes: attr)
+        try SMSyncServer.session.uploadData(self.jsonData, withDataAttributes: attr)
     }
     
     // Call this based on sync-driven changes to the note. Creates the note if needed.
@@ -55,7 +54,7 @@ class Note: NSManagedObject {
         var note = self.fetch(withUUID: uuid)
         if note == nil {
             Log.special("Couldn't find uuid: \(uuid); creating new Note")
-            note = (Note.newObjectAndMakeUUID(makeUUIDAndUpload: false) as! Note)
+            try! note = (Note.newObjectAndMakeUUID(makeUUIDAndUpload: false) as! Note)
             note!.uuid = uuid.UUIDString
         }
         
@@ -99,7 +98,8 @@ class Note: NSManagedObject {
         return "Note"
     }
 
-    class func newObjectAndMakeUUID(makeUUIDAndUpload makeUUIDAndUpload: Bool) -> NSManagedObject {
+    // Only may throw when makeUUIDAndUpload is true.
+    class func newObjectAndMakeUUID(makeUUIDAndUpload makeUUIDAndUpload: Bool) throws -> NSManagedObject {
         let note = CoreData.sessionNamed(CoreDataExtras.sessionName).newObjectWithEntityName(self.entityName()) as! Note
         
         if makeUUIDAndUpload {
@@ -112,14 +112,14 @@ class Note: NSManagedObject {
         CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext()
 
         if makeUUIDAndUpload {
-            note.upload()
+            try note.upload()
         }
         
         return note
     }
     
     class func newObject() -> NSManagedObject {
-        return self.newObjectAndMakeUUID(makeUUIDAndUpload: false)
+        return try! self.newObjectAndMakeUUID(makeUUIDAndUpload: false)
     }
     
     class func fetchRequestForAllObjects() -> NSFetchRequest? {
@@ -139,8 +139,8 @@ class Note: NSManagedObject {
         return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? Note
     }
     
-    // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server. In some cases, though the server doesn't need to be updated-- e.g., on a download-deletion.
-    func removeObject(andUpdateServer updateServer:Bool) {
+    // Make sure to call this method when removing a Note, so that the change gets propagated to the sync server. In some cases, though the server doesn't need to be updated-- e.g., on a download-deletion. Can only throw if updateServer is true.
+    func removeObject(andUpdateServer updateServer:Bool) throws {
         let uuid = self.uuid
         
         // Need to remove any associated images.
@@ -148,7 +148,7 @@ class Note: NSManagedObject {
             let images = NSSet(set: self.images!)
             for elem in images {
                 let image = elem as! NoteImage
-                image.removeObject(andUpdateServer: updateServer)
+                try image.removeObject(andUpdateServer: updateServer)
             }
         }
         
@@ -156,8 +156,8 @@ class Note: NSManagedObject {
         
         if CoreData.sessionNamed(CoreDataExtras.sessionName).saveContext() {
             if updateServer {
-                SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
-                SMSyncServer.session.commit()
+                try SMSyncServer.session.deleteFile(NSUUID(UUIDString: uuid!)!)
+                try SMSyncServer.session.commit()
             }
         }
     }
