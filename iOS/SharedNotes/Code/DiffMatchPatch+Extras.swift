@@ -31,4 +31,11 @@ extension DiffMatchPatch {
         
         return concatenatedDiffText
     }
+    
+    // Returns the levenshtein distance scaled to the length of the longest string. Smaller numbers mean more similarity.
+    func similarity(firstString firstString:String, secondString: String) -> Float {
+        let diffs = self.diff_mainOfOldString(firstString, andNewString: secondString)
+        let numberChanges = self.diff_levenshtein(diffs! as [AnyObject])
+        return Float(numberChanges)/Float(max(firstString.characters.count, secondString.characters.count))
+    }
 }

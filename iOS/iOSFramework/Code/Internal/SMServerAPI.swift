@@ -727,14 +727,14 @@ internal class SMServerAPI {
         }
     }
     
-    // Recursive multiple file download implementation. If there are no files in the filesToDownload parameter array, this doesn't call the server, and has no effect but to give a SMServerAPIResult with returnCode as SMServerConstants.rcNoFilesToDownload and nil error.
+    // Recursive multiple file download implementation. If there are no files in the filesToDownload parameter array, this doesn't call the server, and has no effect but to give a SMServerAPIResult callback.
     internal func downloadFiles(filesToDownload: [SMServerFile], completion:((apiResult:SMServerAPIResult)->(Void))?) {
         if filesToDownload.count >= 1 {
             self.downloadFilesAux(filesToDownload, completion: completion)
         }
         else {
             Log.warning("No files to download")
-            completion?(apiResult: SMServerAPIResult(returnCode: SMServerConstants.rcNoFilesToDownload, error: nil))
+            completion?(apiResult: SMServerAPIResult(returnCode: nil, error: nil))
         }
     }
     

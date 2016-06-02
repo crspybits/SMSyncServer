@@ -47,16 +47,6 @@ class ViewController: UIViewController {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(spinnerTapGestureAction))
         self.spinner.addGestureRecognizer(tapGesture)
-        
-        SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(userSignedInAction))
-    }
-    
-    @objc private func userSignedInAction() {
-        do {
-            try Readme.createAndUploadIfNeeded()
-        } catch (let error) {
-            Misc.showAlert(fromParentViewController: self, title: "Error uploading README!", message: "\(error)")
-        }
     }
     
     // Enable a reset from error when needed.
@@ -141,6 +131,7 @@ extension ViewController : SMSyncServerDelegate {
             switch objectDataType {
             case CoreDataExtras.objectDataTypeReadme:
                 try! Readme.createAndUploadIfNeeded(downloadedUUID: attr.uuid!.UUIDString)
+                // TODO: Check to see if there is an existing README file! We only want one README UUID.
                 
             case CoreDataExtras.objectDataTypeNote:
                 Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
@@ -224,9 +215,25 @@ extension ViewController : SMSyncServerDelegate {
                     // Delete the conflicting operations because we don't want our prior upload. We want to create a merged upload.
                     conflict.resolveConflict(resolution: .DeleteConflictingClientOperations)
                     
-                    Assert.badMojo(alwaysPrintThisString: "Need to fix merge to deal with JSON!")
-                    //note!.merge(withDownloadedNoteContents: url)
+                    let localJSONData = note!.jsonData!
+                    let localContents = SMImageTextView.contents(fromJSONData: localJSONData)
+                    let remoteJSONData = NSData(contentsOfURL: url)
+                    Assert.If(remoteJSONData == nil, thenPrintThisString: "Yikes: Bad remote JSON data!")
+                    let remoteContents = SMImageTextView.contents(fromJSONData: remoteJSONData)
                     
+                    let mergedContents = Misc.mergeImageViewContents(localContents!, c2: remoteContents!)
+                    
+                    // mergedContents may reference some newly downloaded images. OR images that have just been downloaded. How do we add those newly referenced images into the note? Or is that dealt with properly by syncServerShouldSaveDownloads? With new images, syncServerShouldSaveDownloads will be called prior to resolveDownloadConflicts, so we should be fine.
+                    
+                    // setJSONData will do an upload with the change, but it doesn't do a commit.
+                    do {
+                        try note!.setJSONData(SMImageTextView.contentsToData(mergedContents)!)
+                        try SMSyncServer.session.commit()
+                    } catch (let error) {
+                        Misc.showAlert(fromParentViewController: self, title: "Error updating note!", message: "\(error)")
+                    }
+                    
+                    // Deal with any remaining conflicts.
                     self.resolveDownloadConflicts(remainingConflicts)
                 })
             }
@@ -239,7 +246,6 @@ extension ViewController : SMSyncServerDelegate {
         for attr in deletions {
             let objectDataType = attr.appMetaData![CoreDataExtras.objectDataTypeKey] as! String
             
-
             switch objectDataType {
             case CoreDataExtras.objectDataTypeNote:
                 // Note deletion should remove associated images. We don't know the order that they'll arrive in though.

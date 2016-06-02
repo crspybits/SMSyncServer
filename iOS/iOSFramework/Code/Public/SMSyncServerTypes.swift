@@ -77,8 +77,8 @@ public enum SMSyncServerEvent {
     // As said elsewhere, this information is for debugging/testing. The url/attr here may not be consistent with the atomic/transaction-maintained results from syncServerDownloadsComplete in the SMSyncServerDelegate method. (Because of possible recovery steps).
     case SingleDownloadComplete(url:SMRelativeLocalURL, attr:SMSyncAttributes)
     
-    // The client polled the server and found that there were no files available to download or files that needed deletion.
-    case NoFilesToDownload
+    // Called at the end of a download when one or more files were downloaded, or at the end of a check for downloads if no downloads were performed.
+    case DownloadsFinished
 
     // Commit was called, but there were no files to upload and no upload-deletions to send to the server.
     case NoFilesToUpload

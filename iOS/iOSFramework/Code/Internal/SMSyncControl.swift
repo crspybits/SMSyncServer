@@ -499,7 +499,7 @@ internal class SMSyncControl {
                 SMSyncControl.checkForDownloads(fromServerFileIndex: fileIndex!)
                 if nil == SMQueues.current().beingDownloaded {
                     NSThread.runSyncOnMainThread() {
-                        self.delegate?.syncServerEventOccurred(.NoFilesToDownload)
+                        self.delegate?.syncServerEventOccurred(.DownloadsFinished)
                     }
                 }
                 
@@ -724,6 +724,8 @@ extension SMSyncControl : SMSyncControlDelegate {
         Log.msg("syncControlDownloadsFinished")
         self.haveServerLock = false
 
+        self.delegate?.syncServerEventOccurred(.DownloadsFinished)
+        
         // Since we're not at the bottom of the priority list, call next(). This will (unfortunately) result in another check for downloads. We're trying to get to the point where we can check for uploads, however.
         self.next()
     }

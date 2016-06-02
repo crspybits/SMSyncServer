@@ -24,6 +24,9 @@
 1. DONE 5/24/16. The syncServerShouldDoDeletions delegate method should pass back SMSyncAttributes and not just NSUUID's. This is so that the app can know the type of object it's deleting. E.g., in the case of SharedNotes: images vs. text notes.
 
 1. DONE 5/24/16. Incorporate appFileType; See SMSyncAttributes. Seems like we should change that from appFileType to appDataType to get ready for generic upload interface. [Actual implementation amounted to adding more general appMetaData property and removing appFileType].
+
+1. DONE 5/30/16. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
+	5/26/16; I just ran into a specific instance of this. [Implemented this by using Swift throws in client API].
   
 1. Improve robustness of recovering from errors in network/server access. I've been encountering some failures in server access where (I think) due to a poor network connection (a) I don't detect that the network is down, but (b) the connection to the server fails. Right now what happens is that the server API call is retried several times, then the client goes into a failure mode. Instead, upon such a server API failure, it should be treated the same as a network loss. Even if the server was down, I think this is the right way to handle this issue. With the server down, we'd need to restart the server, and the app should later retry. TESTING: Add manual tests which shut down the network at certain points. In that way, the network will be up, but the server will be unresponsive.
 
@@ -32,9 +35,6 @@
 1. Improving detection of errors in file data using checksums (From Daniel Pfeiffer): "I would suggest putting some technological solutions in place to shore up your third assumption (about users messing with the files). I’ve used both Dropbox and Google Drive in some of the apps I’ve worked on and have found that I can’t trust the integrity of that data. Sometimes it wasn’t even the user’s fault. I don’t know if Dropbox still does this, but there was a point in time it was changing line endings when files were synced between different OSes—just the sort of thing to make the SyncServer stumble! Perhaps SyncServer should store an MD5 hash of the last known integral version of the file. When reading, it compares hashes. If the hashes don’t match, then SyncServer knows the file was changed somewhere else. It can try reading it, or provide the app with a warning about the file being changed."
 
 1. Need to get autocommit working-- so that can periodically initiate sync calls.
-
-1. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
-	5/26/16; I just ran into a specific instance of this.
  
 1. Generic upload interface: One call that will enable various types of items (NSData, file URL's, AnyObject's) to be uploaded. Will need delegate methods that will provide coding and decoding of these items. The `syncServerDownloadsComplete` delegate method will need to deal with this-- providing items back to the caller in the form they were given. E.g., if you upload NSData, then it should be downloaded as NSData.
 

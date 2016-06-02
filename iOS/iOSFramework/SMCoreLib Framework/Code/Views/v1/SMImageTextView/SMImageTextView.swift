@@ -21,6 +21,14 @@ private class ImageTextAttachment : NSTextAttachment {
     var imageId:NSUUID?
 }
 
+public func ==(lhs:SMImageTextView.ImageTextViewElement, rhs:SMImageTextView.ImageTextViewElement) -> Bool {
+    return lhs.equals(rhs)
+}
+
+public func ===(lhs:SMImageTextView.ImageTextViewElement, rhs:SMImageTextView.ImageTextViewElement) -> Bool {
+    return lhs.equalsWithRange(rhs)
+}
+
 public class SMImageTextView : UITextView, UITextViewDelegate {
     public weak var imageDelegate:SMImageTextViewDelegate?
     public var scalingFactor:CGFloat = 0.5
@@ -84,9 +92,60 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
     private static let RangeLength = "RangeLength"
     private static let Contents = "Contents"
 
-    public enum ImageTextViewElement {
+    public enum ImageTextViewElement : Equatable {
         case Text(String, NSRange)
         case Image(UIImage?, NSUUID?, NSRange)
+        
+        public var text:String? {
+            switch self {
+            case .Text(let string, _):
+                return string
+                
+            case .Image:
+                return nil
+            }
+        }
+        
+        // Doesn't test range. For text, tests string. For image, tests uuid.
+        public func equals(other:SMImageTextView.ImageTextViewElement) -> Bool {
+            switch self {
+            case .Text(let string, _):
+                switch other {
+                case .Text(let stringOther, _):
+                    return string == stringOther
+                case .Image:
+                    return false
+                }
+            
+            case .Image(_, let uuid, _):
+                switch other {
+                case .Image(_, let uuidOther, _):
+                    return uuid == uuidOther
+                case .Text:
+                    return false
+                }
+            }
+        }
+        
+        public func equalsWithRange(other:SMImageTextView.ImageTextViewElement) -> Bool {
+            switch self {
+            case .Text(let string, let range):
+                switch other {
+                case .Text(let stringOther, let rangeOther):
+                    return string == stringOther && range.length == rangeOther.length && range.location == rangeOther.location
+                case .Image:
+                    return false
+                }
+            
+            case .Image(_, let uuid, let range):
+                switch other {
+                case .Image(_, let uuidOther, let rangeOther):
+                    return uuid == uuidOther && range.length == rangeOther.length && range.location == rangeOther.location
+                case .Text:
+                    return false
+                }
+            }
+        }
         
         public func toDictionary() -> [String:AnyObject] {
             switch self {
@@ -200,9 +259,13 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
             return nil
         }
         
+        return SMImageTextView.contentsToData(currentContents)
+    }
+    
+    public class func contentsToData(contents:[ImageTextViewElement]) -> NSData? {
         // First create array of dictionaries.
         var array = [[String:AnyObject]]()
-        for elem in currentContents {
+        for elem in contents {
             array.append(elem.toDictionary())
         }
         
@@ -237,7 +300,7 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
         
         return true
     }
-
+    
     // Give populateImagesUsing as non-nil to populate the images.
     private class func contents(fromJSONData jsonData:NSData?, populateImagesUsing smImageTextView:SMImageTextView?) -> [ImageTextViewElement]? {
         var array:[[String:AnyObject]]?
@@ -290,10 +353,14 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
         
         return results
     }
+
+    public class func contents(fromJSONData jsonData:NSData?) -> [ImageTextViewElement]? {
+        return self.contents(fromJSONData: jsonData, populateImagesUsing: nil)
+    }
     
     // Concatenates all of the string components. Ignores the images.
     public class func contentsAsConcatenatedString(fromJSONData jsonData:NSData?) -> String? {
-        if let contents = SMImageTextView.contents(fromJSONData: jsonData, populateImagesUsing:nil) {
+        if let contents = SMImageTextView.contents(fromJSONData: jsonData) {
             var result = ""
     
             for elem in contents {

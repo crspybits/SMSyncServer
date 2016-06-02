@@ -38,6 +38,17 @@ class Readme: NSManagedObject {
     class func fetch(withUUID uuid:NSUUID) -> Readme? {
         return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? Readme
     }
+
+    class func fetch() -> Readme? {
+        do {
+            let result = try CoreData.sessionNamed(CoreDataExtras.sessionName).fetchAllObjectsWithEntityName(self.entityName()) as? [Readme]
+            Assert.If(result!.count != 1, thenPrintThisString: "Not exactly one README: \(result)")
+            return result![0]
+        } catch (let error) {
+            Log.error("Error: \(error)")
+            return nil
+        }
+    }
     
     static let mimeType = "text/plain"
     static let fileName = "README.txt"
