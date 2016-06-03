@@ -16,6 +16,7 @@
 		8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 8322EBDE1C71577300DF418C /* NSThread+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8322EBE11C71577300DF418C /* NSThread+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EBDF1C71577300DF418C /* NSThread+Extras.m */; };
 		8346BC051C6EE28200AC657D /* SMMultiPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346BC041C6EE28200AC657D /* SMMultiPeer.swift */; };
+		8346E1FE1D011A3C006C2637 /* SMImageTextView+JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1FD1D011A3B006C2637 /* SMImageTextView+JSON.swift */; };
 		835D800E1C6422F9004DBF79 /* SMModal.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D800C1C6422F9004DBF79 /* SMModal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D800F1C6422F9004DBF79 /* SMModal.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D800D1C6422F9004DBF79 /* SMModal.m */; };
 		835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80161C6423BF004DBF79 /* SMAppearance.h */; };
@@ -186,6 +187,7 @@
 		8322EBDE1C71577300DF418C /* NSThread+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSThread+Extras.h"; path = "Code/Categories/v1/NSThread+Extras.h"; sourceTree = "<group>"; };
 		8322EBDF1C71577300DF418C /* NSThread+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSThread+Extras.m"; path = "Code/Categories/v1/NSThread+Extras.m"; sourceTree = "<group>"; };
 		8346BC041C6EE28200AC657D /* SMMultiPeer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMMultiPeer.swift; path = Code/Network/v1/SMMultiPeer.swift; sourceTree = "<group>"; };
+		8346E1FD1D011A3B006C2637 /* SMImageTextView+JSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMImageTextView+JSON.swift"; path = "Code/Views/v1/SMImageTextView/SMImageTextView+JSON.swift"; sourceTree = "<group>"; };
 		835D800C1C6422F9004DBF79 /* SMModal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMModal.h; sourceTree = "<group>"; };
 		835D800D1C6422F9004DBF79 /* SMModal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SMModal.m; sourceTree = "<group>"; };
 		835D80161C6423BF004DBF79 /* SMAppearance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SMAppearance.h; sourceTree = "<group>"; };
@@ -430,6 +432,7 @@
 			isa = PBXGroup;
 			children = (
 				839CAEA21CF1453D0072C1BD /* SMImageTextView.swift */,
+				8346E1FD1D011A3B006C2637 /* SMImageTextView+JSON.swift */,
 			);
 			name = SMImageTextView;
 			sourceTree = "<group>";
@@ -975,6 +978,7 @@
 				83FB1E0D1CF66EEE00D1D1E6 /* AFURLSessionManager.m in Sources */,
 				83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */,
 				83CF34741CF019D300FEA292 /* Array+Extras.swift in Sources */,
+				8346E1FE1D011A3C006C2637 /* SMImageTextView+JSON.swift in Sources */,
 				83FB1DF11CF66EDE00D1D1E6 /* UIRefreshControl+AFNetworking.m in Sources */,
 				83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */,
 				83D3EDB11C4DC94800BFDA93 /* CoreData.m in Sources */,

@@ -128,11 +128,7 @@ extension ViewController : SMSyncServerDelegate {
         for (url, attr) in downloads {
             let objectDataType = attr.appMetaData![CoreDataExtras.objectDataTypeKey] as! String
             
-            switch objectDataType {
-            case CoreDataExtras.objectDataTypeReadme:
-                try! Readme.createAndUploadIfNeeded(downloadedUUID: attr.uuid!.UUIDString)
-                // TODO: Check to see if there is an existing README file! We only want one README UUID.
-                
+            switch objectDataType {                
             case CoreDataExtras.objectDataTypeNote:
                 Note.createOrUpdate(usingUUID: attr.uuid, fromFileAtURL: url)
             

@@ -279,9 +279,6 @@ function define(name, value) {
     // Really the same as rcOperationStatusInProgress, but making this a different different value because of the Swift -> Javascript conversion.
 	define("rcOperationInProgress", 300);
     
-    // For convenience on client side; not returned by server.
-	define("rcNoFilesToDownload", 400);
-    
     // -------- Other constants --------
 
     // Used in the file upload form. This is not a key specifically, but has to correspond to that used on the server.
