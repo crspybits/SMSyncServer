@@ -42,8 +42,8 @@ class ErrorHandling: BaseClass {
             Network.session().debugNetworkOff = true
             
             let testFile = TestBasics.session.createTestFile("ResetFromClientAPIError")
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.commit()
             
             self.errorCallbacks.append() {
                 errorExpectation.fulfill()
@@ -51,7 +51,7 @@ class ErrorHandling: BaseClass {
 
             // Generate a client API error: Attempt to delete a file unknown to SMSyncServer. Need to do this because resetFromError requires that the mode currently be an error mode.
             let testFile2 = TestBasics.session.createTestFile("ResetFromClientAPIError.2")
-            SMSyncServer.session.deleteFile(testFile2.uuid)
+            try! SMSyncServer.session.deleteFile(testFile2.uuid)
         
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()

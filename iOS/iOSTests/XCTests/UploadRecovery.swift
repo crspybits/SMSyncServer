@@ -52,7 +52,7 @@ class UploadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("NetworkRecovery1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -80,7 +80,7 @@ class UploadRecovery: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -110,7 +110,7 @@ class UploadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile(fileName)
 
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleRecoveryCallback = { mode in
                 XCTAssertTrue(!self.doneRecovery)
@@ -137,7 +137,7 @@ class UploadRecovery: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             // Expecting that we'll get delegate callback on progress and then delegate callback on uploadComplete, without an error.
         }
@@ -180,7 +180,7 @@ class UploadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile(fileName)
 
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
@@ -208,7 +208,7 @@ class UploadRecovery: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             // Expecting that we'll get delegate callback on progress and then delegate callback on uploadComplete, without an error.
         }
@@ -235,7 +235,7 @@ class UploadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile(fileName)
 
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
 
             self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
@@ -264,7 +264,7 @@ class UploadRecovery: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -309,11 +309,11 @@ class UploadRecovery: BaseClass {
             
             let testFile1 = TestBasics.session.createTestFile(fileName1)
 
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             let testFile2 = TestBasics.session.createTestFile(fileName2)
 
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
 
             self.singleRecoveryCallback = { mode in
                 // So we don't get the error test cases on the server again
@@ -348,7 +348,7 @@ class UploadRecovery: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -375,7 +375,7 @@ class UploadRecovery: BaseClass {
                 
                 let testFile = TestBasics.session.createTestFile("RecoveryAfterAppCrash")
 
-                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -390,7 +390,7 @@ class UploadRecovery: BaseClass {
                     // XCTFail(msg)
                 }
             
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {
@@ -446,8 +446,8 @@ class UploadRecovery: BaseClass {
                 let testFile2 = TestBasics.session.createTestFile(testFileName2)
                 UploadRecovery.crashUUIDString1.stringValue = testFile2.uuidString
 
-                SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
-                SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -461,7 +461,7 @@ class UploadRecovery: BaseClass {
                     progressCallbackExpected.fulfill()
                 }
             
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {
@@ -521,7 +521,7 @@ class UploadRecovery: BaseClass {
                 let testFile = TestBasics.session.createTestFile(fileName)
                 UploadRecovery.crashUUIDString3.stringValue = testFile.uuid.UUIDString
                 
-                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -532,7 +532,7 @@ class UploadRecovery: BaseClass {
                     SMTest.session.crash()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
             
         }

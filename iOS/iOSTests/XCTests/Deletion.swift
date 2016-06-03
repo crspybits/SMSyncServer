@@ -41,7 +41,7 @@ class UploadDeletion: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("SingleFileDelete")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -57,12 +57,12 @@ class UploadDeletion: BaseClass {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.deleteFile(testFile.uuid)
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.deleteFile(testFile.uuid)
+                    try! SMSyncServer.session.commit()
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -105,11 +105,11 @@ class UploadDeletion: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("TwoFileDelete1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
 
             let testFile2 = TestBasics.session.createTestFile("TwoFileDelete2")
             
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -129,15 +129,15 @@ class UploadDeletion: BaseClass {
                     TestBasics.session.checkFileSize(testFile2.uuidString, size: testFile2.sizeInBytes) {
                         commitCompleteCallbackExpectation1.fulfill()
                         
-                        SMSyncServer.session.deleteFile(testFile1.uuid)
-                        SMSyncServer.session.deleteFile(testFile2.uuid)
+                        try! SMSyncServer.session.deleteFile(testFile1.uuid)
+                        try! SMSyncServer.session.deleteFile(testFile2.uuid)
             
                         // let idleExpectation = self.expectationWithDescription("Idle")
                         self.idleCallbacks.append() {
                             idleExpectation2.fulfill()
                         }
                         
-                        SMSyncServer.session.commit()
+                        try! SMSyncServer.session.commit()
                     }
                 }
             }
@@ -146,7 +146,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 2)
@@ -204,7 +204,7 @@ class UploadDeletion: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("UploadAfterDelete")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -221,8 +221,8 @@ class UploadDeletion: BaseClass {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.deleteFile(testFile.uuid)
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.deleteFile(testFile.uuid)
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -231,7 +231,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -254,8 +254,8 @@ class UploadDeletion: BaseClass {
                 }
                 
                 errorExpected = true
-                SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+                try! SMSyncServer.session.commit()
             }
             
             self.errorCallbacks.append() {
@@ -293,7 +293,7 @@ class UploadDeletion: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("DeleteAlreadyDeletedFile")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -310,8 +310,8 @@ class UploadDeletion: BaseClass {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.deleteFile(testFile.uuid)
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.deleteFile(testFile.uuid)
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -320,7 +320,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -342,8 +342,8 @@ class UploadDeletion: BaseClass {
                 }
             
                 errorExpected = true
-                SMSyncServer.session.deleteFile(testFile.uuid)
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.deleteFile(testFile.uuid)
+                try! SMSyncServer.session.commit()
                 
                 commitCompleteCallbackExpectation2.fulfill()
             }
@@ -388,8 +388,8 @@ class UploadDeletion: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.deleteFile(testFile.uuid)
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.deleteFile(testFile.uuid)
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -413,7 +413,7 @@ class UploadDeletion: BaseClass {
             
             let testFile1 = TestBasics.session.createTestFile("CombinedUploadAndDelete1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -432,16 +432,16 @@ class UploadDeletion: BaseClass {
                 TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
                     commitCompleteCallbackExpectation1.fulfill()
                     
-                    SMSyncServer.session.deleteFile(testFile1.uuid)
+                    try! SMSyncServer.session.deleteFile(testFile1.uuid)
                     
-                    SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                    try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -465,7 +465,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -487,13 +487,10 @@ class UploadDeletion: BaseClass {
             let testFile1 = TestBasics.session.createTestFile(
                 "UploadDeleteSameFileBeforeCommit")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
-            SMSyncServer.session.deleteFile(testFile1.uuid)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.deleteFile(testFile1.uuid)
             
-            let commitResult = SMSyncServer.session.commit()
-            if commitResult == nil || commitResult! {
-                XCTFail()
-            }
+            try! SMSyncServer.session.commit()
             
             commitComplete.fulfill()
         }
@@ -516,7 +513,7 @@ class UploadDeletion: BaseClass {
             
             let testFile1 = TestBasics.session.createTestFile("UploadDeleteSameFile")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -529,16 +526,16 @@ class UploadDeletion: BaseClass {
                 TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
                     commitCompleteCallbackExpectation1.fulfill()
 
-                    SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+                    try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
                     
-                    SMSyncServer.session.deleteFile(testFile1.uuid)
+                    try! SMSyncServer.session.deleteFile(testFile1.uuid)
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
                         idleExpectation2.fulfill()
                     }
  
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -557,7 +554,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -589,7 +586,7 @@ class UploadDeletion: BaseClass {
             
             let testFile1 = TestBasics.session.createTestFile("DeleteUploadSameFile")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -602,7 +599,7 @@ class UploadDeletion: BaseClass {
                 TestBasics.session.checkFileSize(testFile1.uuidString, size: testFile1.sizeInBytes) {
                     commitCompleteCallbackExpectation1.fulfill()
 
-                    SMSyncServer.session.deleteFile(testFile1.uuid)
+                    try! SMSyncServer.session.deleteFile(testFile1.uuid)
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
@@ -610,10 +607,10 @@ class UploadDeletion: BaseClass {
                     }
 
                     errorExpected = true
-                    SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+                    try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
 
                     // Our expectation here is that this should *not* delete the file. This is because the resetFromError() call does a flush operation, removing uploads, and upload-deletions.
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -645,7 +642,7 @@ class UploadDeletion: BaseClass {
                 deleteExpectation.fulfill()
             }*/
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -670,7 +667,7 @@ class UploadDeletion: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("RepeatedDelete")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -682,7 +679,7 @@ class UploadDeletion: BaseClass {
                 TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
                     commitCompleteCallbackExpectation1.fulfill()
                     
-                    SMSyncServer.session.deleteFile(testFile.uuid)
+                    try! SMSyncServer.session.deleteFile(testFile.uuid)
 
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
@@ -690,10 +687,10 @@ class UploadDeletion: BaseClass {
                     }
                     
                     errorExpected = true
-                    SMSyncServer.session.deleteFile(testFile.uuid)
+                    try! SMSyncServer.session.deleteFile(testFile.uuid)
                     
                     // Expect neither delete to work-- because of the flush in the error reset.
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
 
@@ -702,7 +699,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             /*
             self.deletionCallbacks.append() { uuids in
@@ -751,7 +748,7 @@ class UploadDeletion: BaseClass {
             var testFile2 = TestBasics.session.createTestFile("DeleteCreateWithSameCloudStorageName2")
             testFile2.remoteFileName = testFile1.fileName
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -768,8 +765,8 @@ class UploadDeletion: BaseClass {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.deleteFile(testFile1.uuid)
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.deleteFile(testFile1.uuid)
+                    try! SMSyncServer.session.commit()
                 }
             }
             
@@ -778,7 +775,7 @@ class UploadDeletion: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.deletionCallbacks.append() { uuids in
                 XCTAssert(uuids.count == 1)
@@ -796,8 +793,8 @@ class UploadDeletion: BaseClass {
                     idleExpectation3.fulfill()
                 }
                 
-                SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                try! SMSyncServer.session.commit()
             }
 
             self.singleUploadCallbacks.append() { uuid in

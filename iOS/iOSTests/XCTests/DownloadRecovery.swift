@@ -49,7 +49,7 @@ class DownloadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("RecoveryBasedOnTestContext" + testContext.rawValue)
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -78,7 +78,7 @@ class DownloadRecovery: BaseClass {
                 singleDownloadExpectation.fulfill()
             }
             
-            self.singleNoDownloadsCallback = {
+            self.downloadsFinishedCallback = {
                 if noDownloads {
                     singleDownloadExpectation.fulfill()
                     allDownloadsCompleteExpectation.fulfill()
@@ -120,7 +120,7 @@ class DownloadRecovery: BaseClass {
                 SMSyncControl.session.nextSyncOperation()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -180,7 +180,7 @@ class DownloadRecovery: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             
             let testFile = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".1" + "." + numberOfFilesToDownload.rawValue)
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -190,7 +190,7 @@ class DownloadRecovery: BaseClass {
             var testFile2:TestFile?
             if numberOfFilesToDownload == .Two {
                 testFile2 = TestBasics.session.createTestFile("ServerDownloadFailureRecovery" + String(serverTestCase) + ".2" + "." + numberOfFilesToDownload.rawValue)
-                SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile2!.uuidString)
@@ -267,7 +267,7 @@ class DownloadRecovery: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -340,7 +340,7 @@ class DownloadRecovery: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("NetworkDownloadRecovery1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -387,7 +387,7 @@ class DownloadRecovery: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -434,7 +434,7 @@ class DownloadRecovery: BaseClass {
                 testFile = TestBasics.session.createTestFile(testFileName)
                 DownloadRecovery.crashUUIDString1.stringValue = testFile!.uuidString
                 
-                SMSyncServer.session.uploadImmutableFile(testFile!.url, withFileAttributes: testFile!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile!.url, withFileAttributes: testFile!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile!.uuidString)
@@ -461,7 +461,7 @@ class DownloadRecovery: BaseClass {
                     uploadCompleteCallbackExpectation!.fulfill()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {
@@ -531,7 +531,7 @@ class DownloadRecovery: BaseClass {
                 testFile = TestBasics.session.createTestFile(testFileName)
                 DownloadRecovery.crashUUIDString1.stringValue = testFile!.uuidString
                 
-                SMSyncServer.session.uploadImmutableFile(testFile!.url, withFileAttributes: testFile!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile!.url, withFileAttributes: testFile!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile!.uuidString)
@@ -559,7 +559,7 @@ class DownloadRecovery: BaseClass {
                     SMSyncControl.session.nextSyncOperation()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {
@@ -629,11 +629,11 @@ class DownloadRecovery: BaseClass {
 
                 testFile1 = TestBasics.session.createTestFile(testFileName1)
                 DownloadRecovery.crashUUIDString1.stringValue = testFile1!.uuidString
-                SMSyncServer.session.uploadImmutableFile(testFile1!.url, withFileAttributes: testFile1!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile1!.url, withFileAttributes: testFile1!.attr)
                 
                 testFile2 = TestBasics.session.createTestFile(testFileName2)
                 DownloadRecovery.crashUUIDString2.stringValue = testFile2!.uuidString
-                SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile1!.uuidString)
@@ -678,7 +678,7 @@ class DownloadRecovery: BaseClass {
                     SMSyncControl.session.nextSyncOperation()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {
@@ -759,11 +759,11 @@ class DownloadRecovery: BaseClass {
 
                 testFile1 = TestBasics.session.createTestFile(testFileName1)
                 DownloadRecovery.crashUUIDString1.stringValue = testFile1!.uuidString
-                SMSyncServer.session.uploadImmutableFile(testFile1!.url, withFileAttributes: testFile1!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile1!.url, withFileAttributes: testFile1!.attr)
                 
                 testFile2 = TestBasics.session.createTestFile(testFileName2)
                 DownloadRecovery.crashUUIDString2.stringValue = testFile2!.uuidString
-                SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile2!.url, withFileAttributes: testFile2!.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile1!.uuidString)
@@ -814,7 +814,7 @@ class DownloadRecovery: BaseClass {
                     SMSyncControl.session.nextSyncOperation()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
         }
         else {

@@ -41,7 +41,7 @@ class FileViewerVC : UIViewController {
             
             let remoteFileName = self.file!.url().lastPathComponent
             let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: self.file!.uuid!)!, mimeType: "text/plain", andRemoteFileName: remoteFileName!)
-            SMSyncServer.session.uploadImmutableFile(self.file!.url(), withFileAttributes: fileAttributes)
+            try! SMSyncServer.session.uploadImmutableFile(self.file!.url(), withFileAttributes: fileAttributes)
             Log.msg("File \(self.file!.fileName) has changed")
         }
     }

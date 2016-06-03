@@ -356,17 +356,17 @@ class DownloadDeletion: BaseClass {
                     
                     self.idleCallbacks.append() {
                         idleAfterShouldDeleteFiles.fulfill()
-
-                        self.errorCallbacks.append() {
-                            SMSyncServer.session.resetFromError()
-                        }
                         
                         self.idleCallbacks.append() {
                             idleAfterErrorReset.fulfill()
                         }
                         
                         // This is going to fail.
-                        SMSyncServer.session.deleteFile(testFile.uuid)
+                        do {
+                            try SMSyncServer.session.deleteFile(testFile.uuid)
+                        } catch {
+                            SMSyncServer.session.resetFromError()
+                        }
                         
                         // SMSyncServer.session.commit()
                     }

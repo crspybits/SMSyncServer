@@ -38,9 +38,9 @@ class SMTwoDeviceTestThatTwoUploadsWithLargerFileWork : TwoDeviceTestCase {
 
         self.sizeInBytes = FileStorage.fileSize(url.path!)
 
-        SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes)
+        try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes)
 
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.commit()
     }
     
     // Upload file to server.

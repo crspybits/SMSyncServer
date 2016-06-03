@@ -26,8 +26,8 @@ class SMTwoDeviceTestThatTwoUploadsWork : TwoDeviceTestCase {
     func uploadFile() {
         let fileName = "TestThatTwoUploadsWork"
         self.testFile = TestBasics.session.createTestFile(fileName)
-        SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+        try! SMSyncServer.session.commit()
     }
     
     // Upload file to server.

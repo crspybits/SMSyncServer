@@ -51,14 +51,14 @@ class SMTwoDeviceTestThatDownloadDeletionWorks : TwoDeviceTestCase {
         super.master()
     
         // 1) Master uploads a file
-        SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+        try! SMSyncServer.session.commit()
         
         // 3) Master does upload deletion (how to detect when slave has finished downloading?)
         TimedCallback.withDuration(SMTwoDeviceTestThatDownloadDeletionWorks.shortWait) {
             self.deletionPhase = true
-            SMSyncServer.session.deleteFile(self.testFile.uuid)
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.deleteFile(self.testFile.uuid)
+            try! SMSyncServer.session.commit()
         }
     }
     

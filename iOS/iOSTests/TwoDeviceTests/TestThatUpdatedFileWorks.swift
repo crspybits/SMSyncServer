@@ -44,8 +44,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
     override func master() {
         super.master()
     
-        SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+        try! SMSyncServer.session.commit()
     }
     
     let newFileContents = "newFileContents"
@@ -106,7 +106,7 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
         case .AllUploadsComplete:
             self.commitComplete()
                
-        case .NoFilesToDownload, .LockAlreadyHeld:
+        case .DownloadsFinished, .LockAlreadyHeld:
             // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded. Not an error to get this event on the master, because in SMSyncControl we normally check for downloads to get the lock.
             if self.isSlave {
                 if self.numberDownloads < 2 {
@@ -154,8 +154,8 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             
                 // Give the slave time to download the first file version.
                 TimedCallback.withDuration(self.masterWaitTime) {
-                    SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+                    try! SMSyncServer.session.commit()
                 }
             }
         }

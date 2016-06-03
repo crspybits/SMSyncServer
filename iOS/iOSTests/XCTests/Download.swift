@@ -36,7 +36,7 @@ class Download: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("FilesInSyncResultsInNoDownloads")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -50,20 +50,22 @@ class Download: BaseClass {
                 }
             }
             
+            self.singleDownload.append() { localFile, attr in
+                XCTFail()
+            }
+            
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation1.fulfill()
-                self.numberOfNoDownloadsCallbacks = 0
                 SMSyncControl.session.nextSyncOperation()
             }
             
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation2.fulfill()
-                XCTAssert(self.numberOfNoDownloadsCallbacks == 1)
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -94,7 +96,7 @@ class Download: BaseClass {
         self.extraServerResponseTime = 360
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -140,7 +142,7 @@ class Download: BaseClass {
                 idleExpectation2.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -175,7 +177,7 @@ class Download: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("DownloadOfUntransferredServerFile")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -205,7 +207,7 @@ class Download: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -232,8 +234,8 @@ class Download: BaseClass {
         self.extraServerResponseTime = 60
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -314,7 +316,7 @@ class Download: BaseClass {
                 idleExpectation2.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -346,7 +348,7 @@ class Download: BaseClass {
         self.extraServerResponseTime = 120
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -414,18 +416,18 @@ class Download: BaseClass {
                     
                     SMSyncControl.session.nextSyncOperation()
                     
-                    SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+                    try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
                     
                     // let idleExpectation = self.expectationWithDescription("Idle")
                     self.idleCallbacks.append() {
                         idleExpectation2.fulfill()
                     }
                     
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -457,8 +459,8 @@ class Download: BaseClass {
         self.extraServerResponseTime = 60
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -553,16 +555,16 @@ class Download: BaseClass {
                 
                 SMSyncControl.session.nextSyncOperation()
                 
-                SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
+                try! SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
                 
                 self.idleCallbacks.append() {
                     idleExpectation2.fulfill()
                 }
             
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()

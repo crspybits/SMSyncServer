@@ -64,7 +64,7 @@ class DownloadConflicts: BaseClass {
                     // Our current situation is that, when we next do a sync with the server, there will be a download-deletion.
                     // To generate a LocalUpload conflict, we need to now do an upload for this file.
                     let newFileContentsData = newFileContents.dataUsingEncoding(NSUTF8StringEncoding)
-                    SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile.attr)
+                    try! SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile.attr)
                     
                     self.shouldResolveDeletionConflicts.append() { conflicts in
                         Log.msg("shouldResolveDeletionConflicts")
@@ -122,7 +122,7 @@ class DownloadConflicts: BaseClass {
                         }
                     }
                     
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
         }
@@ -189,8 +189,8 @@ class DownloadConflicts: BaseClass {
                     // Our current situation is that, when we next do a sync with the server, there will be a download-deletion.
                     // To generate a LocalUpload conflict, we need to now do an upload for this file.
                     let newFileContentsData = newFileContents.dataUsingEncoding(NSUTF8StringEncoding)
-                    SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile1.attr)
-                    SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile2.attr)
+                    try! SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile1.attr)
+                    try! SMSyncServer.session.uploadData(newFileContentsData!, withDataAttributes: testFile2.attr)
                     
                     self.shouldResolveDeletionConflicts.append() { conflicts in
                         XCTAssert(conflicts.count == 2)
@@ -279,7 +279,7 @@ class DownloadConflicts: BaseClass {
                         }
                     }
                     
-                    SMSyncServer.session.commit()
+                    try! SMSyncServer.session.commit()
                 }
             }
         }

@@ -62,7 +62,7 @@ class ServerAPI: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("DoubleDeletionOfASingleFile")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -99,7 +99,7 @@ class ServerAPI: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()

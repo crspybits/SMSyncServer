@@ -81,7 +81,7 @@ class Settings: UIViewController {
     }
     
     func uploadChangedFilesButtonAction() {
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.commit()
     }
     
     override func viewDidAppear(animated: Bool) {

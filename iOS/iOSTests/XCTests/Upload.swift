@@ -31,7 +31,7 @@ class Upload: BaseClass {
         let afterCommitExpectation = self.expectationWithDescription("After Commit")
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             XCTAssert(!SMSyncServer.session.isOperating)
             
             afterCommitExpectation.fulfill()
@@ -51,7 +51,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile(fileName, withContents: fileContents)
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -74,7 +74,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -96,7 +96,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("SingleTemporaryFileUpload")
             
-            SMSyncServer.session.uploadTemporaryFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadTemporaryFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -127,7 +127,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -154,7 +154,7 @@ class Upload: BaseClass {
                 data = strData!.dataUsingEncoding(NSUTF8StringEncoding)
             }
             
-            SMSyncServer.session.uploadData(data, withDataAttributes: fileAttributes)
+            try! SMSyncServer.session.uploadData(data, withDataAttributes: fileAttributes)
             
             var tempFiles1:NSArray!
             var tempFiles2:NSArray!
@@ -189,7 +189,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -232,7 +232,7 @@ class Upload: BaseClass {
             let fileUUID = NSUUID(UUIDString: file.uuid!)!
             let fileAttributes = SMSyncAttributes(withUUID: fileUUID, mimeType: "image/png", andRemoteFileName: remoteFileName)
             
-            SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes)
+            try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == file.uuid!)
@@ -255,7 +255,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -272,11 +272,11 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("TwoFileUpload1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             let testFile2 = TestBasics.session.createTestFile("TwoFileUpload2")
             
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -312,7 +312,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -329,7 +329,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("TwoFileUpdateUpload1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             let fileContents:NSString = "TwoFileUpdateUpload2 abcdefg"
             let fileSizeBytes = fileContents.length
@@ -344,7 +344,7 @@ class Upload: BaseClass {
             
             // This is not violating the immutable characteristic of the uploadImmutableFile method because the contents of the file at the above URL haven't changed. Rather, a new file (different URL) is given with the same UUID.
             
-            SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -368,7 +368,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -389,7 +389,7 @@ class Upload: BaseClass {
             
             let testFile1 = TestBasics.session.createTestFile("TwoSeriesFileUpload1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -403,11 +403,11 @@ class Upload: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             let testFile2 = TestBasics.session.createTestFile("TwoSeriesFileUpload2")
 
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 singleUploadExpectation2.fulfill()
@@ -426,7 +426,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -446,7 +446,7 @@ class Upload: BaseClass {
             
             let testFile = TestBasics.session.createTestFile("FirstFileUpload1")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 singleUploadExpectation1.fulfill()
@@ -460,7 +460,7 @@ class Upload: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             let fileContents:NSString = "FirstFileUpload.Update smigma"
             let secondFileSize = fileContents.length
@@ -472,7 +472,7 @@ class Upload: BaseClass {
                 XCTFail("Failed to write file: \(error)!")
             }
             
-            SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -491,7 +491,7 @@ class Upload: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -511,7 +511,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile = TestBasics.session.createTestFile("FirstFileUpload3")
             
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             func secondUpload() {
                 
@@ -525,7 +525,7 @@ class Upload: BaseClass {
                     XCTFail("Failed to write file: \(error)!")
                 }
                 
-                SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
+                try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: testFile.attr)
                 
                 self.singleUploadCallbacks.append() { uuid in
                     XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -544,7 +544,7 @@ class Upload: BaseClass {
                     idleExpectation2.fulfill()
                 }
                 
-                SMSyncServer.session.commit()
+                try! SMSyncServer.session.commit()
             }
             
             self.singleUploadCallbacks.append() { uuid in
@@ -565,7 +565,7 @@ class Upload: BaseClass {
                 idleExpectation1.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -586,12 +586,12 @@ class Upload: BaseClass {
             var testFile1 = TestBasics.session.createTestFile("SameFileNameUpload1.2")
             testFile1.remoteFileName = "SameFileNameUpload1.2"
 
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             var testFile2 = TestBasics.session.createTestFile("SameFileNameUpload2.2")
             testFile2.remoteFileName = testFile1.remoteFileName
 
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
@@ -599,7 +599,7 @@ class Upload: BaseClass {
             }
             
             // TODO: What is the expectation for this commit? Should it cause the first file to be committed? i.e., the second upload throws an error. What should following operations, such as commmit do?
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -640,9 +640,9 @@ class Upload: BaseClass {
             var testFile3 = TestBasics.session.createTestFile("SameFileNameUpload2")
             testFile3.remoteFileName = testFile2.fileName
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
-            SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile3.url, withFileAttributes: testFile3.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -660,7 +660,7 @@ class Upload: BaseClass {
             }
             
             // TODO: Again, what is our expectation here?
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             self.errorCallbacks.append() {
                 SMSyncServer.session.cleanupFile(testFile1.uuid)
@@ -697,7 +697,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("FirstFileUpload6")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -711,7 +711,7 @@ class Upload: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             let fileContents:NSString = "FirstFileUpload.Update smigma"
             
@@ -733,7 +733,7 @@ class Upload: BaseClass {
                 errorCallbackExpectation.fulfill()
             }
             
-            SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes2)
+            try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes2)
                         
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
@@ -741,7 +741,7 @@ class Upload: BaseClass {
             }
 
             // This won't do anything as there are no additional files needing to be uploaded given the error.
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
@@ -759,7 +759,7 @@ class Upload: BaseClass {
         self.waitUntilSyncServerUserSignin() {
             let testFile1 = TestBasics.session.createTestFile("DifferentUUIDButSameCloudName")
             
-            SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile1.uuidString)
@@ -773,7 +773,7 @@ class Upload: BaseClass {
                 }
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
             
             var testFile2 = TestBasics.session.createTestFile("DifferentUUIDButSameCloudName2")
             testFile2.remoteFileName = testFile1.fileName
@@ -793,14 +793,14 @@ class Upload: BaseClass {
                 }
             }
             
-            SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
             
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()
             }
 
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()

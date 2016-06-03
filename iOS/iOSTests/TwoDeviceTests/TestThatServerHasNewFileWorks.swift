@@ -42,8 +42,8 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
     override func master() {
         super.master()
     
-        SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.uploadImmutableFile(self.testFile.url, withFileAttributes: self.testFile.attr)
+        try! SMSyncServer.session.commit()
     }
     
     override func syncServerShouldSaveDownloads(downloads: [(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes)], acknowledgement: () -> ()) {
@@ -108,7 +108,7 @@ class SMTwoDeviceTestThatServerHasNewFileWorks : TwoDeviceTestCase {
                 self.passTest()
             }
             
-        case .NoFilesToDownload, .LockAlreadyHeld:
+        case .DownloadsFinished, .LockAlreadyHeld:
             // Initially, on the slave, there may be no files to download yet-- the master may not yet have uploaded. It is not an error to get this event on the master: We get this in normal operation in SMSyncControl when we check for downloads/get the lock.
             if self.isSlave && self.numberDownloads < 1 {
                 // No downloads ready yet. Start the timer to check for downloads in a while.

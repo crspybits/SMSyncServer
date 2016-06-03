@@ -26,8 +26,8 @@ class BaseClass: XCTestCase {
     var singleRecoveryCallback:(()->())?
     var numberOfRecoverySteps = 0
 
-    var singleNoDownloadsCallback:(()->())?
-    var numberOfNoDownloadsCallbacks = 0
+    var downloadsFinishedCallback:(()->())?
+    var numberOfDownloadsFinishedCallbacks = 0
     
     typealias inboundTransferCallback = (numberOperations:Int)->()
     var singleInboundTransferCallback:inboundTransferCallback?
@@ -80,7 +80,6 @@ class BaseClass: XCTestCase {
     override func setUp() {
         super.setUp()
 
-        SMSyncServer.session.autoCommit = false
         SMSyncServer.session.delegate = self
         
         self.extraServerResponseTime = 0
@@ -100,7 +99,7 @@ class BaseClass: XCTestCase {
         self.idleCallbacks = [idleCallback]()
         self.singleRecoveryCallback = nil
         self.numberOfRecoverySteps = 0
-        self.numberOfNoDownloadsCallbacks = 0
+        self.numberOfDownloadsFinishedCallbacks = 0
         self.shouldDoDeletionsSequenceNumber = 0
         self.shouldDoDeletions = [shouldDoDeletionsCallback]()
         self.processModeChanges = false
@@ -211,11 +210,11 @@ extension BaseClass : SMSyncServerDelegate {
             self.commitCompleteSequenceNumber += 1
             self.commitCompleteCallbacks[sequenceNumber](numberUploads: numberOperations)
         
-        case .NoFilesToDownload:
-            if nil != self.singleNoDownloadsCallback {
-                self.singleNoDownloadsCallback!()
+        case .DownloadsFinished:
+            if nil != self.downloadsFinishedCallback {
+                self.downloadsFinishedCallback!()
             }
-            self.numberOfNoDownloadsCallbacks += 1
+            self.numberOfDownloadsFinishedCallbacks += 1
         
         case .NoFilesToUpload:
             break
@@ -248,7 +247,7 @@ extension BaseClass : SMSyncServerDelegate {
             let testFile = testFiles[testFileIndex]
             let uploadExpectation:XCTestExpectation? = uploadExpectations?[testFileIndex]
         
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             if uploadExpectation != nil {
                 self.singleUploadCallbacks.append() { uuid in
@@ -275,7 +274,7 @@ extension BaseClass : SMSyncServerDelegate {
             }
         }
         
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.commit()
     }
     
     func checkFileSizes(testFiles:[TestFile], complete:(()->())?) {
@@ -299,7 +298,7 @@ extension BaseClass : SMSyncServerDelegate {
         
         for testFileIndex in 0...testFiles.count-1 {
             let testFile = testFiles[testFileIndex]
-            SMSyncServer.session.deleteFile(testFile.uuid)
+            try! SMSyncServer.session.deleteFile(testFile.uuid)
         }
         
         if deletionExpectation != nil {
@@ -341,6 +340,6 @@ extension BaseClass : SMSyncServerDelegate {
             }
         }
         
-        SMSyncServer.session.commit()
+        try! SMSyncServer.session.commit()
     }
 }

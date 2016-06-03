@@ -40,7 +40,7 @@ class AppMetaData: BaseClass {
         self.extraServerResponseTime = 360
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             
             self.singleUploadCallbacks.append() { uuid in
                 XCTAssert(uuid.UUIDString == testFile.uuidString)
@@ -102,7 +102,7 @@ class AppMetaData: BaseClass {
                 idleExpectation2.fulfill()
             }
             
-            SMSyncServer.session.commit()
+            try! SMSyncServer.session.commit()
         }
         
         self.waitForExpectations()
