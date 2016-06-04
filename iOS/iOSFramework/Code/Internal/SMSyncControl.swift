@@ -132,7 +132,7 @@ internal class SMSyncControl {
     */
     internal func nextSyncOperation(completion:(()->())?=nil) {
         switch self.mode {
-        case .ClientAPIError, .InternalError, .NonRecoverableError, .ResettingFromError:
+        case .InternalError, .NonRecoverableError, .ResettingFromError:
             // Don't call self.syncControlModeChange because that will cause a call to stopOperating(), which will fail. Just report this above as an error.
             NSThread.runSyncOnMainThread() {
                 self.delegate?.syncServerModeChange(self.mode)
@@ -219,13 +219,9 @@ internal class SMSyncControl {
             if allowDebugReset {
                 break
             }
-            completion?(error: Error.Create("Not in an error mode: \(self.mode)"))
-            return
-        
-        case .ClientAPIError:
-            self.localCleanup()
-            self.syncControlModeChange(.Idle)
-            completion?(error: nil)
+            let error = Error.Create("Not in an error mode: \(self.mode)")
+            Log.msg("\(error)")
+            completion?(error: error)
             return
             
         case .InternalError, .NonRecoverableError:
@@ -746,7 +742,7 @@ extension SMSyncControl : SMSyncControlDelegate {
         case .NetworkNotConnected:
             self.stopOperating()
         
-        case .ClientAPIError, .NonRecoverableError, .InternalError:
+        case .NonRecoverableError, .InternalError:
             // Ditto.
             self.stopOperating()
         }

@@ -84,8 +84,6 @@ class SMTwoDeviceTestThatUpdatedFileWorks : TwoDeviceTestCase {
             self.failTest("We got a non-recoverable error: \(error)")
         case .InternalError(let error):
             self.failTest("We got an internal error: \(error)")
-        case .ClientAPIError(let error):
-            self.failTest("We got an client api error: \(error)")
         }
     }
     

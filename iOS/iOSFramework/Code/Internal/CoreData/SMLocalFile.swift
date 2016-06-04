@@ -75,6 +75,7 @@ class SMLocalFile: NSManagedObject, CoreDataModel {
             }
         }
         
+        // Does a CoreData save context.
         set {
             if newValue == nil {
                 self.internalAppMetaData = nil

@@ -322,7 +322,7 @@ class DownloadDeletion: BaseClass {
 
         let clientShouldDeleteFilesExpectation = self.expectationWithDescription("Should Delete Files")
         let idleAfterShouldDeleteFiles = self.expectationWithDescription("Idle After Should Delete")
-        let idleAfterErrorReset = self.expectationWithDescription("Idle After Error Reset")
+        let deletionFailure = self.expectationWithDescription("Deletion Failure")
         
         self.extraServerResponseTime = 60
         
@@ -357,15 +357,11 @@ class DownloadDeletion: BaseClass {
                     self.idleCallbacks.append() {
                         idleAfterShouldDeleteFiles.fulfill()
                         
-                        self.idleCallbacks.append() {
-                            idleAfterErrorReset.fulfill()
-                        }
-                        
-                        // This is going to fail.
                         do {
+                            // This is going to fail.
                             try SMSyncServer.session.deleteFile(testFile.uuid)
                         } catch {
-                            SMSyncServer.session.resetFromError()
+                            deletionFailure.fulfill()
                         }
                         
                         // SMSyncServer.session.commit()

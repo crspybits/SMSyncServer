@@ -29,7 +29,9 @@ class ErrorHandling: BaseClass {
         XCTAssert(SMQueues.current().internalBeingDownloaded == nil || SMQueues.current().internalBeingDownloaded!.count == 0)
         XCTAssert(SMQueues.current().internalCommittedUploads == nil || SMQueues.current().internalCommittedUploads!.count == 0)
     }
-    
+
+    // Seems ClientAPI error is not used any more-- since we now are using throws for client API errors.
+#if false
     func testThatResetFromClientAPIErrorWorks() {
         let idleExpectation = self.expectationWithDescription("Idle Callback")
         let resetExpectation = self.expectationWithDescription("Reset Callback")
@@ -44,15 +46,14 @@ class ErrorHandling: BaseClass {
             let testFile = TestBasics.session.createTestFile("ResetFromClientAPIError")
             try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
             try! SMSyncServer.session.commit()
-            
-            self.errorCallbacks.append() {
-                errorExpectation.fulfill()
-            }
 
             // Generate a client API error: Attempt to delete a file unknown to SMSyncServer. Need to do this because resetFromError requires that the mode currently be an error mode.
             let testFile2 = TestBasics.session.createTestFile("ResetFromClientAPIError.2")
-            try! SMSyncServer.session.deleteFile(testFile2.uuid)
-        
+            do {
+                try SMSyncServer.session.deleteFile(testFile2.uuid)
+            } catch {
+            }
+            
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()
             }
@@ -69,7 +70,8 @@ class ErrorHandling: BaseClass {
         
         self.waitForExpectations()
     }
-    
+#endif
+
     func testSeriousError(doSecondRequest secondRequest:Bool) {
         let idleExpectation = self.expectationWithDescription("Idle Callback")
         let resetExpectation = self.expectationWithDescription("Reset Callback")

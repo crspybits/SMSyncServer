@@ -144,9 +144,6 @@ public enum SMSyncServerMode {
     
     // The modes below are errors that the SMSyncServer couldn't recover from. It's up to the client app to deal with these.
     
-    // There was a client API error in which the user of the SMSyncServer (e.g., caller of this interface) made an error (e.g., using the same cloud file name with two different UUID's).
-    case ClientAPIError(NSError)
-    
     // There was an error that, after internal SMSyncServer recovery attempts, could not be dealt with.
     case NonRecoverableError(NSError)
     
@@ -177,12 +174,6 @@ public func ==(lhs:SMSyncServerMode, rhs:SMSyncServerMode) -> Bool {
     case .NetworkNotConnected:
         switch rhs {
             case .NetworkNotConnected: return true
-            default: return false
-        }
-        
-    case .ClientAPIError:
-        switch rhs {
-            case .ClientAPIError: return true
             default: return false
         }
         
@@ -227,10 +218,6 @@ internal class SMSyncServerModeWrapper : NSObject, NSCoding
         case "NonRecoverableError":
             let error = aDecoder.decodeObjectForKey("error") as! NSError
             self.mode = .NonRecoverableError(error)
-
-        case "ClientAPIError":
-            let error = aDecoder.decodeObjectForKey("error") as! NSError
-            self.mode = .ClientAPIError(error)
             
         case "InternalError":
             let error = aDecoder.decodeObjectForKey("error") as! NSError
@@ -263,10 +250,6 @@ internal class SMSyncServerModeWrapper : NSObject, NSCoding
             
         case .NonRecoverableError(let err):
             name = "NonRecoverableError"
-            error = err
-            
-        case .ClientAPIError(let err):
-            name = "ClientAPIError"
             error = err
             
         case .InternalError(let err):

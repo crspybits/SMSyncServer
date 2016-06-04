@@ -725,16 +725,13 @@ class Upload: BaseClass {
             }
             
             let fileAttributes2 = SMSyncAttributes(withUUID: testFile1.uuid, mimeType: "text/plain", andRemoteFileName: fileName2)
-
-            // Gotta put the error callback before the uploadImmutableFile in this case because the error callback is thrown from uploadImmutableFile.
-            self.errorCallbacks.append() {
-                // Since this error doesn't occur during an actual upload we don't need to do a resetFromError or a cleanup.
-                
+            
+            do {
+                try SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes2)
+            } catch {
                 errorCallbackExpectation.fulfill()
             }
             
-            try! SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: fileAttributes2)
-                        
             // let idleExpectation = self.expectationWithDescription("Idle")
             self.idleCallbacks.append() {
                 idleExpectation.fulfill()

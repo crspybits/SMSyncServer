@@ -177,7 +177,7 @@ extension BaseClass : SMSyncServerDelegate {
         case .NetworkNotConnected:
             break
         
-        case .NonRecoverableError, .ClientAPIError, .InternalError:
+        case .NonRecoverableError, .InternalError:
             let sequenceNumber = self.errorSequenceNumber
             self.errorSequenceNumber += 1
             self.errorCallbacks[sequenceNumber]()

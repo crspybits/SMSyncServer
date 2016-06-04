@@ -228,8 +228,11 @@ public class SMSyncServer : NSObject {
         }
         
         if !dataToWrite.writeToURL(localFile!, atomically: true) {
+        
+            // Cleanup due to error: Remove temporary file
             let mgr = NSFileManager.defaultManager()
             _ = try? mgr.removeItemAtURL(localFile!)
+            
             throw SMSyncClientAPIError.CouldNotWriteToTemporaryFile
         }
 
@@ -244,24 +247,33 @@ public class SMSyncServer : NSObject {
     private func uploadFile(localFileURL:SMRelativeLocalURL, ofType typeOfUpload:TypeOfUploadFile, withFileAttributes attr: SMSyncAttributes) throws {
         // Check to see if we already know about this file in our SMLocalFile meta data.
         var localFileMetaData = SMLocalFile.fetchObjectWithUUID(attr.uuid.UUIDString)
+        var existingFile:Bool
+        var change:SMUploadFile?
         
         Log.msg("localFileMetaData: \(localFileMetaData)")
         
+        func cleanupOnError() {
+            if !existingFile {
+                localFileMetaData?.removeObject()
+            }
+            change?.removeObject()
+        }
+        
         if (nil == localFileMetaData) {
-            localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
-            localFileMetaData!.syncState = .InitialUpload
-            localFileMetaData!.uuid = attr.uuid.UUIDString
+            existingFile = false
             
             if nil == attr.mimeType {
                 throw SMSyncClientAPIError.MimeTypeNotGiven
             }
             
-            localFileMetaData!.mimeType = attr.mimeType
-            
             if nil == attr.remoteFileName {
                 throw SMSyncClientAPIError.RemoteFileNameNotGiven
             }
             
+            localFileMetaData = SMLocalFile.newObject() as? SMLocalFile
+            localFileMetaData!.syncState = .InitialUpload
+            localFileMetaData!.uuid = attr.uuid.UUIDString
+            localFileMetaData!.mimeType = attr.mimeType
             localFileMetaData!.remoteFileName = attr.remoteFileName
             
             // Just created for upload -- it must have a version of 0.
@@ -269,6 +281,7 @@ public class SMSyncServer : NSObject {
         }
         else {
             // Existing file
+            existingFile = true
             
             // TODO: Make sure the mimeType of the file is consistent with that used last time. Make sure the server is checking for this too.
             
@@ -280,27 +293,28 @@ public class SMSyncServer : NSObject {
             }
         }
         
-        localFileMetaData!.appMetaData = attr.appMetaData
-        
         // TODO: Compute an MD5 hash of the file and store that in the meta data. This needs to be shipped up to the server too so that when the file is downloaded the receiving client can verify the hash. 
         
-        let change = SMUploadFile.newObject() as! SMUploadFile
-        change.fileURL = localFileURL
+        change = (SMUploadFile.newObject() as! SMUploadFile)
+        change!.fileURL = localFileURL
         
         switch (typeOfUpload) {
         case .Immutable:
-            change.deleteLocalFileAfterUpload = false
+            change!.deleteLocalFileAfterUpload = false
         case .Temporary:
-            change.deleteLocalFileAfterUpload = true
+            change!.deleteLocalFileAfterUpload = true
         }
         
-        change.localFile = localFileMetaData!
+        change!.localFile = localFileMetaData!
         CoreData.sessionNamed(SMCoreData.name).saveContext()
         
         // This also checks the .deletedOnServer property.
-        if !SMQueues.current().addToUploadsBeingPrepared(change) {
+        if !SMQueues.current().addToUploadsBeingPrepared(change!) {
+            cleanupOnError()
             throw SMSyncClientAPIError.FileWasAlreadyDeleted(specificLocation: "When uploading")
         }
+        
+        localFileMetaData!.appMetaData = attr.appMetaData
         
         // The localVersion property of the SMLocalFile object will get updated, if needed, when we sync this file meta data to the server meta data.
         
@@ -407,7 +421,7 @@ public class SMSyncServer : NSObject {
         case .Synchronizing, .ResettingFromError:
             return true
             
-        case .ClientAPIError, .Idle, .InternalError, .NetworkNotConnected, .NonRecoverableError:
+        case .Idle, .InternalError, .NetworkNotConnected, .NonRecoverableError:
             return false
         }
     }
@@ -490,11 +504,8 @@ public class SMSyncServer : NSObject {
     Has two behaviors:
     
     1) Local cleanup: resets the pending upload operations to the initial state (i.e., all uploads/deletions you have queued will be lost).
-    
     2) Server cleanup: resets the server so that it can operate again (e.g., removes the server lock), and if the server reset is successful, resets the mode to .Idle. The client *must* have the server lock in order for this to succeed.
-    
-    For .ClientAPIError's: Does only behavior 1) and does it *synchronously*.
-    
+        
     For .InternalError's and .NonRecoverableError's: Does behavior 2) asynchronously, and if behavior 2) is successful, does behavior 1). So effectively, both behaviors are *asynchronous*.
     
     On normal reset operation (i.e., the reset worked properly), the callback error parameter will be nil.
