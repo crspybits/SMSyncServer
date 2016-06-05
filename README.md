@@ -48,7 +48,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 ## 1) Create Google Developer Credentials
 
 * To enable access to user Google Drive accounts, you must create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests app or in your app making use of the iOSFramework. See
-<https://developers.google.com/identity/sign-in/ios/>
+<https://developers.google.com/identity/sign-in/ios/>. Make sure you enable the Google Drive API for your Google project.
 
 ## 2) MongoDb installation
 
@@ -95,7 +95,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 * One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#markdown-header-shared-notes-demo-app). 
 
 * Next, you need to replace the `GoogleService-Info.plist` symbolic link with your actual .plist file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
-<https://developers.google.com/identity/sign-in/ios/>. Make sure you enable the Google Drive API for your Google project.
+<https://developers.google.com/identity/sign-in/ios/>.
 
 * You need to replace the `SMSyncServer-client.plist` symbolic link with your actual .plist file. The value of the GoogleServerClientID key is from your Google credentials. The CloudFolderPath key should be the name of the directory (no slashes-- we're not supporting subdirectories yet) where your SMSyncServer files will be stored in Google Drive. ServerURL is the URL of your SMSyncServer Node.js server, without a trailing "/". Here's it's format:
 
