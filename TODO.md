@@ -12,6 +12,8 @@
 
 1. Figure out if we have a combination of adds and deletes of images if we upload the right ones and delete the right ones-- with no trash left over.
 
+1. The "big" spinner should be activated when doing server interaction wrt. users: e.g., CheckForExistingUser because otherwise, long server latencies with these operations make it seem like nothing is going on. (This comes up with Heroku because the server spins down and takes some time to come back up).
+
 ## FUNCTIONALITY
 
 1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
