@@ -104,7 +104,7 @@
 		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
 		8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ODRefreshControl.m; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.m; sourceTree = "<group>"; };
 		8346E1F91CFCB42D006C2637 /* Misc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Misc.swift; sourceTree = "<group>"; };
-		8369D3101CD1C792006DA33C /* US.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = US.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8369D3101CD1C792006DA33C /* SharedNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SharedNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8369D32B1CD1C79E006DA33C /* SharedNotesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesTests.swift; sourceTree = "<group>"; };
 		8369D32D1CD1C79E006DA33C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -227,7 +227,7 @@
 		8369D3111CD1C792006DA33C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8369D3101CD1C792006DA33C /* US.app */,
+				8369D3101CD1C792006DA33C /* SharedNotes.app */,
 				8369D3271CD1C79E006DA33C /* SharedNotesTests.xctest */,
 				8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */,
 			);
@@ -392,9 +392,9 @@
 			productReference = 8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		8369D30F1CD1C792006DA33C /* US */ = {
+		8369D30F1CD1C792006DA33C /* SharedNotes */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "US" */;
+			buildConfigurationList = 8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */;
 			buildPhases = (
 				989193649A92E3A252ADEEBF /* Check Pods Manifest.lock */,
 				8369D30C1CD1C792006DA33C /* Sources */,
@@ -409,9 +409,9 @@
 			dependencies = (
 				83973A061CD986DA00FD8520 /* PBXTargetDependency */,
 			);
-			name = US;
+			name = SharedNotes;
 			productName = SharedNotes;
-			productReference = 8369D3101CD1C792006DA33C /* US.app */;
+			productReference = 8369D3101CD1C792006DA33C /* SharedNotes.app */;
 			productType = "com.apple.product-type.application";
 		};
 		8369D3261CD1C79E006DA33C /* SharedNotesTests */ = {
@@ -459,7 +459,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "US" */;
+			buildConfigurationList = 8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "SharedNotes" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -478,7 +478,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				8369D30F1CD1C792006DA33C /* US */,
+				8369D30F1CD1C792006DA33C /* SharedNotes */,
 				8369D3261CD1C79E006DA33C /* SharedNotesTests */,
 				8329795E1CE03FAB00508783 /* SharedNotesUITests */,
 			);
@@ -669,12 +669,12 @@
 /* Begin PBXTargetDependency section */
 		832979651CE03FAC00508783 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8369D30F1CD1C792006DA33C /* US */;
+			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
 			targetProxy = 832979641CE03FAC00508783 /* PBXContainerItemProxy */;
 		};
 		8369D3291CD1C79E006DA33C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8369D30F1CD1C792006DA33C /* US */;
+			target = 8369D30F1CD1C792006DA33C /* SharedNotes */;
 			targetProxy = 8369D3281CD1C79E006DA33C /* PBXContainerItemProxy */;
 		};
 		83973A061CD986DA00FD8520 /* PBXTargetDependency */ = {
@@ -823,8 +823,8 @@
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
-				PRODUCT_NAME = US;
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotes;
+				PRODUCT_NAME = SharedNotes;
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -843,8 +843,8 @@
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.NetDb;
-				PRODUCT_NAME = US;
+				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotes;
+				PRODUCT_NAME = SharedNotes;
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "SharedNotes-Bridging-Header.h";
 			};
@@ -859,7 +859,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/US.app/US";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SharedNotes.app/SharedNotes";
 			};
 			name = Debug;
 		};
@@ -872,7 +872,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = biz.SpasticMuffin.SharedNotesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/US.app/US";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SharedNotes.app/SharedNotes";
 			};
 			name = Release;
 		};
@@ -888,7 +888,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "US" */ = {
+		8369D30B1CD1C791006DA33C /* Build configuration list for PBXProject "SharedNotes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8369D32E1CD1C79E006DA33C /* Debug */,
@@ -897,7 +897,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "US" */ = {
+		8369D3301CD1C79E006DA33C /* Build configuration list for PBXNativeTarget "SharedNotes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8369D3311CD1C79E006DA33C /* Debug */,

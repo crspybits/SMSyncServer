@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8369D30F1CD1C792006DA33C"
-               BuildableName = "US.app"
-               BlueprintName = "US"
-               ReferencedContainer = "container:US.xcodeproj">
+               BuildableName = "SharedNotes.app"
+               BlueprintName = "SharedNotes"
+               ReferencedContainer = "container:SharedNotes.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,7 +35,7 @@
                BlueprintIdentifier = "8369D3261CD1C79E006DA33C"
                BuildableName = "SharedNotesTests.xctest"
                BlueprintName = "SharedNotesTests"
-               ReferencedContainer = "container:US.xcodeproj">
+               ReferencedContainer = "container:SharedNotes.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -45,7 +45,7 @@
                BlueprintIdentifier = "8329795E1CE03FAB00508783"
                BuildableName = "SharedNotesUITests.xctest"
                BlueprintName = "SharedNotesUITests"
-               ReferencedContainer = "container:US.xcodeproj">
+               ReferencedContainer = "container:SharedNotes.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -53,9 +53,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8369D30F1CD1C792006DA33C"
-            BuildableName = "US.app"
-            BlueprintName = "US"
-            ReferencedContainer = "container:US.xcodeproj">
+            BuildableName = "SharedNotes.app"
+            BlueprintName = "SharedNotes"
+            ReferencedContainer = "container:SharedNotes.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -76,9 +76,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8369D30F1CD1C792006DA33C"
-            BuildableName = "US.app"
-            BlueprintName = "US"
-            ReferencedContainer = "container:US.xcodeproj">
+            BuildableName = "SharedNotes.app"
+            BlueprintName = "SharedNotes"
+            ReferencedContainer = "container:SharedNotes.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -95,9 +95,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8369D30F1CD1C792006DA33C"
-            BuildableName = "US.app"
-            BlueprintName = "US"
-            ReferencedContainer = "container:US.xcodeproj">
+            BuildableName = "SharedNotes.app"
+            BlueprintName = "SharedNotes"
+            ReferencedContainer = "container:SharedNotes.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

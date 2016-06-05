@@ -534,6 +534,11 @@ public class SMSyncServer : NSObject {
         }
         
         getDictVar("ServerURL", result: &serverURLString)
+        // Make sure the last character of the ServerURL is not a "/".
+        if serverURLString![serverURLString!.endIndex.predecessor()] == "/" {
+            Assert.badMojo(alwaysPrintThisString: "Should not have a trailing '/' on the ServerURL in the \(fileName)!")
+        }
+
         getDictVar("CloudFolderPath", result: &cloudFolderPath)
         getDictVar("GoogleServerClientID", result: &googleServerClientId)
         

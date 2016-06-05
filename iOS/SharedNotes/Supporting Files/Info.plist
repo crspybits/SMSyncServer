@@ -25,7 +25,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.973140004732-nss95sev1cscktkds4nr8vchvbnkuh7g</string>
+				<string>com.googleusercontent.apps.741700267355-paauncml151t7dkdjqutdg4o5kvd2g2p</string>
 			</array>
 		</dict>
 		<dict>
@@ -33,7 +33,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>biz.SpasticMuffin.NetDb</string>
+				<string>biz.SpasticMuffin.SharedNotes</string>
 			</array>
 		</dict>
 	</array>

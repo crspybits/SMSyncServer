@@ -57,7 +57,7 @@ class ViewController: UIViewController {
         case .Idle, .NetworkNotConnected, .Synchronizing, .ResettingFromError:
             break
         
-        case .ClientAPIError, .NonRecoverableError, .InternalError:
+        case .NonRecoverableError, .InternalError:
             let alert = UIAlertController(title: "Reset error?", message: nil, preferredStyle: .ActionSheet)
             alert.addAction(UIAlertAction(title: "Reset", style: .Destructive) { action in
                 SMSyncServer.session.resetFromError()
@@ -309,9 +309,6 @@ extension ViewController : SMSyncServerDelegate {
         switch newMode {
         case .Synchronizing, .ResettingFromError:
             self.spinner.start()
-        
-        case .ClientAPIError:
-            self.spinner.stop(withBackgroundColor: .Yellow)
             
         case .NonRecoverableError, .InternalError:
             self.spinner.stop(withBackgroundColor: .Red)
