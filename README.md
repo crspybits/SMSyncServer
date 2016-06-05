@@ -151,70 +151,135 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 # Shared Notes Demo App
 
-In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Open the project `Shared Notes.workspace` in Xcode.
+In `iOS/SharedNotes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Open the project `SharedNotes.workspace` in Xcode.
 
 # Usage Examples
-* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.
+* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#markdown-header-shared-notes-demo-app). 
 
-* In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted after upload.
+* In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted by the SMSyncServer framework after upload. Some of these examples are extracted from README_Examples.swift in the XCTests for the Tests app.
 
 * The `SMSyncServer.session.delegate` provides information about the completion of server operations, errors etc.
 
-* Files are referenced by UUID's. Typically this occurs via `SMSyncAttributes` objects. Example:
+* Files are referenced by NSUUID's. Typically this occurs via `SMSyncAttributes` objects. Example:
 
 	`SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)`
 
 ## 1) Uploading: Immutable Files
 
-	let testFile1 = TestBasics.session.createTestFile("TwoFileUpload1")
+	let url = SMRelativeLocalURL(withRelativePath: "READMEUploadImmutableFile", toBaseURLType: .DocumentsDirectory)!
 	
-	SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+	// Just to put some content in the file. This content would, of course, depend on your app.
+	let exampleFileContents = "Hello World!"
+	try! exampleFileContents.writeToURL(url, atomically: true, encoding: NSUTF8StringEncoding)
 	
-	let testFile2 = TestBasics.session.createTestFile("TwoFileUpload2")
+	 // you would normally store this persistently, e.g., in CoreData. The UUID lets you reference the particular file, later, to the SMSyncServer framework.
+	let uuid = NSUUID()
 	
-	SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+	let attr = SMSyncAttributes(withUUID: uuid, mimeType: "text/plain", andRemoteFileName: uuid.UUIDString)
 	
-	SMSyncServer.session.commit()
-    
+	do {
+		try SMSyncServer.session.uploadImmutableFile(url, withFileAttributes: attr)
+	} catch (let error) {
+		print("Yikes: There was an error with uploadImmutableFile: \(error)")
+	}
+	
+	// You could call uploadImmutableFile (or the other upload or deletion methods) any number of times, to queue up a group of files for upload.
+	
+	// The commit call actually starts the upload process.
+	do {
+		try SMSyncServer.session.commit()
+	} catch (let error) {
+		print("Yikes: There was an error with commit: \(error)")
+	}
+
 ## 2) Uploading: Temporary Files
 
-	let testFile = TestBasics.session.createTestFile("SingleTemporaryFileUpload")
+	let url = SMRelativeLocalURL(withRelativePath: "READMEUploadTemporaryFile", toBaseURLType: .DocumentsDirectory)!
 	
-	SMSyncServer.session.uploadTemporaryFile(testFile.url, withFileAttributes: testFile.attr)
+	// Just to put some content in the file. This content would, of course, depend on your app.
+	let exampleFileContents = "Hello World!"
+	try! exampleFileContents.writeToURL(url, atomically: true, encoding: NSUTF8StringEncoding)
 	
-	SMSyncServer.session.commit()
+	 // you would normally store this persistently, e.g., in CoreData. The UUID lets you reference the particular file, later, to the SMSyncServer framework.
+	let uuid = NSUUID()
+	
+	let attr = SMSyncAttributes(withUUID: uuid, mimeType: "text/plain", andRemoteFileName: uuid.UUIDString)
+	
+	do {
+		try SMSyncServer.session.uploadTemporaryFile(url, withFileAttributes: attr)
+	} catch (let error) {
+		print("Yikes: There was an error with uploadTemporaryFile: \(error)")
+	}
+	
+	// You could call uploadTemporaryFile (or the other upload or deletion methods) any number of times, to queue up a group of files for upload.
+	
+	// The commit call actually starts the upload process.
+	do {
+		try SMSyncServer.session.commit()
+	} catch (let error) {
+		print("Yikes: There was an error with commit: \(error)")
+	}
 
 ## 3) Uploading: NSData
 
-	let cloudStorageFileName = "SingleDataUpload"
-	let fileUUID = UUID.make()
-	let fileAttributes = SMSyncAttributes(withUUID: NSUUID(UUIDString: fileUUID)!, mimeType: "text/plain", andRemoteFileName: cloudStorageFileName)
+	// Just example content. This content would, of course, depend on your app.
+	let exampleContents = "Hello World!"
+	let data = exampleContents.dataUsingEncoding(NSUTF8StringEncoding)!
 	
-	let strData: NSString = "SingleDataUpload file contents"
-	let data = strData.dataUsingEncoding(NSUTF8StringEncoding)
+	 // you would normally store this persistently, e.g., in CoreData. The UUID lets you reference the particular data object, later, to the SMSyncServer framework.
+	let uuid = NSUUID()
 	
-	SMSyncServer.session.uploadData(data!, withDataAttributes: fileAttributes)
+	let attr = SMSyncAttributes(withUUID: uuid, mimeType: "text/plain", andRemoteFileName: uuid.UUIDString)
 	
-	SMSyncServer.session.commit()
+	do {
+		try SMSyncServer.session.uploadData(data, withDataAttributes: attr)
+	} catch (let error) {
+		print("Yikes: There was an error with uploadData: \(error)")
+	}
+	
+	// You could call uploadData (or the other upload or deletion methods) any number of times, to queue up a group of files/data for upload.
+	
+	// The commit call actually starts the upload process.
+	do {
+		try SMSyncServer.session.commit()
+	} catch (let error) {
+		print("Yikes: There was an error with commit: \(error)")
+	}
+	
+## 4) App specific metadata
 
-## 4) Deletion
+	// SMSyncAttributes has an app-dependent meta data property that is a dictionary:
+	public typealias SMAppMetaData = [String:AnyObject]
+    public var appMetaData:SMAppMetaData?
+    
+    // Any time you upload a file/data object you can change this meta data, and when when synced with other devices, those other devices will receive this meta data for the file/data object.
 
-This allows you to mark a file as deleted locally, and also mark it as deleted on the server. Other devices, on a download, will have the delegate method `syncServerClientShouldDeleteFiles` triggered (see below).
+## 5) Deletion
+
+// This allows you to mark a file as deleted locally, and also mark it as deleted on the server. Other devices, on a download, will have the delegate method `syncServerClientShouldDeleteFiles` triggered (see below).
 
 	// File referenced by uuid is assumed to exist in cloud storage
 	let uuid = ...
 	
-	SMSyncServer.session.deleteFile(uuid)
-	
-	SMSyncServer.session.commit()
-        
-## 5) Download
+	do {
+		try SMSyncServer.session.deleteFile(uuid)
+	} catch (let error) {
+		print("Yikes: There was an error with deleteFile: \(error)")
+	}
 
-Downloads are caused by other devices uploading files, and these are initiated by the SMSyncServer and reported by the delegate method `syncServerDownloadsComplete` (see below). If needed, you can programmatically make a sync request which will do any currently needed downloads:
+	do {
+		try SMSyncServer.session.commit()
+	} catch (let error) {
+		print("Yikes: There was an error with commit: \(error)")
+	}	
+        
+## 6) Download
+
+// Downloads are caused by other devices uploading files, and these are initiated by the SMSyncServer and reported by the delegate method `syncServerShouldSaveDownloads` (see below). If needed, you can programmatically make a sync request which will do any currently needed downloads:
 
 	SMSyncServer.session.sync()
     
-## 6) SMSyncServer.session.delegate
+## 7) SMSyncServer.session.delegate
 
 	// These delegate methods are called on the main thread.
 	public protocol SMSyncServerDelegate : class {

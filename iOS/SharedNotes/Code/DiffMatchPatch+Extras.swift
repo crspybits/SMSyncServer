@@ -17,7 +17,7 @@ extension DiffMatchPatch {
         "Diff(DIFF_INSERT,\"\U00b6What's going on\")"
     )
     
-    This method just concatenates all of the diff results, equal, delete, insert etc. together, which creates a simple merge of the two strings.
+    This method just concatenates all of the diff results, equal, delete, insert etc. together, which creates a simple merge of the two strings. Puts a space between pairs of various inserts, deletes etc. as I think this looks better than just mushing them together.
     */
     func diff_simpleMerge(firstString firstString:String, secondString: String) -> String {
         let diffs = self.diff_mainOfOldString(firstString, andNewString: secondString)
@@ -26,6 +26,9 @@ extension DiffMatchPatch {
         var concatenatedDiffText:String = ""
         for obj in diffs {
             let diff = obj as! Diff
+            if concatenatedDiffText != "" {
+                concatenatedDiffText += " "
+            }
             concatenatedDiffText += diff.text
         }
         

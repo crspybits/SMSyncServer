@@ -6,7 +6,7 @@
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 
-// A text view with images.
+// A text view with images. Deals with keyboard appearing and disappearing by changing the .bottom property of the .contentInset.
 
 import Foundation
 
@@ -60,6 +60,33 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
     
     private func setup() {
         super.delegate = self
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWillShow), name: UIKeyboardWillShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWillHide), name: UIKeyboardWillHideNotification, object: nil)
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: nil)
+    }
+    
+    private var originalEdgeInsets:UIEdgeInsets?
+    
+    // There are a number of ways to get the text view to play well the keyboard *and* autolayout: http://stackoverflow.com/questions/14140536/resizing-an-uitextview-when-the-keyboard-pops-up-with-auto-layout (see https://developer.apple.com/library/ios/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/KeyboardManagement/KeyboardManagement.html for the idea of changing bottom .contentInset). I didn't use http://stackoverflow.com/questions/12924649/autolayout-constraint-keyboard, but it seems to be another means.
+    @objc private func keyboardWillShow(notification:NSNotification) {
+        let info = notification.userInfo!
+        let kbFrame = info[UIKeyboardFrameEndUserInfoKey] as! NSValue
+        let keyboardFrame = kbFrame.CGRectValue()
+        Log.msg("keyboardFrame: \(keyboardFrame)")
+        
+        self.originalEdgeInsets = self.contentInset
+        var insets = self.contentInset
+        insets.bottom += keyboardFrame.size.height
+        self.contentInset = insets
+    }
+
+    @objc private func keyboardWillHide(notification:NSNotification) {
+        self.contentInset = self.originalEdgeInsets!
     }
     
     public func insertImageAtCursorLocation(image:UIImage, imageId:NSUUID?) {
