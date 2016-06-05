@@ -91,7 +91,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 
-* A useful way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder.
+* One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#markdown-header-shared-notes-demo-app). 
 
 * Next, you need to replace the `GoogleService-Info.plist` symbolic link with your actual .plist file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>. Make sure you enable the Google Drive API for your Google project.
@@ -149,9 +149,9 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You will also need to setup a delegate for the SMSyncServer session shared instance.
 
-# Demo App: Shared Notes
+# Shared Notes Demo App
 
-In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of notes across iOS devices. Open the project `Shared Notes.workspace` in Xcode.
+In `iOS/Shared Notes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Open the project `Shared Notes.workspace` in Xcode.
 
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`). The following examples are extracted from those XCTests.
