@@ -2,7 +2,7 @@ Contents:
 [Introduction](#markdown-header-introduction)  
 [Development Status](#markdown-header-development-status)  
 [Installation](#markdown-header-installation)  
-[SharedNotes Demo App](#markdown-header-shared-notes-demo-app).  
+[SharedNotes Demo App](#markdown-header-shared-notes-demo-app) 
 [Usage examples](#markdown-header-usage-examples)  
 
 # Introduction
