@@ -12,8 +12,8 @@ SMSyncServer has the following general goals:
 1. Giving end-users permanent access to their mobile app data,  
 1. Synchronizing mobile app data across end-user devices,  
 1. Reducing data storage costs for app developers/publishers,  
-1. Allowing sharing of data with other users, and
-1. Cross-platform synchronization (e.g., iOS, Android).
+1. Allowing sharing of data with other users,  
+1. Cross-platform synchronization (e.g., iOS, Android), and  
 1. Synchronized devices need only be [Occasionally Connected](https://msdn.microsoft.com/en-us/library/ff650163.aspx) to a network.
 
 More detailed characteristics of the SMSyncServer:
@@ -153,6 +153,8 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 # Shared Notes Demo App
 
 In `iOS/SharedNotes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Open the project `SharedNotes.workspace` in Xcode.
+
+[YouTube Demo of SharedNotes app](https://www.youtube.com/watch?v=9AVZa_pNvdo).
 
 # Usage Examples
 * The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#markdown-header-shared-notes-demo-app). 
