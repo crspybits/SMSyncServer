@@ -147,47 +147,24 @@ internal class SMServerNetworking {
         let mimeType = sendParameters![SMServerConstants.fileMIMEtypeKey]
         Assert.If(mimeType == nil, thenPrintThisString: "You must give a mime type!")
         
-        /*
-        self.manager.POST(serverURL.absoluteString, parameters: sendParameters, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
-                // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
-                // Was getting an odd try/catch error here, so this is the reason for "try!"; see https://github.com/AFNetworking/AFNetworking/issues/3005
-                // 12/12/15; I think this issue was because I wasn't doing the do/try/catch, however.
-                do {
-                    try formData.appendPartWithFileURL(fileToUpload, name: SMServerConstants.fileUploadFieldName, fileName: SMServerConstants.fileUploadFieldName, mimeType: mimeType! as! String)
-                    //try formData.appendPartWithFileURL(fileToUpload, name: SMServerConstants.fileUploadFieldName)
-                } catch let error {
-                    let message = "Failed to appendPartWithFileURL: \(fileToUpload); error: \(error)!"
-                    Log.error(message)
-                    completion?(serverResponse: nil, error: Error.Create(message))
-                }
-            },
-            progress: nil,
-            success: { (request:NSURLSessionDataTask, response:AnyObject?) in
-                if let responseDict = response as? [String:AnyObject] {
-                    print("AFNetworking Success: \(response)")
-                    completion?(serverResponse: responseDict, error: nil)
-                }
-                else {
-                    let error = Error.Create("No dictionary given in response")
-                    print("**** AFNetworking FAILURE: \(error)")
-                    completion?(serverResponse: nil, error: error)
-                }
-            },
-            failure: { (request:NSURLSessionDataTask?, error:NSError) in
-                Log.msg("**** AFNetworking FAILURE: \(error)")
-                completion?(serverResponse: nil, error: error)
-            })
-        */
-        
         var error:NSError? = nil
+
+        // For the reason for this JSON serialization, see https://stackoverflow.com/questions/37449472/afnetworking-v3-1-0-multipartformrequestwithmethod-uploads-json-numeric-values-w/
+        var jsonData:NSData?
         
-        // let fileData = NSData(contentsOfURL: fileToUpload)
-        // Log.special("size of fileData: \(fileData!.length)")
+        do {
+            try jsonData = NSJSONSerialization.dataWithJSONObject(sendParameters!, options: NSJSONWritingOptions(rawValue: 0))
+        } catch (let error) {
+            Assert.badMojo(alwaysPrintThisString: "Yikes: Error serializing to JSON data: \(error)")
+        }
+        
+        // The server needs to pull SMServerConstants.serverParametersForFileUpload out of the request body, then convert the value to JSON
+        let serverParameters = [SMServerConstants.serverParametersForFileUpload : jsonData!]
         
         // http://stackoverflow.com/questions/34517582/how-can-i-prevent-modifications-of-a-png-file-uploaded-using-afnetworking-to-a-n
         // I have now set the COMPRESS_PNG_FILES Build Setting to NO to deal with this.
         
-        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: sendParameters, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
+        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: serverParameters, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
                 // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
                 // Was getting an odd try/catch error here, so this is the reason for "try!"; see https://github.com/AFNetworking/AFNetworking/issues/3005
                 // 12/12/15; I think this issue was because I wasn't doing the do/try/catch, however.
@@ -232,76 +209,6 @@ internal class SMServerNetworking {
         }
         
         self.uploadTask?.resume()
-
-        /*
-        self.manager.POST(serverURL.absoluteString, parameters: sendParameters, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
-            // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
-            // Was getting an odd try/catch error here, so this is the reason for "try!"; see https://github.com/AFNetworking/AFNetworking/issues/3005
-            // 12/12/15; I think this issue was because I wasn't doing the do/try/catch, however.
-            do {
-                try formData.appendPartWithFileURL(fileToUpload, name: SMServerConstants.fileUploadFieldName, fileName: SMServerConstants.fileUploadFieldName, mimeType: mimeType! as! String)
-                //try formData.appendPartWithFileURL(fileToUpload, name: SMServerConstants.fileUploadFieldName)
-            } catch let error {
-                let message = "Failed to appendPartWithFileURL: \(fileToUpload); error: \(error)!"
-                Log.error(message)
-                completion?(serverResponse: nil, error: Error.Create(message))
-            }
-        }, success: { (request: AFHTTPRequestOperation, response:AnyObject) in
-            if let responseDict = response as? [String:AnyObject] {
-                print("AFNetworking Success: \(response)")
-                completion?(serverResponse: responseDict, error: nil)
-            }
-            else {
-                let error = Error.Create("No dictionary given in response")
-                print("**** AFNetworking FAILURE: \(error)")
-                completion?(serverResponse: nil, error: error)
-            }
-        }, failure:  { (request: AFHTTPRequestOperation?, error:NSError) in
-            print("**** AFNetworking FAILURE: \(error)")
-            completion?(serverResponse: nil, error: error)
-        })
-        */
-        
-        // This was not working with multer on the server side. I was getting req.file and req.files as undefined. Seems this doesn't use a multi-part form.
-        /*
-        Alamofire.upload(.POST, serverURL, file: fileURL)
-             .progress { bytesWritten, totalBytesWritten, totalBytesExpectedToWrite in
-                 print(totalBytesWritten)
-
-                 // This closure is NOT called on the main queue for performance
-                 // reasons. To update your ui, dispatch to the main queue.
-                 dispatch_async(dispatch_get_main_queue()) {
-                     print("Total bytes written: \(totalBytesWritten)")
-                 }
-             }
-             .responseJSON { response in
-                 debugPrint(response)
-             }
-        */
-        
-        /*
-        // https://github.com/Alamofire/Alamofire/issues/679
-        Alamofire.upload(
-            .POST,
-            serverURL,
-            multipartFormData: { multipartFormData in
-                // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
-                multipartFormData.appendBodyPart(fileURL: fileURL, name: SMSyncServerConstants.fileUploadFieldName)
-            },
-            encodingCompletion: { encodingResult in
-                switch encodingResult {
-                case .Success(let upload, _, _):
-                    upload.progress { bytesRead, totalBytesRead, totalBytesExpectedToRead in
-                        print(totalBytesRead)
-                    }
-                    upload.responseJSON { result in
-                        debugPrint(result)
-                    }
-                case .Failure(let encodingError):
-                    print(encodingError)
-                }
-            })
-            */
     }
     
     internal func downloadFileFrom(serverURL: NSURL, fileToDownload:NSURL, withParameters parameters:[String:AnyObject]?, completion:((serverResponse:[String:AnyObject]?, error:NSError?)->())?) {

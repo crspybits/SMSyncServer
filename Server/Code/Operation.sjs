@@ -33,10 +33,12 @@ function Operation(request, response, errorHandling) {
     
     // The client expects a dictionary in response.
     self.result = {};
+    
     // Many more cases fail than succeed, so make failure the default.
     self.result[ServerConstants.resultCodeKey] = ServerConstants.rcOperationFailed;
     
     // See macros.sjs for usage. Only used in development.
+    // TODO: "Compile" this out (using a macro?) in development.
     self.debugTestCase = request.body[ServerConstants.debugTestCaseKey];
     
     // This important output on logging- may want to change the color to be something more distinctive.

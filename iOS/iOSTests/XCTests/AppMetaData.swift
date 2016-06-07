@@ -137,15 +137,15 @@ class AppMetaData: BaseClass {
         self.downloadOneFile(testFile) { dict in
             let fileType = dict["FileType"] as? String
             let fruit = dict["Fruit"] as? [String]
-            let number = dict["Number"] as? String
-            let numbers = dict["Numbers"] as? [String]
+            let number = dict["Number"] as? Int
+            let numbers = dict["Numbers"] as? [Int]
             let dictionary = dict["Dictionary"] as? [String:String]
 
             if fileType != nil && fruit != nil && number != nil && numbers != nil && dictionary != nil {
                 return fileType! == "Image" &&
                     fruit! == ["Apples", "Oranges", "Bananas"] &&
-                    number! == "100" &&
-                    numbers! == ["1", "2", "3", "4", "5"] &&
+                    number! == 100 &&
+                    numbers! == [1, 2, 3, 4, 5] &&
                     dictionary! == ["a":"b", "c": "d"]
             }
             else {
@@ -166,13 +166,14 @@ class AppMetaData: BaseClass {
             "SecondUploadCanChangeMetaData")
         testFile.appMetaData = ["Test" : 1]
         
+        self.extraServerResponseTime = 30
+
         self.waitUntilSyncServerUserSignin() {
             self.uploadFiles([testFile], uploadExpectations: [uploadExpectation1], commitComplete: commitComplete1, idleExpectation: idleExpectation1) {
                 let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
                 XCTAssert(attr != nil)
                 XCTAssert(attr!.appMetaData != nil)
-                
-                let number = SMExtras.getIntFromDictValue(attr!.appMetaData!["Test"])
+                let number = attr!.appMetaData!["Test"] as? Int
                 XCTAssert(number == 1)
                 
                 testFile.appMetaData = ["Test" : 2]
@@ -181,8 +182,7 @@ class AppMetaData: BaseClass {
                     let attr = SMSyncServer.session.localFileStatus(testFile.uuid)
                     XCTAssert(attr != nil)
                     XCTAssert(attr!.appMetaData != nil)
-                    
-                    let number = SMExtras.getIntFromDictValue(attr!.appMetaData!["Test"])
+                    let number = attr!.appMetaData!["Test"] as? Int
                     XCTAssert(number == 2)
                 }
             }

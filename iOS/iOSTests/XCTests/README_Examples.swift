@@ -146,8 +146,4 @@ class README_Examples: BaseClass {
             }
         }
     }
-    
-    func testThatREADMEDeletionWorks() {
-    
-    }
 }

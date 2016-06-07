@@ -284,4 +284,7 @@ function define(name, value) {
     // Used in the file upload form. This is not a key specifically, but has to correspond to that used on the server.
 	define("fileUploadFieldName", "file");
     
+    // Also used in file upload. Gives JSON parameters that must be parsed on server.
+	define("serverParametersForFileUpload", "serverParams");
+    
 // ***** This is a machine generated file: Do not change by hand!! *****

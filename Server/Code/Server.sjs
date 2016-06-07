@@ -229,6 +229,10 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
 */
 // Failure mode analysis: File may have been moved into our temporary directory and/or entry may have been created in PSOutboundFileChange.
 app.post('/' + ServerConstants.operationUploadFile, upload, function (request, response) {
+    // Somewhat of a hack, but due to the way that the file upload works on the iOS client we have to do some processing of the parameters out of the body ourselves. I'm doing this at the very start of the operation so that the Operation constructor gets the proper JSON valued request.body. See also https://stackoverflow.com/questions/37449472/afnetworking-v3-1-0-multipartformrequestwithmethod-uploads-json-numeric-values-w/37684827#37684827
+    // TODO: When other (e.g., Android) clients are created, we may need to condition this step based on the type of client.
+    request.body = JSON.parse(request.body[ServerConstants.serverParametersForFileUpload]);
+    
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
