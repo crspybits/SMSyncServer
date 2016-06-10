@@ -13,15 +13,21 @@
 		831594F91C9B4BCB00D55E3A /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */; };
 		831594FB1C9B4BCB00D55E3A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
 		831595241CA0E3B600D55E3A /* SMRelativeLocalURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */; };
+		831DEF761D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 831DEF741D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		831DEF771D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 831DEF751D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.m */; };
+		831DEF981D08807E004CAE49 /* ImageStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 831DEF961D08807E004CAE49 /* ImageStorage.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		831DEF991D08807E004CAE49 /* ImageStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 831DEF971D08807E004CAE49 /* ImageStorage.m */; };
+		831DF0D31D0A004F004CAE49 /* UIImage+Resize.h in Headers */ = {isa = PBXBuildFile; fileRef = 831DF0D11D0A004F004CAE49 /* UIImage+Resize.h */; };
+		831DF0D41D0A004F004CAE49 /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = 831DF0D21D0A004F004CAE49 /* UIImage+Resize.m */; };
 		8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 8322EBDE1C71577300DF418C /* NSThread+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8322EBE11C71577300DF418C /* NSThread+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EBDF1C71577300DF418C /* NSThread+Extras.m */; };
 		8346BC051C6EE28200AC657D /* SMMultiPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346BC041C6EE28200AC657D /* SMMultiPeer.swift */; };
 		8346E1FE1D011A3C006C2637 /* SMImageTextView+JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1FD1D011A3B006C2637 /* SMImageTextView+JSON.swift */; };
 		835D800E1C6422F9004DBF79 /* SMModal.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D800C1C6422F9004DBF79 /* SMModal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D800F1C6422F9004DBF79 /* SMModal.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D800D1C6422F9004DBF79 /* SMModal.m */; };
-		835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80161C6423BF004DBF79 /* SMAppearance.h */; };
+		835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D80161C6423BF004DBF79 /* SMAppearance.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D80191C6423BF004DBF79 /* SMAppearance.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80171C6423BF004DBF79 /* SMAppearance.m */; };
-		835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801B1C6423FA004DBF79 /* SMRotation.h */; };
+		835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801B1C6423FA004DBF79 /* SMRotation.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D801E1C6423FA004DBF79 /* SMRotation.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D801C1C6423FA004DBF79 /* SMRotation.m */; };
 		835D80211C64242E004DBF79 /* UIViewController+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D801F1C64242E004DBF79 /* UIViewController+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D80221C64242E004DBF79 /* UIViewController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80201C64242E004DBF79 /* UIViewController+Extras.m */; };
@@ -184,6 +190,12 @@
 		831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
 		831594FA1C9B4BCB00D55E3A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMRelativeLocalURL.swift; path = Code/General/v1/SMRelativeLocalURL.swift; sourceTree = "<group>"; };
+		831DEF741D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HPTextViewTapGestureRecognizer.h; path = Code/SDKs/HPTextViewTapGestureRecognizer/HPTextViewTapGestureRecognizer/HPTextViewTapGestureRecognizer.h; sourceTree = "<group>"; };
+		831DEF751D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = HPTextViewTapGestureRecognizer.m; path = Code/SDKs/HPTextViewTapGestureRecognizer/HPTextViewTapGestureRecognizer/HPTextViewTapGestureRecognizer.m; sourceTree = "<group>"; };
+		831DEF961D08807E004CAE49 /* ImageStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImageStorage.h; path = Code/General/v1/PersistentStorage/ImageStorage.h; sourceTree = "<group>"; };
+		831DEF971D08807E004CAE49 /* ImageStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ImageStorage.m; path = Code/General/v1/PersistentStorage/ImageStorage.m; sourceTree = "<group>"; };
+		831DF0D11D0A004F004CAE49 /* UIImage+Resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+Resize.h"; path = "Code/Categories/v1/UIImage+Resize.h"; sourceTree = "<group>"; };
+		831DF0D21D0A004F004CAE49 /* UIImage+Resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+Resize.m"; path = "Code/Categories/v1/UIImage+Resize.m"; sourceTree = "<group>"; };
 		8322EBDE1C71577300DF418C /* NSThread+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSThread+Extras.h"; path = "Code/Categories/v1/NSThread+Extras.h"; sourceTree = "<group>"; };
 		8322EBDF1C71577300DF418C /* NSThread+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSThread+Extras.m"; path = "Code/Categories/v1/NSThread+Extras.m"; sourceTree = "<group>"; };
 		8346BC041C6EE28200AC657D /* SMMultiPeer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMMultiPeer.swift; path = Code/Network/v1/SMMultiPeer.swift; sourceTree = "<group>"; };
@@ -356,6 +368,38 @@
 			path = SMCoreLibTests;
 			sourceTree = "<group>";
 		};
+		831DEF731D07C8F4004CAE49 /* HPTextViewTapGestureRecognizer */ = {
+			isa = PBXGroup;
+			children = (
+				831DEF741D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.h */,
+				831DEF751D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.m */,
+			);
+			name = HPTextViewTapGestureRecognizer;
+			sourceTree = "<group>";
+		};
+		831DEF951D088040004CAE49 /* Persistent Storage */ = {
+			isa = PBXGroup;
+			children = (
+				83D3ED7A1C4DC92800BFDA93 /* FileStorage.h */,
+				83D3ED7B1C4DC92800BFDA93 /* FileStorage.m */,
+				831DEF961D08807E004CAE49 /* ImageStorage.h */,
+				831DEF971D08807E004CAE49 /* ImageStorage.m */,
+				83823E461CF2BD7200E28B76 /* FileExtras.swift */,
+			);
+			name = "Persistent Storage";
+			sourceTree = "<group>";
+		};
+		831DEF9A1D088117004CAE49 /* Timers */ = {
+			isa = PBXGroup;
+			children = (
+				83D3ED7F1C4DC92800BFDA93 /* RepeatingTimer.h */,
+				83D3ED801C4DC92800BFDA93 /* RepeatingTimer.m */,
+				83D3ED811C4DC92800BFDA93 /* TimedCallback.h */,
+				83D3ED821C4DC92800BFDA93 /* TimedCallback.m */,
+			);
+			name = Timers;
+			sourceTree = "<group>";
+		};
 		835D800A1C6422CE004DBF79 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
@@ -519,6 +563,7 @@
 		83D3ED071C4DC7AD00BFDA93 /* SDKs */ = {
 			isa = PBXGroup;
 			children = (
+				831DEF731D07C8F4004CAE49 /* HPTextViewTapGestureRecognizer */,
 				83D3ED171C4DC83400BFDA93 /* Globbing */,
 				83D3ED161C4DC82D00BFDA93 /* Reachability */,
 				83D3ED151C4DC82400BFDA93 /* AFNetworking+UIKit */,
@@ -570,21 +615,16 @@
 		83D3ED0C1C4DC7EC00BFDA93 /* General */ = {
 			isa = PBXGroup;
 			children = (
+				831DEF951D088040004CAE49 /* Persistent Storage */,
+				831DEF9A1D088117004CAE49 /* Timers */,
 				83D3ED761C4DC92800BFDA93 /* BiRef.h */,
 				83D3ED771C4DC92800BFDA93 /* BiRef.m */,
 				83D3ED781C4DC92800BFDA93 /* Debounce.h */,
 				83D3ED791C4DC92800BFDA93 /* Debounce.m */,
-				83823E461CF2BD7200E28B76 /* FileExtras.swift */,
-				83D3ED7A1C4DC92800BFDA93 /* FileStorage.h */,
-				83D3ED7B1C4DC92800BFDA93 /* FileStorage.m */,
 				83D3ED7C1C4DC92800BFDA93 /* SMIdentifiers2.h */,
 				83D3ED7D1C4DC92800BFDA93 /* SMIdentifiers2.m */,
 				83D3ED7E1C4DC92800BFDA93 /* Synchronized.swift */,
-				83D3ED7F1C4DC92800BFDA93 /* RepeatingTimer.h */,
-				83D3ED801C4DC92800BFDA93 /* RepeatingTimer.m */,
 				835D80151C6423BF004DBF79 /* SMAppearance */,
-				83D3ED811C4DC92800BFDA93 /* TimedCallback.h */,
-				83D3ED821C4DC92800BFDA93 /* TimedCallback.m */,
 				83D3ED831C4DC92800BFDA93 /* UUID.h */,
 				83D3ED841C4DC92800BFDA93 /* UUID.m */,
 				83D3ED851C4DC92800BFDA93 /* WeakRef.h */,
@@ -642,6 +682,8 @@
 				835D80241C64243E004DBF79 /* UINavigationController+Extras.m */,
 				8322EBDE1C71577300DF418C /* NSThread+Extras.h */,
 				8322EBDF1C71577300DF418C /* NSThread+Extras.m */,
+				831DF0D11D0A004F004CAE49 /* UIImage+Resize.h */,
+				831DF0D21D0A004F004CAE49 /* UIImage+Resize.m */,
 				83A71EA81C8E3A6000701BCB /* UITableView+Extras.h */,
 				83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */,
 				83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */,
@@ -735,6 +777,8 @@
 				83D3EDA91C4DC93900BFDA93 /* SPASLog.h in Headers */,
 				83D3ED8B1C4DC92800BFDA93 /* FileStorage.h in Headers */,
 				83D3ED921C4DC92800BFDA93 /* TimedCallback.h in Headers */,
+				831DEF761D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.h in Headers */,
+				831DF0D31D0A004F004CAE49 /* UIImage+Resize.h in Headers */,
 				835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */,
 				83FB1DF01CF66EDE00D1D1E6 /* UIRefreshControl+AFNetworking.h in Headers */,
 				83A71EAE1C8E3A6000701BCB /* UITableViewCell+Extras.h in Headers */,
@@ -758,6 +802,7 @@
 				835D80181C6423BF004DBF79 /* SMAppearance.h in Headers */,
 				83D3EDA61C4DC93900BFDA93 /* SMAssert.h in Headers */,
 				83D3ED8D1C4DC92800BFDA93 /* SMIdentifiers2.h in Headers */,
+				831DEF981D08807E004CAE49 /* ImageStorage.h in Headers */,
 				8322EBE01C71577300DF418C /* NSThread+Extras.h in Headers */,
 				83D3ED961C4DC92800BFDA93 /* WeakRef.h in Headers */,
 				835D801D1C6423FA004DBF79 /* SMRotation.h in Headers */,
@@ -966,6 +1011,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				831DEF771D07C90F004CAE49 /* HPTextViewTapGestureRecognizer.m in Sources */,
 				83FB1DEF1CF66EDE00D1D1E6 /* UIProgressView+AFNetworking.m in Sources */,
 				83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */,
 				83D3EDA71C4DC93900BFDA93 /* SMAssert.m in Sources */,
@@ -988,6 +1034,7 @@
 				83D3ED671C4DC89200BFDA93 /* KeyChain.m in Sources */,
 				839CAEA31CF1453D0072C1BD /* SMImageTextView.swift in Sources */,
 				83FB1E0B1CF66EEE00D1D1E6 /* AFURLResponseSerialization.m in Sources */,
+				831DEF991D08807E004CAE49 /* ImageStorage.m in Sources */,
 				83D3ED8A1C4DC92800BFDA93 /* Debounce.m in Sources */,
 				55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */,
 				83D3EDB51C4DC96400BFDA93 /* UIView+Extras.m in Sources */,
@@ -1013,6 +1060,7 @@
 				831595241CA0E3B600D55E3A /* SMRelativeLocalURL.swift in Sources */,
 				83FB1E021CF66EEE00D1D1E6 /* AFHTTPSessionManager.m in Sources */,
 				83D3EDA31C4DC93900BFDA93 /* Log.swift in Sources */,
+				831DF0D41D0A004F004CAE49 /* UIImage+Resize.m in Sources */,
 				83D3ED611C4DC87700BFDA93 /* NSArray+Globbing.m in Sources */,
 				83D3ED881C4DC92800BFDA93 /* BiRef.m in Sources */,
 				83D3ED751C4DC90400BFDA93 /* SMUIMessages.m in Sources */,

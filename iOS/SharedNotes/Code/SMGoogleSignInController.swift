@@ -35,15 +35,6 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         self.signOutButton.addTarget(self, action: #selector(signOutButtonAction), forControlEvents: .TouchUpInside)
         */
         
-        /*
-        self.sync = UIButton(type: .Custom)
-        self.sync.setTitle("Sync", forState: .Normal)
-        frame.origin.y += 100
-        self.sync.frame = frame
-        self.view.addSubview(self.sync)
-        self.sync.addTarget(self, action: #selector(syncButtonAction), forControlEvents: .TouchUpInside)
-        */
-        
         GIDSignIn.sharedInstance().uiDelegate = self
         
         SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(signInCompletedAction))
@@ -51,10 +42,6 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
     
     @objc private func signOutButtonAction() {
         GIDSignIn.sharedInstance().signOut()
-    }
-
-    @objc private func syncButtonAction() {
-        SMSyncServer.session.sync()
     }
     
     @objc private func signInCompletedAction(error:NSError?) {

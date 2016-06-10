@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10117" systemVersion="15E65" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="zaB-JY-Gym">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="zaB-JY-Gym">
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
@@ -89,6 +89,38 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="wpt-z0-LYx" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1968" y="336"/>
+        </scene>
+        <!--Large Image View Controller-->
+        <scene sceneID="O75-OG-MTI">
+            <objects>
+                <viewController storyboardIdentifier="LargeImageViewController" id="G0F-SP-Wky" customClass="LargeImageViewController" customModule="SharedNotes" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="9zA-ci-7wW"/>
+                        <viewControllerLayoutGuide type="bottom" id="23F-NC-pk5"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="0oY-ag-Ez4">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="uIt-wr-1PG">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="23F-NC-pk5" firstAttribute="top" secondItem="uIt-wr-1PG" secondAttribute="bottom" id="A0c-9N-Yad"/>
+                            <constraint firstItem="uIt-wr-1PG" firstAttribute="top" secondItem="0oY-ag-Ez4" secondAttribute="topMargin" id="LBR-tf-GBK"/>
+                            <constraint firstItem="uIt-wr-1PG" firstAttribute="leading" secondItem="0oY-ag-Ez4" secondAttribute="leadingMargin" constant="-20" id="hSK-bU-FMJ"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="uIt-wr-1PG" secondAttribute="trailing" constant="-20" id="ieS-TQ-ULx"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="imageView" destination="uIt-wr-1PG" id="RqP-Pz-bfB"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="wVu-ga-6JL" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2598" y="336"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="SSs-HP-6ww">

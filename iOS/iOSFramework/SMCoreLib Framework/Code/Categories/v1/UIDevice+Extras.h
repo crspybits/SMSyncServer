@@ -40,4 +40,7 @@
 @property (nonatomic, readonly) BOOL orientationIsLandscape;
 @property (nonatomic, readonly) BOOL orientationIsPortrait;
 
+// Is app attached to debugger? Returns NO if this is a production build. See SO link in code.
++ (BOOL) beingDebugged;
+
 @end

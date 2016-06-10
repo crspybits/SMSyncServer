@@ -9,6 +9,8 @@
 #import "ImageStorage.h"
 #import "UIImage+Resize.h"
 #import <ImageIO/ImageIO.h>
+#import "SPASLog.h"
+#import "SMAssert.h"
 
 @implementation ImageStorage
 

@@ -10,11 +10,13 @@
 
 import Foundation
 
-public protocol SMImageTextViewDelegate : class {
-    func smImageTextView(imageTextView:SMImageTextView, imageDeleted:NSUUID?)
+@objc public protocol SMImageTextViewDelegate : class {
+    optional func smImageTextView(imageTextView:SMImageTextView, imageWasDeleted imageId:NSUUID?)
     
-    // Only in an error should this return nil.
+    // You should provide the UIImage corresponding to the NSUUID. Only in an error should this return nil.
     func smImageTextView(imageTextView: SMImageTextView, imageForUUID: NSUUID) -> UIImage?
+    
+    optional func smImageTextView(imageTextView: SMImageTextView, imageWasTapped imageId:NSUUID?)
 }
 
 private class ImageTextAttachment : NSTextAttachment {
@@ -63,12 +65,21 @@ public class SMImageTextView : UITextView, UITextViewDelegate {
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWillShow), name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWillHide), name: UIKeyboardWillHideNotification, object: nil)
+        
+        let tapGesture = HPTextViewTapGestureRecognizer()
+        tapGesture.delegate = self
+        self.addGestureRecognizer(tapGesture)
     }
     
     deinit {
         NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
         NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: nil)
     }
+    
+    /*
+    @objc private func imageTapGestureAction() {
+        Log.msg("imageTapGestureAction")
+    }*/
     
     private var originalEdgeInsets:UIEdgeInsets?
     
@@ -294,12 +305,19 @@ extension SMImageTextView {
                 if let textAttachment = object as? ImageTextAttachment {
                     if NSLocationInRange(imageRange.location, range) {
                         Log.msg("Deletion of image: \(object); range: \(range)")
-                        self.imageDelegate?.smImageTextView(self, imageDeleted: textAttachment.imageId)
+                        self.imageDelegate?.smImageTextView?(self, imageWasDeleted: textAttachment.imageId)
                     }
                 }
             }
         }
 
         return true
+    }
+}
+
+extension SMImageTextView : HPTextViewTapGestureRecognizerDelegate {
+    public func gestureRecognizer(gestureRecognizer: UIGestureRecognizer!, handleTapOnTextAttachment textAttachment: NSTextAttachment!, inRange characterRange: NSRange) {
+        let attach = textAttachment as! ImageTextAttachment
+        self.imageDelegate?.smImageTextView?(self, imageWasTapped: attach.imageId)
     }
 }

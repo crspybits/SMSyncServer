@@ -35,4 +35,6 @@
 // Appends the string to the logfile. Prepends current date to the log message.
 + (void) write:(NSString *) message;
 
++ (void) redirectConsoleLogToDocumentFolder:(bool) clearRedirectLog;
+
 @end

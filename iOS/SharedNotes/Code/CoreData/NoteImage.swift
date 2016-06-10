@@ -73,7 +73,7 @@ class NoteImage: NSManagedObject {
         return CoreData.fetchObjectWithUUID(uuid.UUIDString, usingUUIDKey: UUID_KEY, fromEntityName: self.entityName(), coreDataSession: CoreData.sessionNamed(CoreDataExtras.sessionName)) as? NoteImage
     }
 
-    // Also removes the file at the fileURL. Does not do a SMSyncServer commit when updateServer is true. Only can throw if updateServer is true
+    // Also removes the file at the fileURL. Does not do a SMSyncServer commit. Only can throw if updateServer is true
     func removeObject(andUpdateServer updateServer:Bool) throws {
         let uuid = self.uuid!
         let fileURL = self.fileURL!

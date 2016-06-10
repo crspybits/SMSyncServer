@@ -7,6 +7,7 @@
 //
 
 #import "CallCounter.h"
+@import SMCoreLib;
 
 @interface CallCounter()<NSCoding>
 @property (nonatomic) NSUInteger countOfTimesCalled;

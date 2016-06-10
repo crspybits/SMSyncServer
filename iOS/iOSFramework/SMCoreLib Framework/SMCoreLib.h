@@ -50,6 +50,11 @@ FOUNDATION_EXPORT const unsigned char SMCoreLibVersionString[];
 #import <SMCoreLib/NSThread+Extras.h>
 #import <SMCoreLib/UITableViewCell+Extras.h>
 #import <SMCoreLib/UITableView+Extras.h>
+#import <SMCoreLib/ImageStorage.h>
+#import <SMCoreLib/SMAppearance.h>
+#import <SMCoreLib/SMRotation.h>
 
+// Only really need this internally.
+#import <SMCoreLib/HPTextViewTapGestureRecognizer.h>
 
 

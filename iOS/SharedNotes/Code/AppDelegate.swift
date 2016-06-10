@@ -21,6 +21,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
     
+        Log.redirectConsoleLogToDocumentFolder(clearRedirectLog: false)
+    
         let coreDataSession = CoreData(namesDictionary: [
             CoreDataBundleModelName: "SharedNotes",
             CoreDataSqlliteBackupFileName: "~SharedNotes.sqlite",
@@ -34,11 +36,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // This is the path on the cloud storage service (Google Drive for now) where the app's data will be synced
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        // Starting to establish cloud storage credentials-- user will also have to sign in their specific account.
+        // Starting to establish cloud storage credentials-- user will also have to sign in to their specific account.
         SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)
+        
         SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
         
         return true

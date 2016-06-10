@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6FD0BE8A568536B303639F69 /* Pods_SharedNotes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CEC5BF5FE4DFCB8EE7AEB1D /* Pods_SharedNotes.framework */; };
 		832979621CE03FAC00508783 /* SharedNotesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832979611CE03FAC00508783 /* SharedNotesUITests.swift */; };
+		832A87A71D07C62400CED4BA /* LargeImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832A87A61D07C62400CED4BA /* LargeImageViewController.swift */; };
 		834457891CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m in Sources */ = {isa = PBXBuildFile; fileRef = 834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */; };
 		8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 8344578C1CDDB2E2000C3533 /* ODRefreshControl.m */; };
 		8346E1FA1CFCB42D006C2637 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E1F91CFCB42D006C2637 /* Misc.swift */; };
@@ -99,6 +100,7 @@
 		8329795F1CE03FAB00508783 /* SharedNotesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SharedNotesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		832979611CE03FAC00508783 /* SharedNotesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedNotesUITests.swift; sourceTree = "<group>"; };
 		832979631CE03FAC00508783 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		832A87A61D07C62400CED4BA /* LargeImageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LargeImageViewController.swift; sourceTree = "<group>"; };
 		834457871CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "CALayer+MBAnimationPersistence.h"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.h"; sourceTree = SOURCE_ROOT; };
 		834457881CDDB2C3000C3533 /* CALayer+MBAnimationPersistence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "CALayer+MBAnimationPersistence.m"; path = "SDKs/CALayer+MBAnimationPersistence/CALayer+MBAnimationPersistence.m"; sourceTree = SOURCE_ROOT; };
 		8344578B1CDDB2E2000C3533 /* ODRefreshControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ODRefreshControl.h; path = SDKs/ODRefreshControl/ODRefreshControl/ODRefreshControl.h; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				839739CE1CD96D7D00FD8520 /* ViewController.swift */,
 				83CF346D1CEF65FF00FEA292 /* DiffMatchPatch+Extras.swift */,
 				83973A4E1CDADCBF00FD8520 /* EditNoteViewController.swift */,
+				832A87A61D07C62400CED4BA /* LargeImageViewController.swift */,
 				8346E1F91CFCB42D006C2637 /* Misc.swift */,
 				839739E11CD96F7800FD8520 /* SyncSpinner.swift */,
 				83973A0B1CD9872E00FD8520 /* SMGoogleCredentials.swift */,
@@ -644,6 +647,7 @@
 				83E064D51CE534030088BE37 /* NSString+JavaSubstring.m in Sources */,
 				83E064D61CE534030088BE37 /* NSString+UnicharUtilities.m in Sources */,
 				8344578D1CDDB2E2000C3533 /* ODRefreshControl.m in Sources */,
+				832A87A71D07C62400CED4BA /* LargeImageViewController.swift in Sources */,
 				839739DA1CD96E3F00FD8520 /* SharedNotes.xcdatamodel in Sources */,
 				839739E21CD96F7800FD8520 /* SyncSpinner.swift in Sources */,
 				83E064C91CE533FB0088BE37 /* DiffMatchPatchCFUtilities.c in Sources */,

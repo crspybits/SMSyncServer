@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = 'primary'
-               BlueprintIdentifier = '52D200584D56FF29384998C9'
+               BlueprintIdentifier = 'D1DE1D52815DDF9D9ABCE4B6'
                BlueprintName = 'Pods-SharedNotes'
                ReferencedContainer = 'container:Pods.xcodeproj'
                BuildableName = 'Pods_SharedNotes.framework'>

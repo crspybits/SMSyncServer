@@ -66,8 +66,6 @@
 
 1. Enabling README and other "static" files to be uploaded from a client to server. That is, files that should *not* be downloaded or synced to other devices. These files will also include files such an index.html file that could be used to allow the user to view the app's files. We need to handle these static files quite differently than the other files I've been considering. I could either keep a record of them in the server file index, or not. In any event, a normal getFileIndex from a client should not return these files-- so they don't get downloaded. I tried an implementation of README files using the normal sync mechanism, and its a mess. Way more complicated than it ought to be-- e.g., there's a nasty race condition where multiple apps may be uploading the README, and only one will win-- the others will fail because they are using the same remote file name. That's another thing that will have to be included in this functionality is the ability to overwrite the existing remote cloud file.
 
-1. It would be good to have an option/switch that you can set with the framework to indicate the kind of network that can be used for synchronization. E.g., the user might want to allow/disallow use of cellular data for synchronization. [Thanks to Cory at Comcast VIPER for this idea].
-
 ## SHARING
 
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
@@ -81,6 +79,8 @@
 1. WebSockets or HTTP long polling: Make it possible to not use polling on the app to detect the end of a long-running server operation or the availability of downloads on the server. [See also this example using Redis](http://www.ibm.com/developerworks/cloud/library/cl-bluemix-node-redis-app/index.html).
 
 1. Deal with issue that downloading groups of objects may grow too large. I.e., when uploading we can control a collection of items that need to be uploaded by terminating it with a commit. But have no sense of this on download. An example of a worst case of this is a download of all files with a new device when other device(s) have accumulated a large amount of data/files. Would like some logical, i.e., transactional way of grouping the files for download.
+
+1. It would be good to have an option/switch that you can set with the framework to indicate the kind of network that can be used for synchronization. E.g., the user might want to allow/disallow use of cellular data for synchronization. [Thanks to Cory at Comcast VIPER for this idea].
 
 ## SECURITY
 

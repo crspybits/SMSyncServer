@@ -8,6 +8,7 @@
 
 #import "LogFile.h"
 #import "FileStorage.h"
+#import "UIDevice+Extras.h"
 
 @implementation LogFile
 
@@ -114,5 +115,55 @@
     [lf->fileHandle synchronizeFile];
 }
 
+// Requires plist setting:  UIFileSharingEnabled set to YES
+
+// direct the console log to documents folder.
+
+// From BBT
++ (void) redirectConsoleLogToDocumentFolder:(bool) clearRedirectLog;
+{
+    if ([UIDevice beingDebugged]) {
+        return;
+    }
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+
+    NSString *logPath = [documentsDirectory stringByAppendingPathComponent:@"console.log"];
+
+    if (clearRedirectLog) {
+
+        // For error information
+        NSError *error;
+        
+        // Create file manager
+        NSFileManager *fileMgr = [NSFileManager defaultManager];
+
+        if ([fileMgr removeItemAtPath:logPath error:&error] != YES)
+
+            NSLog(@"Unable to delete file: %@", [error localizedDescription]);
+
+    }
+
+    freopen([logPath cStringUsingEncoding:NSASCIIStringEncoding],"a+",stderr);
+}
+
++ (void) clearR
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+
+    NSString *logPath = [documentsDirectory stringByAppendingPathComponent:@"console.log"];
+
+    // For error information
+    NSError *error;
+
+    // Create file manager
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+
+    [fileMgr removeItemAtPath:logPath error:&error];
+}
 
 @end

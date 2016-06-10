@@ -17,6 +17,9 @@ public class EditNoteImageTextView : SMImageTextView {
     var acquireImage:SMAcquireImage?
     weak var parentViewController:UIViewController!
     
+    // To deal with a funky interaction of pushing to the large image VC.
+    var allowShouldBeginEditing = true
+    
     func commitChanges() {
         if SMSyncServerUser.session.signedIn {
             
@@ -49,6 +52,10 @@ public class EditNoteImageTextView : SMImageTextView {
     
     func textViewDidChange(textView: UITextView) {
         self.didChange = true
+    }
+    
+    func textViewShouldBeginEditing(textView: UITextView) -> Bool {
+        return self.allowShouldBeginEditing
     }
 }
 
@@ -104,6 +111,8 @@ class EditNoteViewController : UIViewController {
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
         self.imageTextView.note = self.note
+        
+        self.imageTextView.allowShouldBeginEditing = true
     }
     
     override func viewDidAppear(animated: Bool) {
@@ -121,10 +130,11 @@ class EditNoteViewController : UIViewController {
 
 extension EditNoteViewController : SMImageTextViewDelegate {
     // User has requested deletion of an image.
-    func smImageTextView(imageTextView:SMImageTextView, imageDeleted uuid:NSUUID?) {
-        Log.msg("UUID of image: \(uuid)")
+    
+    func smImageTextView(imageTextView:SMImageTextView, imageWasDeleted imageId:NSUUID?) {
+        Log.msg("UUID of image: \(imageId)")
         
-        if let noteImage = NoteImage.fetch(withUUID: uuid!) {
+        if let noteImage = NoteImage.fetch(withUUID: imageId!) {
             // Since this is a user request for a deletion, update the server.
             do {
                 try noteImage.removeObject(andUpdateServer: true)
@@ -134,8 +144,6 @@ extension EditNoteViewController : SMImageTextViewDelegate {
             
             // TODO: Does this, as a side effect, cause textViewDidEndEditing to be called. I.e., does the updated note text get uploaded?
         }
-        
-        Log.error("Could not fetch image for uuid: \(uuid)")
     }
     
     // Fetch an image from a file given a UUID
@@ -147,6 +155,25 @@ extension EditNoteViewController : SMImageTextViewDelegate {
         
         Log.error("Could not fetch image for uuid: \(uuid)")
         return nil
+    }
+    
+    func smImageTextView(imageTextView: SMImageTextView, imageWasTapped imageId: NSUUID?) {
+        Log.msg("Tap: \(imageId)")
+        
+        // There is an odd UI effect where I get the keyboard toolbar being black when I pop back from the large image VC. Deal with this in two ways:
+        
+        // 1) For tapping on the image when the keyboard is *not* present initially.
+        self.imageTextView.allowShouldBeginEditing = false
+        
+        // 2) For when the keyboard is present *prior* to the tap.
+        imageTextView.resignFirstResponder()
+        
+        if let largeImageVC = self.storyboard?.instantiateViewControllerWithIdentifier(
+            "LargeImageViewController") as? LargeImageViewController {
+            
+            largeImageVC.imageId = imageId
+            self.navigationController!.pushViewController(largeImageVC, animated: true)
+        }
     }
 }
 

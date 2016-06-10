@@ -173,7 +173,7 @@ extension ViewController : SMSyncServerDelegate {
     private func resolveDownloadConflicts(conflicts:[(downloadedFile: NSURL, downloadedFileAttributes: SMSyncAttributes, uploadConflict: SMSyncServerConflict)]) {
     
         if conflicts.count > 0 {
-            let remainingConflicts = Array(conflicts[1..<conflicts.count])
+            let remainingConflicts = conflicts.tail()
             
             let (url, attr, conflict) = conflicts[0]
             let note = Note.fetch(withUUID: attr.uuid)
@@ -181,6 +181,7 @@ extension ViewController : SMSyncServerDelegate {
             
             // If we had useful remote names for files, we could show it to them...
             // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
+            // TODO: Could use appMetaData now.
             
             var message:String
             switch conflict.conflictType! {
@@ -286,7 +287,7 @@ extension ViewController : SMSyncServerDelegate {
             
             // If we had useful remote names for files, we could show it to them...
             // let fileAttr = SMSyncServer.session.localFileStatus(uuid)
-            // TODO: When we get the appMetaData attributes we could store a title name there.
+            // TODO: Could use appMetaData now.
             
             let alert = UIAlertController(title: "Someone else has deleted a note.", message: "But you just updated it!", preferredStyle: .Alert)
             
