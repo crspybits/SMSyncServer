@@ -6,6 +6,7 @@
 #import "UIImage+Resize.h"
 #import "UIImage+RoundedCorner.h"
 #import "UIImage+Alpha.h"
+#import "SMAssert.h"
 
 /* Causes warnings, kill it!
 // Private helper methods
