@@ -40,8 +40,7 @@ public class SMGoogleSignInController: UIViewController, GIDSignInUIDelegate {
         //GIDSignIn.sharedInstance().signInSilently()
     }
     
-    // Must not be private
-    func signOutButtonAction() {
+    @objc private func signOutButtonAction() {
         GIDSignIn.sharedInstance().signOut()
     }
 }

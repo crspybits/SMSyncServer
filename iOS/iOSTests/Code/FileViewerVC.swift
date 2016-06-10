@@ -52,7 +52,6 @@ class FileViewerVC : UIViewController {
         self.title = self.file!.fileName
         
         // Need to load the file.
-        
         let fileContents: String?
         do {
             try fileContents = NSString(contentsOfURL: self.file!.url(), encoding: NSASCIIStringEncoding) as String

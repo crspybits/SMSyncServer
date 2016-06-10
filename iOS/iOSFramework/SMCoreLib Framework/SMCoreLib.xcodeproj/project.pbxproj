@@ -35,6 +35,7 @@
 		835D80261C64243E004DBF79 /* UINavigationController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D80241C64243E004DBF79 /* UINavigationController+Extras.m */; };
 		835D802E1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		835D802F1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */; };
+		836B7F311D0AB17B0040F259 /* SMIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836B7F301D0AB17B0040F259 /* SMIdentifiers.swift */; };
 		837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06331C7C0C8F000695F2 /* CoreData.swift */; };
 		83823E471CF2BD7200E28B76 /* FileExtras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83823E461CF2BD7200E28B76 /* FileExtras.swift */; };
 		839CAE841CF144D40072C1BD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE831CF144D40072C1BD /* AppDelegate.swift */; };
@@ -212,6 +213,7 @@
 		835D80241C64243E004DBF79 /* UINavigationController+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UINavigationController+Extras.m"; path = "Code/Categories/v1/UINavigationController+Extras.m"; sourceTree = "<group>"; };
 		835D802C1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ChangeFrameTransitioningDelegate.h; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.h; sourceTree = SOURCE_ROOT; };
 		835D802D1C648F5B004DBF79 /* ChangeFrameTransitioningDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ChangeFrameTransitioningDelegate.m; path = Code/ViewControllers/v1/ChangeFrameTransitioningDelegate/ChangeFrameTransitioningDelegate.m; sourceTree = SOURCE_ROOT; };
+		836B7F301D0AB17B0040F259 /* SMIdentifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMIdentifiers.swift; path = Code/General/v1/SMIdentifiers.swift; sourceTree = "<group>"; };
 		837E06331C7C0C8F000695F2 /* CoreData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreData.swift; path = Code/CoreData/v2/CoreData.swift; sourceTree = "<group>"; };
 		83823E461CF2BD7200E28B76 /* FileExtras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FileExtras.swift; path = Code/General/v1/PersistentStorage/FileExtras.swift; sourceTree = "<group>"; };
 		839CAE811CF144D40072C1BD /* SMImageTextView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SMImageTextView.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -621,6 +623,7 @@
 				83D3ED771C4DC92800BFDA93 /* BiRef.m */,
 				83D3ED781C4DC92800BFDA93 /* Debounce.h */,
 				83D3ED791C4DC92800BFDA93 /* Debounce.m */,
+				836B7F301D0AB17B0040F259 /* SMIdentifiers.swift */,
 				83D3ED7C1C4DC92800BFDA93 /* SMIdentifiers2.h */,
 				83D3ED7D1C4DC92800BFDA93 /* SMIdentifiers2.m */,
 				83D3ED7E1C4DC92800BFDA93 /* Synchronized.swift */,
@@ -1016,6 +1019,7 @@
 				83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */,
 				83D3EDA71C4DC93900BFDA93 /* SMAssert.m in Sources */,
 				83FB1DE91CF66EDE00D1D1E6 /* UIButton+AFNetworking.m in Sources */,
+				836B7F311D0AB17B0040F259 /* SMIdentifiers.swift in Sources */,
 				83D3ED711C4DC8F300BFDA93 /* SMMutableDictionary.m in Sources */,
 				83D3EDA51C4DC93900BFDA93 /* LogFile.m in Sources */,
 				837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */,

@@ -7,8 +7,7 @@
 //
 
 #import "Defaults.h"
-#import "Assert.h"
-#import "SPASLog.h"
+@import SMCoreLib;
 
 @interface Defaults()
 @property (nonatomic, strong) NSDictionary *currentItems;

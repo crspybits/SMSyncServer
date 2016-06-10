@@ -6,13 +6,13 @@
 //  Copyright (c) 2015 Spastic Muffin, LLC. All rights reserved.
 //
 
-// Singleton class.
+// Common identifiers.
 
 import Foundation
 
 // @objc so we can access static properties from Objective-C.
 @objc public class SMIdentifiers : NSObject {
-    // Make sure you make a subclass that assigns to this.
+    // You can make a subclass that assigns to this.
     public static var _session:SMIdentifiers?
     
     private static var appVersionString:String!
@@ -28,6 +28,9 @@ import Foundation
     public static let SMALL_IMAGE_DIRECTORY = "smallImages"
     
     public class func session() -> SMIdentifiers {
+        if self._session == nil {
+            self._session = SMIdentifiers()
+        }
         return self._session!
     }
     

@@ -1,5 +1,6 @@
 #import "UIImageResizing.h"
 #import "UIImage+Resize.h"
+@import SMCoreLib;
 
 // http://stackoverflow.com/questions/2658738/the-simplest-way-to-resize-an-uiimage
 @implementation UIImage (ResizeVersion1)

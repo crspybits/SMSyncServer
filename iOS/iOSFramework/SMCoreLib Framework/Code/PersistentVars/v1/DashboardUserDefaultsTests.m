@@ -8,6 +8,7 @@
 
 #import "DashboardUserDefaultsTests.h"
 #import "PetDefs.h"
+@import SMCoreLib;
 
 #ifdef DEBUG
 @interface DashboardUserDefaultsTests ()

@@ -153,6 +153,7 @@
 		8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadConflicts.swift; path = XCTests/DownloadConflicts.swift; sourceTree = SOURCE_ROOT; };
 		8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatDownloadDeletionWorks.swift; path = TwoDeviceTests/TestThatDownloadDeletionWorks.swift; sourceTree = "<group>"; };
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
+		836B7F1D1D0A63EA0040F259 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMGoogleSignInController.swift; sourceTree = "<group>"; };
 		839739FA1CD97EED00FD8520 /* SMGoogleCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleCredentials.swift; path = ../../iOSFramework/Code/SignIn/SMGoogleCredentials.swift; sourceTree = "<group>"; };
@@ -177,7 +178,6 @@
 		83D3E8BA1C4C079900BFDA93 /* BaseClass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BaseClass.swift; path = XCTests/BaseClass.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8BB1C4C079900BFDA93 /* Deletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Deletion.swift; path = XCTests/Deletion.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8BC1C4C079900BFDA93 /* Download.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Download.swift; path = XCTests/Download.swift; sourceTree = SOURCE_ROOT; };
-		83D3E8BD1C4C079900BFDA93 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = XCTests/Info.plist; sourceTree = SOURCE_ROOT; };
 		83D3E8BE1C4C079900BFDA93 /* ServerAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerAPI.swift; path = XCTests/ServerAPI.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8BF1C4C079900BFDA93 /* ServerCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerCredentials.swift; path = XCTests/ServerCredentials.swift; sourceTree = SOURCE_ROOT; };
 		83D3E8C01C4C079900BFDA93 /* ServerNetworking.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerNetworking.swift; path = XCTests/ServerNetworking.swift; sourceTree = SOURCE_ROOT; };
@@ -396,7 +396,7 @@
 		83D3E89C1C4C031E00BFDA93 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				83D3E8BD1C4C079900BFDA93 /* Info.plist */,
+				836B7F1D1D0A63EA0040F259 /* Info.plist */,
 				83D3ECD41C4D92E400BFDA93 /* GoogleService-Info.plist */,
 				839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */,
 			);

@@ -7,6 +7,7 @@
 //
 
 #import "UILabel+Extras.h"
+@import SMCoreLib;
 
 @implementation UILabel (Extras)
 

@@ -11,6 +11,7 @@
 		83274B681CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */; };
 		832ADADC1CB10D7300FFDD4C /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = 832ADADB1CB10D7300FFDD4C /* README.txt */; };
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
+		836B7F331D0AB41A0040F259 /* SMSyncServerSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */; };
 		839739C81CD968AE00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A091CD966C400047A86 /* SMCoreLib.framework */; };
 		839739F11CD97DB200FD8520 /* SMCloudStorageCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */; };
 		83C5F9A21CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83C5F9A11CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift */; };
@@ -97,6 +98,7 @@
 		832ADADB1CB10D7300FFDD4C /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = Code/Internal/CoreData/README.txt; sourceTree = "<group>"; };
 		832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SMUploadBlock.swift; path = Code/Internal/CoreData/SMUploadBlock.swift; sourceTree = "<group>"; };
 		832CD50C1C5DA40C005F99D4 /* SMFiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFiles.swift; path = Code/Internal/SMFiles.swift; sourceTree = "<group>"; };
+		836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerSharing.swift; path = Code/Public/SMSyncServerSharing.swift; sourceTree = "<group>"; };
 		839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMCloudStorageCredentials.swift; path = Code/Public/SMCloudStorageCredentials.swift; sourceTree = "<group>"; };
 		83C5F9A11CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadStartup+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadStartup+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83CF83DB1CF972E900FF0D90 /* SMExtras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMExtras.swift; path = Code/Internal/SMExtras.swift; sourceTree = "<group>"; };
@@ -236,6 +238,7 @@
 				83D3E9791C4C84A600BFDA93 /* SMSyncServer.swift */,
 				830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */,
 				83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */,
+				836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */,
 			);
 			name = Public;
 			sourceTree = "<group>";
@@ -455,6 +458,7 @@
 				83D732951CB366BA00B2BFD3 /* SMUploadQueue.swift in Sources */,
 				83D3EA2C1C4C870C00BFDA93 /* SMServerConstants.swift in Sources */,
 				83D732991CB366BA00B2BFD3 /* SMDownloadQueue.swift in Sources */,
+				836B7F331D0AB41A0040F259 /* SMSyncServerSharing.swift in Sources */,
 				83D7331B1CB74D9D00B2BFD3 /* SMUploadQueue+CoreDataProperties.swift in Sources */,
 				83E55CEF1CBA07DB00F204E0 /* SMDownloadFileOperation+CoreDataProperties.swift in Sources */,
 				83E55CED1CBA07DB00F204E0 /* SMUploadDeletion+CoreDataProperties.swift in Sources */,

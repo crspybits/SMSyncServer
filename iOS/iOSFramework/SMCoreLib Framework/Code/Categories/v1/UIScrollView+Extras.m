@@ -7,6 +7,7 @@
 //
 
 #import "UIScrollView+Extras.h"
+@import SMCoreLib;
 
 @implementation UIScrollView (Extras)
 

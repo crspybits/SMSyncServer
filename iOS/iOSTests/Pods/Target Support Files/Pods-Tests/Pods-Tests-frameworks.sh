@@ -82,3 +82,16 @@ strip_invalid_archs() {
   fi
 }
 
+
+if [[ "$CONFIGURATION" == "Debug" ]]; then
+  install_framework "Pods-Tests/Bolts.framework"
+  install_framework "Pods-Tests/FBSDKCoreKit.framework"
+  install_framework "Pods-Tests/FBSDKLoginKit.framework"
+  install_framework "Pods-Tests/FBSDKShareKit.framework"
+fi
+if [[ "$CONFIGURATION" == "Release" ]]; then
+  install_framework "Pods-Tests/Bolts.framework"
+  install_framework "Pods-Tests/FBSDKCoreKit.framework"
+  install_framework "Pods-Tests/FBSDKLoginKit.framework"
+  install_framework "Pods-Tests/FBSDKShareKit.framework"
+fi

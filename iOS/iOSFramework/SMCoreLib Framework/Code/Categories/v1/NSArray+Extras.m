@@ -7,6 +7,7 @@
 //
 
 #import "NSArray+Extras.h"
+@import SMCoreLib;
 
 @implementation NSArray (Extras)
 
