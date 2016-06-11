@@ -4,6 +4,7 @@
 
 var Mongo = require('./Mongo');
 var logger = require('./Logger');
+var jsonExtras = require('./JSON');
 
 // Not used, but needed to define name "Common".
 function Common() {
@@ -58,6 +59,8 @@ Common.shallowClone = function (objectToClone) {
 Common.lookup = function (self, props, mongoCollectionName, callback) {
 
     var query = Common.extractPropsFrom(self, props);
+    query = jsonExtras.flatten(query);
+    
 	var cursor = Mongo.db().collection(mongoCollectionName).find(query);
 		
 	if (!cursor) {

@@ -795,7 +795,8 @@ internal class SMServerAPI {
         }
     }
     
-    private func initialServerResponseProcessing(serverResponse:[String:AnyObject]?, error:NSError?) -> SMServerAPIResult {
+    // Previously, I had this marked as "private". However, it was convenient to add extensions for additional ServerAPI functionality. This method is not intended for callers outside of the SMServerAPI.
+    internal func initialServerResponseProcessing(serverResponse:[String:AnyObject]?, error:NSError?) -> SMServerAPIResult {
         
         if let rc = serverResponse?[SMServerConstants.resultCodeKey] as? Int {
             if error != nil {

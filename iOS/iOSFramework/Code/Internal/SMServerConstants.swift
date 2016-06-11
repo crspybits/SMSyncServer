@@ -26,6 +26,8 @@ public class SMServerConstants {
     
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
     public static let operationRemoveUser = "RemoveUser"
+    
+    public static let operationCreateSharingInvitation = "CreateSharingInvitation"
 
     public static let operationLock = "Lock"
     
@@ -179,6 +181,13 @@ public class SMServerConstants {
 
     // Simulated failure in a file download, when getting download file info. Applies to download only.
     public static let dbTcGetDownloadFileInfo = 8
+    
+    // MARK: Parameters sent in sharing operations
+    
+    // Key:
+    public static let userCapabilities = "UserCapabilities"
+    // Values:
+    // A (possibly empty) array of capability strings. See SMSharingUserCapabilityMask.
     
     // MARK: Responses from server
     

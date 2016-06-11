@@ -11,6 +11,68 @@
 import Foundation
 import SMCoreLib
 
+// Modified from http://www.swift-studies.com/blog/2015/6/17/exploring-swift-20-optionsettypes
+public struct SMSharingUserCapabilityMask : OptionSetType {
+    private enum UserCapability : Int, CustomStringConvertible {
+        case Create /* Objects */ = 1
+        case Read /* Objects */ = 2
+        case Update /* Objects */ = 4
+        case Delete /* Objects */ = 8
+        case Authorize /* NewUsers */ = 16
+        
+        private var allAsStrings:[String] {
+            return ["Create", "Read", "Update", "Delete", "Authorize"]
+        }
+        
+        var description : String {
+            var shift = 0
+            while (self.rawValue >> shift != 1) {
+                shift += 1
+            }
+            return self.allAsStrings[shift]
+        }
+    }
+    
+    public let rawValue : Int
+    public init(rawValue:Int){ self.rawValue = rawValue}
+    private init(_ capability:UserCapability) {
+        self.rawValue = capability.rawValue
+    }
+
+    public static let Create = SMSharingUserCapabilityMask(UserCapability.Create)
+    public static let Read = SMSharingUserCapabilityMask(UserCapability.Read)
+    public static let Update = SMSharingUserCapabilityMask(UserCapability.Update)
+    public static let Delete = SMSharingUserCapabilityMask(UserCapability.Delete)
+    public static let CRUD:SMSharingUserCapabilityMask = [Create, Read, Update, Delete]
+    public static let Authorize = SMSharingUserCapabilityMask(UserCapability.Authorize)
+    public static let ALL:SMSharingUserCapabilityMask = [CRUD, Authorize]
+    
+    public var description : String {
+        var result = ""
+
+        for capability in self.sendable {
+            result += (result.characters.count == 0) ? capability : ",\(capability)"
+        }
+
+        return "[\(result)]"
+    }
+    
+    // An array of capability strings, possibly empty.
+    public var sendable: [String] {
+        var result = [String]()
+        var shift = 0
+
+        while let currentCapability = UserCapability(rawValue: 1 << shift) {
+            shift += 1
+            if self.contains(SMSharingUserCapabilityMask(currentCapability)) {
+                result.append("\(currentCapability)")
+            }
+        }
+
+        return result
+    }
+}
+
 public enum SMSyncClientAPIError: ErrorType {
     case BadAutoCommitInterval
     case CouldNotCreateTemporaryFile

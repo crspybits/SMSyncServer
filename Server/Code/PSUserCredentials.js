@@ -1,4 +1,5 @@
 // Persistent Storage for User Credentials; stored using MongoDb
+// These are "Owning Users" -- i.e., users that directly own the cloud storage accounts.
 
 'use strict';
 

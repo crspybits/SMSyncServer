@@ -73,7 +73,7 @@ PSInboundFile.prototype.storeNew = function (callback) {
         callback(error);
     }
     
-    // We should not allow multiple entries in the collection of inbound file changes for the the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
+    // We should not allow multiple entries in the collection of inbound file changes for the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
     Common.lookup(copy, props, collectionName, function (error, objectFound) {
         if (error) {
             callback(error);
