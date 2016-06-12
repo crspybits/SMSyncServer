@@ -134,7 +134,7 @@ public class SMSyncServer : NSObject {
     }
     
     // Only retains a weak reference to the cloudStorageUserDelegate
-    public func appLaunchSetup(withServerURL serverURL: NSURL, andCloudStorageUserDelegate cloudStorageUserDelegate:SMCloudStorageUserDelegate) {
+    public func appLaunchSetup(withServerURL serverURL: NSURL, andUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignIn>) {
 
         Network.session().appStartup()
         SMServerNetworking.session.appLaunchSetup()
@@ -158,7 +158,7 @@ public class SMSyncServer : NSObject {
         // Do this before SMSyncServerUser.session.appLaunchSetup, which will lead to signing a user in.
         SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(SMSyncServer.signInCompletedAction))
         
-        SMSyncServerUser.session.appLaunchSetup(withCloudStorageUserDelegate: cloudStorageUserDelegate)
+        SMSyncServerUser.session.appLaunchSetup(withUserSignInLazyDelegate: userSignInLazyDelegate)
     }
     
     // PRIVATE
@@ -449,7 +449,12 @@ public class SMSyncServer : NSObject {
             return false
         }
         
-        if !SMSyncServerUser.session.delegate.syncServerUserIsSignedIn {
+        var signedIn = false
+        if let result = SMSyncServerUser.session.delegate.lazyRef?.syncServerUserIsSignedIn {
+            signedIn = result
+        }
+        
+        if !signedIn {
             throw SMSyncClientAPIError.UserNotSignedIn
         }
         

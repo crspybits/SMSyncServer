@@ -41,7 +41,10 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 * Currently an iOS client has been implemented (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [see also this SO post](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)).
 * Currently Google Drive is supported in terms of cloud storage systems.
 * No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
-* Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
+* Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control. [IN PROGRESS!] 
+* 23,600 lines of program code and documentation, across client interface, client examples, tests, and server.
+* 116 XCTests-- single device tests.
+* 7 custom two device tests
 * [TODO development list](./TODO.md)
 
 # Installation

@@ -13,7 +13,7 @@ import Foundation
 public class SMServerConstants {
     
     // Don't change the following constant. I'm using it to extract constants and use them in the Node.js
-    // Each line in the following is assumed (by the processing script) to either be a comment (starts with "//"), or have the structure: public static let X = Y (with a possible following comment)
+    // Each line in the following is assumed (by the processing script) to either be a comment (starts with "//"), or have the structure: public static let X = Y (with *NO* possible following comments; The value of Y is taken as the remaining text up to the end of the line).
     //SERVER-CONSTANTS-START
     
     // --------  Information sent to the server --------
@@ -28,7 +28,9 @@ public class SMServerConstants {
     public static let operationRemoveUser = "RemoveUser"
     
     public static let operationCreateSharingInvitation = "CreateSharingInvitation"
-
+    public static let operationLookupSharingInvitation = "LookupSharingInvitation"
+    public static let operationRedeemSharingInvitation = "RedeemSharingInvitation"
+    
     public static let operationLock = "Lock"
     
     public static let operationUploadFile = "UploadFile"
@@ -85,8 +87,10 @@ public class SMServerConstants {
     
     // And each specific storage system has its own specific keys in the credentials data for the specific user.
     // MARK: For cloudTypeGoogle Google, there are the following additional keys.
-    public static let googleUserCredentialsIdToken = "IdToken" // Value is an id token representing the user
-    public static let googleUserCredentialsAuthCode = "AuthCode" // Value is a one-time authentication code
+    // Value is an id token representing the user
+    public static let googleUserCredentialsIdToken = "IdToken"
+    // Value is a one-time authentication code
+    public static let googleUserCredentialsAuthCode = "AuthCode"
 
     // MARK: Other parameters sent to the server.
 
@@ -188,6 +192,39 @@ public class SMServerConstants {
     public static let userCapabilities = "UserCapabilities"
     // Values:
     // A (possibly empty) array of capability strings. See SMSharingUserCapabilityMask.
+    // The ordering of elements in the following array is utilized in SMSharingUserCapabilityMask. Be careful about changing the order!
+    // The syntax for the following array conveniently works in both Swift and Javascript!!
+    public static let possibleUserCapabilityValues = ["Create", "Read", "Update", "Delete", "Authorize"]
+    
+    // Key:
+    public static let sharingUserAccountKey = "SharingUserAccount"
+    // Value: Component subkeys as follow:
+    
+        // SubKey: 
+        public static let sharingUserAccountUserName = "UserName"
+        // Value: String
+    
+        // SubKey:
+        public static let sharingUserAccountType = "AccountType"
+        // Value: One of the following:
+    
+            public static let sharingUserAccountTypeFacebook = "Facebook"
+    
+            // For Facebook account type
+            // SubKey:
+            public static let facebookUserId = "FacebookUserId"
+            // Value: String
+        
+            // SubKey:
+            public static let facebookAppTokenString = "AppTokenString"
+            // Value: String
+    
+    // MARK Keys both sent to the server and received back from the server.
+
+    // This is returned on a successful call to operationCreateSharingInvitation, and sent to the server on an operationLookupSharingInvitation call.
+    // Key:
+    public static let sharingInvitationCode = "SharingInvitationCode"
+    // Value: A code uniquely identifying the sharing invitation.
     
     // MARK: Responses from server
     
@@ -212,16 +249,24 @@ public class SMServerConstants {
     public static let resultFileIndexKey = "ServerFileIndex"
     // Values: An JSON array of JSON objects describing the files for the user.
     
-    // The keys/values within the elements of that file index array are as follows:
-    // (Server side implementation note: Just changing these string constants below is not sufficient to change the names on the server. See PSFileIndex.sjs on the server).
-    public static let fileIndexFileId = "fileId" // Value: UUID String; Client identifier for the file.
-    public static let fileIndexCloudFileName = "cloudFileName" // Value: String; name of file in cloud storage.
-    public static let fileIndexMimeType = "mimeType" // Value: String; A valid MIME type
-    public static let fileIndexAppMetaData = "appMetaData" // Value: JSON structure; app-specific meta data
-    public static let fileIndexDeleted = "deleted" // Value: Boolean; Has file been deleted?
-    public static let fileIndexFileVersion = "fileVersion" // Value: Integer; version of file
-    public static let fileIndexLastModified = "lastModified" // Value: String; a Javascript date.
-    public static let fileSizeBytes = "fileSizeBytes" // Value: Integer; The size of the file in cloud storage.
+        // The keys/values within the elements of that file index array are as follows:
+        // (Server side implementation note: Just changing these string constants below is not sufficient to change the names on the server. See PSFileIndex.sjs on the server).
+        // Value: UUID String; Client identifier for the file.
+        public static let fileIndexFileId = "fileId"
+        // Value: String; name of file in cloud storage.
+        public static let fileIndexCloudFileName = "cloudFileName"
+        // Value: String; A valid MIME type
+        public static let fileIndexMimeType = "mimeType"
+        // Value: JSON structure; app-specific meta data
+        public static let fileIndexAppMetaData = "appMetaData"
+        // Value: Boolean; Has file been deleted?
+        public static let fileIndexDeleted = "deleted"
+        // Value: Integer; version of file
+        public static let fileIndexFileVersion = "fileVersion"
+        // Value: String; a Javascript date.
+        public static let fileIndexLastModified = "lastModified"
+        // Value: Integer; The size of the file in cloud storage.
+        public static let fileSizeBytes = "fileSizeBytes"
     
     // These are returned on a successful call to operationCheckOperationStatus. Note that "successful" doesn't mean the server operation being checked completed successfully.
     // Key:
@@ -233,10 +278,26 @@ public class SMServerConstants {
     // Values: Will be empty if no error occurred, and otherwise has a string describing the error.
     
     // Key:
+    public static let resultInvitationContentsKey = "InvitationContents"
+    // Value: A JSON structure with the following keys:
+    
+        // SubKey:
+        public static let invitationExpiryDate = "ExpiryDate"
+        // Value: A string giving a date
+        
+        // SubKey:
+        public static let invitationOwningUser = "OwningUser"
+        // Value: A unique id for the owning user.
+        
+        // SubKey:
+        public static let invitationCapabilities = "Capabilities"
+        // Value: An array of capability names. See SMSharingUserCapabilityMask.
+    
+    // Key:
     public static let resultOperationStatusCountKey = "ServerOperationStatusCount"
     // Values: The numer of cloud storage operations attempted.
     
-    // Server result codes (rc's)
+    // MARK: Server result codes (rc's)
     
     // Common result codes
     // Generic success! Some of the other result codes below also can indicate success.

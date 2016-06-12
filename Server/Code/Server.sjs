@@ -1645,6 +1645,112 @@ function getDownloadFileInfo(request, op, callback) {
     });
 }
 
+app.post('/' + ServerConstants.operationCreateSharingInvitation, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        // User is on the system.
+        
+        var capabilities = request.body[ServerConstants.userCapabilities];
+        if (!isDefined(capabilities)) {
+            var message = "No capabilities were sent!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            return;
+        }
+        
+        if (!(capabilities instanceof Array) || (capabilities.length == 0)) {
+            var message = "Capabilities was not an array or was empty!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            return;
+        }
+        
+        // Validate possible values for elements of capabilities array
+        for (var capIndex in capabilities) {
+            var cap = capabilities[capIndex];
+            if (ServerConstants.possibleUserCapabilityValues.indexOf(cap) < 0) {
+                var message = "You gave an unknown capability: " + cap;
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                return;
+            }
+        }
+        
+        // TODO: Need to check if the current user is (a) a sharing user, and (b) in that case if the user is authorized to create sharing invitations.
+        
+        var sharingInvitation = new Mongo.SharingInvitation({
+            owningUser: op.userId(),
+            capabilities: capabilities
+        });
+        
+        sharingInvitation.save(function (err, sharingInvitation) {
+            if (err) {
+                op.endWithErrorDetails(err);
+            }
+            else {
+                logger.trace("New Sharing Invitation:");
+                logger.debug(sharingInvitation);
+                op.result[ServerConstants.sharingInvitationCode] = sharingInvitation._id;
+                op.endWithRC(ServerConstants.rcOK);
+            }
+        });
+    });
+});
+
+app.post('/' + ServerConstants.operationLookupSharingInvitation, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    op.validateUser(function (psLock, psOperationId) {
+        // User is on the system.
+        
+        var invitationCode = request.body[ServerConstants.sharingInvitationCode];
+        if (!isDefined(invitationCode)) {
+            var message = "No invitation code was sent!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            return;
+        }
+        
+        Mongo.SharingInvitation.findOne({ _id: invitationCode }, function (err, sharingInvitation) {
+            if (err) {
+                op.endWithErrorDetails(err);
+            }
+            else {
+                logger.trace("Found Sharing Invitation:");
+                logger.debug(sharingInvitation);
+                
+                // Make sure that the owningUser is us-- otherwise, this is a security issue.
+                if (!op.userId().equals(sharingInvitation.owningUser)) {
+                    logger.error("Current userId: " + op.userId() + "; owningUser: " + sharingInvitation.owningUser + "; typeof owningUser: " + typeof sharingInvitation.owningUser);
+                    
+                    var message = "You didn't own this sharing invitation!";
+                    logger.error(message);
+                    op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                    return;
+                }
+
+                var invitationContents = {};
+                invitationContents[ServerConstants.invitationExpiryDate] = sharingInvitation.expiry;
+                invitationContents[ServerConstants.invitationOwningUser] = sharingInvitation.owningUser;
+                invitationContents[ServerConstants.invitationCapabilities] = sharingInvitation.capabilities;
+                
+                op.result[ServerConstants.resultInvitationContentsKey] = invitationContents;
+                
+                op.endWithRC(ServerConstants.rcOK);
+            }
+        });
+    });
+});
+
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");
     var op = new Operation(request, response, true);

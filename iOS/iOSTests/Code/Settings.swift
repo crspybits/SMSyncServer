@@ -9,7 +9,6 @@
 import UIKit
 import SMSyncServer
 import SMCoreLib
-import FBSDKLoginKit
 
 class Settings: UIViewController {
     let signInButton = UIButton(type: .System)
@@ -36,10 +35,10 @@ class Settings: UIViewController {
     
         SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(Settings.signInCompletionAction))
 
-        self.signInButton.setTitle("Sign In", forState: .Normal)
+        self.signInButton.setTitle("Google SignIn", forState: .Normal)
         self.signInButton.sizeToFit()
         self.signInButton.frameOrigin = CGPoint(x: 50, y: 100)
-        self.signInButton.addTarget(self, action: #selector(Settings.signInButtonAction), forControlEvents: .TouchUpInside)
+        self.signInButton.addTarget(self, action: #selector(googleSignInButtonAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.signInButton)
         
         let verticalDistanceBetweenButtons:CGFloat = 30
@@ -65,21 +64,11 @@ class Settings: UIViewController {
         self.showLocalMetaData.addTarget(self, action: #selector(Settings.showLocalMetaDataAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.showLocalMetaData)
         
-        let fbLoginButton = FBSDKLoginButton()
+        let facebookSignIn = SMUserSignIn.possibleAccounts[SMFacebookUserSignIn.displayName] as! SMFacebookUserSignIn
+        let fbLoginButton = facebookSignIn.signInButton()
         fbLoginButton.frameX = self.showLocalMetaData.frameX
         fbLoginButton.frameY = self.showLocalMetaData.frameMaxY + verticalDistanceBetweenButtons
-        fbLoginButton.readPermissions =  ["public_profile", "email", "user_friends"]
-        fbLoginButton.delegate = self
         self.view.addSubview(fbLoginButton)
-        
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(longPressAction))
-        fbLoginButton.addGestureRecognizer(longPress)
-    }
-    
-    @objc private func longPressAction() {
-        if FBSDKAccessToken.currentAccessToken() != nil {
-            self.reallyLogOut()
-        }
     }
     
     func getFileIndexAction() {
@@ -92,8 +81,9 @@ class Settings: UIViewController {
         SMSyncServer.session.showLocalFiles()
     }
     
-    func signInButtonAction() {
-        let signInController = SMCloudStorageCredentials.session.makeSignInController()
+    func googleSignInButtonAction() {
+        let googleSignIn = SMUserSignIn.possibleAccounts[SMGoogleUserSignIn.displayName] as! SMGoogleUserSignIn
+        let signInController = googleSignIn.makeSignInController()
         self.navigationController!.pushViewController(signInController, animated: true)
     }
     
@@ -105,37 +95,3 @@ class Settings: UIViewController {
         super.viewDidAppear(animated)
     }
 }
-
-extension Settings : FBSDKLoginButtonDelegate {
-    func loginButton(loginButton: FBSDKLoginButton!, didCompleteWithResult result: FBSDKLoginManagerLoginResult!, error: NSError!) {
-        if !result.isCancelled {
-            Log.msg("result: \(result); error: \(error)")
-            Log.msg("FBSDKAccessToken.currentAccessToken().userID: \(FBSDKAccessToken.currentAccessToken().userID)")
-            
-            // Adapted from http://stackoverflow.com/questions/29323244/facebook-ios-sdk-4-0how-to-get-user-email-address-from-fbsdkprofile
-            let parameters = ["fields" : "email, id, name"]
-            FBSDKGraphRequest(graphPath: "me", parameters: parameters).startWithCompletionHandler { (connection:FBSDKGraphRequestConnection!, result: AnyObject!, error: NSError!) in
-                Log.msg("result: \(result); error: \(error)")
-            }
-            
-            // See https://developers.facebook.com/docs/graph-api/reference/user/friends/
-            FBSDKGraphRequest(graphPath: "me/friends", parameters: ["fields" : "data"]).startWithCompletionHandler { (connection:FBSDKGraphRequestConnection!, result: AnyObject!, error: NSError!) in
-                Log.msg("result: \(result); error: \(error)")
-            }
-        }
-    }
-
-    func loginButtonDidLogOut(loginButton: FBSDKLoginButton!) {
-        
-    }
-    
-    // It seems really hard to fully logout!!! The following helps.
-    private func reallyLogOut() {
-        let deletepermission = FBSDKGraphRequest(graphPath: "me/permissions/", parameters: nil, HTTPMethod: "DELETE")
-        deletepermission.startWithCompletionHandler({ (connection, result, error) in
-            print("the delete permission is \(result)")
-            FBSDKLoginManager().logOut()
-        })
-    }
-}
-

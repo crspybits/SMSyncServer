@@ -34,11 +34,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
         // Starting to establish cloud storage credentials-- user will also have to sign in their specific account.
-        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId)
+        let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
+        let facebookSignIn = SMFacebookUserSignIn()
+        SMUserSignIn.addSignInAccount(googleSignIn)
+        SMUserSignIn.addSignInAccount(facebookSignIn)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)
-        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
+        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andUserSignInLazyDelegate: SMUserSignIn.lazySession)
 
         return true
     }
@@ -46,8 +49,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication,
         openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
         
-        if SMCloudStorageCredentials.session.handleURL(url, sourceApplication: sourceApplication, annotation: annotation) {
-            return true
+        if let couldHandle = SMUserSignIn.lazySession.lazyRef?.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+            if couldHandle {
+                return true
+            }
         }
         
         if FBSDKApplicationDelegate.sharedInstance().application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {

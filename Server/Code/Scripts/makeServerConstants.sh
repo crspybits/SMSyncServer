@@ -32,14 +32,19 @@ echo "}" >> "${OUTPUTFILE}"
 # The second awk is to retain, in their entirety, purely comment lines (and empty lines), and do our define substitution on the other lines.
 
 # The other lines have the form: public static let X = Y
-# To change the pattern for the "other lines", you need to change the $4, $6 field numbers below appropriately.
+# Y is taken as the text remaining on the line after the "=", which adds some complexity below.
+# 	See http://stackoverflow.com/questions/2961635/using-awk-to-print-all-columns-from-the-nth-to-the-last for the technique used to print out text from $6 onwards.
 
 # which we'll replace with: define("X", Y);
 # print -- prints with a newline; printf -- prints without a newline
 awk "/${START}/{flag=1;next}/${END}/{flag=0}flag" "${INPUTFILE}" | \
 	awk '{ if (($1 == "//") || (0 == NF))\
 				print $0; \
-			else \
-				printf "\tdefine(\"%s\", %s);\n", $4, $6 }' >> "${OUTPUTFILE}"
+			else { \
+				xvar = $4; \
+				$1=$2=$3=$4=$5=""; \
+				printf "\tdefine(\"%s\", %s);\n", xvar, $0; \
+			} \
+		}' >> "${OUTPUTFILE}"
 								
 echo "${WARNING}" >> "${OUTPUTFILE}"

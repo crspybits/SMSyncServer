@@ -12,16 +12,16 @@ import Foundation
 import SMCoreLib
 
 // "class" so its delegate var can be weak.
-public protocol SMCloudStorageUserDelegate : class {
+public protocol SMUserSignInDelegate : class {
     // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed to sign in the user.
     func syncServerAppLaunchSetup()
     
     // Is a user currently signed in?
     var syncServerUserIsSignedIn: Bool {get}
     
-    // Credentials specific to the cloud storage system being used.
+    // Credentials specific to the user signed in.
     // Returns non-nil value iff syncServerUserSignedIn is true.
-    var syncServerSignedInUser:SMCloudStorageUser? {get}
+    var syncServerSignedInUser:SMUserCredentials? {get}
     
     // If user is currently signed in, sign them out. No effect if not signed in.
     func syncServerSignOutUser()
@@ -37,7 +37,7 @@ internal protocol SMServerAPIUserDelegate : class {
 }
 
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
-public enum SMCloudStorageUser {
+public enum SMUserCredentials {
     // When using as a parameter to call createNewUser, authCode must not be nil.
     case GoogleDrive(idToken:String!, authCode:String?)
     
@@ -45,6 +45,7 @@ public enum SMCloudStorageUser {
     // case AppleDrive
 }
 
+// This class is *not* intended to be subclassed for particular sign-in systems.
 public class SMSyncServerUser {
     private var _internalUserId:String?
     
@@ -55,7 +56,7 @@ public class SMSyncServerUser {
     private var _signInCallback = NSObject()
     // var signInCompletion:((error:NSError?)->(Void))?
     
-    internal weak var delegate:SMCloudStorageUserDelegate!
+    internal weak var delegate: SMLazyWeakRef<SMUserSignIn>!
     
     public static var session = SMSyncServerUser()
     
@@ -69,17 +70,17 @@ public class SMSyncServerUser {
     // TODO: Eventually give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
     public var cloudFolderPath:String?
     
-    internal func appLaunchSetup(withCloudStorageUserDelegate cloudStorageUserDelegate:SMCloudStorageUserDelegate!) {
+    internal func appLaunchSetup(withUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignIn>!) {
     
         if 0 == SMSyncServerUser.MobileDeviceUUID.stringValue.characters.count {
             SMSyncServerUser.MobileDeviceUUID.stringValue = UUID.make()
         }
         
-        self.delegate = cloudStorageUserDelegate
+        self.delegate = userSignInLazyDelegate
         SMServerAPI.session.userDelegate = self
 
         // Do this last because it could lead to invocation of the signInProcessCompleted callbacks.
-        self.delegate.syncServerAppLaunchSetup()
+        self.delegate.lazyRef?.syncServerAppLaunchSetup()
     }
     
     // Add target/selector to this to get a callback when the user sign-in process completes.
@@ -93,7 +94,12 @@ public class SMSyncServerUser {
     // Is the user signed in? (So we don't have to expose the delegate publicly.)
     public var signedIn:Bool {
         get {
-            return self.delegate.syncServerUserIsSignedIn
+            if let result = self.delegate.lazyRef?.syncServerUserIsSignedIn {
+                return result
+            }
+            else {
+                return false
+            }
         }
     }
     
@@ -112,11 +118,11 @@ public class SMSyncServerUser {
     }
     
     public func signOut() {
-        self.delegate.syncServerUserIsSignedIn
+        self.delegate.lazyRef?.syncServerUserIsSignedIn
     }
     
     // This method doesn't keep a reference to userCreds; it just allows the caller to check for an existing user on the server.
-    public func checkForExistingUser(userCreds:SMCloudStorageUser, completion:((error: NSError?)->())?) {
+    public func checkForExistingUser(userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         SMServerAPI.session.checkForExistingUser(
             self.serverParameters(userCreds)) { internalUserId, cfeuResult in
@@ -128,7 +134,7 @@ public class SMSyncServerUser {
     }
     
     // This method doesn't keep a reference to userCreds; it just allows the caller to create a new user on the server.
-    public func createNewUser(userCreds:SMCloudStorageUser, completion:((error: NSError?)->())?) {
+    public func createNewUser(userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         switch (userCreds) {
         case .GoogleDrive(_, let authCode):
@@ -160,15 +166,10 @@ public class SMSyncServerUser {
     }
     
     // Parameters in a REST API call to be provided to the server for a user's credentials & other info (e.g., deviceId, cloudFolderPath).
-    // TODO: Do we still need this additionalCredentials param after the changes of 1/18/16?
-    private func serverParameters(userCredsData:SMCloudStorageUser, additionalCredentials additionalCreds:[String:AnyObject]?=nil) -> [String:AnyObject] {
+    private func serverParameters(userCredsData:SMUserCredentials) -> [String:AnyObject] {
         
         var serverParameters = [String:AnyObject]()
         var userCredentials = [String:AnyObject]()
-        
-        if (additionalCreds != nil) {
-            userCredentials = additionalCreds!
-        }
         
         Assert.If(0 == SMSyncServerUser.MobileDeviceUUID.stringValue.characters.count, thenPrintThisString: "Whoops: No device UUID!")
         
@@ -221,13 +222,18 @@ public class SMSyncServerUser {
 extension SMSyncServerUser : SMServerAPIUserDelegate {
     var userCredentialParams:[String:AnyObject]? {
         get {
-            Assert.If(!self.delegate.syncServerUserIsSignedIn, thenPrintThisString: "Yikes: There is no signed in user!")
-            return self.serverParameters(self.delegate.syncServerSignedInUser!)
+            Assert.If(!self.signedIn, thenPrintThisString: "Yikes: There is no signed in user!")
+            if let creds = self.delegate.lazyRef?.syncServerSignedInUser {
+                return self.serverParameters(creds)
+            }
+            else {
+                return nil
+            }
         }
     }
     
     func refreshUserCredentials() {
-        self.delegate.syncServerRefreshUserCredentials()
+        self.delegate.lazyRef?.syncServerRefreshUserCredentials()
     }
 }
 

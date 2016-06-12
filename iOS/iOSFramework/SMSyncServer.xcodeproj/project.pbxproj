@@ -13,7 +13,7 @@
 		832CD50D1C5DA40C005F99D4 /* SMFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832CD50C1C5DA40C005F99D4 /* SMFiles.swift */; };
 		836B7F331D0AB41A0040F259 /* SMSyncServerSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */; };
 		839739C81CD968AE00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A091CD966C400047A86 /* SMCoreLib.framework */; };
-		839739F11CD97DB200FD8520 /* SMCloudStorageCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */; };
+		839739F11CD97DB200FD8520 /* SMUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739F01CD97DB200FD8520 /* SMUserSignIn.swift */; };
 		83C5F9A21CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83C5F9A11CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift */; };
 		83CF83DC1CF972E900FF0D90 /* SMExtras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83CF83DB1CF972E900FF0D90 /* SMExtras.swift */; };
 		83D1AE751D0C768C00353FE4 /* SMServerAPI+Sharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D1AE741D0C768C00353FE4 /* SMServerAPI+Sharing.swift */; };
@@ -94,13 +94,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8305BA661D0D0BE90000A033 /* SMGoogleUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleUserSignIn.swift; path = Code/SignIn/SMGoogleUserSignIn.swift; sourceTree = "<group>"; };
+		8305BA681D0D0C170000A033 /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = README.txt; path = Code/SignIn/README.txt; sourceTree = "<group>"; };
+		8305BA6A1D0D0C870000A033 /* SMFacebookUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFacebookUserSignIn.swift; path = Code/SignIn/SMFacebookUserSignIn.swift; sourceTree = "<group>"; };
 		830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerTypes.swift; path = Code/Public/SMSyncServerTypes.swift; sourceTree = "<group>"; };
 		83274B671CC5E340006669A1 /* SMUploadWrapup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMUploadWrapup+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMUploadWrapup+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		832ADADB1CB10D7300FFDD4C /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = Code/Internal/CoreData/README.txt; sourceTree = "<group>"; };
 		832ADAEE1CB1171700FFDD4C /* SMUploadBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SMUploadBlock.swift; path = Code/Internal/CoreData/SMUploadBlock.swift; sourceTree = "<group>"; };
 		832CD50C1C5DA40C005F99D4 /* SMFiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFiles.swift; path = Code/Internal/SMFiles.swift; sourceTree = "<group>"; };
 		836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMSyncServerSharing.swift; path = Code/Public/SMSyncServerSharing.swift; sourceTree = "<group>"; };
-		839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMCloudStorageCredentials.swift; path = Code/Public/SMCloudStorageCredentials.swift; sourceTree = "<group>"; };
+		839739F01CD97DB200FD8520 /* SMUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMUserSignIn.swift; path = Code/Public/SMUserSignIn.swift; sourceTree = "<group>"; };
 		83C5F9A11CCC5D1C002E9840 /* SMDownloadStartup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMDownloadStartup+CoreDataProperties.swift"; path = "Code/Internal/CoreData/SMDownloadStartup+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		83CF83DB1CF972E900FF0D90 /* SMExtras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMExtras.swift; path = Code/Internal/SMExtras.swift; sourceTree = "<group>"; };
 		83D1AE741D0C768C00353FE4 /* SMServerAPI+Sharing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SMServerAPI+Sharing.swift"; path = "Code/Internal/SMServerAPI+Sharing.swift"; sourceTree = "<group>"; };
@@ -163,6 +166,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8305BA611D0D0B3B0000A033 /* Users */ = {
+			isa = PBXGroup;
+			children = (
+				83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */,
+				836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */,
+				839739F01CD97DB200FD8520 /* SMUserSignIn.swift */,
+				8305BA691D0D0C340000A033 /* User Signin */,
+			);
+			name = Users;
+			sourceTree = "<group>";
+		};
+		8305BA691D0D0C340000A033 /* User Signin */ = {
+			isa = PBXGroup;
+			children = (
+				8305BA681D0D0C170000A033 /* README.txt */,
+				8305BA661D0D0BE90000A033 /* SMGoogleUserSignIn.swift */,
+				8305BA6A1D0D0C870000A033 /* SMFacebookUserSignIn.swift */,
+			);
+			name = "User Signin";
+			sourceTree = "<group>";
+		};
 		832ADAEF1CB1176E00FFDD4C /* Generated (don't change by hand) */ = {
 			isa = PBXGroup;
 			children = (
@@ -245,11 +269,9 @@
 		83D3E9751C4C845600BFDA93 /* Public */ = {
 			isa = PBXGroup;
 			children = (
-				839739F01CD97DB200FD8520 /* SMCloudStorageCredentials.swift */,
 				83D3E9791C4C84A600BFDA93 /* SMSyncServer.swift */,
 				830E23531C8126AE0054D97C /* SMSyncServerTypes.swift */,
-				83D3ECC01C4D597500BFDA93 /* SMSyncServerUser.swift */,
-				836B7F321D0AB41A0040F259 /* SMSyncServerSharing.swift */,
+				8305BA611D0D0B3B0000A033 /* Users */,
 			);
 			name = Public;
 			sourceTree = "<group>";
@@ -503,7 +525,7 @@
 				83D7328E1CB366BA00B2BFD3 /* SMLocalFile+CoreDataProperties.swift in Sources */,
 				83CF83DC1CF972E900FF0D90 /* SMExtras.swift in Sources */,
 				83D3EA2F1C4C870C00BFDA93 /* SMUploadFiles.swift in Sources */,
-				839739F11CD97DB200FD8520 /* SMCloudStorageCredentials.swift in Sources */,
+				839739F11CD97DB200FD8520 /* SMUserSignIn.swift in Sources */,
 				83E55CE41CBA07DB00F204E0 /* SMDownloadOperation.swift in Sources */,
 				83E55CF41CBA07DB00F204E0 /* SMUploadWrapup.swift in Sources */,
 				83D7329A1CB366BA00B2BFD3 /* SMUploadBlock+CoreDataProperties.swift in Sources */,

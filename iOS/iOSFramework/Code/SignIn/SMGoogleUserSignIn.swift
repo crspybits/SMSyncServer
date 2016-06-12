@@ -1,6 +1,6 @@
 
 //
-//  SMGoogleCredentials.swift
+//  SMGoogleUserSignIn.swift
 //  NetDb
 //
 //  Created by Christopher Prince on 11/26/15.
@@ -12,12 +12,16 @@ import SMSyncServer
 import SMCoreLib
 import Google
 
+/* TODO: Handle this: Got it when I pressed the Sign In button to connect to Google.
+2015-11-26 21:09:38.198 NetDb[609/0x16e12f000] [lvl=3] __65-[GGLClearcutLogger sendNextPendingRequestWithCompletionHandler:]_block_invoke_3() Error posting to Clearcut: Error Domain=NSURLErrorDomain Code=-1005 "The network connection was lost." UserInfo={NSUnderlyingError=0x15558de70 {Error Domain=kCFErrorDomainCFNetwork Code=-1005 "(null)" UserInfo={_kCFStreamErrorCodeKey=57, _kCFStreamErrorDomainKey=1}}, NSErrorFailingURLStringKey=https://play.googleapis.com/log, NSErrorFailingURLKey=https://play.googleapis.com/log, _kCFStreamErrorDomainKey=1, _kCFStreamErrorCodeKey=57, NSLocalizedDescription=The network connection was lost.}
+*/
+
 // See https://developers.google.com/identity/sign-in/ios/sign-in
-public class SMGoogleCredentials : SMCloudStorageCredentials {
+public class SMGoogleUserSignIn : SMUserSignIn {
 
     // Specific to Google Credentials. I'm not sure it's needed really (i.e., could it be obtained each time the app launches on sign in-- since to be signed in really assumes we're connected to the network?), but I'll store this in the Keychain since it's credential info.
     // Hmmmm. I may be making incorrect assumptions about the longevity of these IdTokens. See https://github.com/google/google-auth-library-nodejs/issues/46 Does silently signing the user in generate a new IdToken?
-    private static let IdToken = SMPersistItemString(name: "SMGoogleCredentials.IdToken", initialStringValue: "", persistType: .KeyChain)
+    private static let IdToken = SMPersistItemString(name: "SMGoogleUserSignIn.IdToken", initialStringValue: "", persistType: .KeyChain)
     
     private let serverClientID:String!
     
@@ -26,12 +30,18 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     
     private var idToken:String! {
         set {
-            SMGoogleCredentials.IdToken.stringValue = newValue
+            SMGoogleUserSignIn.IdToken.stringValue = newValue
         }
         
         get {
-            return SMGoogleCredentials.IdToken.stringValue
+            return SMGoogleUserSignIn.IdToken.stringValue
         }
+    }
+    
+    public static let displayName = "Google"
+    
+    override public var displayName:String? {
+        return SMFacebookUserSignIn.displayName
     }
    
     public init(serverClientID theServerClientID:String) {
@@ -57,8 +67,8 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
         // See also this on refreshing of idTokens: http://stackoverflow.com/questions/33279485/how-to-refresh-authentication-idtoken-with-gidsignin-or-gidauthentication
         GIDSignIn.sharedInstance().signInSilently()
     }
-    
-    override public func handleURL(url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
+
+    override public func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {
         return GIDSignIn.sharedInstance().handleURL(url, sourceApplication: sourceApplication,
             annotation: annotation)
     }
@@ -84,20 +94,16 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
     */
     // See https://cocoapods.org/pods/GoogleSignIn for current version of GoogleSignIn
     
-    override public func makeSignInController() -> UIViewController! {
-        return SMGoogleSignInController()
-    }
-    
     override public var syncServerUserIsSignedIn: Bool {
         get {
             return GIDSignIn.sharedInstance().hasAuthInKeychain()
         }
     }
     
-    override public var syncServerSignedInUser:SMCloudStorageUser? {
+    override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return SMCloudStorageUser.GoogleDrive(idToken: self.idToken, authCode: nil)
+                return SMUserCredentials.GoogleDrive(idToken: self.idToken, authCode: nil)
             }
             else {
                 return nil
@@ -140,6 +146,10 @@ public class SMGoogleCredentials : SMCloudStorageCredentials {
             }
         }
     }
+    
+    public func makeSignInController() -> UIViewController! {
+        return SMGoogleSignInController()
+    }
 }
 
 /* 1/24/16; I just got this:
@@ -149,7 +159,7 @@ Error signing in: Error Domain=com.google.HTTPStatus Code=500 "(null)" UserInfo=
 }, data=<7b0a2022 6572726f 72223a20 22696e74 65726e61 6c5f6661 696c7572 65222c0a 20226572 726f725f 64657363 72697074 696f6e22 3a202242 61636b65 6e642045 72726f72 220a7d0a>}
 */
 
-extension SMGoogleCredentials : GIDSignInDelegate {
+extension SMGoogleUserSignIn : GIDSignInDelegate {
 
     public func signIn(signIn: GIDSignIn!, didSignInForUser user: GIDGoogleUser!,
         withError error: NSError!) {
@@ -170,7 +180,7 @@ extension SMGoogleCredentials : GIDSignInDelegate {
                 
                 Log.msg("Attempting to sign in: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let syncServerGoogleUser = SMCloudStorageUser.GoogleDrive(idToken:user.authentication.idToken, authCode:user.serverAuthCode)
+                let syncServerGoogleUser = SMUserCredentials.GoogleDrive(idToken:user.authentication.idToken, authCode:user.serverAuthCode)
                 
                 if user.serverAuthCode == nil {
                     SMSyncServerUser.session.checkForExistingUser(syncServerGoogleUser) { error in

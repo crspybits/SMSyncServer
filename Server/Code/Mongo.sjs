@@ -5,7 +5,12 @@
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var logger = require('./Logger');
+
 var mongoose = require('mongoose');
+// TODO: Take this out for production.
+mongoose.set('debug, true');
+
+var PSSharingInvitations = require('./PSSharingInvitations')
 
 var connectedDb = null;
 
@@ -22,6 +27,9 @@ exports.connect = function(mongoDbURL) {
             var db = mongoose.connection;
             db.on('error', console.error.bind(console, 'connection error:'));
             db.once('open', function() {
+                // SCHEMA's
+                exports.SharingInvitation = PSSharingInvitations.buildSchema(mongoose);
+                
                 logger.info("Mongoose: Connected to MongoDb database");
             });
             

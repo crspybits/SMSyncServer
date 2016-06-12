@@ -1,6 +1,8 @@
 // Persistent Storage for User Credentials; stored using MongoDb
-// These are "Owning Users" -- i.e., users that directly own the cloud storage accounts.
-
+/* These are for both:
+    a) OwningUser's -- users that directly own the cloud storage accounts, and
+    b) SharingUser's -- users that do not own the cloud storage accounts, rather they have been allowed shared access to those cloud storage accounts.
+*/
 'use strict';
 
 var UserCredentials = require('./UserCredentials.sjs');
@@ -10,7 +12,41 @@ var logger = require('./Logger');
 
 const collectionName = "UserCredentials";
 
-/* Data model
+/* Data model v2 (with both OwningUser's and SharingUser's)
+	{
+		_id: (ObjectId), // userId: unique to the user (assigned by MongoDb).
+		username: (String), // account name, e.g., email address.
+        
+		account: {
+            userType: "OwningUser" | "SharingUser",
+            
+            accountType: // Value as follows
+ 
+            // If userType is "OwningUser", then the following options are available for accountType
+			accountType: "Google",
+ 
+             // If userType is "SharingUser", then the following options are available for accountType
+            accountType: "Facebook",
+ 
+            creds: // Value as follows
+ 
+            // If userType is "OwningUser" and accountType is "Google"
+			creds: {
+				sub: XXXX, // Google individual identifier
+				access_token: XXXX,
+				refresh_token: XXXX
+            }
+            
+            // If userType is "SharingUser" and accountType is "Facebook"
+			creds: {
+                userId: String,
+                accessToken: String
+            }
+        }
+	}
+*/
+
+/* Data model v1 (without SharingUser's).
 	{
 		_id: (ObjectId), // userId: unique to the user (assigned by MongoDb).
 		username: (String), // account name on app (e.g., Petunia username)
@@ -27,7 +63,7 @@ const collectionName = "UserCredentials";
 // Constructor
 // userCreds is of type UserCredentials; keeps a reference to this object, so that if the user creds changes, the PSUserCredentials object can access that change.
 // Doesn't access MongoDb.
-// Throws an erorr if userCreds are invalid.
+// Throws an error if userCreds are invalid.
 function PSUserCredentials(userCreds) {
     // always initialize all instance properties
     

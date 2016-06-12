@@ -1,0 +1,1 @@
+These files are not compiled into the framework. They must, however, be compiled/linked into your app if you want to provide that specific form of sign-in for your users.

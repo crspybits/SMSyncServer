@@ -15,7 +15,7 @@ const props = ["_id", "username", "account", "shared"];
 /* Data model
 	{
 		_id: (ObjectId), // userId: unique to the user (assigned by MongoDb).
-		username: (String), // account name
+		username: (String), // account name (optional)
         
         // Account that identifies the sharing user.
 		account: {

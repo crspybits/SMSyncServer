@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
+		8305BA761D0D22B00000A033 /* SMLazyWeakRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */; };
 		831594F11C9B46D100D55E3A /* NSDate+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F01C9B46D100D55E3A /* NSDate+Extras.swift */; };
 		831594F91C9B4BCB00D55E3A /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */; };
 		831594FB1C9B4BCB00D55E3A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
@@ -186,6 +187,7 @@
 /* Begin PBXFileReference section */
 		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
 		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
+		8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMLazyWeakRef.swift; path = Code/General/v1/SMLazyWeakRef.swift; sourceTree = "<group>"; };
 		831594F01C9B46D100D55E3A /* NSDate+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "NSDate+Extras.swift"; path = "Code/Categories/v1/NSDate+Extras.swift"; sourceTree = "<group>"; };
 		831594F61C9B4BCB00D55E3A /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
@@ -633,6 +635,7 @@
 				83D3ED851C4DC92800BFDA93 /* WeakRef.h */,
 				83D3ED861C4DC92800BFDA93 /* WeakRef.m */,
 				831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */,
+				8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */,
 			);
 			name = General;
 			sourceTree = "<group>";
@@ -1064,6 +1067,7 @@
 				831595241CA0E3B600D55E3A /* SMRelativeLocalURL.swift in Sources */,
 				83FB1E021CF66EEE00D1D1E6 /* AFHTTPSessionManager.m in Sources */,
 				83D3EDA31C4DC93900BFDA93 /* Log.swift in Sources */,
+				8305BA761D0D22B00000A033 /* SMLazyWeakRef.swift in Sources */,
 				831DF0D41D0A004F004CAE49 /* UIImage+Resize.m in Sources */,
 				83D3ED611C4DC87700BFDA93 /* NSArray+Globbing.m in Sources */,
 				83D3ED881C4DC92800BFDA93 /* BiRef.m in Sources */,

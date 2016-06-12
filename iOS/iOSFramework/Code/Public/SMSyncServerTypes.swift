@@ -21,7 +21,8 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
         case Authorize /* NewUsers */ = 16
         
         private var allAsStrings:[String] {
-            return ["Create", "Read", "Update", "Delete", "Authorize"]
+            // We depend here on the ordering of elements in the following array!
+            return SMServerConstants.possibleUserCapabilityValues
         }
         
         var description : String {

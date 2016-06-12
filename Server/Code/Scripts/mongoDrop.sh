@@ -10,5 +10,7 @@ db.OperationIds.drop()
 db.FileIndex.drop()
 db.FileTransferLog.drop()
 db.InboundFiles.drop()
+db.SharingUsers.drop()
+db.sharinginvitations.drop()
 
 EOF
