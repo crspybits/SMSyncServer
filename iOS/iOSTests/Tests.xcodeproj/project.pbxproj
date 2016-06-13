@@ -28,7 +28,6 @@
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
 		839739C11CD9682B00FD8520 /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; };
 		839739C21CD9682B00FD8520 /* SMCoreLib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 83CA6A1D1CD967AE00047A86 /* SMCoreLib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		839739EB1CD97B4F00FD8520 /* SMGoogleSignInController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */; };
 		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
 		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
@@ -159,7 +158,6 @@
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
 		836B7F1D1D0A63EA0040F259 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
-		839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMGoogleSignInController.swift; sourceTree = "<group>"; };
 		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ErrorHandling.swift; path = XCTests/ErrorHandling.swift; sourceTree = SOURCE_ROOT; };
@@ -279,7 +277,6 @@
 				83D3E8B41C4C072800BFDA93 /* MainPageVC.swift */,
 				83D3E8B51C4C072800BFDA93 /* Settings.swift */,
 				83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */,
-				839739EA1CD97B4F00FD8520 /* SMGoogleSignInController.swift */,
 			);
 			name = "View Controllers";
 			sourceTree = "<group>";
@@ -734,7 +731,6 @@
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
 				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,
-				839739EB1CD97B4F00FD8520 /* SMGoogleSignInController.swift in Sources */,
 				83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */,
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
 				8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */,

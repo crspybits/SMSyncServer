@@ -395,7 +395,7 @@ CloudStorage.prototype.callGoogleDriveAPIAux =
                 // Attempt to refresh the access token, and then if successful, call the API function again.
                 logger.trace("Access token expired: Attempting to refresh");
                 
-                self.userCreds.refreshSecurityTokens(function (err) {                    
+                self.userCreds.signedInCreds().refreshSecurityTokens(function (err) {
                     if (err) {
                         logger.error("Failed on refreshing access token: %j", err);
                         callback(err, response);

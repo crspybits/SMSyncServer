@@ -72,32 +72,57 @@ public class SMServerConstants {
     public static let httpDownloadParamHeader = "SMSyncServer-Download-Parameters"
 
     // MARK: Credential parameters sent to the server.
-    
+
     // Key:
     public static let userCredentialsDataKey = "CredentialsData"
-    // Each storage system type has one common key in the user credentials data nested structure:
-    // Nested key:
-    public static let cloudType = "CloudType"
-    // Nested values
-    public static let cloudTypeGoogle = "Google"
+    // Each user account type has four common keys in the user credentials data nested structure:
+        // SubKey:
+        public static let mobileDeviceUUIDKey = "MobileDeviceUUID"
+        // Value: A UUID assigned by the app that uniquely represents the users device.
     
-    // Nested key:
-    public static let cloudFolderPath = "CloudFolderPath"
-    // Value: The path into the cloud storage system where the files will be stored. *All* files are stored in a single folder in the cloud storage system. Currently, this *must* be a folder immediately off of the root. E.g., /Petunia. Subfolders (e.g., /Petunia/subfolder) are not allowable currently.
+        // SubKey:
+        public static let cloudFolderPath = "CloudFolderPath"
+        // Value: The path into the cloud storage system where the files will be stored. *All* files are stored in a single folder in the cloud storage system. Currently, this *must* be a folder immediately off of the root. E.g., /Petunia. Subfolders (e.g., /Petunia/subfolder) are not allowable currently.
     
-    // And each specific storage system has its own specific keys in the credentials data for the specific user.
-    // MARK: For cloudTypeGoogle Google, there are the following additional keys.
-    // Value is an id token representing the user
-    public static let googleUserCredentialsIdToken = "IdToken"
-    // Value is a one-time authentication code
-    public static let googleUserCredentialsAuthCode = "AuthCode"
+        // SubKey: (optional)
+        public static let accountUserName = "UserName"
+        // Value: String
+    
+        // SubKey:
+        public static let userType = "UserType"
+        // Values
+            public static let userTypeOwning = "OwningUser"
+            public static let userTypeSharing = "SharingUser"
+    
+        // SubKey:
+        public static let accountType = "AccountType"
+        // Values:
+            public static let accountTypeGoogle = "Google"
+            public static let accountTypeFacebook = "Facebook"
 
+        // And each specific storage system has its own specific keys in the credentials data for the specific user.
+    
+        // MARK: For Google, there are the following additional keys:
+        // SubKey:
+        public static let googleUserIdToken = "IdToken"
+        // Value is an id token representing the user
+    
+        // SubKey:
+        public static let googleUserAuthCode = "AuthCode"
+        // Value is a one-time authentication code
+
+        // MARK: For Facebook, there are the following additional keys:
+        // For Facebook account type
+        // SubKey:
+        public static let facebookUserId = "FacebookUserId"
+        // Value: String
+    
+        // SubKey:
+        public static let facebookUserAppTokenString = "AppTokenString"
+        // Value: String
+    
     // MARK: Other parameters sent to the server.
 
-    // Required for all operations.
-    // Key:
-    public static let mobileDeviceUUIDKey = "MobileDeviceUUID"
-    // Value: A UUID assigned by the app that uniquely represents this device.
     
     // Used with GetFileIndex operation
     // Key:
@@ -187,37 +212,13 @@ public class SMServerConstants {
     public static let dbTcGetDownloadFileInfo = 8
     
     // MARK: Parameters sent in sharing operations
-    
     // Key:
     public static let userCapabilities = "UserCapabilities"
     // Values:
     // A (possibly empty) array of capability strings. See SMSharingUserCapabilityMask.
     // The ordering of elements in the following array is utilized in SMSharingUserCapabilityMask. Be careful about changing the order!
     // The syntax for the following array conveniently works in both Swift and Javascript!!
-    public static let possibleUserCapabilityValues = ["Create", "Read", "Update", "Delete", "Authorize"]
-    
-    // Key:
-    public static let sharingUserAccountKey = "SharingUserAccount"
-    // Value: Component subkeys as follow:
-    
-        // SubKey: 
-        public static let sharingUserAccountUserName = "UserName"
-        // Value: String
-    
-        // SubKey:
-        public static let sharingUserAccountType = "AccountType"
-        // Value: One of the following:
-    
-            public static let sharingUserAccountTypeFacebook = "Facebook"
-    
-            // For Facebook account type
-            // SubKey:
-            public static let facebookUserId = "FacebookUserId"
-            // Value: String
-        
-            // SubKey:
-            public static let facebookAppTokenString = "AppTokenString"
-            // Value: String
+    public static let possibleUserCapabilityValues = ["Create", "Read", "Update", "Delete", "Invite"]
     
     // MARK Keys both sent to the server and received back from the server.
 

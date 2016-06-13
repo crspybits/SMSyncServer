@@ -18,10 +18,10 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
         case Read /* Objects */ = 2
         case Update /* Objects */ = 4
         case Delete /* Objects */ = 8
-        case Authorize /* NewUsers */ = 16
+        case Invite /* New users to share */ = 16
         
         private var allAsStrings:[String] {
-            // We depend here on the ordering of elements in the following array!
+            // We depend here on the ordering and values of elements in the following array!
             return SMServerConstants.possibleUserCapabilityValues
         }
         
@@ -40,13 +40,13 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
         self.rawValue = capability.rawValue
     }
 
-    public static let Create = SMSharingUserCapabilityMask(UserCapability.Create)
-    public static let Read = SMSharingUserCapabilityMask(UserCapability.Read)
-    public static let Update = SMSharingUserCapabilityMask(UserCapability.Update)
-    public static let Delete = SMSharingUserCapabilityMask(UserCapability.Delete)
-    public static let CRUD:SMSharingUserCapabilityMask = [Create, Read, Update, Delete]
-    public static let Authorize = SMSharingUserCapabilityMask(UserCapability.Authorize)
-    public static let ALL:SMSharingUserCapabilityMask = [CRUD, Authorize]
+    public static let Create = SMSharingUserCapabilityMask(.Create)
+    public static let Read = SMSharingUserCapabilityMask(.Read)
+    public static let Update = SMSharingUserCapabilityMask(.Update)
+    public static let Delete = SMSharingUserCapabilityMask(.Delete)
+    public static let CRUD:SMSharingUserCapabilityMask = [.Create, .Read, .Update, .Delete]
+    public static let Invite = SMSharingUserCapabilityMask(UserCapability.Invite)
+    public static let ALL:SMSharingUserCapabilityMask = [.CRUD, .Invite]
     
     public var description : String {
         var result = ""

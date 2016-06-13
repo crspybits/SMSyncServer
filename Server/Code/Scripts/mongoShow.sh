@@ -37,9 +37,6 @@ db.PSFileTransferLog.find().pretty()
 showCollectionNameFor("InboundFiles");
 db.InboundFiles.find().pretty()
 
-showCollectionNameFor("SharingUsers");
-db.SharingUsers.find().pretty()
-
 showCollectionNameFor("SharingInvitations");
 db.SharingInvitations.find().pretty()
 

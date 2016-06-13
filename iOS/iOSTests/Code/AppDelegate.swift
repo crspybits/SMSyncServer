@@ -9,7 +9,6 @@
 import UIKit
 import SMCoreLib
 import SMSyncServer
-import FBSDKCoreKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -33,7 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // This is the path on the cloud storage service (Google Drive for now) where the app's data will be synced
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        // Starting to establish cloud storage credentials-- user will also have to sign in their specific account.
+        // Starting to establish account credentials-- user will also have to sign in to their specific account.
         let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
         let facebookSignIn = SMFacebookUserSignIn()
         SMUserSignIn.addSignInAccount(googleSignIn)
@@ -49,13 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication,
         openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
         
-        if let couldHandle = SMUserSignIn.lazySession.lazyRef?.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
-            if couldHandle {
-                return true
-            }
-        }
-        
-        if FBSDKApplicationDelegate.sharedInstance().application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+        if SMUserSignIn.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
             return true
         }
         

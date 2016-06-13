@@ -19,9 +19,11 @@ public class SMUserSignIn : NSObject, SMUserSignInDelegate {
     private static var _session = SMLazyWeakRef<SMUserSignIn>() {
         var current:SMUserSignIn?
         for signInAccount in _possibleAccounts.values {
+            Log.msg("CHECKING: if signed in to account: \(signInAccount.displayName)")
             if signInAccount.syncServerUserIsSignedIn {
                 Assert.If(current != nil, thenPrintThisString: "Yikes: Signed into more than one account!")
                 current = signInAccount
+                Log.msg("YES: Signed in to account! \(signInAccount.displayName)")
             }
         }
         
@@ -43,19 +45,33 @@ public class SMUserSignIn : NSObject, SMUserSignInDelegate {
         return _possibleAccounts
     }
 
-    // The user *must* be signed into at most one of these accounts.
+    // The user *must* be signed into at most one of these accounts. Call this method at app launch because it will invoke the syncServerAppLaunchSetup() method of the account.
     public static func addSignInAccount(signIn: SMUserSignIn) {
         self._possibleAccounts[signIn.displayName!] = signIn
+        signIn.syncServerAppLaunchSetup(silentSignIn: signIn.syncServerUserIsSignedIn)
     }
     
     // Call this from the corresponding method in the AppDelegate.
+    public static func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {
+        for signInAccount in _possibleAccounts.values {
+            Log.msg("CHECKING: if account can handle openURL: \(signInAccount.displayName)")
+            if signInAccount.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+                Log.msg("YES: account could handle openURL! \(signInAccount.displayName)")
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    // Override this in each of the specific account subclasses.
     public func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {
         return false
     }
     
-    // MARK: SMCloudStorageCredentials delegate method/vars start
+    // MARK: SMUserSignInDelegate delegate method/vars start
     
-    public func syncServerAppLaunchSetup() {
+    public func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool) {
     }
     
     public var syncServerUserIsSignedIn: Bool {

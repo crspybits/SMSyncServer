@@ -93,4 +93,12 @@ class SharingUsers: BaseClass {
     
     func testThatRedeemingSharingInvitationWorks() {
     }
+    
+    // Test case: Attempt to create a sharing invitation when you are a sharing user, and don't have authority to create a sharing invitation. Should fail.
+    // Test is disabled because you have to make sure to sign in to the right account to make this happen.
+    func testThatMinimalCapabilitySharingUserCannotCreateSharingInvitation() {
+    }
+    
+    func testThatInviteCapabilitySharingUserCanCreateSharingInvitation() {
+    }
 }

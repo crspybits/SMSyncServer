@@ -12,47 +12,6 @@ import SMCoreLib
 // Looks like I need to follow this process on the server-side to generate a longer-lived access token
 // https://developers.facebook.com/docs/facebook-login/access-tokens/expiration-and-extension
 
-public struct SMSharingUser {
-    // The account types that sharing users have available to them to access sync server data.
-    public enum AccountCreds {
-        case Facebook(userId: String, appTokenString:String)
-    }
-
-    var username:String?
-    var accountType:AccountCreds
-    
-    // Assign this to the SMServerConstants.sharingUserAccountKey
-    internal func sharingUserAccountDict() -> [String:AnyObject] {
-        return ["x":"y"]
-    }
-    
-    
-/*
-    // Key:
-    public static let sharingUserAccountKey = "SharingUserAccount"
-    // Value: Component subkeys as follow:
-    
-        // SubKey: 
-        public static let sharingUserAccountUserName = "UserName"
-        // Value: String
-    
-        // SubKey:
-        public static let sharingUserAccountType = "AccountType"
-        // Value: One of the following:
-    
-            public static let sharingUserAccountTypeFacebook = "Facebook"
-    
-            // For Facebook account type
-            // SubKey:
-            public static let facebookUserId = "FacebookUserId"
-            // Value: String
-        
-            // SubKey:
-            public static let facebookAppTokenString = "AppTokenString"
-            // Value: String
-            */
-}
-
 // Enable non-owning (e.g., Facebook) users to access sync server data.
 
 // Handles urls of the form: <BundleId>.authorize://?code=<UUID>&username=<UserName>

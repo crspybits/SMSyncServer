@@ -22,11 +22,11 @@ public class SMFacebookUserSignIn : SMUserSignIn {
         super.init()
     }
     
-    override public func syncServerAppLaunchSetup() {
+    override public func syncServerAppLaunchSetup(silentSignIn silentSignIn: Bool) {
     }
     
     override public func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {
-        return false
+        return FBSDKApplicationDelegate.sharedInstance().application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation)
     }
     
     override public var syncServerUserIsSignedIn: Bool {
@@ -38,7 +38,7 @@ public class SMFacebookUserSignIn : SMUserSignIn {
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return nil
+                return .Facebook(userType: SMServerConstants.userTypeSharing, appToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID)
             }
             else {
                 return nil

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		830A66FE1D0E04AB00E33EAA /* GoogleUserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = GoogleUserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		830A67001D0E0A6700E33EAA /* FacebookUserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FacebookUserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		833BFC9F1C52F7A000CFCBF6 /* PSInboundFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSInboundFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		8357A3EA1C0FD864005891B9 /* PSLock.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSLock.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		8369D3431CD827C6006DA33C /* startOnHeroku.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = startOnHeroku.sh; sourceTree = "<group>"; };
@@ -43,11 +45,20 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		8305BA601D0CF1F60000A033 /* Sharing Users */ = {
+		8305BA601D0CF1F60000A033 /* User Credentials */ = {
 			isa = PBXGroup;
 			children = (
+				83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */,
 			);
-			name = "Sharing Users";
+			name = "User Credentials";
+			sourceTree = "<group>";
+		};
+		830A66FF1D0E0A4500E33EAA /* Facebook */ = {
+			isa = PBXGroup;
+			children = (
+				830A67001D0E0A6700E33EAA /* FacebookUserCredentials.sjs */,
+			);
+			name = Facebook;
 			sourceTree = "<group>";
 		};
 		836F287D1C166CE500385636 /* Persistent Storage */ = {
@@ -66,19 +77,20 @@
 			name = "Persistent Storage";
 			sourceTree = "<group>";
 		};
-		83A4F1D11C683AB30086B22F /* Cloud Storage */ = {
+		83A4F1D11C683AB30086B22F /* Owning and Sharing Users */ = {
 			isa = PBXGroup;
 			children = (
+				830A66FF1D0E0A4500E33EAA /* Facebook */,
 				83A4F1D21C683B0F0086B22F /* Google Drive */,
 			);
-			name = "Cloud Storage";
+			name = "Owning and Sharing Users";
 			sourceTree = "<group>";
 		};
 		83A4F1D21C683B0F0086B22F /* Google Drive */ = {
 			isa = PBXGroup;
 			children = (
 				83B0BEBE1C114935002B5735 /* CloudStorage.sjs */,
-				83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */,
+				830A66FE1D0E04AB00E33EAA /* GoogleUserCredentials.sjs */,
 			);
 			name = "Google Drive";
 			sourceTree = "<group>";
@@ -100,8 +112,8 @@
 				836F28761C12D9E700385636 /* Server.sjs */,
 				83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */,
 				836F287D1C166CE500385636 /* Persistent Storage */,
-				8305BA601D0CF1F60000A033 /* Sharing Users */,
-				83A4F1D11C683AB30086B22F /* Cloud Storage */,
+				8305BA601D0CF1F60000A033 /* User Credentials */,
+				83A4F1D11C683AB30086B22F /* Owning and Sharing Users */,
 				836F28751C128D1D00385636 /* FileTransfers.sjs */,
 				83EBF7661C0E890A009F9796 /* Operation.sjs */,
 				836F28781C13758900385636 /* File.sjs */,

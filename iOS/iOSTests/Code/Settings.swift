@@ -10,15 +10,12 @@ import UIKit
 import SMSyncServer
 import SMCoreLib
 
-class Settings: UIViewController {
-    let signInButton = UIButton(type: .System)
-    //let silentlySignIn = UIButton(type: .System)
+class Settings: SMGoogleUserSignInViewController {
     let uploadFileButton = UIButton(type: .System)
     let getFileIndex = UIButton(type: .System)
     let showLocalMetaData = UIButton(type: .System)
     
-    // Must not be private
-    func signInCompletionAction(error:NSError?) {
+    @objc private func signInCompletionAction(error:NSError?) {
         if SMSyncServerUser.session.signedIn && error == nil {
             print("SUCCESS signing in!")
         }
@@ -33,35 +30,34 @@ class Settings: UIViewController {
         
         self.view.backgroundColor = UIColor.whiteColor()
     
-        SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(Settings.signInCompletionAction))
-
-        self.signInButton.setTitle("Google SignIn", forState: .Normal)
-        self.signInButton.sizeToFit()
-        self.signInButton.frameOrigin = CGPoint(x: 50, y: 100)
-        self.signInButton.addTarget(self, action: #selector(googleSignInButtonAction), forControlEvents: .TouchUpInside)
-        self.view.addSubview(self.signInButton)
+        SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(signInCompletionAction))
+        
+        let googleSignIn = SMUserSignIn.possibleAccounts[SMGoogleUserSignIn.displayName] as! SMGoogleUserSignIn
+        let googleSignInButton = googleSignIn.signInButton(delegate: self)
+        googleSignInButton.frameOrigin = CGPoint(x: 50, y: 100)
+        self.view.addSubview(googleSignInButton)
         
         let verticalDistanceBetweenButtons:CGFloat = 30
         
         self.uploadFileButton.setTitle("Upload Changed Files", forState: .Normal)
         self.uploadFileButton.sizeToFit()
-        self.uploadFileButton.frameX = self.signInButton.frameX
-        self.uploadFileButton.frameY = self.signInButton.frameMaxY + verticalDistanceBetweenButtons
-        self.uploadFileButton.addTarget(self, action: #selector(Settings.uploadChangedFilesButtonAction), forControlEvents: .TouchUpInside)
+        self.uploadFileButton.frameX = googleSignInButton.frameX
+        self.uploadFileButton.frameY = googleSignInButton.frameMaxY + verticalDistanceBetweenButtons
+        self.uploadFileButton.addTarget(self, action: #selector(uploadChangedFilesButtonAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.uploadFileButton)
         
         self.getFileIndex.setTitle("Get File Index", forState: .Normal)
         self.getFileIndex.sizeToFit()
         self.getFileIndex.frameX = self.uploadFileButton.frameX
         self.getFileIndex.frameY = self.uploadFileButton.frameMaxY + verticalDistanceBetweenButtons
-        self.getFileIndex.addTarget(self, action: #selector(Settings.getFileIndexAction), forControlEvents: .TouchUpInside)
+        self.getFileIndex.addTarget(self, action: #selector(getFileIndexAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.getFileIndex)
         
         self.showLocalMetaData.setTitle("Show local meta data", forState: .Normal)
         self.showLocalMetaData.sizeToFit()
         self.showLocalMetaData.frameX = self.getFileIndex.frameX
         self.showLocalMetaData.frameY = self.getFileIndex.frameMaxY + verticalDistanceBetweenButtons
-        self.showLocalMetaData.addTarget(self, action: #selector(Settings.showLocalMetaDataAction), forControlEvents: .TouchUpInside)
+        self.showLocalMetaData.addTarget(self, action: #selector(showLocalMetaDataAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.showLocalMetaData)
         
         let facebookSignIn = SMUserSignIn.possibleAccounts[SMFacebookUserSignIn.displayName] as! SMFacebookUserSignIn
@@ -79,12 +75,6 @@ class Settings: UIViewController {
     func showLocalMetaDataAction() {
         // Available for debug builds only.
         SMSyncServer.session.showLocalFiles()
-    }
-    
-    func googleSignInButtonAction() {
-        let googleSignIn = SMUserSignIn.possibleAccounts[SMGoogleUserSignIn.displayName] as! SMGoogleUserSignIn
-        let signInController = googleSignIn.makeSignInController()
-        self.navigationController!.pushViewController(signInController, animated: true)
     }
     
     func uploadChangedFilesButtonAction() {

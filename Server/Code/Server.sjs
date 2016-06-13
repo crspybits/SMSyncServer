@@ -50,25 +50,6 @@ Secrets.load(function (error) {
     Mongo.connect(Secrets.mongoDbURL());
 });
 
-app.post("/" + ServerConstants.operationCheckForExistingUser, function(request, response) {
-
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-
-    op.validateUser(false, function () {
-        if (op.psUserCreds.stored) {
-            op.result[ServerConstants.internalUserId] = op.psUserCreds._id;
-            op.endWithRC(ServerConstants.rcUserOnSystem);
-        }
-        else {
-            op.endWithRC(ServerConstants.rcUserNotOnSystem);
-        }
-    });
-});
-
 app.post("/" + ServerConstants.operationCreateNewUser, function(request, response) {
 
     var op = new Operation(request, response);
@@ -103,6 +84,25 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
                     }
                 });
             }
+        }
+    });
+});
+
+app.post("/" + ServerConstants.operationCheckForExistingUser, function(request, response) {
+
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+
+    op.validateUser(false, function () {
+        if (op.psUserCreds.stored) {
+            op.result[ServerConstants.internalUserId] = op.psUserCreds._id;
+            op.endWithRC(ServerConstants.rcUserOnSystem);
+        }
+        else {
+            op.endWithRC(ServerConstants.rcUserNotOnSystem);
         }
     });
 });

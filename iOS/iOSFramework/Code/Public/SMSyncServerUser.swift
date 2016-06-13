@@ -13,10 +13,10 @@ import SMCoreLib
 
 // "class" so its delegate var can be weak.
 public protocol SMUserSignInDelegate : class {
-    // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed to sign in the user.
-    func syncServerAppLaunchSetup()
+    // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed. If silentSignIn is true, the callee should try to silently sign the user in-- this is used when the user was, last time the app was launched, signed in with this account.
+    func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool)
     
-    // Is a user currently signed in?
+    // Is a user currently signed in? This should return true if the user signed in during this launch of the app, and has not signed out, *and* if the user was signed in the last launch of the app, and never signed out.
     var syncServerUserIsSignedIn: Bool {get}
     
     // Credentials specific to the user signed in.
@@ -39,10 +39,37 @@ internal protocol SMServerAPIUserDelegate : class {
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
 public enum SMUserCredentials {
     // When using as a parameter to call createNewUser, authCode must not be nil.
-    case GoogleDrive(idToken:String!, authCode:String?)
+    case Google(userType:String, idToken:String!, authCode:String?)
+
+    // userType *must* be SharingUser
+    case Facebook(userType:String, appToken:String!, userId:String!)
     
-    // case Dropbox
-    // case AppleDrive
+    internal func toServerParameterDictionary() -> [String:AnyObject] {
+        var userCredentials = [String:AnyObject]()
+        
+        switch self {
+        case .Google(userType: let userType, idToken: let idToken, authCode: let authCode):
+            Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Yikes: Not yet implemented!")
+            Log.msg("Sending IdToken: \(idToken)")
+            
+            userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeOwning
+            userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeGoogle
+            userCredentials[SMServerConstants.googleUserIdToken] = idToken
+
+            if (authCode != nil) {
+                userCredentials[SMServerConstants.googleUserAuthCode] = authCode!
+            }
+        
+        case .Facebook(userType: let userType, appToken: let appToken, userId: let userId):
+            Assert.If(userType != SMServerConstants.userTypeSharing, thenPrintThisString: "Yikes: Not allowed!")
+            userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeSharing
+            userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeFacebook
+            userCredentials[SMServerConstants.facebookUserId] = userId
+            userCredentials[SMServerConstants.facebookUserAppTokenString] = appToken
+        }
+        
+        return userCredentials
+    }
 }
 
 // This class is *not* intended to be subclassed for particular sign-in systems.
@@ -67,7 +94,7 @@ public class SMSyncServerUser {
     // You *must* set this (e.g., shortly after app launch). Currently, this must be a single name, with no subfolders, relative to the root. Don't put any "/" character in the name.
     // 1/18/16; I just moved this here, from SMCloudStorageCredentials because it seems like the cloudFolderPath should be at a different level of abstraction, or at least seems independent of the details of cloud storage user creds.
     // 1/18/16; I've now made this public because the folder used in cloud storage is fundamentally a client app decision-- i.e., it is a decision made by the user of SMSyncServer, e.g., Petunia.
-    // TODO: Eventually give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
+    // TODO: Eventually it would seem like a good idea to give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
     public var cloudFolderPath:String?
     
     internal func appLaunchSetup(withUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignIn>!) {
@@ -78,9 +105,6 @@ public class SMSyncServerUser {
         
         self.delegate = userSignInLazyDelegate
         SMServerAPI.session.userDelegate = self
-
-        // Do this last because it could lead to invocation of the signInProcessCompleted callbacks.
-        self.delegate.lazyRef?.syncServerAppLaunchSetup()
     }
     
     // Add target/selector to this to get a callback when the user sign-in process completes.
@@ -137,8 +161,12 @@ public class SMSyncServerUser {
     public func createNewUser(userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         switch (userCreds) {
-        case .GoogleDrive(_, let authCode):
+        case .Google(userType: let userType, idToken: _, authCode: let authCode):
+            Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Don't have owning type!")
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
+
+        case .Facebook:
+            Assert.badMojo(alwaysPrintThisString: "Cannot create an OwningUser for a Facebook account!")
         }
         
         SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { internalUserId, cnuResult in
@@ -166,28 +194,15 @@ public class SMSyncServerUser {
     }
     
     // Parameters in a REST API call to be provided to the server for a user's credentials & other info (e.g., deviceId, cloudFolderPath).
-    private func serverParameters(userCredsData:SMUserCredentials) -> [String:AnyObject] {
-        
-        var serverParameters = [String:AnyObject]()
-        var userCredentials = [String:AnyObject]()
-        
+    private func serverParameters(userCreds:SMUserCredentials) -> [String:AnyObject] {
         Assert.If(0 == SMSyncServerUser.MobileDeviceUUID.stringValue.characters.count, thenPrintThisString: "Whoops: No device UUID!")
+        
+        var userCredentials = userCreds.toServerParameterDictionary()
         
         userCredentials[SMServerConstants.mobileDeviceUUIDKey] = SMSyncServerUser.MobileDeviceUUID.stringValue
         userCredentials[SMServerConstants.cloudFolderPath] = self.cloudFolderPath!
         
-        switch (userCredsData) {
-        case .GoogleDrive(let idToken, let authCode):
-            Log.msg("Sending IdToken: \(idToken)")
-            
-            userCredentials[SMServerConstants.cloudType] = SMServerConstants.cloudTypeGoogle
-            userCredentials[SMServerConstants.googleUserCredentialsIdToken] = idToken
-
-            if (authCode != nil) {
-                userCredentials[SMServerConstants.googleUserCredentialsAuthCode] = authCode!
-            }
-        }
-
+        var serverParameters = [String:AnyObject]()
         serverParameters[SMServerConstants.userCredentialsDataKey] = userCredentials
         
         return serverParameters

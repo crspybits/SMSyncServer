@@ -63,32 +63,57 @@ function define(name, value) {
 	define("httpDownloadParamHeader",      "SMSyncServer-Download-Parameters");
 
     // MARK: Credential parameters sent to the server.
-    
+
     // Key:
 	define("userCredentialsDataKey",      "CredentialsData");
-    // Each storage system type has one common key in the user credentials data nested structure:
-    // Nested key:
-	define("cloudType",      "CloudType");
-    // Nested values
-	define("cloudTypeGoogle",      "Google");
+    // Each user account type has four common keys in the user credentials data nested structure:
+        // SubKey:
+	define("mobileDeviceUUIDKey",      "MobileDeviceUUID");
+        // Value: A UUID assigned by the app that uniquely represents the users device.
     
-    // Nested key:
+        // SubKey:
 	define("cloudFolderPath",      "CloudFolderPath");
-    // Value: The path into the cloud storage system where the files will be stored. *All* files are stored in a single folder in the cloud storage system. Currently, this *must* be a folder immediately off of the root. E.g., /Petunia. Subfolders (e.g., /Petunia/subfolder) are not allowable currently.
+        // Value: The path into the cloud storage system where the files will be stored. *All* files are stored in a single folder in the cloud storage system. Currently, this *must* be a folder immediately off of the root. E.g., /Petunia. Subfolders (e.g., /Petunia/subfolder) are not allowable currently.
     
-    // And each specific storage system has its own specific keys in the credentials data for the specific user.
-    // MARK: For cloudTypeGoogle Google, there are the following additional keys.
-    // Value is an id token representing the user
-	define("googleUserCredentialsIdToken",      "IdToken");
-    // Value is a one-time authentication code
-	define("googleUserCredentialsAuthCode",      "AuthCode");
+        // SubKey: (optional)
+	define("accountUserName",      "UserName");
+        // Value: String
+    
+        // SubKey:
+	define("userType",      "UserType");
+        // Values
+	define("userTypeOwning",      "OwningUser");
+	define("userTypeSharing",      "SharingUser");
+    
+        // SubKey:
+	define("accountType",      "AccountType");
+        // Values:
+	define("accountTypeGoogle",      "Google");
+	define("accountTypeFacebook",      "Facebook");
 
+        // And each specific storage system has its own specific keys in the credentials data for the specific user.
+    
+        // MARK: For Google, there are the following additional keys:
+        // SubKey:
+	define("googleUserIdToken",      "IdToken");
+        // Value is an id token representing the user
+    
+        // SubKey:
+	define("googleUserAuthCode",      "AuthCode");
+        // Value is a one-time authentication code
+
+        // MARK: For Facebook, there are the following additional keys:
+        // For Facebook account type
+        // SubKey:
+	define("facebookUserId",      "FacebookUserId");
+        // Value: String
+    
+        // SubKey:
+	define("facebookUserAppTokenString",      "AppTokenString");
+        // Value: String
+    
     // MARK: Other parameters sent to the server.
 
-    // Required for all operations.
-    // Key:
-	define("mobileDeviceUUIDKey",      "MobileDeviceUUID");
-    // Value: A UUID assigned by the app that uniquely represents this device.
     
     // Used with GetFileIndex operation
     // Key:
@@ -178,37 +203,13 @@ function define(name, value) {
 	define("dbTcGetDownloadFileInfo",      8);
     
     // MARK: Parameters sent in sharing operations
-    
     // Key:
 	define("userCapabilities",      "UserCapabilities");
     // Values:
     // A (possibly empty) array of capability strings. See SMSharingUserCapabilityMask.
     // The ordering of elements in the following array is utilized in SMSharingUserCapabilityMask. Be careful about changing the order!
     // The syntax for the following array conveniently works in both Swift and Javascript!!
-	define("possibleUserCapabilityValues",      ["Create", "Read", "Update", "Delete", "Authorize"]);
-    
-    // Key:
-	define("sharingUserAccountKey",      "SharingUserAccount");
-    // Value: Component subkeys as follow:
-    
-        // SubKey: 
-	define("sharingUserAccountUserName",      "UserName");
-        // Value: String
-    
-        // SubKey:
-	define("sharingUserAccountType",      "AccountType");
-        // Value: One of the following:
-    
-	define("sharingUserAccountTypeFacebook",      "Facebook");
-    
-            // For Facebook account type
-            // SubKey:
-	define("facebookUserId",      "FacebookUserId");
-            // Value: String
-        
-            // SubKey:
-	define("facebookAppTokenString",      "AppTokenString");
-            // Value: String
+	define("possibleUserCapabilityValues",      ["Create", "Read", "Update", "Delete", "Invite"]);
     
     // MARK Keys both sent to the server and received back from the server.
 

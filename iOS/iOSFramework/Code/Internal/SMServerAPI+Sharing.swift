@@ -14,7 +14,7 @@ import SMCoreLib
 internal extension SMServerAPI {
 
     // Create sharing invitation of current owning user's cloud storage data.
-    // Must have a signed in owning user. Doesn't require a lock. The capabilities must not be empty.
+    // An owning user must currently be signed in. Doesn't require a lock. The capabilities must not be empty.
     // capabilities is an optional value only to allow for error case testing on the server. In production builds, it *must* not be nil.
     internal func createSharingInvitation(capabilities capabilities:SMSharingUserCapabilityMask?, completion:((invitationCode:String?, apiResult:SMServerAPIResult)->(Void))?) {
         
@@ -96,6 +96,7 @@ internal extension SMServerAPI {
         }
     }
     
+    /*
     // Redeem an existing sharing invitation. This binds the invitation to a specific sharing user account.
     internal func redeemSharingInvitation(invitationCode invitationCode:String, sharingUser:SMSharingUser, completion:((apiResult:SMServerAPIResult)->(Void))?) {
 
@@ -115,4 +116,7 @@ internal extension SMServerAPI {
             completion?(apiResult: result)
         }
     }
+    */
+    
+    // Need a server operation that enables client app to look up the accounts that are shared with the current sharing user. If there is more than one, UI will have to let user choose.
 }

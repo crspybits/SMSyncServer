@@ -9,40 +9,54 @@ var UserCredentials = require('./UserCredentials.sjs');
 var Mongo = require('./Mongo');
 var jsonExtras = require('./JSON');
 var logger = require('./Logger');
+var ServerConstants = require('./ServerConstants');
 
 const collectionName = "UserCredentials";
 
 /* Data model v2 (with both OwningUser's and SharingUser's)
 	{
 		_id: (ObjectId), // userId: unique to the user (assigned by MongoDb).
+ 
 		username: (String), // account name, e.g., email address.
         
-		account: {
-            userType: "OwningUser" | "SharingUser",
-            
-            accountType: // Value as follows
- 
-            // If userType is "OwningUser", then the following options are available for accountType
-			accountType: "Google",
- 
-             // If userType is "SharingUser", then the following options are available for accountType
-            accountType: "Facebook",
- 
-            creds: // Value as follows
- 
-            // If userType is "OwningUser" and accountType is "Google"
-			creds: {
-				sub: XXXX, // Google individual identifier
-				access_token: XXXX,
-				refresh_token: XXXX
-            }
-            
-            // If userType is "SharingUser" and accountType is "Facebook"
-			creds: {
-                userId: String,
-                accessToken: String
-            }
+        userType: "OwningUser" | "SharingUser",
+        
+        accountType: // Value as follows
+
+        // If userType is "OwningUser", then the following options are available for accountType
+        accountType: "Google",
+
+         // If userType is "SharingUser", then the following options are available for accountType
+        accountType: "Facebook",
+
+        creds: // Value as follows
+
+        // If userType is "OwningUser" and accountType is "Google"
+        creds: {
+            sub: XXXX, // Google individual identifier
+            access_token: XXXX,
+            refresh_token: XXXX
         }
+        
+        // If userType is "SharingUser" and accountType is "Facebook"
+        creds: {
+            userId: String,
+            accessToken: String
+        }
+        
+        // SharingUser's have another field in this structure:
+
+        // The linked or shared "Owning User" accounts.
+        // Array of structures because a given sharing user can potentially share more than one set of cloud storage data.
+        linked: [
+            { 
+                // The _id of a PSUserCredentials object that must be an OwningUser
+                owningUser: ObjectId,
+                
+                // Each string is the description representation of a UserCapabilityMask item (see iOS client) -- e.g., Create or Read
+                capabilities: [String]
+            }
+        ]
 	}
 */
 
@@ -65,17 +79,22 @@ const collectionName = "UserCredentials";
 // Doesn't access MongoDb.
 // Throws an error if userCreds are invalid.
 function PSUserCredentials(userCreds) {
+    var self = this;
+    
     // always initialize all instance properties
     
-    // these three will be taken from persistent storage.
-    this._id = null;
-    this.username = null;
-    this.cloud_storage = null;
+    self._id = null;
+    self.username = null;
+    self.userType = null;
+    self.accountType = null;
+    self.creds = null;
+    self.linked = null;
     
+    // the UserCredentials object.
     this.userCreds = userCreds;
     
-	if (!this.userCreds.persistent()) {
-		throw "**** ERROR ****: Null user creds cloud_storage";
+	if (!this.userCreds.signedInCreds().persistent()) {
+		throw "**** ERROR ****: Null persistent user creds";
 	}
 	
 	// Is this in persistent storage? (We don't know yet).
@@ -84,14 +103,23 @@ function PSUserCredentials(userCreds) {
 
 // instance methods
 
-// Lookup the user creds in persistent storage.
+// Only use the invariant parts of the cloud storage as these form the unique search key. Also should qualify it by account type and user type.
+function queryData(signedInCreds) {
+    return {
+        accountType: signedInCreds.accountType,
+        userType: signedInCreds.userType,
+        creds: signedInCreds.persistentInvariant()
+    };
+}
+
+// Lookup the signed-in user creds in persistent storage.
 // Callback has a single parameter: error. If the error is null in the callback, check the member property .stored to see if the user creds are stored in persistent storage. The .stored member will be null if there is an error.
 PSUserCredentials.prototype.lookup = function (callback) {
     var self = this;
     self.stored = null;
     
-    // Only use the invariant parts of the cloud storage as these form the unique search key.
-    var query = { cloud_storage: self.userCreds.persistentInvariant() };
+    var query = queryData(self.userCreds.signedInCreds());
+    
 	// find needs this query flattened.
 	query = jsonExtras.flatten(query);
 	
@@ -128,12 +156,11 @@ PSUserCredentials.prototype.lookup = function (callback) {
 					self.stored = true;
 					self._id = doc._id;
                     self.username = doc.username;
-                    self.cloud_storage = doc.cloud_storage;
+                    self.userType = doc.userType;
+                    self.accountType = doc.accountType;
+                    self.creds = doc.creds;
+                    self.linked = doc.linked;
 				}
-                
-                //console.log(err);
-                //console.log(doc);
-                //console.log(self.cloud_storage);
                 
                 callback(err);
 			});
@@ -146,21 +173,21 @@ PSUserCredentials.prototype.lookup = function (callback) {
 	// See https://mongodb.github.io/node-mongodb-native/api-generated/cursor.html#each
 }
 
-// Populates the .userCreds member of this object from the .cloud_storage member.
+// Populates the signed in .userCreds member of this object from the .creds member.
 // Callback has one parameter: error
 PSUserCredentials.prototype.populateFromUserCreds = function (callback) {
     var self = this;
-    logger.info("populateFromUserCreds: " + JSON.stringify(self.cloud_storage));
+    logger.info("populateFromUserCreds: " + JSON.stringify(self.creds));
     
     function setPersistent() {
-        self.userCreds.setPersistent(self.cloud_storage, function (err) {
+        self.userCreds.signedInCreds().setPersistent(self.creds, function (err) {
             callback(err);
         });
     }
 
     // populateFromUserCreds could be called with or without calling lookup first.
-    if (self.cloud_storage) {
-        logger.info("Populating directly from self.cloud_storage");
+    if (self.creds) {
+        logger.info("Populating directly from self.creds");
         setPersistent();
     }
     else {
@@ -181,11 +208,19 @@ PSUserCredentials.prototype.populateFromUserCreds = function (callback) {
 PSUserCredentials.prototype.storeNew = function (callback) {
     var self = this;
     
+    var signedInCreds = self.userCreds.signedInCreds();
+    
     // Letting Mongo give us the unique _id.
     var userCredentialsDocument = {
-    	username: self.userCreds.username,
-    	cloud_storage: self.userCreds.persistent()
+    	username: signedInCreds.username,
+        userType: signedInCreds.userType,
+        accountType: signedInCreds.accountType,
+    	creds: signedInCreds.persistent()
     };
+    
+    if (ServerConstants.userTypeSharing == signedInCreds.userType) {
+        throw new Error("Not implemented yet: SharingUser");
+    }
     
    	Mongo.db().collection(collectionName).insertOne(userCredentialsDocument,
    		function(err, result) {
@@ -203,7 +238,7 @@ PSUserCredentials.prototype.update = function (callback) {
     var self = this;
     
     // Anything to update?
-    var variantData = this.userCreds.persistentVariant();
+    var variantData = self.userCreds.signedInCreds().persistentVariant();
     if (!variantData) {
         callback(null);
         return;
@@ -211,20 +246,20 @@ PSUserCredentials.prototype.update = function (callback) {
     
     // logger.info("variantData: " + JSON.stringify(variantData));
     
-    var query = { cloud_storage : self.userCreds.persistentInvariant() };
+    var query = queryData(self.userCreds.signedInCreds());
 	// I'm guessing that since find needs this query flattened, so does updateOne.
 	query = jsonExtras.flatten(query);
     
     // Create the update data
-    var variantCloudStorage = { cloud_storage : variantData };
-    variantCloudStorage = jsonExtras.flatten(variantCloudStorage);
+    var variantCreds = { creds : variantData };
+    variantCreds = jsonExtras.flatten(variantCreds);
     var updates = {};
     var numberOfUpdates = 0;
     
-    for (var key in variantCloudStorage) {
-        if (variantCloudStorage.hasOwnProperty(key)) {
+    for (var key in variantCreds) {
+        if (variantCreds.hasOwnProperty(key)) {
             numberOfUpdates++;
-            updates[key] = variantCloudStorage[key];
+            updates[key] = variantCreds[key];
         }
     }
     

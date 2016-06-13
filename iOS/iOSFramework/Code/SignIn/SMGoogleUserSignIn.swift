@@ -16,9 +16,13 @@ import Google
 2015-11-26 21:09:38.198 NetDb[609/0x16e12f000] [lvl=3] __65-[GGLClearcutLogger sendNextPendingRequestWithCompletionHandler:]_block_invoke_3() Error posting to Clearcut: Error Domain=NSURLErrorDomain Code=-1005 "The network connection was lost." UserInfo={NSUnderlyingError=0x15558de70 {Error Domain=kCFErrorDomainCFNetwork Code=-1005 "(null)" UserInfo={_kCFStreamErrorCodeKey=57, _kCFStreamErrorDomainKey=1}}, NSErrorFailingURLStringKey=https://play.googleapis.com/log, NSErrorFailingURLKey=https://play.googleapis.com/log, _kCFStreamErrorDomainKey=1, _kCFStreamErrorCodeKey=57, NSLocalizedDescription=The network connection was lost.}
 */
 
+public class SMGoogleUserSignInViewController : UIViewController, GIDSignInUIDelegate {
+}
+
 // See https://developers.google.com/identity/sign-in/ios/sign-in
 public class SMGoogleUserSignIn : SMUserSignIn {
-
+    private static let signedIn = SMPersistItemBool(name: "SMGoogleUserSignIn.SignedIn", initialBoolValue: false, persistType: .UserDefaults)
+    
     // Specific to Google Credentials. I'm not sure it's needed really (i.e., could it be obtained each time the app launches on sign in-- since to be signed in really assumes we're connected to the network?), but I'll store this in the Keychain since it's credential info.
     // Hmmmm. I may be making incorrect assumptions about the longevity of these IdTokens. See https://github.com/google/google-auth-library-nodejs/issues/46 Does silently signing the user in generate a new IdToken?
     private static let IdToken = SMPersistItemString(name: "SMGoogleUserSignIn.IdToken", initialStringValue: "", persistType: .KeyChain)
@@ -38,10 +42,10 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         }
     }
     
-    public static let displayName = "Google"
+    public static let displayName = SMServerConstants.accountTypeGoogle
     
     override public var displayName:String? {
-        return SMFacebookUserSignIn.displayName
+        return SMGoogleUserSignIn.displayName
     }
    
     public init(serverClientID theServerClientID:String) {
@@ -49,7 +53,7 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         super.init()
     }
     
-    override public func syncServerAppLaunchSetup() {
+    override public func syncServerAppLaunchSetup(silentSignIn silentSignIn: Bool) {
         var configureError: NSError?
         GGLContext.sharedInstance().configureWithError(&configureError)
         assert(configureError == nil, "Error configuring Google services: \(configureError)")
@@ -65,7 +69,9 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         // 12/20/15; Trying to resolve my user sign in issue
         // It looks like, at least for Google Drive, calling this method is sufficient for dealing with rcStaleUserSecurityInfo. I.e., having the IdToken for Google become stale. (Note that while it deals with the IdToken becoming stale, dealing with an expired access token on the server is a different matter-- and the server seems to need to refresh the access token from the refresh token to deal with this independently).
         // See also this on refreshing of idTokens: http://stackoverflow.com/questions/33279485/how-to-refresh-authentication-idtoken-with-gidsignin-or-gidauthentication
-        GIDSignIn.sharedInstance().signInSilently()
+        if silentSignIn {
+            GIDSignIn.sharedInstance().signInSilently()
+        }
     }
 
     override public func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {
@@ -96,14 +102,14 @@ public class SMGoogleUserSignIn : SMUserSignIn {
     
     override public var syncServerUserIsSignedIn: Bool {
         get {
-            return GIDSignIn.sharedInstance().hasAuthInKeychain()
+            return GIDSignIn.sharedInstance().hasAuthInKeychain() || SMGoogleUserSignIn.signedIn.boolValue
         }
     }
     
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return SMUserCredentials.GoogleDrive(idToken: self.idToken, authCode: nil)
+                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: self.idToken, authCode: nil)
             }
             else {
                 return nil
@@ -113,6 +119,7 @@ public class SMGoogleUserSignIn : SMUserSignIn {
     
     override public func syncServerSignOutUser() {
         GIDSignIn.sharedInstance().signOut()
+        SMGoogleUserSignIn.signedIn.boolValue = false
     }
     
     // 5/23/16; I just added this to deal with the case where the app has been in the foreground for a period of time, and the IdToken has expired.
@@ -147,8 +154,11 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         }
     }
     
-    public func makeSignInController() -> UIViewController! {
-        return SMGoogleSignInController()
+    public func signInButton(delegate delegate: SMGoogleUserSignInViewController) -> UIControl {
+        GIDSignIn.sharedInstance().uiDelegate = delegate
+        let signInButton = GIDSignInButton()
+        signInButton.delegate = delegate
+        return signInButton
     }
 }
 
@@ -164,6 +174,7 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
     public func signIn(signIn: GIDSignIn!, didSignInForUser user: GIDGoogleUser!,
         withError error: NSError!) {
             if (error == nil) {
+                SMGoogleUserSignIn.signedIn.boolValue = true
                 self.googleUser = user
                 
                 Log.msg("Attempting to sign in to server...")
@@ -180,19 +191,19 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                 
                 Log.msg("Attempting to sign in: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let syncServerGoogleUser = SMUserCredentials.GoogleDrive(idToken:user.authentication.idToken, authCode:user.serverAuthCode)
-                
+                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: user.authentication.idToken, authCode: user.serverAuthCode)
+
                 if user.serverAuthCode == nil {
                     SMSyncServerUser.session.checkForExistingUser(syncServerGoogleUser) { error in
                         if nil == error {
-                            self.idToken = user.authentication.idToken;
+                            self.idToken = user.authentication.idToken
                         }
                     }
                 }
                 else {
                     SMSyncServerUser.session.createNewUser(syncServerGoogleUser) { error in
                         if nil == error {
-                            self.idToken = user.authentication.idToken;
+                            self.idToken = user.authentication.idToken
                         }
                     }
                 }

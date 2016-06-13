@@ -31,7 +31,7 @@ function Operation(request, response, errorHandling) {
     self.request = request;
     self.response = response;
     
-    // The client expects a dictionary in response.
+    // The client expects a dictionary in response to the HTTP request.
     self.result = {};
     
     // Many more cases fail than succeed, so make failure the default.
@@ -41,15 +41,14 @@ function Operation(request, response, errorHandling) {
     // TODO: "Compile" this out (using a macro?) in development.
     self.debugTestCase = request.body[ServerConstants.debugTestCaseKey];
     
-    // This important output on logging- may want to change the color to be something more distinctive.
+    // This is important output on logging- may want to change the color to be something more distinctive.
     logger.trace("OPERATION: request.url: " + request.url);
     
     if (!errorHandling) {
-        // Only log the request info in non-error handling cases.
         // logger.info("request.body: " + JSON.stringify(request.body));
 
         var credentialsData = request.body[ServerConstants.userCredentialsDataKey];
-        if (!credentialsData) {
+        if (!isDefined(credentialsData)) {
             var error = "No user credentials sent in request!";
             self.result[ServerConstants.errorDetailsKey] = error; // just for convenience.
             self.error = true;
@@ -61,11 +60,11 @@ function Operation(request, response, errorHandling) {
                 self.userCreds = new UserCredentials(credentialsData);
             } catch (error) {
                 logger.error("Failed creating UserCredentials: ", error.toString());
-                self.result[ServerConstants.errorDetailsKey] = error; // just for convenience.
+                self.result[ServerConstants.errorDetailsKey] = error.toString(); // just for convenience.
                 self.error = true;
             }
             
-            //logger.debug("Finished creating a new UserCredentials object: this.error: " + this.error);
+            // logger.debug("Finished creating a new UserCredentials object: " + JSON.stringify(self.userCreds));
         }
     }
 }
@@ -242,18 +241,19 @@ Operation.prototype.prepareToEndDownloadWithRCAndErrorDetails = function (return
 Operation.prototype.checkForExistingUser = function (update, callback) {
     var self = this;
     
-	self.userCreds.validate(function(error, staleUserSecurityInfo) {
+	self.userCreds.signedInCreds().validate(function(error, staleUserSecurityInfo) {        
 		if (error) {
 			callback(error, staleUserSecurityInfo, null);
 		}
-		else {
-            logger.info("self.userCreds.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.userCreds.googleUserCredentials.oauth2Client.credentials));
-            
+		else {            
             var psUserCreds = null;
             try {
                 psUserCreds = new PSUserCredentials(self.userCreds);
             } catch (error) {
+                logger.error("Failed creating PSUserCredentials");
+                logger.error(error);
                 callback(error, false, null);
+                return;
             }
             
 			psUserCreds.lookup(function (error) {

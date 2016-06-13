@@ -545,6 +545,8 @@ public class SMSyncServer : NSObject {
         }
 
         getDictVar("CloudFolderPath", result: &cloudFolderPath)
+        
+        // TODO: Eventually will need to make GoogleServerClientID optional when there is actually a choice of different cloud storage services.
         getDictVar("GoogleServerClientID", result: &googleServerClientId)
         
         return (serverURL:serverURLString!, cloudFolderPath:cloudFolderPath!, googleServerClientId:googleServerClientId!)
