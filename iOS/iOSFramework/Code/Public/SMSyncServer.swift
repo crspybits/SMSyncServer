@@ -134,7 +134,7 @@ public class SMSyncServer : NSObject {
     }
     
     // Only retains a weak reference to the cloudStorageUserDelegate
-    public func appLaunchSetup(withServerURL serverURL: NSURL, andUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignIn>) {
+    public func appLaunchSetup(withServerURL serverURL: NSURL, andUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignInAccount>) {
 
         Network.session().appStartup()
         SMServerNetworking.session.appLaunchSetup()
@@ -502,7 +502,36 @@ public class SMSyncServer : NSObject {
         Log.msg("\(numberOfFiles) files described in the meta data")
     }
 #endif
+    
+    public struct ErrorResetMask : OptionSetType {
+        private enum ErrorReset : Int, CustomStringConvertible {
+            case Local = 1
+            case Server = 2
+            
+            private var allAsStrings:[String] {
+                // We depend here on the ordering and values of elements in the following array!
+                return ["Local", "Server"]
+            }
+            
+            var description : String {
+                var shift = 0
+                while (self.rawValue >> shift != 1) {
+                    shift += 1
+                }
+                return self.allAsStrings[shift]
+            }
+        }
+    
+        public let rawValue : Int
+        public init(rawValue:Int){ self.rawValue = rawValue }
+        private init(_ errorReset:ErrorReset) {
+            self.rawValue = errorReset.rawValue
+        }
 
+        public static let Local = ErrorResetMask(.Local)
+        public static let Server = ErrorResetMask(.Server)
+    }
+    
     // USE CAREFULLY!
     /* Doesn't actually recover from the error. Expects the caller to somehow do that.
     
@@ -510,13 +539,11 @@ public class SMSyncServer : NSObject {
     
     1) Local cleanup: resets the pending upload operations to the initial state (i.e., all uploads/deletions you have queued will be lost).
     2) Server cleanup: resets the server so that it can operate again (e.g., removes the server lock), and if the server reset is successful, resets the mode to .Idle. The client *must* have the server lock in order for this to succeed.
-        
-    For .InternalError's and .NonRecoverableError's: Does behavior 2) asynchronously, and if behavior 2) is successful, does behavior 1). So effectively, both behaviors are *asynchronous*.
     
     On normal reset operation (i.e., the reset worked properly), the callback error parameter will be nil.
     */
-    public func resetFromError(completion:((error:NSError?)->())?=nil) {
-        SMSyncControl.session.resetFromError(completion: completion)
+    public func resetFromError(resetType resetType: ErrorResetMask, completion:((error:NSError?)->())?=nil) {
+        SMSyncControl.session.resetFromError(resetType: resetType, completion: completion)
     }
     
     // Convenience function to get data from smSyncServerClientPlist

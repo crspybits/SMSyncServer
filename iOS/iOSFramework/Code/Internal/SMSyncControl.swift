@@ -202,12 +202,25 @@ internal class SMSyncControl {
     }
 
     private func localCleanup() {
+        // Using nextOperationLock so that no one races in, does a client commit, and the commit remains enqueued but doesn't actually do any sync operations. Either the commit will get thrown away in the cleanup, or it will operate after this cleanup/stop sequence occurs.
+        self.nextOperationLock.lock()
+
         SMQueues.current().flush()
         self.numberCleanupAttempts = 0
+
+        // Since we just did the localCleanup(), which flushed the SMQueues, there is no point in calling doNextUploadOrStop() because there will not be any uploads or other queued operations.
+        
+        self.stopOperating()
+        self.nextOperationLock.unlock()
+        
+        self.syncControlModeChange(.Idle)
     }
 
     // allowDebugReset is for DEBUG builds and for testing .InternalError and .NonRecoverableError reset.
-    internal func resetFromError(allowDebugReset allowDebugReset:Bool=false, completion:((error:NSError?)->())?=nil) {
+    internal func resetFromError(allowDebugReset allowDebugReset:Bool=false, resetType: SMSyncServer.ErrorResetMask, completion:((error:NSError?)->())?=nil) {
+    
+        Assert.If(resetType.isEmpty, thenPrintThisString: "Yikes: Empty reset!")
+    
         let orignalErrorMode = self.mode
         
         #if !DEBUG
@@ -238,50 +251,52 @@ internal class SMSyncControl {
 
         self.syncControlModeChange(.ResettingFromError)
         
-        self.resetFromErrorAux1(originalErrorMode:orignalErrorMode, completion: completion)
+        if resetType.contains(.Local) && !resetType.contains(.Server) {
+            self.localCleanup()
+            completion?(error: nil)
+            return
+        }
+        
+        self.resetFromErrorAux1(resetType:resetType, originalErrorMode:orignalErrorMode, completion: completion)
     }
     
-    private func resetFromErrorAux1(originalErrorMode originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
+    private func resetFromErrorAux1(resetType resetType: SMSyncServer.ErrorResetMask, originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
         
         // Don't bother checking for the lock. It's simpler if we just go for it. If we already have the lock, we won't fail. Plus, resets will be infrequent.
 
         SMServerAPI.session.lock { apiResult in
             if nil == apiResult.error {
-                self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+                self.resetFromErrorAux2(resetType:resetType, originalErrorMode: originalErrorMode, completion: completion)
             }
             else {
                 self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on obtaining lock", success: {
-                    self.resetFromErrorAux1(originalErrorMode: originalErrorMode, completion: completion)
+                    self.resetFromErrorAux1(resetType:resetType, originalErrorMode: originalErrorMode, completion: completion)
                 })
             }
         }
     }
     
-    private func resetFromErrorAux2(originalErrorMode originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
+    private func resetFromErrorAux2(resetType resetType: SMSyncServer.ErrorResetMask, originalErrorMode:SMSyncServerMode, completion:((error:NSError?)->())?=nil) {
         
         SMServerAPI.session.cleanup() { apiResult in
             if nil == apiResult.error {
-                // One result of successfully calling cleanup is that we won't have the server lock any more.
+                // One result of successfully calling server cleanup is that we won't have the server lock any more.
                 self.haveServerLock = false
                 
-                // Using nextOperationLock so that no one races in, does a client commit, and the commit remains enqueued but doesn't actually do any sync operations. Either the commit will get thrown away in the cleanup, or it will operate after this cleanup/stop sequence occurs.
-                self.nextOperationLock.lock()
+                if resetType.contains(.Local) {
+                    self.localCleanup()
+                }
+                else {
+                    self.syncControlModeChange(.Synchronizing)
+                    self.doNextUploadOrStop()
+                }
                 
-                self.localCleanup()
-                
-                // Since we just did the localCleanup(), which flushed the SMQueues, there is no point in calling doNextUploadOrStop() because there will not be any uploads or other queued operations.
-                
-                self.stopOperating()
-                self.nextOperationLock.unlock()
-                
-                self.syncControlModeChange(.Idle)
-
                 completion?(error: nil)
             }
             else {
                 // Not checking Network.session().connected() because SMServerNetworking will check that and we can retry here.
                 self.retry(&self.numberResetAttempts, errorSpecifics: "Failed on server cleanup", success: {
-                    self.resetFromErrorAux2(originalErrorMode: originalErrorMode, completion: completion)
+                    self.resetFromErrorAux2(resetType:resetType, originalErrorMode: originalErrorMode, completion: completion)
                 }, failure: {
                     // Failed on resetting.
                     self.syncControlModeChange(originalErrorMode)
