@@ -59,12 +59,17 @@ class ViewController: UIViewController {
         
         case .NonRecoverableError, .InternalError:
             let alert = UIAlertController(title: "Reset error?", message: nil, preferredStyle: .ActionSheet)
-            alert.addAction(UIAlertAction(title: "Reset", style: .Destructive) { action in
-                SMSyncServer.session.resetFromError()
+            alert.addAction(UIAlertAction(title: "Partial reset", style: .Destructive) { action in
+                SMSyncServer.session.resetFromError(resetType: .Server)
+            })
+            alert.addAction(UIAlertAction(title: "Full reset", style: .Destructive) { action in
+                SMSyncServer.session.resetFromError(resetType: [.Local, .Server])
             })
             alert.addAction(UIAlertAction(title: "Cancel", style: .Default) { action in
             })
-            alert.popoverPresentationController!.barButtonItem = self.barButtonSpinner
+            if alert.popoverPresentationController != nil {
+                alert.popoverPresentationController!.barButtonItem = self.barButtonSpinner
+            }
             self.presentViewController(alert, animated: true, completion: nil)
         }
     }

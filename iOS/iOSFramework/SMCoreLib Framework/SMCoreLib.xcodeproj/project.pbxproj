@@ -10,6 +10,9 @@
 		55AAC6F11C5D4672003E47CE /* UIDevice+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		55AAC6F21C5D4672003E47CE /* UIDevice+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */; };
 		8305BA761D0D22B00000A033 /* SMLazyWeakRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */; };
+		830A670A1D0F24AB00E33EAA /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 830A67091D0F24AB00E33EAA /* Images.xcassets */; };
+		830A670D1D0F259300E33EAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 839CAE8A1CF144D40072C1BD /* Assets.xcassets */; };
+		830A670F1D0F272600E33EAA /* SMIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830A670E1D0F272600E33EAA /* SMIcons.swift */; };
 		831594F11C9B46D100D55E3A /* NSDate+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F01C9B46D100D55E3A /* NSDate+Extras.swift */; };
 		831594F91C9B4BCB00D55E3A /* SMCoreLibTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */; };
 		831594FB1C9B4BCB00D55E3A /* SMCoreLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */; };
@@ -42,7 +45,6 @@
 		839CAE841CF144D40072C1BD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE831CF144D40072C1BD /* AppDelegate.swift */; };
 		839CAE861CF144D40072C1BD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE851CF144D40072C1BD /* ViewController.swift */; };
 		839CAE891CF144D40072C1BD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 839CAE871CF144D40072C1BD /* Main.storyboard */; };
-		839CAE8B1CF144D40072C1BD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 839CAE8A1CF144D40072C1BD /* Assets.xcassets */; };
 		839CAE8E1CF144D40072C1BD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 839CAE8C1CF144D40072C1BD /* LaunchScreen.storyboard */; };
 		839CAE991CF144D40072C1BD /* SMImageTextViewUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE981CF144D40072C1BD /* SMImageTextViewUITests.swift */; };
 		839CAEA31CF1453D0072C1BD /* SMImageTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAEA21CF1453D0072C1BD /* SMImageTextView.swift */; };
@@ -188,6 +190,8 @@
 		55AAC6EF1C5D4672003E47CE /* UIDevice+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIDevice+Extras.h"; path = "Code/Categories/v1/UIDevice+Extras.h"; sourceTree = "<group>"; };
 		55AAC6F01C5D4672003E47CE /* UIDevice+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIDevice+Extras.m"; path = "Code/Categories/v1/UIDevice+Extras.m"; sourceTree = "<group>"; };
 		8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMLazyWeakRef.swift; path = Code/General/v1/SMLazyWeakRef.swift; sourceTree = "<group>"; };
+		830A67091D0F24AB00E33EAA /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Resources/Images.xcassets; sourceTree = "<group>"; };
+		830A670E1D0F272600E33EAA /* SMIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMIcons.swift; path = Code/MiscUI/SMIcons.swift; sourceTree = "<group>"; };
 		831594F01C9B46D100D55E3A /* NSDate+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "NSDate+Extras.swift"; path = "Code/Categories/v1/NSDate+Extras.swift"; sourceTree = "<group>"; };
 		831594F61C9B4BCB00D55E3A /* SMCoreLibTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SMCoreLibTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		831594F81C9B4BCB00D55E3A /* SMCoreLibTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMCoreLibTests.swift; sourceTree = "<group>"; };
@@ -363,6 +367,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		830A670B1D0F24B200E33EAA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				830A67091D0F24AB00E33EAA /* Images.xcassets */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
 		831594F71C9B4BCB00D55E3A /* SMCoreLibTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -510,6 +522,7 @@
 				83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */,
 				83D3ED001C4DC09800BFDA93 /* Code */,
 				83D3ECFF1C4DC08100BFDA93 /* Supporting Files */,
+				830A670B1D0F24B200E33EAA /* Resources */,
 				831594F71C9B4BCB00D55E3A /* SMCoreLibTests */,
 				839CAE821CF144D40072C1BD /* SMImageTextView */,
 				839CAE971CF144D40072C1BD /* SMImageTextViewUITests */,
@@ -612,6 +625,7 @@
 				83D3ED721C4DC90400BFDA93 /* SMUIMessages.h */,
 				83D3ED731C4DC90400BFDA93 /* SMUIMessages.m */,
 				83B854E81CF1C36800629C05 /* SMAcquireImage.swift */,
+				830A670E1D0F272600E33EAA /* SMIcons.swift */,
 			);
 			name = MiscUI;
 			sourceTree = "<group>";
@@ -966,7 +980,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				839CAE8E1CF144D40072C1BD /* LaunchScreen.storyboard in Resources */,
-				839CAE8B1CF144D40072C1BD /* Assets.xcassets in Resources */,
+				830A670D1D0F259300E33EAA /* Assets.xcassets in Resources */,
 				839CAE891CF144D40072C1BD /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -982,6 +996,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				830A670A1D0F24AB00E33EAA /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1026,6 +1041,7 @@
 				83D3ED711C4DC8F300BFDA93 /* SMMutableDictionary.m in Sources */,
 				83D3EDA51C4DC93900BFDA93 /* LogFile.m in Sources */,
 				837E06341C7C0C8F000695F2 /* CoreData.swift in Sources */,
+				830A670F1D0F272600E33EAA /* SMIcons.swift in Sources */,
 				83FB1DE11CF66EDE00D1D1E6 /* AFAutoPurgingImageCache.m in Sources */,
 				83D3ED691C4DC89200BFDA93 /* SMPersistVars.swift in Sources */,
 				83FB1E0D1CF66EEE00D1D1E6 /* AFURLSessionManager.m in Sources */,
