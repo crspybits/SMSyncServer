@@ -59,7 +59,8 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 ## 3) Server installation
 
-* Create your own `serverSecrets.json` file (i.e., `Server/Code/serverSecrets.json`). This file is not in the public repo because it has private info -- it is in the SMSyncServer .gitignore file. You must create your own. This file contains keys for cloud storage access and for MongoDb access. Its structure is as follows:
+* Create your own `serverSecrets.json` file (i.e., `Server/Code/serverSecrets.json`). This file is not in the public repo because it has private info -- it is in the SMSyncServer .gitignore file. You must create your own. This file contains keys for cloud storage access and for MongoDb access. The field for `SharingServices` is optional but necessary if you want to share access to SMSyncServer using Facebook.
+Its structure is as follows:
 
 ### `serverSecrets.json`
 
@@ -74,6 +75,13 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 				],
 				"auth_uri": "https://accounts.google.com/o/oauth2/auth",
 				"token_uri": "https://accounts.google.com/o/oauth2/token"
+			}
+		},
+		"SharingServices": {
+			"Facebook": {
+				"app_id": "<snip>",
+				"app_secret": "<snip>",
+				"client_token": "<snip>"
 			}
 		}
 	}

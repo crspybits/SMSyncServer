@@ -10,6 +10,7 @@ const secretsFile = "serverSecrets.json";
 
 const mongoURL = "MongoDbURL";
 const cloudStorage = "CloudStorageServices";
+const sharingServices = "SharingServices";
 
 var secrets = null;
 
@@ -57,6 +58,17 @@ define("googleCloudStorageService", "GoogleDrive");
 // Returns undefined if the service cannot be found.
 exports.cloudStorageService = function(serviceName) {
     var serviceSecrets = secrets[cloudStorage];
+    var serviceSecret = serviceSecrets[serviceName];
+    return serviceSecret;
+};
+
+// SharingServices
+define("facebookSharingService", "Facebook");
+
+// serviceName needs to be one of the above
+// Returns undefined if the service cannot be found.
+exports.sharingService = function(serviceName) {
+    var serviceSecrets = secrets[sharingServices];
     var serviceSecret = serviceSecrets[serviceName];
     return serviceSecret;
 };
