@@ -20,12 +20,22 @@ public class SMGoogleUserSignInViewController : UIViewController, GIDSignInUIDel
 }
 
 // See https://developers.google.com/identity/sign-in/ios/sign-in
-public class SMGoogleUserSignIn : SMUserSignIn {
-    private static let signedIn = SMPersistItemBool(name: "SMGoogleUserSignIn.SignedIn", initialBoolValue: false, persistType: .UserDefaults)
-    
+public class SMGoogleUserSignIn : SMUserSignInAccount {
     // Specific to Google Credentials. I'm not sure it's needed really (i.e., could it be obtained each time the app launches on sign in-- since to be signed in really assumes we're connected to the network?), but I'll store this in the Keychain since it's credential info.
     // Hmmmm. I may be making incorrect assumptions about the longevity of these IdTokens. See https://github.com/google/google-auth-library-nodejs/issues/46 Does silently signing the user in generate a new IdToken?
     private static let IdToken = SMPersistItemString(name: "SMGoogleUserSignIn.IdToken", initialStringValue: "", persistType: .KeyChain)
+    
+    private static let _googleUserName = SMPersistItemString(name: "SMGoogleUserSignIn.googleUserName", initialStringValue: "", persistType: .UserDefaults)
+    
+    private var googleUserName:String? {
+        get {
+            return SMGoogleUserSignIn._googleUserName.stringValue == "" ? nil : SMGoogleUserSignIn._googleUserName.stringValue
+        }
+        set {
+            SMGoogleUserSignIn._googleUserName.stringValue =
+                newValue == nil ? "" : newValue!
+        }
+    }
     
     private let serverClientID:String!
     
@@ -42,15 +52,24 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         }
     }
     
-    public static let displayName = SMServerConstants.accountTypeGoogle
+    private let signInOutButton = GoogleSignInOutButton()
     
-    override public var displayName:String? {
-        return SMGoogleUserSignIn.displayName
+    override public static var displayNameS: String? {
+        get {
+            return SMServerConstants.accountTypeGoogle
+        }
+    }
+    
+    override public var displayNameI: String? {
+        get {
+            return SMGoogleUserSignIn.displayNameS
+        }
     }
    
     public init(serverClientID theServerClientID:String) {
         self.serverClientID = theServerClientID
         super.init()
+        self.signInOutButton.signOutButton.addTarget(self, action: #selector(syncServerSignOutUser), forControlEvents: .TouchUpInside)
     }
     
     override public func syncServerAppLaunchSetup(silentSignIn silentSignIn: Bool) {
@@ -102,14 +121,14 @@ public class SMGoogleUserSignIn : SMUserSignIn {
     
     override public var syncServerUserIsSignedIn: Bool {
         get {
-            return GIDSignIn.sharedInstance().hasAuthInKeychain() || SMGoogleUserSignIn.signedIn.boolValue
+            return GIDSignIn.sharedInstance().hasAuthInKeychain()
         }
     }
     
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: self.idToken, authCode: nil)
+                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: self.idToken, authCode: nil, userName: self.googleUserName)
             }
             else {
                 return nil
@@ -117,9 +136,10 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         }
     }
     
-    override public func syncServerSignOutUser() {
+    @objc override public func syncServerSignOutUser() {
         GIDSignIn.sharedInstance().signOut()
-        SMGoogleUserSignIn.signedIn.boolValue = false
+        self.activeSignInDelegate.smUserSignIn(userJustSignedOut: self)
+        self.signInOutButton.buttonShowing = .SignIn
     }
     
     // 5/23/16; I just added this to deal with the case where the app has been in the foreground for a period of time, and the IdToken has expired.
@@ -154,11 +174,13 @@ public class SMGoogleUserSignIn : SMUserSignIn {
         }
     }
     
-    public func signInButton(delegate delegate: SMGoogleUserSignInViewController) -> UIControl {
+    public func signInButton(delegate delegate: SMGoogleUserSignInViewController) -> UIView {
+        self.signInOutButton.signInButton.delegate = delegate
         GIDSignIn.sharedInstance().uiDelegate = delegate
-        let signInButton = GIDSignInButton()
-        signInButton.delegate = delegate
-        return signInButton
+
+        self.signInOutButton.buttonShowing = self.activeSignInDelegate.smUserSignIn(activelySignedIn: self) ? .SignOut : .SignIn
+        
+        return self.signInOutButton
     }
 }
 
@@ -170,18 +192,25 @@ Error signing in: Error Domain=com.google.HTTPStatus Code=500 "(null)" UserInfo=
 */
 
 extension SMGoogleUserSignIn : GIDSignInDelegate {
-
+    func tellUserThereWasAnError(error:NSError) {
+        // TODO: To present an alert, will need a reference to a view controller.
+    }
+    
     public func signIn(signIn: GIDSignIn!, didSignInForUser user: GIDGoogleUser!,
         withError error: NSError!) {
             if (error == nil) {
-                SMGoogleUserSignIn.signedIn.boolValue = true
-                self.googleUser = user
                 
-                Log.msg("Attempting to sign in to server...")
                 // Perform any operations on signed in user here.
                 // let userId = user.userID     // For client-side use only!
-                // let name = user.profile.name
-                // let email = user.profile.email
+                let name = user.profile.name
+                let email = user.profile.email
+                
+                if email != nil {
+                    self.googleUserName = email
+                }
+                else {
+                    self.googleUserName = name
+                }
                 
                 // user.serverAuthCode can be nil if the user didn't do a "fresh" signin. i.e., if we silently signed in the user.
                 /* We're going to handle this in two cases:
@@ -189,26 +218,40 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                 b) user.serverAuthCode is not present: Try to check for an existing user
                 */
                 
-                Log.msg("Attempting to sign in: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
+                Log.msg("Attempting to sign in to server: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: user.authentication.idToken, authCode: user.serverAuthCode)
+                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: user.authentication.idToken, authCode: user.serverAuthCode, userName: self.googleUserName)
 
+                func successfulSignIn(idToken:String) {
+                    self.activeSignInDelegate.smUserSignIn(userJustSignedIn: self)
+                    self.signInOutButton.buttonShowing = .SignOut
+                    self.googleUser = user
+                    self.idToken = idToken
+                }
+                
                 if user.serverAuthCode == nil {
                     SMSyncServerUser.session.checkForExistingUser(syncServerGoogleUser) { error in
                         if nil == error {
-                            self.idToken = user.authentication.idToken
+                            successfulSignIn(user.authentication.idToken)
+                        }
+                        else {
+                            self.tellUserThereWasAnError(error!)
                         }
                     }
                 }
                 else {
-                    SMSyncServerUser.session.createNewUser(syncServerGoogleUser) { error in
+                    SMSyncServerUser.session.createNewOwningUser(syncServerGoogleUser) { error in
                         if nil == error {
-                            self.idToken = user.authentication.idToken
+                            successfulSignIn(user.authentication.idToken)
+                        }
+                        else {
+                            self.tellUserThereWasAnError(error!)
                         }
                     }
                 }
             } else {
                 Log.error("Error signing in: \(error)")
+                self.tellUserThereWasAnError(error)
             }
     }
     
@@ -219,3 +262,91 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
     }
 }
 
+// Self-sized; cannot be resized.
+private class GoogleSignInOutButton : UIView {
+    let signInButton = GIDSignInButton()
+    
+    let signOutButtonContainer = UIView()
+    let signOutContentView = UIView()
+    let signOutButton = UIButton(type: .System)
+    let signOutLabel = UILabel()
+    
+    init() {
+        super.init(frame: CGRectZero)
+        self.addSubview(signInButton)
+        self.addSubview(self.signOutButtonContainer)
+        
+        self.signOutButtonContainer.addSubview(self.signOutContentView)
+        self.signOutButtonContainer.addSubview(signOutButton)
+       
+        let googleIconView = UIImageView(image: SMIcons.GoogleIcon)
+        googleIconView.contentMode = .ScaleAspectFit
+        self.signOutContentView.addSubview(googleIconView)
+        
+        self.signOutLabel.text = "Sign out"
+        self.signOutLabel.font = UIFont.boldSystemFontOfSize(15.0)
+        self.signOutLabel.sizeToFit()
+        self.signOutContentView.addSubview(self.signOutLabel)
+        
+        let frame = signInButton.frame
+        self.bounds = frame
+        self.signOutButton.frame = frame
+        self.signOutButtonContainer.frame = frame
+        
+        let margin:CGFloat = 20
+        self.signOutContentView.frame = frame
+        self.signOutContentView.frameHeight -= margin
+        self.signOutContentView.frameWidth -= margin
+        self.signOutContentView.centerInSuperview()
+        
+        let iconSize = frame.size.height * 0.4
+        googleIconView.frameSize = CGSize(width: iconSize, height: iconSize)
+        
+        googleIconView.centerVerticallyInSuperview()
+        
+        self.signOutLabel.frameMaxX = self.signOutContentView.boundsMaxX
+        self.signOutLabel.centerVerticallyInSuperview()
+
+        let layer = self.signOutButton.layer
+        layer.borderColor = UIColor.lightGrayColor().CGColor
+        layer.borderWidth = 0.5
+        
+        self.buttonShowing = .SignIn
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+    }
+    
+    enum State {
+        case SignIn
+        case SignOut
+    }
+    
+    private var _state:State!
+    var buttonShowing:State {
+        get {
+            return self._state
+        }
+        
+        set {
+            Log.msg("Change sign-in state: \(newValue)")
+            self._state = newValue
+            switch self._state! {
+            case .SignIn:
+                self.signInButton.hidden = false
+                self.signOutButtonContainer.hidden = true
+            
+            case .SignOut:
+                self.signInButton.hidden = true
+                self.signOutButtonContainer.hidden = false
+            }
+            
+            self.setNeedsDisplay()
+        }
+    }
+}

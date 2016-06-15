@@ -69,6 +69,16 @@ function Operation(request, response, errorHandling) {
     }
 }
 
+Operation.prototype.owningUserSignedIn = function () {
+    var self = this;
+    return self.userCreds.owningUserSignedIn();
+}
+
+Operation.prototype.sharingUserSignedIn = function () {
+    var self = this;
+    return self.userCreds.sharingUserSignedIn();
+}
+
 // Checks if the user is on the system, and as a side effect (if no error), adds a PSUserCredentials object as a new member, .psUserCreds
 // userMustBeOnSystem is optional, and defaults to true.
 // On failure, ends the operation connection.
@@ -158,8 +168,7 @@ Operation.prototype.validateUserAlwaysCallback = function (userMustBeOnSystem, c
         userMustBeOnSystem = true;
     }
     
-    // Pass update as false because I'm assuming we won't have an authorization code when checking for an existing user.
-    self.checkForExistingUser(false, function (error, staleUserSecurityInfo, psUserCreds) {
+    self.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
         if (error) {
 			callback(error, staleUserSecurityInfo);
 		}
@@ -228,68 +237,105 @@ Operation.prototype.prepareToEndDownloadWithRCAndErrorDetails = function (return
     return this.prepareToEndDownloadWithRC(returnCode);
 }
 
-/* 
-    update is of type bool:
-        If the user exists in persistent storage, and:
-        a) If update is true, this will update the persistent storage with any changes in the user credentials. (The intent here is for Google parameters where the access token, and refresh token will change if an authorization code is given in the user creds; this assumes that validate may change the user creds).
-        b) If update is false, this will populate the user creds object with data from persistent storage. This should be the normal case: An API call needs to check the user creds, and update them with details from persistent storage if the user creds are valid.
-    Callback has parameters: 
-        1) error;
-        2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because ther security information is stale; this parameter is given as null if error is null
-        2) if error is null, a PSUserCredentials object (use the .stored property of that object to see if the user exists in persistent storage).
+/*
+Callback has parameters:
+    1) error;
+    2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because ther security information is stale; this parameter is given as null if error is null
+    2) if error is null, a PSUserCredentials object (use the .stored property of that object to see if the user exists in persistent storage).
 */
-Operation.prototype.checkForExistingUser = function (update, callback) {
+Operation.prototype.checkForExistingUser = function (callback) {
     var self = this;
     
-	self.userCreds.signedInCreds().validate(function(error, staleUserSecurityInfo) {        
-		if (error) {
-			callback(error, staleUserSecurityInfo, null);
-		}
-		else {            
-            var psUserCreds = null;
-            try {
-                psUserCreds = new PSUserCredentials(self.userCreds);
-            } catch (error) {
-                logger.error("Failed creating PSUserCredentials");
-                logger.error(error);
+    // 6/14/16; I'm going to immediately create the PSUserCredentials object, and also do a lookup now because with some of my UserCredentials objects (Facebook, specifically), I need the currently stored creds, if any, to do validation.
+
+    var psUserCreds = null;
+    try {
+        psUserCreds = new PSUserCredentials(self.userCreds);
+    } catch (error) {
+        logger.error("Failed creating PSUserCredentials");
+        logger.error(error);
+        callback(error, false, null);
+        return;
+    }
+
+    // 6/15/16: Identified a problem: I was doing a lookup before having done a validation. For Google creds, this meant we couldn't yet do the lookup because we haven't decrypted the IdToken, which give our "sub" identifier. For Facebook, this was OK since we have a non-encrpyted userId). Solution: I'm now making the decision about whether to do the lookup first (versus the validate first) on the basis of whether the specific creds (FB or Google at this point) gives us a non-null .persistentInvariant() function call value.
+
+    var lookupKeys = self.userCreds.signedInCreds().persistentInvariant();
+    
+    if (lookupKeys) {
+
+        // We have keys in order to do the lookup.
+        psUserCreds.lookup(function (error) {
+            if (error) {
                 callback(error, false, null);
-                return;
             }
-            
-			psUserCreds.lookup(function (error) {
-				if (error) {
-                    callback(error, false, null);
-				}
-				else if (psUserCreds.stored) {
-                    if (update) {
-                        // Update persistent store with user creds data.
-                        psUserCreds.update(function (error) {
-                            if (error) {
-                                callback(error, false, null);
-                            }
-                            else {
-                                callback(null, null, psUserCreds);
-                            }
-                        });
+            else {
+                var mongoCreds = null;
+                if (psUserCreds.stored) {
+                    mongoCreds = psUserCreds.creds;
+                }
+
+                self.userCreds.signedInCreds().validate(mongoCreds, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
+                    if (error) {
+                        callback(error, staleUserSecurityInfo, null);
                     }
                     else {
-                        // Populate user creds object from persistent store.
-                        psUserCreds.populateFromUserCreds(function (error) {
-                            if (error) {
-                                callback(error, false, null);
-                            }
-                            else {
-                                callback(null, null, psUserCreds);
-                            }
-                        });
+                        finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback);
                     }
-				} 
-				else {
-					callback(null, null, psUserCreds);
-				}
-			});
-		}
-	});
+                });
+            }
+        });
+    }
+    else {
+        // We don't have the keys to do the lookup. Validate first.
+        self.userCreds.signedInCreds().validate(null, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
+            if (error) {
+                callback(error, staleUserSecurityInfo, null);
+            }
+            else {
+                psUserCreds.lookup(function (error) {
+                    if (error) {
+                        callback(error, false, null);
+                    }
+                    else {
+                        finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback);
+                    }
+                });
+            }
+        });
+    }
+}
+
+function finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback) {
+    logger.debug("psUserCreds.stored: " + psUserCreds.stored + "; credsChangedDuringValidation: " + credsChangedDuringValidation);
+    
+    if (psUserCreds.stored) {
+        if (credsChangedDuringValidation) {
+            // Update persistent store with user creds data.
+            psUserCreds.update(function (error) {
+                if (error) {
+                    callback(error, false, null);
+                }
+                else {
+                    callback(null, null, psUserCreds);
+                }
+            });
+        }
+        else {
+            // Populate user creds object from persistent store.
+            psUserCreds.populateFromUserCreds(function (error) {
+                if (error) {
+                    callback(error, false, null);
+                }
+                else {
+                    callback(null, null, psUserCreds);
+                }
+            });
+        }
+    } 
+    else {
+        callback(null, null, psUserCreds);
+    }
 }
 
 Operation.prototype.userId = function() {

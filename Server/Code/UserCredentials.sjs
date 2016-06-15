@@ -7,6 +7,7 @@
 var ServerConstants = require('./ServerConstants');
 var logger = require('./Logger');
 var GoogleUserCredentials = require('./GoogleUserCredentials');
+var FacebookUserCredentials = require('./FacebookUserCredentials');
 
 /* Constructor
     Throws an error if credentialsData don't have insufficient info.
@@ -43,7 +44,7 @@ function UserCredentials(credentialsData) {
         throw new Error("No cloudFolderPath in credentials data!");
     }
     
-    var accountCreationMethods = [GoogleUserCredentials.CreateIfOurs];
+    var accountCreationMethods = [GoogleUserCredentials.CreateIfOurs, FacebookUserCredentials.CreateIfOurs];
     var creds = null;
     
     // Assume each of the factory methods knows when it should create its creds. Stop at the first one that works.
@@ -85,14 +86,26 @@ UserCredentials.prototype.signedInCreds = function () {
     
     var creds = null;
     
-    if (self.owningUser) {
+    if (isDefined(self.owningUser)) {
         creds = self.owningUser;
     }
-    else if (self.sharingUser) {
+    else if (isDefined(self.sharingUser)) {
         creds = self.sharingUser;
     }
     
     return creds;
+}
+
+// Returns true iff an owning user is signed in.
+UserCredentials.prototype.owningUserSignedIn = function () {
+    var self = this;
+    return isDefined(self.owningUser);
+}
+
+// Returns true iff a sharing user is signed in.
+UserCredentials.prototype.sharingUserSignedIn = function () {
+    var self = this;
+    return isDefined(self.sharingUser);
 }
 
 // Specific account classes need to implement the following methods:

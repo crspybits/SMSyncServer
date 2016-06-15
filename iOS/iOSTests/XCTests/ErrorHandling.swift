@@ -115,4 +115,12 @@ class ErrorHandling: BaseClass {
     func testThatDoubleResetFromMoreSeriousErrorIsIgnored() {
         self.testSeriousError(doSecondRequest: true)
     }
+    
+    func testThatPurelyLocalResetWorks() {
+        XCTFail()
+    }
+    
+    func testThatPurelyServerResetWorks() {
+        XCTFail()
+    }
 }

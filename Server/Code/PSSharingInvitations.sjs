@@ -22,6 +22,9 @@ exports.buildSchema = function(mongoose) {
         // gives time/day that the invitation will expire
         expiry: { type: Date, default: expiryDate },
         
+        // Will get set to true when has been redeemed
+        redeemed: { type: Boolean, default: false },
+        
         // The user is being invited to share the following:
         owningUser: ObjectId, // The _id of a PSUserCredentials object.
         capabilities: [String] // capability names

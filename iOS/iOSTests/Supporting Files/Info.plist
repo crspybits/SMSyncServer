@@ -7,7 +7,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>biz.SpasticMuffin.NetDb.authorize</string>
+				<string>biz.SpasticMuffin.NetDb.invitation</string>
 			</array>
 		</dict>
 		<dict>

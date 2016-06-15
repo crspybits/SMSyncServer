@@ -20,7 +20,11 @@ class Settings: SMGoogleUserSignInViewController {
             print("SUCCESS signing in!")
         }
         else {
-            let alert = UIAlertView(title: "There was an error signing in. Please try again.", message: nil, delegate: nil, cancelButtonTitle: "OK")
+            var message:String?
+            if error != nil {
+                message = "Error: \(error!)"
+            }
+            let alert = UIAlertView(title: "There was an error signing in. Please try again.", message: message, delegate: nil, cancelButtonTitle: "OK")
             alert.show()
         }
     }
@@ -32,7 +36,7 @@ class Settings: SMGoogleUserSignInViewController {
     
         SMSyncServerUser.session.signInProcessCompleted.addTarget!(self, withSelector: #selector(signInCompletionAction))
         
-        let googleSignIn = SMUserSignIn.possibleAccounts[SMGoogleUserSignIn.displayName] as! SMGoogleUserSignIn
+        let googleSignIn = SMUserSignInManager.session.possibleAccounts[SMGoogleUserSignIn.displayNameS!] as! SMGoogleUserSignIn
         let googleSignInButton = googleSignIn.signInButton(delegate: self)
         googleSignInButton.frameOrigin = CGPoint(x: 50, y: 100)
         self.view.addSubview(googleSignInButton)
@@ -60,7 +64,7 @@ class Settings: SMGoogleUserSignInViewController {
         self.showLocalMetaData.addTarget(self, action: #selector(showLocalMetaDataAction), forControlEvents: .TouchUpInside)
         self.view.addSubview(self.showLocalMetaData)
         
-        let facebookSignIn = SMUserSignIn.possibleAccounts[SMFacebookUserSignIn.displayName] as! SMFacebookUserSignIn
+        let facebookSignIn = SMUserSignInManager.session.possibleAccounts[SMFacebookUserSignIn.displayNameS!] as! SMFacebookUserSignIn
         let fbLoginButton = facebookSignIn.signInButton()
         fbLoginButton.frameX = self.showLocalMetaData.frameX
         fbLoginButton.frameY = self.showLocalMetaData.frameMaxY + verticalDistanceBetweenButtons

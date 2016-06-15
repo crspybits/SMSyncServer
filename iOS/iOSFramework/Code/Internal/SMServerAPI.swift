@@ -254,6 +254,8 @@ internal protocol SMServerAPIDownloadDelegate : class {
     func smServerAPIFileDownloaded(file: SMServerFile)
 }
 
+internal typealias SMInternalUserId = String
+
 // http://stackoverflow.com/questions/24051904/how-do-you-add-a-dictionary-of-items-into-another-dictionary
 private func += <KeyType, ValueType> (inout left: Dictionary<KeyType, ValueType>, right: Dictionary<KeyType, ValueType>) {
     for (k, v) in right { 
@@ -282,16 +284,16 @@ internal class SMServerAPI {
     //MARK: Authentication/user-sign in
     
     // All credentials parameters must be provided by serverCredentialParams.
-    internal func createNewUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:String?, apiResult:SMServerAPIResult)->(Void))?) {
+    internal func createNewOwningUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationCreateNewUser)!
+                        "/" + SMServerConstants.operationCreateNewOwningUser)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             
             var result = self.initialServerResponseProcessing(serverResponse, error: error)
             
-            var internalUserId:String?
+            var internalUserId:SMInternalUserId?
             if nil == result.error {
                 internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
                 if nil == internalUserId {

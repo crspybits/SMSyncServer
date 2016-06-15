@@ -21,8 +21,8 @@ public class SMServerConstants {
     // MARK: REST API entry points on the server.
     
     // Append '/' and one these values to the serverURL to create the specific operation URL:
+    public static let operationCreateNewOwningUser = "CreateNewOwningUser"
     public static let operationCheckForExistingUser = "CheckForExistingUser"
-    public static let operationCreateNewUser = "CreateNewUser"
     
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
     public static let operationRemoveUser = "RemoveUser"
@@ -118,7 +118,7 @@ public class SMServerConstants {
         // Value: String
     
         // SubKey:
-        public static let facebookUserAppTokenString = "AppTokenString"
+        public static let facebookUserAccessToken = "FacebookAccessToken"
         // Value: String
     
     // MARK: Other parameters sent to the server.

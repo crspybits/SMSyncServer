@@ -37,16 +37,23 @@ function GoogleUserCredentials(credentialsData) {
     if (!isDefined(self.accountType)) {
         throw new Error("No accountType in credentials data!");
     }
-    
-    // Data for signing into Google from clientSecretFile.
-    self.googleServerCredentials = Secrets.cloudStorageService(Secrets.googleCloudStorageService);
-    // logger.debug("Secrets.googleCloudStorageService" + Secrets.googleCloudStorageService);
-    // logger.debug("self.googleServerCredentials" + self.googleServerCredentials);
 
     // Credentials specific to the user.
     self.googleUserCredentials = {};
     self.googleUserCredentials.sub = null; // user identifier
     self.googleUserCredentials.oauth2Client = null;
+
+    // Data for signing into Google from clientSecretFile.
+    self.googleServerCredentials = Secrets.cloudStorageService(Secrets.googleCloudStorageService);
+    // logger.debug("Secrets.googleCloudStorageService" + Secrets.googleCloudStorageService);
+    // logger.debug("self.googleServerCredentials" + self.googleServerCredentials);
+    
+    var auth = new googleAuth();
+    
+    self.googleUserCredentials.oauth2Client = 
+            new auth.OAuth2(self.googleServerCredentials.client_id,
+                self.googleServerCredentials.client_secret,
+                self.googleServerCredentials.redirect_uris[0]);
     
     self.googleUserCredentials.idToken = credentialsData[ServerConstants.googleUserIdToken];
     if (!isDefined(self.googleUserCredentials.idToken)) {
@@ -74,22 +81,25 @@ GoogleUserCredentials.CreateIfOurs = function (credentialsData) {
 
 // instance methods
 
+// Returning null from this indicates that we don't yet have any persistent creds, and creds need be validated in order to provide those persistent creds. NOTE: This *is* the case for Google.
 GoogleUserCredentials.prototype.persistent = function () {
     var self = this;
     var creds = null;
     
-    // Make sure we have a refresh_token. The access_token can be obtained if we have
-    // the refresh_token. Also make sure we have the "sub" field (the user identifier).
+    var accessToken = null;
+    var refreshToken = null;
     
-    if (self.googleUserCredentials.oauth2Client.refresh_token !== null && 
-    		self.googleUserCredentials.sub !== null) {
-    		
+    if (isDefined(self.googleUserCredentials.oauth2Client.credentials)) {
+        accessToken = self.googleUserCredentials.oauth2Client.credentials.access_token;
+        refreshToken = self.googleUserCredentials.oauth2Client.credentials.refresh_token;
+    }
+    
+    // I'm making both the refresh token and .sub critical as we should never be in a situation were, if we have persistent creds, we don't have one of these.
+    if (refreshToken || self.googleUserCredentials.sub) {
         creds = {
             sub: self.googleUserCredentials.sub,
-            access_token: 
-                self.googleUserCredentials.oauth2Client.credentials.access_token,
-            refresh_token: 
-                self.googleUserCredentials.oauth2Client.credentials.refresh_token
+            access_token: accessToken,
+            refresh_token: refreshToken
         };
     }
     
@@ -100,16 +110,10 @@ GoogleUserCredentials.prototype.setPersistent = function (creds, callback) {
 	var self = this;
     
     if (!creds.access_token || !creds.refresh_token || !creds.sub) {
+        logger.debug("creds: " + JSON.stringify(creds));
         callback("One or more of the creds properties was empty.");
         return;
     }
-
-    var auth = new googleAuth();
-    
-    self.googleUserCredentials.oauth2Client = 
-            new auth.OAuth2(self.googleServerCredentials.client_id,
-                self.googleServerCredentials.client_secret,
-                self.googleServerCredentials.redirect_uris[0]);
             
     self.googleUserCredentials.oauth2Client.setCredentials({
         access_token: creds.access_token,
@@ -129,8 +133,8 @@ GoogleUserCredentials.prototype.persistentInvariant = function () {
 	if (creds) {
 		// Need to actually remove these elements, and not just set them to null, 
 		// otherwise, mongo will search for null valued items in the db.
-		delete creds.access_token;
-		delete creds.refresh_token;
+        delete creds.access_token;
+        delete creds.refresh_token;
 	}
 	
 	return creds;
@@ -163,19 +167,18 @@ GoogleUserCredentials.prototype.persistentVariant = function () {
 	return creds;
 }
 
-// Check to see if these are valid credentials. Returns true or false.
-// Callback takes two parameters: 1) error, and 2) if error is not null, a boolean which is true iff the error that occurred is that the user security information is stale. E.g., user should sign back in again.
-GoogleUserCredentials.prototype.validate = function (callback) {
+/* Check to see if these are valid credentials.
+    Parameters:
+    1) mongoCreds: The credentials currently stored by Mongo (may be null).
+    2) callback: takes three parameters: 
+        a) error, 
+        b) if error is not null, a boolean which is true iff the error that occurred is that the user security information is stale. E.g., user should sign back in again.
+        c) if no error, a boolean which is true iff the creds have been updated and need to be stored to persistent store.
+*/
+GoogleUserCredentials.prototype.validate = function (mongoCreds, callback) {
     // See http://stackoverflow.com/questions/20279484/how-to-access-the-correct-this-context-inside-a-callback
     var self = this;
-
-    var auth = new googleAuth();
     
-    self.googleUserCredentials.oauth2Client = 
-            new auth.OAuth2(self.googleServerCredentials.client_id,
-                self.googleServerCredentials.client_secret,
-                self.googleServerCredentials.redirect_uris[0]);
-
     // The audience to verify against the ID Token  
     // See https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/oauth2client.js#L384
     // TODO: I think this is for the "aud" field
@@ -201,9 +204,7 @@ GoogleUserCredentials.prototype.validate = function (callback) {
     // The second parameter to the callback is a LoginTicket object, which is just a thin wrapper over the parsed idToken. Is the LoginTicket empty if we get back an error below?
     // logger.debug("Calling self.googleUserCredentials.oauth2Client.verifyIdToken");
     self.googleUserCredentials.oauth2Client.verifyIdToken(
-        self.googleUserCredentials.idToken, audience, 
-        
-        function(err, loginTicket) {
+        self.googleUserCredentials.idToken, audience, function(err, loginTicket) {
             // logger.debug('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
             if (err) {
                 var stringMessage = "failed on verifyIdToken: error: "  + err;
@@ -215,11 +216,11 @@ GoogleUserCredentials.prototype.validate = function (callback) {
                 if (stringMessage.indexOf(staleSecurityToken) != -1) {
                     // So, staleSecurityToken was found in the err.
                     logger.info("User security token is stale: %s; loginTicket: %j", err, loginTicket);
-                    callback(err, true);
+                    callback(err, true, null);
                 }
                 else {
                     logger.error(stringMessage);
-                    callback(err, false);
+                    callback(err, false, null);
                 }
                 
                 return;
@@ -228,45 +229,43 @@ GoogleUserCredentials.prototype.validate = function (callback) {
             // See code. https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/loginticket.js
             // getUserId returns the "sub" field.
             self.googleUserCredentials.sub = loginTicket.getUserId();
-            
+
+            logger.debug("GoogleUserCredentials.prototype.validate: " + JSON.stringify(self));
             // console.log(self.googleUserCredentials.oauth2Client.credentials);
             
             // If there is an authorization code, I'm going to exchange it for an access token, and a refresh token (using exchangeAuthorizationCode), which generates a call to the Google servers, and thus takes some time. My assumption is that we will only have an authorization code here infrequently-- e.g., when the user initially signs into the app, this will generate an authorization code. Subsequently (and the main use case), when a silent sign in is used, there will be no authorization code, and hence no Google server access.
-            if (!self.googleUserCredentials.authCode) {
+            if (!isDefined(self.googleUserCredentials.authCode)) {
                 logger.debug("We got no authorization code");
                 logger.info("self.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.googleUserCredentials.oauth2Client.credentials));
-                callback(null, null);
+                callback(null, null, false);
                 return;
             }
             
-            exchangeAuthorizationCode(self.googleUserCredentials.authCode, 
-                self.googleServerCredentials.client_id, 
-                self.googleServerCredentials.client_secret, 
-                function (err, exchangedContent) {
+            exchangeAuthorizationCode(self, function (err, exchangedContent) {
+                if (err) {
+                    logger.error('Error exchanging authorization code: ' + err);
+                    callback(err, false, null);
+                }
+                else if (!exchangedContent || !exchangedContent.access_token || !exchangedContent.refresh_token) {
+                    logger.debug("exchangedContent: " + JSON.stringify(exchangedContent));
+                    callback("ERROR: Could not exchange authorization code", false, null);
+                }
+                else {
+                    logger.debug("exchangedContent.access_token: " +
+                        exchangedContent.access_token);
+                    logger.debug("exchangedContent.refresh_token: " +
+                         exchangedContent.refresh_token);
 
-                    if (err) {
-                        logger.error('Error exchanging authorization code: ' + err);
-                        callback(err, false);
-                    }
-                    else if (!exchangedContent || !exchangedContent.access_token || !exchangedContent.refresh_token) {
-                        callback("ERROR: Could not exchange authorization code", false);
-                    }
-                    else {
-                        logger.debug("exchangedContent.access_token: " +
-                            exchangedContent.access_token);
-                        logger.debug("exchangedContent.refresh_token: " +
-                             exchangedContent.refresh_token);
-
-                        self.googleUserCredentials.oauth2Client.setCredentials({
-                            access_token: exchangedContent.access_token,
-                            refresh_token: exchangedContent.refresh_token
-                        });
-                        
-                        logger.info("self.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.googleUserCredentials.oauth2Client.credentials));
-                        
-                        callback(null, null);
-                    }
-                });
+                    self.googleUserCredentials.oauth2Client.setCredentials({
+                        access_token: exchangedContent.access_token,
+                        refresh_token: exchangedContent.refresh_token
+                    });
+                    
+                    logger.info("self.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.googleUserCredentials.oauth2Client.credentials));
+                    
+                    callback(null, null, true);
+                }
+            });
         });
 }
 
@@ -292,15 +291,17 @@ Here's an example of what I get back:
 }
 */
 // The callback has two parameters: error, and the if error is null, an instance of the above json structure.
-function exchangeAuthorizationCode(authorizationCode, clientId, clientSecret, callback) {
+function exchangeAuthorizationCode(self, callback) {
     var args = 
         {url:'https://www.googleapis.com/oauth2/v3/token', 
-         form: {code: authorizationCode,
-                client_id: clientId,
-                client_secret: clientSecret,
+         form: {code: self.googleUserCredentials.authCode,
+                client_id: self.googleServerCredentials.client_id,
+                client_secret: self.googleServerCredentials.client_secret,
                 grant_type: "authorization_code"
                }
-        }
+        };
+    
+    logger.debug("exchangeAuthorizationCode args: " + JSON.stringify(args));
     
     request.post(args, function(error, httpResponse, body) { 
         if (!error && httpResponse.statusCode == 200) {

@@ -50,7 +50,7 @@ Secrets.load(function (error) {
     Mongo.connect(Secrets.mongoDbURL());
 });
 
-app.post("/" + ServerConstants.operationCreateNewUser, function(request, response) {
+app.post("/" + ServerConstants.operationCreateNewOwningUser, function(request, response) {
 
     var op = new Operation(request, response);
     if (op.error) {
@@ -58,8 +58,15 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
         return;
     }
     
-    // Pass update as true as I'm assuming we *will* have an authorization code when creating a new user. (The authorization code is specific to Google).
-    op.checkForExistingUser(true, function (error, staleUserSecurityInfo, psUserCreds) {
+    // Make sure the creds are for an OwningUser.
+    if (!op.owningUserSignedIn()) {
+        var message = "Error: Attempt to create an owning user with a sharing user creds!";
+        logger.error(message);
+        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        return;
+    }
+
+    op.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
         if (error) {
             if (staleUserSecurityInfo) {
                 op.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
@@ -69,6 +76,7 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
             }
         }
         else {
+            logger.info("psUserCreds.stored: " + psUserCreds.stored);
             if (psUserCreds.stored) {
                 op.endWithRC(ServerConstants.rcUserOnSystem);
             }
@@ -231,7 +239,18 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
 app.post('/' + ServerConstants.operationUploadFile, upload, function (request, response) {
     // Somewhat of a hack, but due to the way that the file upload works on the iOS client we have to do some processing of the parameters out of the body ourselves. I'm doing this at the very start of the operation so that the Operation constructor gets the proper JSON valued request.body. See also https://stackoverflow.com/questions/37449472/afnetworking-v3-1-0-multipartformrequestwithmethod-uploads-json-numeric-values-w/37684827#37684827
     // TODO: When other (e.g., Android) clients are created, we may need to condition this step based on the type of client.
-    request.body = JSON.parse(request.body[ServerConstants.serverParametersForFileUpload]);
+    
+    // I just got an issue: "SyntaxError: Unexpected token u in JSON at position 0" at this position in the code. Which came from bad upload parameters.  See http://stackoverflow.com/questions/13022178/uncaught-syntaxerror-unexpected-token-u-json
+    // Putting in an error test case for that.
+    var paramsForUpload = request.body[ServerConstants.serverParametersForFileUpload];
+    if (!isDefined(paramsForUpload)) {
+        var message = "Undefined upload parameters";
+        logger.error(message);
+        op.endWithErrorDetails(message);
+        return;
+    }
+    
+    request.body = JSON.parse(paramsForUpload);
     
     var op = new Operation(request, response);
     if (op.error) {
@@ -1751,6 +1770,121 @@ app.post('/' + ServerConstants.operationLookupSharingInvitation, function (reque
     });
 });
 
+app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+    
+    // Make sure the creds are for a SharingUser.
+    if (!op.sharingUserSignedIn()) {
+        var message = "Error: Attempt to create a sharing user with an owning user creds!";
+        logger.error(message);
+        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        return;
+    }
+
+    op.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
+        if (error) {
+            if (staleUserSecurityInfo) {
+                op.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
+            }
+            else {
+                op.endWithErrorDetails(error);
+            }
+        }
+        else {
+            var invitationCode = request.body[ServerConstants.sharingInvitationCode];
+            if (!isDefined(invitationCode)) {
+                var message = "No invitation code was sent!";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                return;
+            }
+
+            finishRedeemingSharingInvitation(op, invitationCode, psUserCreds);
+        }
+    });
+});
+
+function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
+    // The following query for findOneAndUpdate also does validation: It ensures the invitation hasn't already been redeemed, and hasn't expired. I'm assuming that this will take place atomically across possibly multiple server instances.
+    
+    // http://mongoosejs.com/docs/api.html#model_Model.findOneAndUpdate
+    var now = new Date ();
+    var query = {
+        _id: invitationCode,
+        redeemed: false,
+        "expiry": {"$lte": now}
+    };
+    var update = { $set: {redeemed: true} };
+    
+    Mongo.SharingInvitation.findOneAndUpdate(query, update, function (err, invitationDoc) {
+        if (err) {
+            logger.error("Error updating/redeeming invitation!");
+            op.endWithErrorDetails(err);
+        }
+        else {
+            // Errors after this point will fail and will have marked the invitation as redeemed. Not the best of techniques, but once we get initial testing done, failures after this point should be rare. It would, of course, be better to rollback our db changes. :(. Thanks MongoDB! Not!
+            // In the worst case we get an invitation that is marked as redeemed, but it fails to allow linking for the user. Presumably, the person that did the inviting in that case would have to generate a new invitation.
+            
+            logger.trace("Found and redeemed Sharing Invitation:");
+            logger.debug(invitationDoc);
+            
+            // Need to link the invitation into the sharing user's account.
+            
+            var newLinked = {
+                owningUser: invitationDoc.owningUser,
+                capabilities: invitationDoc.capabilities
+            };
+            
+            // First, let's see if the given owningUser is already present in the sharing user's linked accounts.
+            var found = false;
+            if (psUserCreds.stored) {
+                for (var linkedIndex in psUserCreds.linked) {
+                    var linkedCreds = psUserCreds.linked[linkedIndex];
+                    if (invitationDoc.owningUser.equals(linkedCreds.owningUser)) {
+                        logger.info("Redeeming with existing owningUser: Replacing.");
+                        found = true;
+                        psUserCreds.linked[linkedIndex] = newLinked;
+                    }
+                }
+            }
+            
+            if (psUserCreds.stored) {
+                if (!found) {
+                    psUserCreds.linked.push(newLinked);
+                }
+                
+                var saveAll = true;
+                psUserCreds.update(saveAll, function (err) {
+                    if (err) {
+                        op.endWithErrorDetails(err);
+                    }
+                    else {
+                        op.endWithRC(ServerConstants.rcUserOnSystem);
+                    }
+                });
+            }
+            else {
+                psUserCreds.linked.push(newLinked);
+                
+                // User creds not yet stored in Mongo. Store 'em.
+                psUserCreds.storeNew(function (error) {
+                    if (error) {
+                        op.endWithErrorDetails(error);
+                    }
+                    else {
+                        op.result[ServerConstants.internalUserId] = psUserCreds._id;
+                        op.endWithRC(ServerConstants.rcOK);
+                    }
+                });
+            }
+        }
+    });
+}
+
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");
     var op = new Operation(request, response, true);
@@ -1766,7 +1900,7 @@ app.use(function(err, req, res, next) {
     logger.error(err.stack);
 });
 
-// 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only one in the server I think.
+// 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only Heroku dependency in the server I think.
 app.set('port', (process.env.PORT || 8081));
 app.listen(app.get('port'), function() {
   logger.info('Node app is running on port', app.get('port'));

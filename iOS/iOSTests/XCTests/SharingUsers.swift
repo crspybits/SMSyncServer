@@ -11,6 +11,7 @@ import XCTest
 import SMCoreLib
 
 class SharingUsers: BaseClass {
+    private static var invitation = SMPersistItemString(name: "SharingUsers.invitation", initialStringValue: "", persistType: .UserDefaults)
     
     override func setUp() {
         super.setUp()
@@ -91,14 +92,49 @@ class SharingUsers: BaseClass {
         self.doTestSendCapabilitiesToServerExpectingNoError([.Create, .Read])
     }
     
-    func testThatRedeemingSharingInvitationWorks() {
+    func testThatRedeemingSharingInvitationByOwningExclusiveUserFails() {
+        XCTFail()
     }
     
-    // Test case: Attempt to create a sharing invitation when you are a sharing user, and don't have authority to create a sharing invitation. Should fail.
     // Test is disabled because you have to make sure to sign in to the right account to make this happen.
+    
+    // This needs to be run *first* before any of the redeeming tests. Run this when you are signed into an OwningUser account (e.g., Google).
+    func testPreparationCreatePersistedInvitations() {
+        let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.createSharingInvitation(capabilities: [.Read], completion: { (invitationCode, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(invitationCode != nil)
+                SharingUsers.invitation.stringValue = invitationCode!
+                createSharingInvitationDone.fulfill()
+            })
+        }
+        
+        self.waitForExpectations()
+    }
+    
     func testThatMinimalCapabilitySharingUserCannotCreateSharingInvitation() {
+        XCTFail()
     }
     
     func testThatInviteCapabilitySharingUserCanCreateSharingInvitation() {
+        XCTFail()
+    }
+    
+    func testThatRedeemingSharingInvitationWorks() {
+        XCTFail()
+    }
+    
+    func testThatRedeemingExpiredInvitationFails() {
+        XCTFail()
+    }
+
+    func testThatRedeemingAlreadyRedeemedInvitationFails() {
+        XCTFail()
+    }
+    
+    func testThatRedeemingAndLinkingSameOwningUserAccountOverwrites() {
+        XCTFail()
     }
 }

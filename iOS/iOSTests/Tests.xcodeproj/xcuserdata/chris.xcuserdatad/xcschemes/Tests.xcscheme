@@ -66,10 +66,22 @@
                   Identifier = "DownloadRecovery/testThatCrash4RecoveryAfterTwoFileWorks()">
                </Test>
                <Test
+                  Identifier = "SharingUsers/testPreparationCreatePersistedInvitations()">
+               </Test>
+               <Test
                   Identifier = "SharingUsers/testThatInviteCapabilitySharingUserCanCreateSharingInvitation()">
                </Test>
                <Test
                   Identifier = "SharingUsers/testThatMinimalCapabilitySharingUserCannotCreateSharingInvitation()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatRedeemingAlreadyRedeemedInvitationFails()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatRedeemingExpiredInvitationFails()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatRedeemingSharingInvitationWorks()">
                </Test>
                <Test
                   Identifier = "Upload/testThatRecoveryAfterAppCrashWorks()">

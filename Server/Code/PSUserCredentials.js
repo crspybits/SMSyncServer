@@ -41,6 +41,8 @@ const collectionName = "UserCredentials";
         // If userType is "SharingUser" and accountType is "Facebook"
         creds: {
             userId: String,
+            
+            // This is the last validated access token. It's stored so I don't have to do validation by going to Facebook's servers (see also https://stackoverflow.com/questions/37822004/facebook-server-side-access-token-validation-can-it-be-done-locally) 
             accessToken: String
         }
         
@@ -91,14 +93,12 @@ function PSUserCredentials(userCreds) {
     self.linked = null;
     
     // the UserCredentials object.
-    this.userCreds = userCreds;
+    self.userCreds = userCreds;
     
-	if (!this.userCreds.signedInCreds().persistent()) {
-		throw "**** ERROR ****: Null persistent user creds";
-	}
+    // logger.debug("self.userCreds: " + JSON.stringify(self.userCreds));
 	
 	// Is this in persistent storage? (We don't know yet).
-	this.stored = null;
+	self.stored = null;
 }
 
 // instance methods
@@ -219,8 +219,10 @@ PSUserCredentials.prototype.storeNew = function (callback) {
     };
     
     if (ServerConstants.userTypeSharing == signedInCreds.userType) {
-        throw new Error("Not implemented yet: SharingUser");
+        userCredentialsDocument.linked = [];
     }
+    
+    logger.debug("storeNew: " + JSON.stringify(userCredentialsDocument));
     
    	Mongo.db().collection(collectionName).insertOne(userCredentialsDocument,
    		function(err, result) {
@@ -233,9 +235,13 @@ PSUserCredentials.prototype.storeNew = function (callback) {
 }
 
 // Update persistent store from the current userCreds member. No effect if user creds has no (variant) data with which to update persistent store. (This is not considered an error).
+// Parameter: saveAll (boolean, optional, default: false)-- if true, will save all fields to PS.
 // Callback has one parameter: error.
-PSUserCredentials.prototype.update = function (callback) {
+// TODO: Need to add a parameter so that other info from the instance can get written back to PS. Need this particularly for updating links field.
+PSUserCredentials.prototype.update = function (saveAll, callback) {
     var self = this;
+    
+    throw new Error("Need to add parameter!!");
     
     // Anything to update?
     var variantData = self.userCreds.signedInCreds().persistentVariant();

@@ -96,27 +96,49 @@ internal extension SMServerAPI {
         }
     }
     
-    /*
-    // Redeem an existing sharing invitation. This binds the invitation to a specific sharing user account.
-    internal func redeemSharingInvitation(invitationCode invitationCode:String, sharingUser:SMSharingUser, completion:((apiResult:SMServerAPIResult)->(Void))?) {
-
-        let userParams = self.userDelegate.userCredentialParams
-        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+    // Does one of two main things: (a) user is already known to the system, it links the account/capabilities represented by the invitation to that user, (b) if the current user is not known to the system, this creates a new sharing user, and does the same kind of linking.
+    // The user must be a sharing user. Will fail if the invitation has expired, or if the invitation has already been redeemed.
+    // All user credentials parameters must be provided by serverCredentialParams.
+    internal func redeemSharingInvitation(serverCredentialParams:[String:AnyObject],invitationCode:String, completion:((internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
         
-        var parameters = userParams!
-    
-        parameters[SMServerConstants.sharingUserAccountKey] = sharingUser.sharingUserAccountDict()
+        var parameters = serverCredentialParams
+        parameters[SMServerConstants.sharingInvitationCode] = invitationCode
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationRedeemSharingInvitation)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: parameters) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            var internalUserId:SMInternalUserId?
+            if nil == result.error {
+                internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
+                if nil == internalUserId {
+                    result.error = Error.Create("Didn't get InternalUserId back from server")
+                }
+            }
+            
+            completion?(internalUserId: internalUserId, apiResult: result)
         }
     }
-    */
     
     // Need a server operation that enables client app to look up the accounts that are shared with the current sharing user. If there is more than one, UI will have to let user choose.
 }
+
+    /*
+    // The sharing users operations provided below apply with respect to the currently signed in user and the sync server data of that user.
+    
+    public func addSharingUser(userCapabilityMask:UserCapabilityMask, userEmail:String, callback:(user:SharingUser?, error:NSError?)->()) {
+    }
+    
+    public func getSharingUsers(callback:([SharingUser], error:NSError?)->()) {
+    }
+    
+    // Giving a nil userCapabilityMask will remove all authorizations for that user.
+    public func updateSharingUser(userCapabilityMask:UserCapabilityMask?, userEmail:String, callback:(error:NSError?)->()) {
+    }
+    
+    public func deleteSharingUser(userEmail:String, callback:(error:NSError?)->()) {
+    }
+    */

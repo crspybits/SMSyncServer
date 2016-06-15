@@ -14,6 +14,10 @@ import SMSyncServer
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
+    static var sharingInvitationCode:String?
+    
+    private static let userSignInDisplayName = SMPersistItemString(name: "AppDelegate.userSignInDisplayName", initialStringValue: "", persistType: .UserDefaults)
+    
     // MARK: Users of SMSyncServer iOSTests client need to change the contents of this file.
     private let smSyncServerClientPlist = "SMSyncServer-client.plist"
 
@@ -34,13 +38,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Starting to establish account credentials-- user will also have to sign in to their specific account.
         let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
+        googleSignIn.activeSignInDelegate = self
+        SMUserSignInManager.session.addSignInAccount(googleSignIn)
+        
         let facebookSignIn = SMFacebookUserSignIn()
-        SMUserSignIn.addSignInAccount(googleSignIn)
-        SMUserSignIn.addSignInAccount(facebookSignIn)
+        facebookSignIn.activeSignInDelegate = self
+        SMUserSignInManager.session.addSignInAccount(facebookSignIn)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)
-        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andUserSignInLazyDelegate: SMUserSignIn.lazySession)
+        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andUserSignInLazyDelegate: SMUserSignInManager.session.lazyCurrentUser)
+        
+        SMUserSignInManager.session.delegate = self
 
         return true
     }
@@ -48,11 +57,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication,
         openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
         
-        if SMUserSignIn.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
-            return true
-        }
-        
-        if SMSyncServerSharing.session.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+        if SMUserSignInManager.session.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
             return true
         }
 
@@ -79,5 +84,37 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    }
+}
+
+extension AppDelegate : SMActivelySignedInUserDelegate {
+    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccountDelegate) {
+        guard AppDelegate.userSignInDisplayName.stringValue == "" || AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+        else {
+            Assert.badMojo(alwaysPrintThisString: "Yikes: Need to sign out of other sign-in (\(AppDelegate.userSignInDisplayName.stringValue))!")
+            return
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccountDelegate) {
+        guard AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+        else {
+        Assert.badMojo(alwaysPrintThisString: "Yikes: Not currently signed into userSignIn.displayName!")
+            return
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = ""
+    }
+    
+    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccountDelegate) -> Bool {
+        return AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+    }
+}
+
+extension AppDelegate : SMUserSignInManagerDelegate {
+    func didReceiveSharingInvitation(manager:SMUserSignInManager, invitationCode: String, userName: String?) {
+        AppDelegate.sharingInvitationCode = invitationCode
     }
 }

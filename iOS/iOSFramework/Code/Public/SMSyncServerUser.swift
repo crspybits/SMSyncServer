@@ -12,25 +12,6 @@ import Foundation
 import SMCoreLib
 
 // "class" so its delegate var can be weak.
-public protocol SMUserSignInDelegate : class {
-    // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed. If silentSignIn is true, the callee should try to silently sign the user in-- this is used when the user was, last time the app was launched, signed in with this account.
-    func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool)
-    
-    // Is a user currently signed in? This should return true if the user signed in during this launch of the app, and has not signed out, *and* if the user was signed in the last launch of the app, and never signed out.
-    var syncServerUserIsSignedIn: Bool {get}
-    
-    // Credentials specific to the user signed in.
-    // Returns non-nil value iff syncServerUserSignedIn is true.
-    var syncServerSignedInUser:SMUserCredentials? {get}
-    
-    // If user is currently signed in, sign them out. No effect if not signed in.
-    func syncServerSignOutUser()
-    
-    // At least OAuth2 requires that the IdToken be refreshed occaisonally.
-    func syncServerRefreshUserCredentials()
-}
-
-// "class" so its delegate var can be weak.
 internal protocol SMServerAPIUserDelegate : class {
     var userCredentialParams:[String:AnyObject]? {get}
     func refreshUserCredentials()
@@ -38,34 +19,36 @@ internal protocol SMServerAPIUserDelegate : class {
 
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
 public enum SMUserCredentials {
+    // userType *must* be OwningUser.
     // When using as a parameter to call createNewUser, authCode must not be nil.
-    case Google(userType:String, idToken:String!, authCode:String?)
+    case Google(userType:String, idToken:String!, authCode:String?, userName:String?)
 
     // userType *must* be SharingUser
-    case Facebook(userType:String, appToken:String!, userId:String!)
+    case Facebook(userType:String, accessToken:String!, userId:String!, userName:String?)
     
     internal func toServerParameterDictionary() -> [String:AnyObject] {
         var userCredentials = [String:AnyObject]()
         
         switch self {
-        case .Google(userType: let userType, idToken: let idToken, authCode: let authCode):
-            Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Yikes: Not yet implemented!")
+        case .Google(userType: let userType, idToken: let idToken, authCode: let authCode, userName: let userName):
+            Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Yikes: Google accounts with userTypeSharing not yet implemented!")
             Log.msg("Sending IdToken: \(idToken)")
             
             userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeOwning
             userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeGoogle
             userCredentials[SMServerConstants.googleUserIdToken] = idToken
+            userCredentials[SMServerConstants.googleUserAuthCode] = authCode
+            userCredentials[SMServerConstants.accountUserName] = userName
 
-            if (authCode != nil) {
-                userCredentials[SMServerConstants.googleUserAuthCode] = authCode!
-            }
         
-        case .Facebook(userType: let userType, appToken: let appToken, userId: let userId):
+        case .Facebook(userType: let userType, accessToken: let accessToken, userId: let userId, userName: let userName):
             Assert.If(userType != SMServerConstants.userTypeSharing, thenPrintThisString: "Yikes: Not allowed!")
+            
             userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeSharing
             userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeFacebook
             userCredentials[SMServerConstants.facebookUserId] = userId
-            userCredentials[SMServerConstants.facebookUserAppTokenString] = appToken
+            userCredentials[SMServerConstants.facebookUserAccessToken] = accessToken
+            userCredentials[SMServerConstants.accountUserName] = userName
         }
         
         return userCredentials
@@ -83,7 +66,7 @@ public class SMSyncServerUser {
     private var _signInCallback = NSObject()
     // var signInCompletion:((error:NSError?)->(Void))?
     
-    internal weak var delegate: SMLazyWeakRef<SMUserSignIn>!
+    internal weak var delegate: SMLazyWeakRef<SMUserSignInAccount>!
     
     public static var session = SMSyncServerUser()
     
@@ -97,7 +80,7 @@ public class SMSyncServerUser {
     // TODO: Eventually it would seem like a good idea to give the user a way to change the cloud folder path. BUT: It's a big change. i.e., the user shouldn't change this lightly because it will mean all of their data has to be moved or re-synced. (Plus, the SMSyncServer currently has no means to do such a move or re-sync-- it would have to be handled at a layer above the SMSyncServer).
     public var cloudFolderPath:String?
     
-    internal func appLaunchSetup(withUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignIn>!) {
+    internal func appLaunchSetup(withUserSignInLazyDelegate userSignInLazyDelegate:SMLazyWeakRef<SMUserSignInAccount>!) {
     
         if 0 == SMSyncServerUser.MobileDeviceUUID.stringValue.characters.count {
             SMSyncServerUser.MobileDeviceUUID.stringValue = UUID.make()
@@ -152,29 +135,36 @@ public class SMSyncServerUser {
             self.serverParameters(userCreds)) { internalUserId, cfeuResult in
             self._internalUserId = internalUserId
             let returnError = self.processSignInResult(forExistingUser: true, apiResult: cfeuResult)
-            self.callSignInCompletion(withError: returnError)
-            completion?(error: returnError)
+            self.finish(withError: returnError, completion: completion)
         }
     }
     
     // This method doesn't keep a reference to userCreds; it just allows the caller to create a new user on the server.
-    public func createNewUser(userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
+    public func createNewOwningUser(userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         switch (userCreds) {
-        case .Google(userType: let userType, idToken: _, authCode: let authCode):
+        case .Google(userType: let userType, idToken: _, authCode: let authCode, userName: _):
             Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Don't have owning type!")
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
 
         case .Facebook:
-            Assert.badMojo(alwaysPrintThisString: "Cannot create an OwningUser for a Facebook account!")
+            Assert.badMojo(alwaysPrintThisString: "Cannot create an OwningUser for a Facebook account: \(userCreds)")
         }
         
-        SMServerAPI.session.createNewUser(self.serverParameters(userCreds)) { internalUserId, cnuResult in
+        SMServerAPI.session.createNewOwningUser(self.serverParameters(userCreds)) { internalUserId, cnuResult in
             self._internalUserId = internalUserId
             let returnError = self.processSignInResult(forExistingUser: false, apiResult: cnuResult)
-            self.callSignInCompletion(withError: returnError)
-            completion?(error: returnError)
+            self.finish(withError: returnError, completion: completion)
         }
+    }
+    
+    private func finish(withError error:NSError?, completion:((error: NSError?)->())?) {
+        // The ordering of these two lines of code is important. callSignInCompletion needs to be second because it tests for the sign-in state generated by the completion.
+        completion?(error: error)
+        self.callSignInCompletion(withError: error)
+    }
+    
+    public func redeemSharingInvitation(invitationCode invitationCode:String, completion:((error: NSError?)->())?) {
     }
     
     private func callSignInCompletion(withError error:NSError?) {

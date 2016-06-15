@@ -12,8 +12,8 @@ function define(name, value) {
     // MARK: REST API entry points on the server.
     
     // Append '/' and one these values to the serverURL to create the specific operation URL:
+	define("operationCreateNewOwningUser",      "CreateNewOwningUser");
 	define("operationCheckForExistingUser",      "CheckForExistingUser");
-	define("operationCreateNewUser",      "CreateNewUser");
     
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
 	define("operationRemoveUser",      "RemoveUser");
@@ -109,7 +109,7 @@ function define(name, value) {
         // Value: String
     
         // SubKey:
-	define("facebookUserAppTokenString",      "AppTokenString");
+	define("facebookUserAccessToken",      "FacebookAccessToken");
         // Value: String
     
     // MARK: Other parameters sent to the server.
