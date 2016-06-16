@@ -137,11 +137,13 @@ FacebookUserCredentials.prototype.validate = function (mongoCreds, callback) {
             self.creds.userId == mongoCreds.userId) {
             // Going to take this to mean that the accessToken hasn't changed, and since we already know about it, we must have validated it before.
             callback(null, null, false);
+            return;
         }
     }
     
     // Either no existing mongoCreds, or they didn't match up with our creds. Validate by asking Facebook.
     
+    // Even though I've turned on the option to require secret_proof, the debug_token REST call doesn't appear to require this.
     // The app secret proof is a sha256 hash of your app access token, using the app secret as the key. Here's what the call looks like in PHP:
     // $appsecret_proof= hash_hmac('sha256', $app_access_token, $app_secret);
 
@@ -170,24 +172,34 @@ FacebookUserCredentials.prototype.validate = function (mongoCreds, callback) {
     }
     */
     
-    // TODO: We could see if we could convert the expires_at field to a date/time and do our own checking for expiry.
+    // TODO: We could see if we could convert the expires_at field to a date/time and do our own checking for expiry. I.e., do this checking when we don't explicitly call the Facebook REST API to check.
     
     var queryArgs = {
         input_token: self.creds.accessToken,
-        access_token: self.facebookSecrets.client_token
+        access_token: self.creds.accessToken
+        
+        // access_token: self.facebookSecrets.client_token
+        // This seems to be why I'm getting back: {"error":{"message":"Invalid OAuth access token.","type":"OAuthException","code":190,"fbtrace_id":"D1wApsVfsOP"}}
     };
     var url = 'https://graph.facebook.com/debug_token';
     
     // http://stackoverflow.com/questions/16903476/node-js-http-get-request-with-query-string-parameters
 
-    request({url: url, qs: queryArgs}, function(err, response, body) {
-        if (!error && response.statusCode == 200) {
-            var result = JSON.parse(body);
+    request.get({url: url, qs: queryArgs}, function(err, response, body) {
+        var result = JSON.parse(body);
+        logger.debug("body: " + JSON.stringify(result));
+        if (!err && response.statusCode == 200) {
             logger.debug("Result from Facebook:");
             logger.debug(result);
             
-            if (result.app_id == self.facebookSecrets.app_id &&
-                result.user_id == self.creds.userId) {
+            if (!result.data.is_valid) {
+                var message = "Invalid credentials: They seem to have expired.";
+                logger.error(message);
+                callback(message, true, null);
+            }
+            else if (result.data.application == self.facebookSecrets.application &&
+                result.data.app_id == self.facebookSecrets.app_id &&
+                result.data.user_id == self.creds.userId) {
                 callback(null, null, true);
             }
             else {

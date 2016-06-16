@@ -43,7 +43,8 @@ class ServerCredentials: XCTestCase {
     
     enum BadCredentialsType {
         case AllPresent
-        case NoCloudType
+        case NoUserType
+        case NoAccountType
         case NoIdToken
         case NoUUID
         case NoCloudFolderPath
@@ -53,18 +54,24 @@ class ServerCredentials: XCTestCase {
     
         var serverParameters = [String:AnyObject]()
         var userCredentials = [String:AnyObject]()
-        
-        userCredentials[SMServerConstants.cloudType] = SMServerConstants.cloudTypeGoogle
-        userCredentials[SMServerConstants.googleUserCredentialsIdToken] = "FakeIdToken"
+
         userCredentials[SMServerConstants.mobileDeviceUUIDKey] = "FakeDeviceUUID"
         userCredentials[SMServerConstants.cloudFolderPath] = "SomeFakePath"
         
+        userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeOwning
+        userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeGoogle
+        
+        userCredentials[SMServerConstants.googleUserIdToken] = "FakeIdToken"
+        
         switch (badCreds) {
-        case .NoCloudType:
-            userCredentials[SMServerConstants.cloudType] = nil
+        case .NoUserType:
+            userCredentials[SMServerConstants.userType] = nil
+
+        case .NoAccountType:
+            userCredentials[SMServerConstants.accountType] = nil
             
         case .NoIdToken:
-            userCredentials[SMServerConstants.googleUserCredentialsIdToken] = nil
+            userCredentials[SMServerConstants.googleUserIdToken] = nil
             
         case .NoUUID:
             userCredentials[SMServerConstants.mobileDeviceUUIDKey] = nil
@@ -94,8 +101,12 @@ class ServerCredentials: XCTestCase {
         self.doTestThatItFailsWithBadCredentials(.AllPresent)
     }
     
-    func testThatItFailsWithBadCredentialsNoCloudType() {
-        self.doTestThatItFailsWithBadCredentials(.NoCloudType)
+    func testThatItFailsWithBadCredentialsNoAccountType() {
+        self.doTestThatItFailsWithBadCredentials(.NoAccountType)
+    }
+    
+    func testThatItFailsWithBadCredentialsNoUserType() {
+        self.doTestThatItFailsWithBadCredentials(.NoUserType)
     }
 
     func testThatItFailsWithBadCredentialsNoIdToken() {

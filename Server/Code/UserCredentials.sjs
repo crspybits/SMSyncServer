@@ -70,7 +70,7 @@ function UserCredentials(credentialsData) {
     case ServerConstants.userTypeSharing:
         self.sharingUser = creds;
         // TODO: Need to put owning user info, linked from sharing user, into .linkedOwningUser
-        throw new Error("Not implemented yet!");
+        logger.debug("ServerConstants.userTypeSharing: " + JSON.stringify(self));
         break;
     
     default:

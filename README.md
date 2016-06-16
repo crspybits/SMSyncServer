@@ -80,6 +80,7 @@ Its structure is as follows:
 		"SharingServices": {
 			"Facebook": {
 				"app_id": "<snip>",
+				"application": "<snip>",
 				"app_secret": "<snip>",
 				"client_token": "<snip>"
 			}

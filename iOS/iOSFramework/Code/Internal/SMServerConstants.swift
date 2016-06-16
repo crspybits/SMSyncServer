@@ -21,7 +21,7 @@ public class SMServerConstants {
     // MARK: REST API entry points on the server.
     
     // Append '/' and one these values to the serverURL to create the specific operation URL:
-    public static let operationCreateNewOwningUser = "CreateNewOwningUser"
+    public static let operationCreateNewUser = "CreateNewUser"
     public static let operationCheckForExistingUser = "CheckForExistingUser"
     
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
@@ -325,6 +325,9 @@ public class SMServerConstants {
     public static let rcLockNotHeld = 53
     
     public static let rcNoOperationId = 54
+    
+    // This will be because the invitation didn't exist, because it expired, or because it already had been redeemed.
+    public static let rcCouldNotRedeemSharingInvitation = 60
     
     // rc's for serverOperationCheckForExistingUser
     // rcUserOnSystem

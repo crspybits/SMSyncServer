@@ -284,10 +284,10 @@ internal class SMServerAPI {
     //MARK: Authentication/user-sign in
     
     // All credentials parameters must be provided by serverCredentialParams.
-    internal func createNewOwningUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
+    internal func createNewUser(serverCredentialParams:[String:AnyObject], completion:((internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
         
         let serverOpURL = NSURL(string: self.serverURLString +
-                        "/" + SMServerConstants.operationCreateNewOwningUser)!
+                        "/" + SMServerConstants.operationCreateNewUser)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverCredentialParams) { (serverResponse:[String:AnyObject]?, error:NSError?) in
             

@@ -14,7 +14,16 @@ import SMSyncServer
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
-    static var sharingInvitationCode:String?
+    private static let _sharingInvitationCode = SMPersistItemString(name: "AppDelegate.sharingInvitationCode", initialStringValue: "", persistType: .UserDefaults)
+    
+    static var sharingInvitationCode:String? {
+        get {
+            return self._sharingInvitationCode.stringValue == "" ? nil : self._sharingInvitationCode.stringValue
+        }
+        set {
+            self._sharingInvitationCode.stringValue = newValue == nil ? "" : newValue!
+        }
+    }
     
     private static let userSignInDisplayName = SMPersistItemString(name: "AppDelegate.userSignInDisplayName", initialStringValue: "", persistType: .UserDefaults)
     
@@ -39,11 +48,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Starting to establish account credentials-- user will also have to sign in to their specific account.
         let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
         googleSignIn.activeSignInDelegate = self
-        SMUserSignInManager.session.addSignInAccount(googleSignIn)
+        SMUserSignInManager.session.addSignInAccount(googleSignIn, launchOptions:launchOptions)
         
         let facebookSignIn = SMFacebookUserSignIn()
         facebookSignIn.activeSignInDelegate = self
-        SMUserSignInManager.session.addSignInAccount(facebookSignIn)
+        SMUserSignInManager.session.addSignInAccount(facebookSignIn, launchOptions:launchOptions)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)

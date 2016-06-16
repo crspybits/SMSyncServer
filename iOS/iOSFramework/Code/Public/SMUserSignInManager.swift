@@ -70,12 +70,12 @@ public class SMUserSignInManager {
     }
 
     // Call this method at app launch because it will invoke the syncServerAppLaunchSetup() method of the account. When you call this, you must have established the value for activeSignInDelegate for the SMUserSignIn object.
-    public func addSignInAccount(signIn: SMUserSignInAccount) {
+    public func addSignInAccount(signIn: SMUserSignInAccount, launchOptions:[NSObject: AnyObject]?) {
         self._possibleAccounts[signIn.displayNameI!] = signIn
         
         let silentSignIn = signIn.activeSignInDelegate.smUserSignIn(activelySignedIn: signIn)
         
-        signIn.syncServerAppLaunchSetup(silentSignIn: silentSignIn)
+        signIn.syncServerAppLaunchSetup(silentSignIn: silentSignIn, launchOptions:launchOptions)
     }
     
     // Call this from the corresponding method in the AppDelegate.

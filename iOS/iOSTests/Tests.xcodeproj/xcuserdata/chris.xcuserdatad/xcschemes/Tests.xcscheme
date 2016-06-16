@@ -78,6 +78,9 @@
                   Identifier = "SharingUsers/testThatRedeemingAlreadyRedeemedInvitationFails()">
                </Test>
                <Test
+                  Identifier = "SharingUsers/testThatRedeemingEmptyInvitationFails()">
+               </Test>
+               <Test
                   Identifier = "SharingUsers/testThatRedeemingExpiredInvitationFails()">
                </Test>
                <Test

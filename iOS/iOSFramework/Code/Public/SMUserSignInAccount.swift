@@ -19,7 +19,7 @@ public protocol SMUserSignInAccountDelegate : class {
     var displayNameI: String? {get}
 
     // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed. If silentSignIn is true, the callee should try to silently sign the user in (without UI interaction).
-    func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool)
+    func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool, launchOptions:[NSObject: AnyObject]?)
     
     func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool
     
@@ -61,7 +61,7 @@ public class SMUserSignInAccount : NSObject, SMUserSignInAccountDelegate {
         }
     }
 
-    public func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool) {
+    public func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool, launchOptions:[NSObject: AnyObject]?) {
     }
     
     public func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool {

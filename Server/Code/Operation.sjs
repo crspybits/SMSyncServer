@@ -98,7 +98,7 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                 self.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
             }
             else {
-                logger.error("validateUser: Invalid user: security info is not stale");
+                logger.error("validateUser: Invalid user: security info is not stale: " + JSON.stringify(error));
                 self.endWithErrorDetails(error);
             }
         }
@@ -264,7 +264,7 @@ Operation.prototype.checkForExistingUser = function (callback) {
     
     if (lookupKeys) {
 
-        // We have keys in order to do the lookup.
+        logger.info("We have keys in order to do the lookup.");
         psUserCreds.lookup(function (error) {
             if (error) {
                 callback(error, false, null);
@@ -287,7 +287,7 @@ Operation.prototype.checkForExistingUser = function (callback) {
         });
     }
     else {
-        // We don't have the keys to do the lookup. Validate first.
+        logger.info("We don't have the keys to do the lookup. Validate first.");
         self.userCreds.signedInCreds().validate(null, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
             if (error) {
                 callback(error, staleUserSecurityInfo, null);

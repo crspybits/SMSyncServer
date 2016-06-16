@@ -50,19 +50,12 @@ Secrets.load(function (error) {
     Mongo.connect(Secrets.mongoDbURL());
 });
 
-app.post("/" + ServerConstants.operationCreateNewOwningUser, function(request, response) {
+// Enable creation of an owning or sharing user.
+app.post("/" + ServerConstants.operationCreateNewUser, function(request, response) {
 
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
-        return;
-    }
-    
-    // Make sure the creds are for an OwningUser.
-    if (!op.owningUserSignedIn()) {
-        var message = "Error: Attempt to create an owning user with a sharing user creds!";
-        logger.error(message);
-        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         return;
     }
 
@@ -1816,7 +1809,10 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
     var query = {
         _id: invitationCode,
         redeemed: false,
-        "expiry": {"$lte": now}
+        
+        // I'm looking for an invitation that has an expiry that is >= the date right now. This defines expiry. E.g., say an expiry is: 2016-06-16T22:42:19.393Z
+        // and the current date is: 2016-06-15T22:52:02.593Z
+        "expiry": {$gte: now}
     };
     var update = { $set: {redeemed: true} };
     
@@ -1825,12 +1821,19 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
             logger.error("Error updating/redeeming invitation!");
             op.endWithErrorDetails(err);
         }
+        else if (!invitationDoc) {
+            var message = "Could not find invitation to redeem: " + invitationCode + " (or it had expired, or was aleady redeemed).";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(
+                ServerConstants.rcCouldNotRedeemSharingInvitation, message);
+        }
         else {
+            
             // Errors after this point will fail and will have marked the invitation as redeemed. Not the best of techniques, but once we get initial testing done, failures after this point should be rare. It would, of course, be better to rollback our db changes. :(. Thanks MongoDB! Not!
             // In the worst case we get an invitation that is marked as redeemed, but it fails to allow linking for the user. Presumably, the person that did the inviting in that case would have to generate a new invitation.
             
-            logger.trace("Found and redeemed Sharing Invitation:");
-            logger.debug(invitationDoc);
+            logger.trace("Found and redeemed Sharing Invitation: "
+                + JSON.stringify(invitationDoc));
             
             // Need to link the invitation into the sharing user's account.
             

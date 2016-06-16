@@ -240,12 +240,15 @@ PSUserCredentials.prototype.storeNew = function (callback) {
 // TODO: Need to add a parameter so that other info from the instance can get written back to PS. Need this particularly for updating links field.
 PSUserCredentials.prototype.update = function (saveAll, callback) {
     var self = this;
-    
-    throw new Error("Need to add parameter!!");
+
+    if (typeof saveAll === 'function') {
+        callback = saveAll;
+        saveAll = false;
+    }
     
     // Anything to update?
     var variantData = self.userCreds.signedInCreds().persistentVariant();
-    if (!variantData) {
+    if (!variantData && !saveAll) {
         callback(null);
         return;
     }
@@ -256,32 +259,48 @@ PSUserCredentials.prototype.update = function (saveAll, callback) {
 	// I'm guessing that since find needs this query flattened, so does updateOne.
 	query = jsonExtras.flatten(query);
     
-    // Create the update data
-    var variantCreds = { creds : variantData };
-    variantCreds = jsonExtras.flatten(variantCreds);
     var updates = {};
-    var numberOfUpdates = 0;
-    
-    for (var key in variantCreds) {
-        if (variantCreds.hasOwnProperty(key)) {
-            numberOfUpdates++;
-            updates[key] = variantCreds[key];
+
+    // Create the update data
+    if (saveAll) {
+        var signedInCreds = self.userCreds.signedInCreds();
+        
+        updates.username = signedInCreds.username;
+        updates.userType = signedInCreds.userType;
+        updates.accountType = signedInCreds.accountType;
+        updates.creds =  signedInCreds.persistent();
+        
+        if (isDefined(self.linked)) {
+            updates.linked = self.linked;
+        }
+    }
+    else {
+        // I'm not quite sure why this is so complex. It works though.
+        var variantCreds = { creds : variantData };
+        variantCreds = jsonExtras.flatten(variantCreds);
+        var numberOfUpdates = 0;
+        
+        for (var key in variantCreds) {
+            if (variantCreds.hasOwnProperty(key)) {
+                numberOfUpdates++;
+                updates[key] = variantCreds[key];
+            }
+        }
+        
+        if (0 == numberOfUpdates) {
+            callback(null);
+            return;
         }
     }
     
     // logger.debug("Updates: " + JSON.stringify(updates));
     // logger.debug("Number of keys in updates: " + Object.keys(updates).length);
     
-    if (0 == numberOfUpdates) {
-        callback(null);
-    }
-    else {
-        Mongo.db().collection(collectionName).updateOne(query, {$set: updates},
-        function(err, results) {
-            // logger.debug(results);
-            callback(err);
-        });
-    }
+    Mongo.db().collection(collectionName).updateOne(query, {$set: updates},
+    function(err, results) {
+        // logger.debug(results);
+        callback(err);
+    });
 }
 
 // export the class

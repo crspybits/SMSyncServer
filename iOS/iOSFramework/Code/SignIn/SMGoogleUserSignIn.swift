@@ -72,7 +72,8 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
         self.signInOutButton.signOutButton.addTarget(self, action: #selector(syncServerSignOutUser), forControlEvents: .TouchUpInside)
     }
     
-    override public func syncServerAppLaunchSetup(silentSignIn silentSignIn: Bool) {
+    override public func syncServerAppLaunchSetup(silentSignIn silentSignIn: Bool, launchOptions:[NSObject: AnyObject]?) {
+    
         var configureError: NSError?
         GGLContext.sharedInstance().configureWithError(&configureError)
         assert(configureError == nil, "Error configuring Google services: \(configureError)")
@@ -240,7 +241,7 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                     }
                 }
                 else {
-                    SMSyncServerUser.session.createNewOwningUser(syncServerGoogleUser) { error in
+                    SMSyncServerUser.session.createNewUser(userCreds: syncServerGoogleUser) { error in
                         if nil == error {
                             successfulSignIn(user.authentication.idToken)
                         }

@@ -530,6 +530,7 @@ public class SMSyncServer : NSObject {
 
         public static let Local = ErrorResetMask(.Local)
         public static let Server = ErrorResetMask(.Server)
+        public static let All = ErrorResetMask([.Local, .Server])
     }
     
     // USE CAREFULLY!
@@ -542,7 +543,7 @@ public class SMSyncServer : NSObject {
     
     On normal reset operation (i.e., the reset worked properly), the callback error parameter will be nil.
     */
-    public func resetFromError(resetType resetType: ErrorResetMask, completion:((error:NSError?)->())?=nil) {
+    public func resetFromError(resetType resetType: ErrorResetMask=[.All], completion:((error:NSError?)->())?=nil) {
         SMSyncControl.session.resetFromError(resetType: resetType, completion: completion)
     }
     

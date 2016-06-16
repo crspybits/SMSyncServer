@@ -217,7 +217,7 @@ internal class SMSyncControl {
     }
 
     // allowDebugReset is for DEBUG builds and for testing .InternalError and .NonRecoverableError reset.
-    internal func resetFromError(allowDebugReset allowDebugReset:Bool=false, resetType: SMSyncServer.ErrorResetMask, completion:((error:NSError?)->())?=nil) {
+    internal func resetFromError(allowDebugReset allowDebugReset:Bool=false, resetType: SMSyncServer.ErrorResetMask=[.All], completion:((error:NSError?)->())?=nil) {
     
         Assert.If(resetType.isEmpty, thenPrintThisString: "Yikes: Empty reset!")
     

@@ -12,7 +12,7 @@ function define(name, value) {
     // MARK: REST API entry points on the server.
     
     // Append '/' and one these values to the serverURL to create the specific operation URL:
-	define("operationCreateNewOwningUser",      "CreateNewOwningUser");
+	define("operationCreateNewUser",      "CreateNewUser");
 	define("operationCheckForExistingUser",      "CheckForExistingUser");
     
     // TODO: This will remove user credentials and all FileIndex entries from the SyncServer.
@@ -316,6 +316,9 @@ function define(name, value) {
 	define("rcLockNotHeld",      53);
     
 	define("rcNoOperationId",      54);
+    
+    // This will be because the invitation didn't exist, because it expired, or because it already had been redeemed.
+	define("rcCouldNotRedeemSharingInvitation",      60);
     
     // rc's for serverOperationCheckForExistingUser
     // rcUserOnSystem
