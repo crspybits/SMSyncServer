@@ -20,7 +20,7 @@ internal extension SMServerAPI {
         
         var capabilitiesStringArray:[String]?
         if capabilities != nil {
-            capabilitiesStringArray = capabilities!.sendable
+            capabilitiesStringArray = capabilities!.stringArray
         }
  
         self.createSharingInvitation(capabilities: capabilitiesStringArray) { (invitationCode, apiResult) in
@@ -123,22 +123,55 @@ internal extension SMServerAPI {
         }
     }
     
-    // Need a server operation that enables client app to look up the accounts that are shared with the current sharing user. If there is more than one, UI will have to let user choose.
-}
+    internal struct LinkedAccount {
+        // This is the userId assigned by the sync server, not by the specific account system.
+        var internalUserId:SMInternalUserId
+        var userName:String?
+        var capabilityMask:SMSharingUserCapabilityMask
+    }
+    
+    // Look up the accounts that are shared with the current sharing user.
+    internal func getLinkedAccountsForSharingUser(completion:((linkedAccounts:[LinkedAccount]?, apiResult:SMServerAPIResult)->(Void))?) {
+        
+        let userParams = self.userDelegate.userCredentialParams
+        Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
+        
+        let serverOpURL = NSURL(string: self.serverURLString +
+                        "/" + SMServerConstants.operationGetLinkedAccountsForSharingUser)!
+        
+        SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: userParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
+            
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            var linkedAccounts:[LinkedAccount]! = [LinkedAccount]()
+            if nil == result.error {
+                if let dictArray = serverResponse![SMServerConstants.resultLinkedAccountsKey] as? [[String:AnyObject]] {
+                
+                    Log.msg("dictArray: \(dictArray)")
 
-    /*
-    // The sharing users operations provided below apply with respect to the currently signed in user and the sync server data of that user.
-    
-    public func addSharingUser(userCapabilityMask:UserCapabilityMask, userEmail:String, callback:(user:SharingUser?, error:NSError?)->()) {
+                    for dict in dictArray {
+                        if let internalUserId = dict[SMServerConstants.internalUserId] as? String,
+                            let userName = dict[SMServerConstants.accountUserName] as? String,
+                            let capabilities =  dict[SMServerConstants.accountCapabilities] as? [String],
+                            let capabilityMask = SMSharingUserCapabilityMask(capabilityNameArray:capabilities)  {
+                            
+                            let linkedAccount = LinkedAccount(internalUserId: internalUserId, userName: userName, capabilityMask: capabilityMask)
+                            linkedAccounts.append(linkedAccount)
+                        }
+                        else {
+                            result.error = Error.Create("Didn't get expected dict element keys back from server: \(dict)")
+                        }
+                    }
+                } else {
+                    result.error = Error.Create("Didn't get array of dictionaries back from server: \(serverResponse![SMServerConstants.resultLinkedAccountsKey])")
+                }
+            }
+            
+            if linkedAccounts.count == 0 {
+                linkedAccounts = nil
+            }
+            
+            completion?(linkedAccounts: linkedAccounts, apiResult: result)
+        }
     }
-    
-    public func getSharingUsers(callback:([SharingUser], error:NSError?)->()) {
-    }
-    
-    // Giving a nil userCapabilityMask will remove all authorizations for that user.
-    public func updateSharingUser(userCapabilityMask:UserCapabilityMask?, userEmail:String, callback:(error:NSError?)->()) {
-    }
-    
-    public func deleteSharingUser(userEmail:String, callback:(error:NSError?)->()) {
-    }
-    */
+}

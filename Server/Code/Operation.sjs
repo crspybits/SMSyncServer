@@ -23,6 +23,7 @@ function Operation(request, response, errorHandling) {
     var self = this;
     
     self.error = false;
+    self.psUserCreds = null;
     
     if (typeof(errorHandling) === "undefined") {
         errorHandling = false;
@@ -77,6 +78,13 @@ Operation.prototype.owningUserSignedIn = function () {
 Operation.prototype.sharingUserSignedIn = function () {
     var self = this;
     return self.userCreds.sharingUserSignedIn();
+}
+
+// Is the current signed in user authorized to do this operation?
+// One parameter: A capability (e.g., ServerConstants.capabilityCreate
+// Returns true or false.
+Operation.prototype.userAuthorizedTo = function (capability) {
+    return self.userCreds.userAuthorizedTo(capability);
 }
 
 // Checks if the user is on the system, and as a side effect (if no error), adds a PSUserCredentials object as a new member, .psUserCreds
@@ -248,9 +256,8 @@ Operation.prototype.checkForExistingUser = function (callback) {
     
     // 6/14/16; I'm going to immediately create the PSUserCredentials object, and also do a lookup now because with some of my UserCredentials objects (Facebook, specifically), I need the currently stored creds, if any, to do validation.
 
-    var psUserCreds = null;
     try {
-        psUserCreds = new PSUserCredentials(self.userCreds);
+        self.psUserCreds = new PSUserCredentials(self.userCreds);
     } catch (error) {
         logger.error("Failed creating PSUserCredentials");
         logger.error(error);
@@ -265,14 +272,14 @@ Operation.prototype.checkForExistingUser = function (callback) {
     if (lookupKeys) {
 
         logger.info("We have keys in order to do the lookup.");
-        psUserCreds.lookup(function (error) {
+        self.psUserCreds.lookup(function (error) {
             if (error) {
                 callback(error, false, null);
             }
             else {
                 var mongoCreds = null;
-                if (psUserCreds.stored) {
-                    mongoCreds = psUserCreds.creds;
+                if (self.psUserCreds.stored) {
+                    mongoCreds = self.psUserCreds.creds;
                 }
 
                 self.userCreds.signedInCreds().validate(mongoCreds, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
@@ -280,7 +287,7 @@ Operation.prototype.checkForExistingUser = function (callback) {
                         callback(error, staleUserSecurityInfo, null);
                     }
                     else {
-                        finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback);
+                        finishCheckForExistingUser(self.psUserCreds, credsChangedDuringValidation, callback);
                     }
                 });
             }
@@ -293,12 +300,12 @@ Operation.prototype.checkForExistingUser = function (callback) {
                 callback(error, staleUserSecurityInfo, null);
             }
             else {
-                psUserCreds.lookup(function (error) {
+                self.psUserCreds.lookup(function (error) {
                     if (error) {
                         callback(error, false, null);
                     }
                     else {
-                        finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback);
+                        finishCheckForExistingUser(self.psUserCreds, credsChangedDuringValidation, callback);
                     }
                 });
             }

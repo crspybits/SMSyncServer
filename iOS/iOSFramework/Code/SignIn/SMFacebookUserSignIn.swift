@@ -23,6 +23,7 @@ FBSDKGraphRequest(graphPath: "me/friends", parameters: ["fields" : "data"]).star
 
 public class SMFacebookUserSignIn : SMUserSignInAccount {
     private static let _fbUserName = SMPersistItemString(name: "SMFacebookUserSignIn.fbUserName", initialStringValue: "", persistType: .UserDefaults)
+    private static let _currentOwningUserId = SMPersistItemString(name: "SMFacebookUserSignIn.currentOwningUserId", initialStringValue: "", persistType: .UserDefaults)
     
     private var fbUserName:String? {
         get {
@@ -30,6 +31,16 @@ public class SMFacebookUserSignIn : SMUserSignInAccount {
         }
         set {
             SMFacebookUserSignIn._fbUserName.stringValue =
+                newValue == nil ? "" : newValue!
+        }
+    }
+    
+    private var currentOwningUserId:String? {
+        get {
+            return SMFacebookUserSignIn._currentOwningUserId.stringValue == "" ? nil : SMFacebookUserSignIn._currentOwningUserId.stringValue
+        }
+        set {
+            SMFacebookUserSignIn._currentOwningUserId.stringValue =
                 newValue == nil ? "" : newValue!
         }
     }
@@ -78,7 +89,7 @@ public class SMFacebookUserSignIn : SMUserSignInAccount {
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return .Facebook(userType: SMServerConstants.userTypeSharing, accessToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID, userName: self.fbUserName)
+                return .Facebook(userType: SMServerConstants.userTypeSharing, owningUserId: self.currentOwningUserId, accessToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID, userName: self.fbUserName)
             }
             else {
                 return nil
@@ -123,7 +134,7 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
     }
 
     public func loginButtonDidLogOut(loginButton: FBSDKLoginButton!) {
-        self.activeSignInDelegate.smUserSignIn(userJustSignedOut: self)
+        self.delegate.smUserSignIn(userJustSignedOut: self)
     }
     
     private func finishSignIn() {
@@ -146,15 +157,17 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
                 }
             }
             
-            let syncServerFacebookUser = SMUserCredentials.Facebook(userType: SMServerConstants.userTypeSharing, accessToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID, userName: self.fbUserName)
+            let syncServerFacebookUser = SMUserCredentials.Facebook(userType: SMServerConstants.userTypeSharing, owningUserId: self.currentOwningUserId, accessToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID, userName: self.fbUserName)
             
             // We are not going to allow the user to create a new sharing user without an invitation code. There just doesn't seem any point: They wouldn't have any access capabilities. So, if we don't have an invitation code, check to see if this user is already on the system.
-            if AppDelegate.sharingInvitationCode == nil {
+            let sharingInvitationCode = self.delegate.smUserSignIn(getSharingInvitationCodeForUserSignIn: self)
+            
+            if sharingInvitationCode == nil {
                 SMSyncServerUser.session.checkForExistingUser(
                     syncServerFacebookUser, completion: { error in
                     
                     if error == nil {
-                        self.activeSignInDelegate.smUserSignIn(userJustSignedIn: self)
+                        self.delegate.smUserSignIn(userJustSignedIn: self)
                     }
                     else {
                         // TODO: Give them an error message. Tell them they need an invitation from user on the system first.
@@ -165,30 +178,20 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
             }
             else {
                 // Going to redeem the invitation even if we get an error checking for email/name (username). The username is optional.
-                // Not doing signing callbacks after success on createNewUser because we want to wait until a successful redeeming of the invitation to sign the user in.
-                SMSyncServerUser.session.createNewUser(callbacksAfterSigninSuccess:false, userCreds: syncServerFacebookUser, completion: { error in
+                
+                // redeemSharingInvitation creates a new user if needed at the same time as redeeming invitation.
+                // Success on redeeming does the sign callback in process.
+                SMSyncServerUser.session.redeemSharingInvitation(invitationCode: sharingInvitationCode!, userCreds: syncServerFacebookUser, completion: { couldNotRedeemSharingInvitation, error in
                     if error == nil {
-                        // Need this right after createNewUser because redeemSharingInvitation needs a signed in user.
-                        self.activeSignInDelegate.smUserSignIn(userJustSignedIn: self)
+                        self.delegate.smUserSignIn(userJustSignedIn: self)
                     
-                        // Success on redeeming will do the sign callback in process.
-                        SMSyncServerUser.session.redeemSharingInvitation(invitationCode: AppDelegate.sharingInvitationCode!, completion: { couldNotRedeemSharingInvitation, error in
-                        
-                            if couldNotRedeemSharingInvitation {
-                                AppDelegate.sharingInvitationCode = nil
-                            }
-                            
-                            if error != nil {
-                                // TODO: Give them an error message.
-                                // Hmmm. We have an odd state here. If it was a new user, we created the user, but we couldn't redeem the invitation. What to do??
-                                Log.error("Failed redeeming new user.")
-                                self.reallyLogOut()
-                            }
-                        })
+                        // If we could not redeem the invitation (couldNotRedeemSharingInvitation is true), we want to set the invitation to nil-- it was bad. If we could redeem it, we also want to set it to nil-- no point in trying to redeem it again.
+                        self.delegate.smUserSignIn(resetSharingInvitationCodeForUserSignIn: self)
                     }
-                    else {
+                    else if error != nil {
                         // TODO: Give them an error message.
-                        Log.error("Failed creating new user.")
+                        // Hmmm. We have an odd state here. If it was a new user, we created the user, but we couldn't redeem the invitation. What to do??
+                        Log.error("Failed redeeming invitation.")
                         self.reallyLogOut()
                     }
                 })
@@ -202,7 +205,7 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
         deletepermission.startWithCompletionHandler({ (connection, result, error) in
             print("the delete permission is \(result)")
             FBSDKLoginManager().logOut()
-            self.activeSignInDelegate.smUserSignIn(userJustSignedOut: self)
+            self.delegate.smUserSignIn(userJustSignedOut: self)
         })
     }
 }

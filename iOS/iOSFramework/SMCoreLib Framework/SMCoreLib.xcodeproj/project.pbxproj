@@ -58,6 +58,7 @@
 		83A71EAD1C8E3A6000701BCB /* UITableView+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */; };
 		83A71EAE1C8E3A6000701BCB /* UITableViewCell+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		83A71EAF1C8E3A6000701BCB /* UITableViewCell+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = 83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */; };
+		83B0FD3A1D12FB6B009FAAA3 /* SMMaskUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B0FD391D12FB6A009FAAA3 /* SMMaskUtilities.swift */; };
 		83B854E91CF1C36800629C05 /* SMAcquireImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B854E81CF1C36800629C05 /* SMAcquireImage.swift */; };
 		83CF34741CF019D300FEA292 /* Array+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83CF34731CF019D300FEA292 /* Array+Extras.swift */; };
 		83D3ED051C4DC2AC00BFDA93 /* SMCoreLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 83D3ED041C4DC2AC00BFDA93 /* SMCoreLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -241,6 +242,7 @@
 		83A71EA91C8E3A6000701BCB /* UITableView+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableView+Extras.m"; path = "Code/Categories/v1/UITableView+Extras.m"; sourceTree = "<group>"; };
 		83A71EAA1C8E3A6000701BCB /* UITableViewCell+Extras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UITableViewCell+Extras.h"; path = "Code/Categories/v1/UITableViewCell+Extras.h"; sourceTree = "<group>"; };
 		83A71EAB1C8E3A6000701BCB /* UITableViewCell+Extras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UITableViewCell+Extras.m"; path = "Code/Categories/v1/UITableViewCell+Extras.m"; sourceTree = "<group>"; };
+		83B0FD391D12FB6A009FAAA3 /* SMMaskUtilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMMaskUtilities.swift; path = Code/General/v1/SMMaskUtilities.swift; sourceTree = "<group>"; };
 		83B854E81CF1C36800629C05 /* SMAcquireImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMAcquireImage.swift; path = Code/MiscUI/SMUIMessages/v1/SMAcquireImage.swift; sourceTree = "<group>"; };
 		83CF34731CF019D300FEA292 /* Array+Extras.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Array+Extras.swift"; path = "Code/Categories/v1/Array+Extras.swift"; sourceTree = "<group>"; };
 		83D3ECE51C4DBFCF00BFDA93 /* SMCoreLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SMCoreLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -650,6 +652,7 @@
 				83D3ED861C4DC92800BFDA93 /* WeakRef.m */,
 				831595231CA0E3B600D55E3A /* SMRelativeLocalURL.swift */,
 				8305BA751D0D22B00000A033 /* SMLazyWeakRef.swift */,
+				83B0FD391D12FB6A009FAAA3 /* SMMaskUtilities.swift */,
 			);
 			name = General;
 			sourceTree = "<group>";
@@ -1048,6 +1051,7 @@
 				83A4F1F11C6977370086B22F /* SMEdgeInsetLabel.m in Sources */,
 				83CF34741CF019D300FEA292 /* Array+Extras.swift in Sources */,
 				8346E1FE1D011A3C006C2637 /* SMImageTextView+JSON.swift in Sources */,
+				83B0FD3A1D12FB6B009FAAA3 /* SMMaskUtilities.swift in Sources */,
 				83FB1DF11CF66EDE00D1D1E6 /* UIRefreshControl+AFNetworking.m in Sources */,
 				83A4F1E31C692E820086B22F /* NSDate+Extras.m in Sources */,
 				83D3EDB11C4DC94800BFDA93 /* CoreData.m in Sources */,

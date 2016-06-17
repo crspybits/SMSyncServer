@@ -47,11 +47,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Starting to establish account credentials-- user will also have to sign in to their specific account.
         let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
-        googleSignIn.activeSignInDelegate = self
+        googleSignIn.delegate = self
         SMUserSignInManager.session.addSignInAccount(googleSignIn, launchOptions:launchOptions)
         
         let facebookSignIn = SMFacebookUserSignIn()
-        facebookSignIn.activeSignInDelegate = self
+        facebookSignIn.delegate = self
         SMUserSignInManager.session.addSignInAccount(facebookSignIn, launchOptions:launchOptions)
         
         // Setup the SMSyncServer (Node.js) server URL.
@@ -96,8 +96,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-extension AppDelegate : SMActivelySignedInUserDelegate {
-    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccountDelegate) {
+extension AppDelegate : SMUserSignInAccountDelegate {
+    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccount) {
         guard AppDelegate.userSignInDisplayName.stringValue == "" || AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
         else {
             Assert.badMojo(alwaysPrintThisString: "Yikes: Need to sign out of other sign-in (\(AppDelegate.userSignInDisplayName.stringValue))!")
@@ -107,7 +107,7 @@ extension AppDelegate : SMActivelySignedInUserDelegate {
         AppDelegate.userSignInDisplayName.stringValue = userSignIn.displayNameI!
     }
     
-    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccountDelegate) {
+    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount) {
         guard AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
         else {
         Assert.badMojo(alwaysPrintThisString: "Yikes: Not currently signed into userSignIn.displayName!")
@@ -117,8 +117,16 @@ extension AppDelegate : SMActivelySignedInUserDelegate {
         AppDelegate.userSignInDisplayName.stringValue = ""
     }
     
-    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccountDelegate) -> Bool {
+    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccount) -> Bool {
         return AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(getSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) -> String? {
+        return AppDelegate.sharingInvitationCode
+    }
+    
+    func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) {
+        AppDelegate.sharingInvitationCode = nil
     }
 }
 

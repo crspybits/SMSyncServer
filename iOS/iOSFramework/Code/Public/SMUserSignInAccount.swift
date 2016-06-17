@@ -11,43 +11,19 @@
 import Foundation
 import SMCoreLib
 
-// "class" so its delegate var can be weak.
-public protocol SMUserSignInAccountDelegate : class {
-    var activeSignInDelegate:SMActivelySignedInUserDelegate! {get set}
-
-    static var displayNameS: String? {get}
-    var displayNameI: String? {get}
-
-    // This will be called just once, when the app is launching. It is assumed that appLaunchSetup will do any initial network interaction needed. If silentSignIn is true, the callee should try to silently sign the user in (without UI interaction).
-    func syncServerAppLaunchSetup(silentSignIn silentSignIn:Bool, launchOptions:[NSObject: AnyObject]?)
-    
-    func application(application: UIApplication!, openURL url: NSURL!, sourceApplication: String!, annotation: AnyObject!) -> Bool
-    
-    // Is a user currently signed in?
-    var syncServerUserIsSignedIn: Bool {get}
-    
-    // Credentials specific to the user signed in.
-    // Returns non-nil value iff syncServerUserSignedIn is true.
-    var syncServerSignedInUser:SMUserCredentials? {get}
-    
-    // If user is currently signed in, sign them out. No effect if not signed in.
-    func syncServerSignOutUser()
-    
-    // At least OAuth2 requires that the IdToken be refreshed occaisonally.
-    func syncServerRefreshUserCredentials()
-}
-
-// The intent of this protocol is to enable you to manage your UI-- e.g., to determine which UI button's should be active, and also to allow you to persistently store the SMUserSignIn.
-public protocol SMActivelySignedInUserDelegate {
-    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccountDelegate)
-    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccountDelegate)
+public protocol SMUserSignInAccountDelegate {
+    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccount)
+    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount)
     
     // Was this SMUserSignInAccount the one that called userJustSignedIn (without calling userJustSignedOut) last? Value must be stored persistently. Implementors must ensure that there is at most one actively signed in account (i.e., SMUserSignInAccount object). This is a persistent version of the method syncServerUserIsSignedIn on the SMUserSignInDelegate.
-    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccountDelegate) -> Bool
+    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccount) -> Bool
+    
+    func smUserSignIn(getSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) -> String?
+    func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount)
 }
 
-public class SMUserSignInAccount : NSObject, SMUserSignInAccountDelegate {
-    public var activeSignInDelegate:SMActivelySignedInUserDelegate!
+public class SMUserSignInAccount : NSObject {
+    public var delegate:SMUserSignInAccountDelegate!
 
     public class var displayNameS: String? {
         get {

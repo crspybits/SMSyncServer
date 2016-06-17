@@ -512,13 +512,9 @@ public class SMSyncServer : NSObject {
                 // We depend here on the ordering and values of elements in the following array!
                 return ["Local", "Server"]
             }
-            
+
             var description : String {
-                var shift = 0
-                while (self.rawValue >> shift != 1) {
-                    shift += 1
-                }
-                return self.allAsStrings[shift]
+                return SMMaskUtilities.enumDescription(rawValue: self.rawValue, allAsStrings: self.allAsStrings)
             }
         }
     
@@ -531,6 +527,17 @@ public class SMSyncServer : NSObject {
         public static let Local = ErrorResetMask(.Local)
         public static let Server = ErrorResetMask(.Server)
         public static let All = ErrorResetMask([.Local, .Server])
+        
+        public var description : String {
+            return SMMaskUtilities.maskDescription(stringArray: self.stringArray)
+        }
+        
+        // An array of capability strings, possibly empty.
+        public var stringArray: [String] {
+            return SMMaskUtilities.maskArrayOfStrings(self) { (maskObj:ErrorResetMask, enumValue:ErrorReset) -> Bool in
+                return maskObj.contains(ErrorResetMask(enumValue))
+            }
+        }
     }
     
     // USE CAREFULLY!

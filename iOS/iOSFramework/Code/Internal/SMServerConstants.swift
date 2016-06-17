@@ -30,6 +30,7 @@ public class SMServerConstants {
     public static let operationCreateSharingInvitation = "CreateSharingInvitation"
     public static let operationLookupSharingInvitation = "LookupSharingInvitation"
     public static let operationRedeemSharingInvitation = "RedeemSharingInvitation"
+    public static let operationGetLinkedAccountsForSharingUser = "GetLinkedAccountsForSharingUser"
     
     public static let operationLock = "Lock"
     
@@ -66,6 +67,7 @@ public class SMServerConstants {
     public static let operationCleanup = "Cleanup"
 
     // MARK: Custom HTTP headers sent back from server
+    
     // For custom header naming conventions, see http://stackoverflow.com/questions/3561381/custom-http-headers-naming-conventions
     
     // Used for operationDownloadFile only.
@@ -94,6 +96,10 @@ public class SMServerConstants {
             public static let userTypeOwning = "OwningUser"
             public static let userTypeSharing = "SharingUser"
     
+        // SubKey: (for userTypeSharing only)
+        public static let linkedSharingIndex = "LinkedSharingIndex"
+        // Values: A integer value (0...N-1) indicating which of the linked accounts are being used.
+    
         // SubKey:
         public static let accountType = "AccountType"
         // Values:
@@ -103,23 +109,22 @@ public class SMServerConstants {
         // And each specific storage system has its own specific keys in the credentials data for the specific user.
     
         // MARK: For Google, there are the following additional keys:
-        // SubKey:
-        public static let googleUserIdToken = "IdToken"
-        // Value is an id token representing the user
-    
-        // SubKey:
-        public static let googleUserAuthCode = "AuthCode"
-        // Value is a one-time authentication code
+            // SubKey:
+            public static let googleUserIdToken = "IdToken"
+            // Value is an id token representing the user
+        
+            // SubKey:
+            public static let googleUserAuthCode = "AuthCode"
+            // Value is a one-time authentication code
 
         // MARK: For Facebook, there are the following additional keys:
-        // For Facebook account type
-        // SubKey:
-        public static let facebookUserId = "FacebookUserId"
-        // Value: String
-    
-        // SubKey:
-        public static let facebookUserAccessToken = "FacebookAccessToken"
-        // Value: String
+            // SubKey:
+            public static let facebookUserId = "FacebookUserId"
+            // Value: String
+        
+            // SubKey:
+            public static let facebookUserAccessToken = "FacebookAccessToken"
+            // Value: String
     
     // MARK: Other parameters sent to the server.
 
@@ -220,6 +225,13 @@ public class SMServerConstants {
     // The syntax for the following array conveniently works in both Swift and Javascript!!
     public static let possibleUserCapabilityValues = ["Create", "Read", "Update", "Delete", "Invite"]
     
+        // These are redundant with that above, but needed to give individual capabilities on the server-side.
+        public static let capabilityCreate = "Create"
+        public static let capabilityRead = "Read"
+        public static let capabilityUpdate = "Update"
+        public static let capabilityDelete = "Delete"
+        public static let capabilityInvite = "Invite"
+    
     // MARK Keys both sent to the server and received back from the server.
 
     // This is returned on a successful call to operationCreateSharingInvitation, and sent to the server on an operationLookupSharingInvitation call.
@@ -297,6 +309,21 @@ public class SMServerConstants {
     // Key:
     public static let resultOperationStatusCountKey = "ServerOperationStatusCount"
     // Values: The numer of cloud storage operations attempted.
+    
+    // The result from operationGetLinkedAccountsForSharingUser
+    // Key: 
+    public static let resultLinkedAccountsKey = "LinkedAccounts"
+    // Values: An array with JSON objects with the following keys:
+    
+        // SubKey:
+        // public static let internalUserId = "InternalUserId" // already defined
+    
+        // SubKey:
+        // public static let accountUserName = "UserName" // already defined
+    
+        // SubKey:
+        public static let accountCapabilities = "AccountCapabilities"
+        // Value: Array of capability strings.
     
     // MARK: Server result codes (rc's)
     

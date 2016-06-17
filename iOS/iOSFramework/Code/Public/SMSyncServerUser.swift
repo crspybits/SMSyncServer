@@ -19,18 +19,20 @@ internal protocol SMServerAPIUserDelegate : class {
 
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
 public enum SMUserCredentials {
+    // In the following, the owningUserId is only used for a SharingUser, and selects the specific shared/linked account being shared.
+    
     // userType *must* be OwningUser.
     // When using as a parameter to call createNewUser, authCode must not be nil.
-    case Google(userType:String, idToken:String!, authCode:String?, userName:String?)
+    case Google(userType:String, owningUserId:SMInternalUserId?, idToken:String!, authCode:String?, userName:String?)
 
     // userType *must* be SharingUser
-    case Facebook(userType:String, accessToken:String!, userId:String!, userName:String?)
+    case Facebook(userType:String, owningUserId:SMInternalUserId?, accessToken:String!, userId:String!, userName:String?)
     
     internal func toServerParameterDictionary() -> [String:AnyObject] {
         var userCredentials = [String:AnyObject]()
         
         switch self {
-        case .Google(userType: let userType, idToken: let idToken, authCode: let authCode, userName: let userName):
+        case .Google(userType: let userType, owningUserId: _, idToken: let idToken, authCode: let authCode, userName: let userName):
             Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Yikes: Google accounts with userTypeSharing not yet implemented!")
             Log.msg("Sending IdToken: \(idToken)")
             
@@ -41,7 +43,7 @@ public enum SMUserCredentials {
             userCredentials[SMServerConstants.accountUserName] = userName
 
         
-        case .Facebook(userType: let userType, accessToken: let accessToken, userId: let userId, userName: let userName):
+        case .Facebook(userType: let userType, owningUserId: let owningUserId, accessToken: let accessToken, userId: let userId, userName: let userName):
             Assert.If(userType != SMServerConstants.userTypeSharing, thenPrintThisString: "Yikes: Not allowed!")
             
             userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeSharing
@@ -49,6 +51,7 @@ public enum SMUserCredentials {
             userCredentials[SMServerConstants.facebookUserId] = userId
             userCredentials[SMServerConstants.facebookUserAccessToken] = accessToken
             userCredentials[SMServerConstants.accountUserName] = userName
+            userCredentials[SMServerConstants.internalUserId] = owningUserId
         }
         
         return userCredentials
@@ -132,7 +135,7 @@ public class SMSyncServerUser {
     public func createNewUser(callbacksAfterSigninSuccess callbacksAfterSignin:Bool=true, userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         switch (userCreds) {
-        case .Google(userType: _, idToken: _, authCode: let authCode, userName: _):
+        case .Google(userType: _, owningUserId: _, idToken: _, authCode: let authCode, userName: _):
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
 
         case .Facebook:
@@ -157,11 +160,19 @@ public class SMSyncServerUser {
         }
     }
     
-    // Must have a currently signed in user-- it makes no sense to redeem an invitation without having first signed a user in.
-    public func redeemSharingInvitation(invitationCode invitationCode:String, completion:((couldNotRedeemSharingInvitation: Bool, error: NSError?)->())?) {
-                
+    // Optionally can have a currently signed in user. i.e., if you give userCreds, they will be used. Otherwise, the currently signed in user creds are used.
+    public func redeemSharingInvitation(invitationCode invitationCode:String, userCreds:SMUserCredentials?=nil, completion:((couldNotRedeemSharingInvitation: Bool, error: NSError?)->())?) {
+        
+        var userCredParams:[String:AnyObject]
+        if userCreds == nil {
+            userCredParams = self.userCredentialParams!
+        }
+        else {
+            userCredParams = self.serverParameters(userCreds!)
+        }
+        
         SMServerAPI.session.redeemSharingInvitation(
-            self.userCredentialParams!, invitationCode: invitationCode, completion: { (internalUserId, apiResult) in
+            userCredParams, invitationCode: invitationCode, completion: { (internalUserId, apiResult) in
             
             var couldNotRedeemSharingInvitation = false
             if apiResult.returnCode == SMServerConstants.rcCouldNotRedeemSharingInvitation {

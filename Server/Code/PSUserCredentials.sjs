@@ -19,26 +19,28 @@ const collectionName = "UserCredentials";
  
 		username: (String), // account name, e.g., email address.
         
-        userType: "OwningUser" | "SharingUser",
-        
+        // The permissible userTypes for these account creds.
+        // "OwningUser" and/or "SharingUser" in an array
+        userTypes: [],
+ 
         accountType: // Value as follows
 
-        // If userType is "OwningUser", then the following options are available for accountType
+        // If userTypes includes "OwningUser", then the following options are available for accountType
         accountType: "Google",
 
-         // If userType is "SharingUser", then the following options are available for accountType
+         // If userTypes includes "SharingUser", then the following options are available for accountType
         accountType: "Facebook",
 
         creds: // Value as follows
 
-        // If userType is "OwningUser" and accountType is "Google"
+        // If accountType is "Google"
         creds: {
             sub: XXXX, // Google individual identifier
             access_token: XXXX,
             refresh_token: XXXX
         }
         
-        // If userType is "SharingUser" and accountType is "Facebook"
+        // If accountType is "Facebook"
         creds: {
             userId: String,
             
@@ -46,7 +48,7 @@ const collectionName = "UserCredentials";
             accessToken: String
         }
         
-        // SharingUser's have another field in this structure:
+        // Users with SharingUser in their userTypes have another field in this structure:
 
         // The linked or shared "Owning User" accounts.
         // Array of structures because a given sharing user can potentially share more than one set of cloud storage data.
@@ -87,12 +89,12 @@ function PSUserCredentials(userCreds) {
     
     self._id = null;
     self.username = null;
-    self.userType = null;
+    self.userTypes = null;
     self.accountType = null;
     self.creds = null;
-    self.linked = null;
+    self.linked = [];
     
-    // the UserCredentials object.
+    // the UserCredentials object. Can be passed null. E.g., to use lookup with just an _id.
     self.userCreds = userCreds;
     
     // logger.debug("self.userCreds: " + JSON.stringify(self.userCreds));
@@ -107,24 +109,34 @@ function PSUserCredentials(userCreds) {
 function queryData(signedInCreds) {
     return {
         accountType: signedInCreds.accountType,
-        userType: signedInCreds.userType,
         creds: signedInCreds.persistentInvariant()
     };
 }
 
 // Lookup the signed-in user creds in persistent storage.
-// Callback has a single parameter: error. If the error is null in the callback, check the member property .stored to see if the user creds are stored in persistent storage. The .stored member will be null if there is an error.
-PSUserCredentials.prototype.lookup = function (callback) {
+// Parameters:
+// 1) (optional) lookupId string of a PSUserCredentials object: lookup purely by this _id. Must be an ObjectId
+// 2) Callback: With a single parameter: error. If the error is null in the callback, check the member property .stored to see if the user creds are stored in persistent storage. The .stored member will be null if there is an error.
+PSUserCredentials.prototype.lookup = function (lookupId, callback) {
     var self = this;
+    
     self.stored = null;
+    var query = null;
     
-    var query = queryData(self.userCreds.signedInCreds());
+    if (typeof lookupId === 'function') {
+        callback = lookupId;
+        lookupId = null;
+        
+        query = queryData(self.userCreds.signedInCreds());
+        
+        // find needs this query flattened.
+        query = jsonExtras.flatten(query);
+    }
+    else {
+        query = { _id: lookupId };
+    }
     
-	// find needs this query flattened.
-	query = jsonExtras.flatten(query);
-	
-	logger.debug("flattened query: ");
-	logger.debug(query);
+	logger.debug("query: " + JSON.stringify(query));
 	
 	var cursor = Mongo.db().collection(collectionName).find(query);
 		
@@ -156,7 +168,7 @@ PSUserCredentials.prototype.lookup = function (callback) {
 					self.stored = true;
 					self._id = doc._id;
                     self.username = doc.username;
-                    self.userType = doc.userType;
+                    self.userTypes = doc.userTypes;
                     self.accountType = doc.accountType;
                     self.creds = doc.creds;
                     self.linked = doc.linked;
@@ -210,16 +222,21 @@ PSUserCredentials.prototype.storeNew = function (callback) {
     
     var signedInCreds = self.userCreds.signedInCreds();
     
+    var currentUserType = ServerConstants.userTypeSharing;
+    if (self.userCreds.owningUserSignedIn()) {
+        currentUserType = ServerConstants.userTypeOwning;
+    }
+    
     // Letting Mongo give us the unique _id.
     var userCredentialsDocument = {
     	username: signedInCreds.username,
-        userType: signedInCreds.userType,
+        userTypes: [currentUserType],
         accountType: signedInCreds.accountType,
-    	creds: signedInCreds.persistent()
+    	creds: signedInCreds.persistent(),
     };
     
-    if (ServerConstants.userTypeSharing == signedInCreds.userType) {
-        userCredentialsDocument.linked = [];
+    if (ServerConstants.userTypeSharing == currentUserType) {
+        userCredentialsDocument.linked = self.linked;
     }
     
     logger.debug("storeNew: " + JSON.stringify(userCredentialsDocument));
@@ -232,6 +249,12 @@ PSUserCredentials.prototype.storeNew = function (callback) {
    			
     		callback(err);
   		});
+}
+
+function updateUserTypes(userTypes, currentUserType) {
+    if (userTypes.indexOf(currentUserType) == -1) {
+        userTypes.push(currentUserType)
+    }
 }
 
 // Update persistent store from the current userCreds member. No effect if user creds has no (variant) data with which to update persistent store. (This is not considered an error).
@@ -263,15 +286,28 @@ PSUserCredentials.prototype.update = function (saveAll, callback) {
 
     // Create the update data
     if (saveAll) {
+        var currentUserType = ServerConstants.userTypeSharing;
+        if (self.userCreds.owningUserSignedIn()) {
+            currentUserType = ServerConstants.userTypeOwning;
+        }
+    
         var signedInCreds = self.userCreds.signedInCreds();
         
         updates.username = signedInCreds.username;
-        updates.userType = signedInCreds.userType;
+        
+        updateUserTypes(self.userTypes, currentUserType);
+        updates.userTypes = self.userTypes;
+        
         updates.accountType = signedInCreds.accountType;
         updates.creds =  signedInCreds.persistent();
         
         if (isDefined(self.linked)) {
             updates.linked = self.linked;
+        }
+        else {
+            if (ServerConstants.userTypeSharing == currentUserType) {
+                updates.linked = [];
+            }
         }
     }
     else {
@@ -301,6 +337,63 @@ PSUserCredentials.prototype.update = function (saveAll, callback) {
         // logger.debug(results);
         callback(err);
     });
+}
+
+// In format needed by operationGetLinkedAccountsForSharingUser
+// Callback has two parameters: 1) error, and 2) the account list if no error.
+PSUserCredentials.prototype.makeAccountList = function (callback) {
+    var self = this;
+    
+    logger.debug("makeAccountList");
+    
+    self.lookup(function (error) {
+        if (error) {
+            logger.error("Failed on lookup for PSUserCredentials: " + JSON.stringify(error));
+            callback(error, null);
+        }
+        else {
+            var result = [];
+            makeAccountListAux(self.linked, 0, result, callback)
+        }
+    });
+}
+
+function makeAccountListAux(linkedAccounts, currIndex, currResult, callback) {
+    logger.debug("makeAccountListAux: " + currIndex);
+
+    if (currIndex >= linkedAccounts.length) {
+        callback(null, currResult);
+    }
+    else {
+        var linkedAccount = linkedAccounts[currIndex];
+        
+        var resultAccount = {};
+        resultAccount[ServerConstants.internalUserId] = linkedAccount.owningUser;
+        resultAccount[ServerConstants.accountCapabilities] = linkedAccount.capabilities;
+
+        var psUserCreds = null;
+        try {
+            psUserCreds = new PSUserCredentials();
+        } catch (error) {
+            callback(error, null);
+            return;
+        }
+        
+        // Do a separate lookup for that owningUser to get its username.
+        psUserCreds.lookup(linkedAccount.owningUser, function (error) {
+            if (error) {
+                logger.error("Failed on lookup for PSUserCredentials: " + JSON.stringify(error));
+                callback(error, null);
+            }
+            else {
+                resultAccount[ServerConstants.accountUserName] = psUserCreds.username;
+                currResult.push(resultAccount);
+                
+                currIndex++;
+                makeAccountListAux(linkedAccounts, currIndex, currResult, callback);
+            }
+        });
+    }
 }
 
 // export the class

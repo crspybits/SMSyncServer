@@ -11,6 +11,8 @@
 import Foundation
 import SMCoreLib
 
+public typealias SMInternalUserId = String
+
 // Modified from http://www.swift-studies.com/blog/2015/6/17/exploring-swift-20-optionsettypes
 public struct SMSharingUserCapabilityMask : OptionSetType {
     private enum UserCapability : Int, CustomStringConvertible {
@@ -20,24 +22,50 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
         case Delete /* Objects */ = 8
         case Invite /* New users to share */ = 16
         
-        private var allAsStrings:[String] {
+        private init?(capabilityName: String) {
+            var rawValue = 1
+            for name in UserCapability.allAsStrings {
+                if name == capabilityName {
+                    self = UserCapability(rawValue: rawValue)!
+                    return
+                }
+                rawValue = rawValue << 1
+            }
+            
+            Log.error("Unknown capabilityName: \(capabilityName)")
+            
+            return nil
+        }
+        
+        private static var allAsStrings:[String] {
             // We depend here on the ordering and values of elements in the following array!
             return SMServerConstants.possibleUserCapabilityValues
         }
         
-        var description : String {
-            var shift = 0
-            while (self.rawValue >> shift != 1) {
-                shift += 1
-            }
-            return self.allAsStrings[shift]
+        private var description : String {
+            return SMMaskUtilities.enumDescription(rawValue: self.rawValue, allAsStrings: UserCapability.allAsStrings)
         }
     }
     
     public let rawValue : Int
     public init(rawValue:Int){ self.rawValue = rawValue}
-    private init(_ capability:UserCapability) {
-        self.rawValue = capability.rawValue
+    private init(_ enumValue:UserCapability) {
+        self.rawValue = enumValue.rawValue
+    }
+    
+    public init?(capabilityNameArray:[String]) {
+        var mask = SMSharingUserCapabilityMask()
+        
+        for capabilityName in capabilityNameArray {
+            if let capabilityEnum = UserCapability(capabilityName: capabilityName) {
+                mask.insert(SMSharingUserCapabilityMask(capabilityEnum))
+            }
+            else {
+                return nil
+            }
+        }
+        
+        self = mask
     }
 
     public static let Create = SMSharingUserCapabilityMask(.Create)
@@ -49,28 +77,14 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
     public static let ALL:SMSharingUserCapabilityMask = [.CRUD, .Invite]
     
     public var description : String {
-        var result = ""
-
-        for capability in self.sendable {
-            result += (result.characters.count == 0) ? capability : ",\(capability)"
-        }
-
-        return "[\(result)]"
+        return SMMaskUtilities.maskDescription(stringArray: self.stringArray)
     }
     
     // An array of capability strings, possibly empty.
-    public var sendable: [String] {
-        var result = [String]()
-        var shift = 0
-
-        while let currentCapability = UserCapability(rawValue: 1 << shift) {
-            shift += 1
-            if self.contains(SMSharingUserCapabilityMask(currentCapability)) {
-                result.append("\(currentCapability)")
-            }
+    public var stringArray: [String] {
+        return SMMaskUtilities.maskArrayOfStrings(self) { (maskObj:SMSharingUserCapabilityMask, enumValue:UserCapability) -> Bool in
+            return maskObj.contains(SMSharingUserCapabilityMask(enumValue))
         }
-
-        return result
     }
 }
 

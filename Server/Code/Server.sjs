@@ -34,6 +34,7 @@ var ClientFile = require('./ClientFile');
 var PSInboundFile = require('./PSInboundFile');
 var Secrets = require('./Secrets');
 var assert = require('assert');
+var PSUserCredentials = require('./PSUserCredentials');
 
 // See http://stackoverflow.com/questions/31496100/cannot-app-usemulter-requires-middleware-function-error
 // See also https://codeforgeek.com/2014/11/file-uploads-using-node-js/
@@ -1667,6 +1668,9 @@ app.post('/' + ServerConstants.operationCreateSharingInvitation, function (reque
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
         
+        // Does the signed in user have sufficient authority/capability to create a sharing invitation? They could be either (a) an owning user, or (b) a sharing user with Invite authority.
+        // TODO: Need to check if the current user is (a) a sharing user, and (b) in that case if the user is authorized to create sharing invitations.
+                
         var capabilities = request.body[ServerConstants.userCapabilities];
         if (!isDefined(capabilities)) {
             var message = "No capabilities were sent!";
@@ -1685,15 +1689,13 @@ app.post('/' + ServerConstants.operationCreateSharingInvitation, function (reque
         // Validate possible values for elements of capabilities array
         for (var capIndex in capabilities) {
             var cap = capabilities[capIndex];
-            if (ServerConstants.possibleUserCapabilityValues.indexOf(cap) < 0) {
+            if (ServerConstants.possibleUserCapabilityValues.indexOf(cap) == -1) {
                 var message = "You gave an unknown capability: " + cap;
                 logger.error(message);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
                 return;
             }
         }
-        
-        // TODO: Need to check if the current user is (a) a sharing user, and (b) in that case if the user is authorized to create sharing invitations.
         
         var sharingInvitation = new Mongo.SharingInvitation({
             owningUser: op.userId(),
@@ -1763,18 +1765,11 @@ app.post('/' + ServerConstants.operationLookupSharingInvitation, function (reque
     });
 });
 
+// You can redeem a sharing invitation for a new user (user created by this call), or for an existing user.
 app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (request, response) {
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
-        return;
-    }
-    
-    // Make sure the creds are for a SharingUser.
-    if (!op.sharingUserSignedIn()) {
-        var message = "Error: Attempt to create a sharing user with an owning user creds!";
-        logger.error(message);
-        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         return;
     }
 
@@ -1788,6 +1783,15 @@ app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (reque
             }
         }
         else {
+    
+            // Make sure the creds are for a SharingUser. Do this after checkForExistingUser because in general, we may need to do a mongo lookup to determine if this user can be a sharing user.
+            if (!op.sharingUserSignedIn()) {
+                var message = "Error: Attempt to redeem sharing invitation by a non-sharing user!";
+                logger.error(message);
+                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+                return;
+            }
+    
             var invitationCode = request.body[ServerConstants.sharingInvitationCode];
             if (!isDefined(invitationCode)) {
                 var message = "No invitation code was sent!";
@@ -1798,6 +1802,37 @@ app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (reque
 
             finishRedeemingSharingInvitation(op, invitationCode, psUserCreds);
         }
+    });
+});
+
+app.post('/' + ServerConstants.operationGetLinkedAccountsForSharingUser, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+        
+    op.validateUser(function (psLock, psOperationId) {
+        // User is on the system.
+
+        // Make sure the creds are for a SharingUser. Do this after checkForExistingUser because in general, we may need to do a mongo lookup to determine if this user can be a sharing user.
+        if (!op.sharingUserSignedIn()) {
+            var message = "Error: Attempt to get linked accounts by a non-sharing user!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            return;
+        }
+        
+        op.psUserCreds.makeAccountList(function (error, accountList) {
+            if (error) {
+                logger.error("Failed on makeAccountList for PSUserCredentials: " + JSON.stringify(error));
+                op.endWithErrorDetails(error);
+            }
+            else {
+                op.result[ServerConstants.resultLinkedAccountsKey] = accountList;
+                op.endWithRC(ServerConstants.rcOK);
+            }
+        });
     });
 });
 
@@ -1817,13 +1852,9 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
     var update = { $set: {redeemed: true} };
     
     Mongo.SharingInvitation.findOneAndUpdate(query, update, function (err, invitationDoc) {
-        if (err) {
-            logger.error("Error updating/redeeming invitation!");
-            op.endWithErrorDetails(err);
-        }
-        else if (!invitationDoc) {
-            var message = "Could not find invitation to redeem: " + invitationCode + " (or it had expired, or was aleady redeemed).";
-            logger.error(message);
+        if (err || !invitationDoc) {
+            var message = "Error updating/redeeming invitation: It was a bad invitation, expired, or had already been redeemed.";
+            logger.error(message + " " + JSON.stringify(err));
             op.endWithRCAndErrorDetails(
                 ServerConstants.rcCouldNotRedeemSharingInvitation, message);
         }

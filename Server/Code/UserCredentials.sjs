@@ -29,9 +29,17 @@ function UserCredentials(credentialsData) {
     var self = this;
     
     self.owningUser = null;
-    self.sharingUser = null;
-    self.linkedOwningUser = null;
 
+    // For sharing users:
+    // 1)
+    self.sharingUser = null;
+    
+    // 2) The creds from the .linked array in PSUserCredentials being used as the cloud storage.
+    self.linkedOwningUser = null;
+    
+    // 3) The owning user creds for the linkedOwningUser. The .creds property of the PSUserCredentials owning user.
+    self.linkedCreds = null;
+    
     // This is not saved into PSUserCredentials -- there may be several of these across users of the owning user account. i.e., several devices across which the data is being shared.
     self.mobileDeviceUUID = credentialsData[ServerConstants.mobileDeviceUUIDKey];
     if (!isDefined(self.mobileDeviceUUID)) {
@@ -106,6 +114,39 @@ UserCredentials.prototype.owningUserSignedIn = function () {
 UserCredentials.prototype.sharingUserSignedIn = function () {
     var self = this;
     return isDefined(self.sharingUser);
+}
+
+// Is the current signed in user authorized to do this operation?
+// One parameter: A capability (e.g., ServerConstants.capabilityCreate
+// Returns true or false.
+UserCredentials.prototype.userAuthorizedTo = function (capability) {
+    var self = this;
+    
+    if (self.owningUserSignedIn()) {
+        return true;
+    }
+    else {
+        if (!self.linkedOwningUser) {
+            throw new Error("Yikes: No linkedOwningUser");
+        }
+        
+        /* The structure expected here for the linkedOwningUser is:
+            { 
+                // The _id of a PSUserCredentials object that must be an OwningUser
+                owningUser: ObjectId,
+                
+                // Each string is the description representation of a UserCapabilityMask item (see iOS client) -- e.g., Create or Read
+                capabilities: [String]
+            }
+        */
+        
+        if (self.linkedOwningUser.capabilities.indexOf(capability) == -1 ) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
 
 // Specific account classes need to implement the following methods:

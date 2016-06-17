@@ -34,7 +34,7 @@ public class SMUserSignInManager {
             
             for signInAccount in self._possibleAccounts.values {
                 Log.msg("CHECKING: if signed in to account: \(signInAccount.displayNameI)")
-                if signInAccount.activeSignInDelegate.smUserSignIn(activelySignedIn: signInAccount) {
+                if signInAccount.delegate.smUserSignIn(activelySignedIn: signInAccount) {
                     Assert.If(current != nil, thenPrintThisString: "Yikes: Signed into more than one account!")
                     current = signInAccount
                     Log.msg("YES: Signed in to account! \(signInAccount.displayNameI)")
@@ -73,7 +73,7 @@ public class SMUserSignInManager {
     public func addSignInAccount(signIn: SMUserSignInAccount, launchOptions:[NSObject: AnyObject]?) {
         self._possibleAccounts[signIn.displayNameI!] = signIn
         
-        let silentSignIn = signIn.activeSignInDelegate.smUserSignIn(activelySignedIn: signIn)
+        let silentSignIn = signIn.delegate.smUserSignIn(activelySignedIn: signIn)
         
         signIn.syncServerAppLaunchSetup(silentSignIn: silentSignIn, launchOptions:launchOptions)
     }

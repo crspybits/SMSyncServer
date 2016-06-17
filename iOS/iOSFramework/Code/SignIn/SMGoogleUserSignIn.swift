@@ -129,7 +129,7 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: self.idToken, authCode: nil, userName: self.googleUserName)
+                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, owningUserId: nil, idToken: self.idToken, authCode: nil, userName: self.googleUserName)
             }
             else {
                 return nil
@@ -139,7 +139,7 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
     
     @objc override public func syncServerSignOutUser() {
         GIDSignIn.sharedInstance().signOut()
-        self.activeSignInDelegate.smUserSignIn(userJustSignedOut: self)
+        self.delegate.smUserSignIn(userJustSignedOut: self)
         self.signInOutButton.buttonShowing = .SignIn
     }
     
@@ -179,7 +179,7 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
         self.signInOutButton.signInButton.delegate = delegate
         GIDSignIn.sharedInstance().uiDelegate = delegate
 
-        self.signInOutButton.buttonShowing = self.activeSignInDelegate.smUserSignIn(activelySignedIn: self) ? .SignOut : .SignIn
+        self.signInOutButton.buttonShowing = self.delegate.smUserSignIn(activelySignedIn: self) ? .SignOut : .SignIn
         
         return self.signInOutButton
     }
@@ -221,10 +221,10 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                 
                 Log.msg("Attempting to sign in to server: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, idToken: user.authentication.idToken, authCode: user.serverAuthCode, userName: self.googleUserName)
+                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, owningUserId: nil, idToken: user.authentication.idToken, authCode: user.serverAuthCode, userName: self.googleUserName)
 
                 func successfulSignIn(idToken:String) {
-                    self.activeSignInDelegate.smUserSignIn(userJustSignedIn: self)
+                    self.delegate.smUserSignIn(userJustSignedIn: self)
                     self.signInOutButton.buttonShowing = .SignOut
                     self.googleUser = user
                     self.idToken = idToken

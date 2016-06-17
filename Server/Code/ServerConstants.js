@@ -21,6 +21,7 @@ function define(name, value) {
 	define("operationCreateSharingInvitation",      "CreateSharingInvitation");
 	define("operationLookupSharingInvitation",      "LookupSharingInvitation");
 	define("operationRedeemSharingInvitation",      "RedeemSharingInvitation");
+	define("operationGetLinkedAccountsForSharingUser",      "GetLinkedAccountsForSharingUser");
     
 	define("operationLock",      "Lock");
     
@@ -57,6 +58,7 @@ function define(name, value) {
 	define("operationCleanup",      "Cleanup");
 
     // MARK: Custom HTTP headers sent back from server
+    
     // For custom header naming conventions, see http://stackoverflow.com/questions/3561381/custom-http-headers-naming-conventions
     
     // Used for operationDownloadFile only.
@@ -85,6 +87,10 @@ function define(name, value) {
 	define("userTypeOwning",      "OwningUser");
 	define("userTypeSharing",      "SharingUser");
     
+        // SubKey: (for userTypeSharing only)
+	define("linkedSharingIndex",      "LinkedSharingIndex");
+        // Values: A integer value (0...N-1) indicating which of the linked accounts are being used.
+    
         // SubKey:
 	define("accountType",      "AccountType");
         // Values:
@@ -94,23 +100,22 @@ function define(name, value) {
         // And each specific storage system has its own specific keys in the credentials data for the specific user.
     
         // MARK: For Google, there are the following additional keys:
-        // SubKey:
+            // SubKey:
 	define("googleUserIdToken",      "IdToken");
-        // Value is an id token representing the user
-    
-        // SubKey:
+            // Value is an id token representing the user
+        
+            // SubKey:
 	define("googleUserAuthCode",      "AuthCode");
-        // Value is a one-time authentication code
+            // Value is a one-time authentication code
 
         // MARK: For Facebook, there are the following additional keys:
-        // For Facebook account type
-        // SubKey:
+            // SubKey:
 	define("facebookUserId",      "FacebookUserId");
-        // Value: String
-    
-        // SubKey:
+            // Value: String
+        
+            // SubKey:
 	define("facebookUserAccessToken",      "FacebookAccessToken");
-        // Value: String
+            // Value: String
     
     // MARK: Other parameters sent to the server.
 
@@ -211,6 +216,13 @@ function define(name, value) {
     // The syntax for the following array conveniently works in both Swift and Javascript!!
 	define("possibleUserCapabilityValues",      ["Create", "Read", "Update", "Delete", "Invite"]);
     
+        // These are redundant with that above, but needed to give individual capabilities on the server-side.
+	define("capabilityCreate",      "Create");
+	define("capabilityRead",      "Read");
+	define("capabilityUpdate",      "Update");
+	define("capabilityDelete",      "Delete");
+	define("capabilityInvite",      "Invite");
+    
     // MARK Keys both sent to the server and received back from the server.
 
     // This is returned on a successful call to operationCreateSharingInvitation, and sent to the server on an operationLookupSharingInvitation call.
@@ -288,6 +300,21 @@ function define(name, value) {
     // Key:
 	define("resultOperationStatusCountKey",      "ServerOperationStatusCount");
     // Values: The numer of cloud storage operations attempted.
+    
+    // The result from operationGetLinkedAccountsForSharingUser
+    // Key: 
+	define("resultLinkedAccountsKey",      "LinkedAccounts");
+    // Values: An array with JSON objects with the following keys:
+    
+        // SubKey:
+        // public static let internalUserId = "InternalUserId" // already defined
+    
+        // SubKey:
+        // public static let accountUserName = "UserName" // already defined
+    
+        // SubKey:
+	define("accountCapabilities",      "AccountCapabilities");
+        // Value: Array of capability strings.
     
     // MARK: Server result codes (rc's)
     

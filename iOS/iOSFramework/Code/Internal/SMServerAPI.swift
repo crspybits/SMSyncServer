@@ -254,8 +254,6 @@ internal protocol SMServerAPIDownloadDelegate : class {
     func smServerAPIFileDownloaded(file: SMServerFile)
 }
 
-internal typealias SMInternalUserId = String
-
 // http://stackoverflow.com/questions/24051904/how-do-you-add-a-dictionary-of-items-into-another-dictionary
 private func += <KeyType, ValueType> (inout left: Dictionary<KeyType, ValueType>, right: Dictionary<KeyType, ValueType>) {
     for (k, v) in right { 
