@@ -20,6 +20,9 @@ public protocol SMUserSignInAccountDelegate {
     
     func smUserSignIn(getSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) -> String?
     func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount)
+    
+    // You must call selectLinkedAccount to make your selection after you receive this call.
+    func smUserSignIn(userSignIn userSignIn:SMUserSignInAccount, linkedAccountsForSharingUser:[SMLinkedAccount], selectLinkedAccount:(internalUserId:SMInternalUserId)->())
 }
 
 public class SMUserSignInAccount : NSObject {

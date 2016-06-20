@@ -35,6 +35,7 @@ var PSInboundFile = require('./PSInboundFile');
 var Secrets = require('./Secrets');
 var assert = require('assert');
 var PSUserCredentials = require('./PSUserCredentials');
+require('./Globals')
 
 // See http://stackoverflow.com/questions/31496100/cannot-app-usemulter-requires-middleware-function-error
 // See also https://codeforgeek.com/2014/11/file-uploads-using-node-js/
@@ -52,15 +53,15 @@ Secrets.load(function (error) {
 });
 
 // Enable creation of an owning or sharing user.
+// TODO: Eventually this needs to contain a check to ensure that only certain apps are calling this entry point. So that others don't use our server resources.
 app.post("/" + ServerConstants.operationCreateNewUser, function(request, response) {
-
     var op = new Operation(request, response);
     if (op.error) {
         op.end();
         return;
     }
 
-    op.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
+    op.checkForExistingUser(function (error, staleUserSecurityInfo) {
         if (error) {
             if (staleUserSecurityInfo) {
                 op.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
@@ -70,18 +71,18 @@ app.post("/" + ServerConstants.operationCreateNewUser, function(request, respons
             }
         }
         else {
-            logger.info("psUserCreds.stored: " + psUserCreds.stored);
-            if (psUserCreds.stored) {
+            logger.info("psUserCreds.stored: " + op.psUserCreds.stored);
+            if (op.psUserCreds.stored) {
                 op.endWithRC(ServerConstants.rcUserOnSystem);
             }
             else {
                 // User creds not yet stored in Mongo. Store 'em.
-                psUserCreds.storeNew(function (error) {
+                op.psUserCreds.storeNew(function (error) {
                     if (error) {
                         op.endWithErrorDetails(error);
                     }
                     else {
-                        op.result[ServerConstants.internalUserId] = psUserCreds._id;
+                        op.result[ServerConstants.internalUserId] = op.psUserCreds._id;
                         op.endWithRC(ServerConstants.rcOK);
                     }
                 });
@@ -98,7 +99,7 @@ app.post("/" + ServerConstants.operationCheckForExistingUser, function(request, 
         return;
     }
 
-    op.validateUser(false, function () {
+    op.validateUser({userMustBeOnSystem:false, mustHaveLinkedOwningUserId:false}, function () {
         if (op.psUserCreds.stored) {
             op.result[ServerConstants.internalUserId] = op.psUserCreds._id;
             op.endWithRC(ServerConstants.rcUserOnSystem);
@@ -270,7 +271,6 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
         // console.log("request.file: " + JSON.stringify(request.file));
         
         // Make sure user/device has the lock.
-
         if (!isDefined(psLock)) {
             var message = "Error: Don't have the lock!";
             logger.error(message);
@@ -308,6 +308,19 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
             } catch (error) {
                 logger.error(error);
                 op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, error);
+                return;
+            }
+            
+            var requiredCapability = null;
+            
+            if (clientFile[ServerConstants.fileVersionKey] == 0) {
+                requiredCapability = ServerConstants.capabilityCreate;
+            }
+            else { // File version > 0
+                requiredCapability = ServerConstants.capabilityUpdate;
+            }
+            
+            if (!op.endIfUserNotAuthorizedFor(requiredCapability)) {
                 return;
             }
             
@@ -1667,10 +1680,11 @@ app.post('/' + ServerConstants.operationCreateSharingInvitation, function (reque
     
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
-        
-        // Does the signed in user have sufficient authority/capability to create a sharing invitation? They could be either (a) an owning user, or (b) a sharing user with Invite authority.
-        // TODO: Need to check if the current user is (a) a sharing user, and (b) in that case if the user is authorized to create sharing invitations.
-                
+
+        if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityInvite)) {
+            return;
+        }
+                    
         var capabilities = request.body[ServerConstants.userCapabilities];
         if (!isDefined(capabilities)) {
             var message = "No capabilities were sent!";
@@ -1773,7 +1787,7 @@ app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (reque
         return;
     }
 
-    op.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
+    op.checkForExistingUser(function (error, staleUserSecurityInfo) {
         if (error) {
             if (staleUserSecurityInfo) {
                 op.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
@@ -1800,39 +1814,8 @@ app.post('/' + ServerConstants.operationRedeemSharingInvitation, function (reque
                 return;
             }
 
-            finishRedeemingSharingInvitation(op, invitationCode, psUserCreds);
+            finishRedeemingSharingInvitation(op, invitationCode, op.psUserCreds);
         }
-    });
-});
-
-app.post('/' + ServerConstants.operationGetLinkedAccountsForSharingUser, function (request, response) {
-    var op = new Operation(request, response);
-    if (op.error) {
-        op.end();
-        return;
-    }
-        
-    op.validateUser(function (psLock, psOperationId) {
-        // User is on the system.
-
-        // Make sure the creds are for a SharingUser. Do this after checkForExistingUser because in general, we may need to do a mongo lookup to determine if this user can be a sharing user.
-        if (!op.sharingUserSignedIn()) {
-            var message = "Error: Attempt to get linked accounts by a non-sharing user!";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-            return;
-        }
-        
-        op.psUserCreds.makeAccountList(function (error, accountList) {
-            if (error) {
-                logger.error("Failed on makeAccountList for PSUserCredentials: " + JSON.stringify(error));
-                op.endWithErrorDetails(error);
-            }
-            else {
-                op.result[ServerConstants.resultLinkedAccountsKey] = accountList;
-                op.endWithRC(ServerConstants.rcOK);
-            }
-        });
     });
 });
 
@@ -1854,7 +1837,7 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
     Mongo.SharingInvitation.findOneAndUpdate(query, update, function (err, invitationDoc) {
         if (err || !invitationDoc) {
             var message = "Error updating/redeeming invitation: It was a bad invitation, expired, or had already been redeemed.";
-            logger.error(message + " " + JSON.stringify(err));
+            logger.error(message + " error: " + JSON.stringify(err));
             op.endWithRCAndErrorDetails(
                 ServerConstants.rcCouldNotRedeemSharingInvitation, message);
         }
@@ -1872,7 +1855,7 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
                 owningUser: invitationDoc.owningUser,
                 capabilities: invitationDoc.capabilities
             };
-            
+                        
             // First, let's see if the given owningUser is already present in the sharing user's linked accounts.
             var found = false;
             if (psUserCreds.stored) {
@@ -1892,11 +1875,12 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
                 }
                 
                 var saveAll = true;
-                psUserCreds.update(saveAll, function (err) {
+                psUserCreds.update(function (err) {
                     if (err) {
                         op.endWithErrorDetails(err);
                     }
                     else {
+                        op.result[ServerConstants.linkedOwningUserId] = invitationDoc.owningUser;
                         op.endWithRC(ServerConstants.rcUserOnSystem);
                     }
                 });
@@ -1910,6 +1894,7 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
                         op.endWithErrorDetails(error);
                     }
                     else {
+                        op.result[ServerConstants.linkedOwningUserId] = invitationDoc.owningUser;
                         op.result[ServerConstants.internalUserId] = psUserCreds._id;
                         op.endWithRC(ServerConstants.rcOK);
                     }
@@ -1918,6 +1903,36 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
         }
     });
 }
+
+app.post('/' + ServerConstants.operationGetLinkedAccountsForSharingUser, function (request, response) {
+    var op = new Operation(request, response);
+    if (op.error) {
+        op.end();
+        return;
+    }
+        
+    op.validateUser({mustHaveLinkedOwningUserId:false}, function (psLock, psOperationId) {
+        // User is on the system.
+
+        if (!op.sharingUserSignedIn()) {
+            var message = "Error: Attempt to get linked accounts by a non-sharing user!";
+            logger.error(message);
+            op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+            return;
+        }
+        
+        op.psUserCreds.makeAccountList(function (error, accountList) {
+            if (error) {
+                logger.error("Failed on makeAccountList for PSUserCredentials: " + JSON.stringify(error));
+                op.endWithErrorDetails(error);
+            }
+            else {
+                op.result[ServerConstants.resultLinkedAccountsKey] = accountList;
+                op.endWithRC(ServerConstants.rcOK);
+            }
+        });
+    });
+});
 
 app.post('/*' , function (request, response) {
     logger.error("Bad Operation URL");

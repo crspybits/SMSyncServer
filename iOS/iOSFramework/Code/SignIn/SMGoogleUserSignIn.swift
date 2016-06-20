@@ -129,7 +129,7 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
     override public var syncServerSignedInUser:SMUserCredentials? {
         get {
             if self.syncServerUserIsSignedIn {
-                return SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, owningUserId: nil, idToken: self.idToken, authCode: nil, userName: self.googleUserName)
+                return SMUserCredentials.Google(userType: .OwningUser, idToken: self.idToken, authCode: nil, userName: self.googleUserName)
             }
             else {
                 return nil
@@ -221,33 +221,30 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                 
                 Log.msg("Attempting to sign in to server: idToken: \(user.authentication.idToken); user.serverAuthCode: \(user.serverAuthCode)")
                 
-                let syncServerGoogleUser = SMUserCredentials.Google(userType: SMServerConstants.userTypeOwning, owningUserId: nil, idToken: user.authentication.idToken, authCode: user.serverAuthCode, userName: self.googleUserName)
-
-                func successfulSignIn(idToken:String) {
-                    self.delegate.smUserSignIn(userJustSignedIn: self)
-                    self.signInOutButton.buttonShowing = .SignOut
-                    self.googleUser = user
-                    self.idToken = idToken
+                let syncServerGoogleUser = SMUserCredentials.Google(userType: .OwningUser,idToken: user.authentication.idToken, authCode: user.serverAuthCode, userName: self.googleUserName)
+                
+                func handleCompletion(idToken idToken:String, error:NSError?) {
+                    if nil == error {
+                        self.delegate.smUserSignIn(userJustSignedIn: self)
+                        self.signInOutButton.buttonShowing = .SignOut
+                        self.googleUser = user
+                        self.idToken = idToken
+                    }
+                    else {
+                        // TODO: This does not necessarily the user is not on the system for the case of checkForExistingUser. E.g., on a server crash or a network failure, we'll also get here. If needed, could check an error return code from the server.
+                        self.syncServerSignOutUser()
+                        self.tellUserThereWasAnError(error!)
+                    }
                 }
                 
                 if user.serverAuthCode == nil {
                     SMSyncServerUser.session.checkForExistingUser(syncServerGoogleUser) { error in
-                        if nil == error {
-                            successfulSignIn(user.authentication.idToken)
-                        }
-                        else {
-                            self.tellUserThereWasAnError(error!)
-                        }
+                        handleCompletion(idToken: user.authentication.idToken, error: error)
                     }
                 }
                 else {
                     SMSyncServerUser.session.createNewUser(userCreds: syncServerGoogleUser) { error in
-                        if nil == error {
-                            successfulSignIn(user.authentication.idToken)
-                        }
-                        else {
-                            self.tellUserThereWasAnError(error!)
-                        }
+                        handleCompletion(idToken: user.authentication.idToken, error: error)
                     }
                 }
             } else {

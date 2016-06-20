@@ -99,7 +99,8 @@ internal extension SMServerAPI {
     // Does one of two main things: (a) user is already known to the system, it links the account/capabilities represented by the invitation to that user, (b) if the current user is not known to the system, this creates a new sharing user, and does the same kind of linking.
     // The user must be a sharing user. Will fail if the invitation has expired, or if the invitation has already been redeemed.
     // All user credentials parameters must be provided by serverCredentialParams.
-    internal func redeemSharingInvitation(serverCredentialParams:[String:AnyObject],invitationCode:String, completion:((internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
+    // Return code is SMServerConstants.rcCouldNotRedeemSharingInvitation when we could not redeem the sharing invitation.
+    internal func redeemSharingInvitation(serverCredentialParams:[String:AnyObject],invitationCode:String, completion:((linkedOwningUserId: SMInternalUserId?, internalUserId:SMInternalUserId?, apiResult:SMServerAPIResult)->(Void))?) {
         
         var parameters = serverCredentialParams
         parameters[SMServerConstants.sharingInvitationCode] = invitationCode
@@ -112,28 +113,35 @@ internal extension SMServerAPI {
             var result = self.initialServerResponseProcessing(serverResponse, error: error)
             
             var internalUserId:SMInternalUserId?
+            var linkedOwningUserId:SMInternalUserId?
+
             if nil == result.error {
                 internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
                 if nil == internalUserId {
-                    result.error = Error.Create("Didn't get InternalUserId back from server")
+                    result.error = Error.Create("Didn't get internalUserId back from server")
+                }
+                
+                linkedOwningUserId = serverResponse![SMServerConstants.linkedOwningUserId] as? String
+                if nil == linkedOwningUserId {
+                    result.error = Error.Create("Didn't get linkedOwningUserId back from server")
                 }
             }
             
-            completion?(internalUserId: internalUserId, apiResult: result)
+            completion?(linkedOwningUserId:linkedOwningUserId, internalUserId: internalUserId, apiResult: result)
         }
     }
     
-    internal struct LinkedAccount {
-        // This is the userId assigned by the sync server, not by the specific account system.
-        var internalUserId:SMInternalUserId
-        var userName:String?
-        var capabilityMask:SMSharingUserCapabilityMask
-    }
-    
-    // Look up the accounts that are shared with the current sharing user.
-    internal func getLinkedAccountsForSharingUser(completion:((linkedAccounts:[LinkedAccount]?, apiResult:SMServerAPIResult)->(Void))?) {
+    // Look up the accounts that are shared with the current sharing user. serverCredentialParams is allowed as a parameter so that we can 
+    internal func getLinkedAccountsForSharingUser(serverCredentialParams:[String:AnyObject]?,completion:((linkedAccounts:[SMLinkedAccount]?, apiResult:SMServerAPIResult)->(Void))?) {
         
-        let userParams = self.userDelegate.userCredentialParams
+        var userParams:[String:AnyObject]?
+        if serverCredentialParams == nil {
+            userParams = self.userDelegate.userCredentialParams
+        }
+        else {
+            userParams = serverCredentialParams
+        }
+        
         Assert.If(nil == userParams, thenPrintThisString: "No user server params!")
         
         let serverOpURL = NSURL(string: self.serverURLString +
@@ -143,7 +151,7 @@ internal extension SMServerAPI {
             
             var result = self.initialServerResponseProcessing(serverResponse, error: error)
             
-            var linkedAccounts:[LinkedAccount]! = [LinkedAccount]()
+            var linkedAccounts:[SMLinkedAccount]! = [SMLinkedAccount]()
             if nil == result.error {
                 if let dictArray = serverResponse![SMServerConstants.resultLinkedAccountsKey] as? [[String:AnyObject]] {
                 
@@ -155,7 +163,7 @@ internal extension SMServerAPI {
                             let capabilities =  dict[SMServerConstants.accountCapabilities] as? [String],
                             let capabilityMask = SMSharingUserCapabilityMask(capabilityNameArray:capabilities)  {
                             
-                            let linkedAccount = LinkedAccount(internalUserId: internalUserId, userName: userName, capabilityMask: capabilityMask)
+                            let linkedAccount = SMLinkedAccount(internalUserId: internalUserId, userName: userName, capabilityMask: capabilityMask)
                             linkedAccounts.append(linkedAccount)
                         }
                         else {

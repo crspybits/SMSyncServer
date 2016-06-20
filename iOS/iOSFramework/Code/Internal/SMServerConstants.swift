@@ -97,8 +97,8 @@ public class SMServerConstants {
             public static let userTypeSharing = "SharingUser"
     
         // SubKey: (for userTypeSharing only)
-        public static let linkedSharingIndex = "LinkedSharingIndex"
-        // Values: A integer value (0...N-1) indicating which of the linked accounts are being used.
+        public static let linkedOwningUserId = "LinkedOwningUserId"
+        // Values: A string giving a server internal id referencing the owning user's data being shared. This is particularly important when a sharing user can access data from more than one owning user.
     
         // SubKey:
         public static let accountType = "AccountType"
@@ -117,13 +117,13 @@ public class SMServerConstants {
             public static let googleUserAuthCode = "AuthCode"
             // Value is a one-time authentication code
 
-        // MARK: For Facebook, there are the following additional keys:
+        // MARK: For Facebook, there are the following additional keys:    
             // SubKey:
-            public static let facebookUserId = "FacebookUserId"
+            public static let facebookUserId = "userId"
             // Value: String
         
             // SubKey:
-            public static let facebookUserAccessToken = "FacebookAccessToken"
+            public static let facebookUserAccessToken = "accessToken"
             // Value: String
     
     // MARK: Other parameters sent to the server.

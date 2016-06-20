@@ -36,6 +36,7 @@
 		83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */; };
 		83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */; };
 		83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A4F1D31C6854C60086B22F /* TestBasics.swift */; };
+		83A57FD91D14AA2C00367F87 /* SharingUserOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A57FD81D14AA2C00367F87 /* SharingUserOperations.swift */; };
 		83C5ECEB1D048CE900FF4B50 /* README_Examples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83C5ECEA1D048CE900FF4B50 /* README_Examples.swift */; };
 		83D1AE771D0C8C3400353FE4 /* SharingUsers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D1AE761D0C8C3400353FE4 /* SharingUsers.swift */; };
 		83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */; };
@@ -165,6 +166,7 @@
 		83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWithLargerFileWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWithLargerFileWork.swift; sourceTree = "<group>"; };
 		83A4F1CF1C6839BE0086B22F /* TwoDeviceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TwoDeviceTests.swift; sourceTree = "<group>"; };
 		83A4F1D31C6854C60086B22F /* TestBasics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestBasics.swift; sourceTree = "<group>"; };
+		83A57FD81D14AA2C00367F87 /* SharingUserOperations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SharingUserOperations.swift; path = XCTests/SharingUserOperations.swift; sourceTree = SOURCE_ROOT; };
 		83C5ECEA1D048CE900FF4B50 /* README_Examples.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = README_Examples.swift; path = XCTests/README_Examples.swift; sourceTree = SOURCE_ROOT; };
 		83CA6A171CD967AE00047A86 /* SMCoreLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMCoreLib.xcodeproj; path = "../../../../Common/SMCoreLib Framework/SMCoreLib.xcodeproj"; sourceTree = "<group>"; };
 		83D1AE761D0C8C3400353FE4 /* SharingUsers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SharingUsers.swift; path = XCTests/SharingUsers.swift; sourceTree = SOURCE_ROOT; };
@@ -363,6 +365,7 @@
 		83D3E88F1C4C01E800BFDA93 /* XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				83A57FD81D14AA2C00367F87 /* SharingUserOperations.swift */,
 				83D1AE761D0C8C3400353FE4 /* SharingUsers.swift */,
 				83C5ECEA1D048CE900FF4B50 /* README_Examples.swift */,
 				833198FE1CF5340A00810678 /* AppMetaData.swift */,
@@ -749,6 +752,7 @@
 				83D3E8C81C4C079900BFDA93 /* ServerCredentials.swift in Sources */,
 				83D1AE771D0C8C3400353FE4 /* SharingUsers.swift in Sources */,
 				83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */,
+				83A57FD91D14AA2C00367F87 /* SharingUserOperations.swift in Sources */,
 				83D3E8C51C4C079900BFDA93 /* Download.swift in Sources */,
 				83D3E8CA1C4C079900BFDA93 /* Upload.swift in Sources */,
 				8369D33F1CD49E65006DA33C /* DownloadDeletionRecovery.swift in Sources */,

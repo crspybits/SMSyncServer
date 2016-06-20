@@ -108,10 +108,10 @@ extension AppDelegate : SMUserSignInAccountDelegate {
     }
     
     func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount) {
-        guard AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
-        else {
-        Assert.badMojo(alwaysPrintThisString: "Yikes: Not currently signed into userSignIn.displayName!")
-            return
+    
+        // In some non-fatal error cases, we can have userJustSignedOut called and we we'ren't officially signed in. E.g., when trying to sign in, but the sign in fails. SO, don't make this a fatal issue, just log a message.
+        if AppDelegate.userSignInDisplayName.stringValue != userSignIn.displayNameI! {
+            Log.error("Not currently signed into userSignIn.displayName!: \(userSignIn.displayNameI)")
         }
         
         AppDelegate.userSignInDisplayName.stringValue = ""
@@ -127,6 +127,11 @@ extension AppDelegate : SMUserSignInAccountDelegate {
     
     func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) {
         AppDelegate.sharingInvitationCode = nil
+    }
+    
+    func smUserSignIn(userSignIn userSignIn:SMUserSignInAccount, linkedAccountsForSharingUser:[SMLinkedAccount], selectLinkedAccount:(internalUserId:SMInternalUserId)->()) {
+        // What we really need to do here is to put up a UI and ask the user which linked account they want to use. For now, just choose the first.
+        selectLinkedAccount(internalUserId: linkedAccountsForSharingUser[0].internalUserId)
     }
 }
 

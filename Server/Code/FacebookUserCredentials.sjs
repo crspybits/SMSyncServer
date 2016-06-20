@@ -15,55 +15,49 @@ var Secrets = require('./Secrets');
 
 // Constructor
 // Throws an error if credentialsData don't have insufficient info.
-// credentialsData is from serverConstants userCredentialsDataKey
-// Public members:
-//      cloudFolderPath, username
+// credentialsData has the same form as the .creds for Facebook in the data stored in PSUserCredetials.
 function FacebookUserCredentials(credentialsData) {
     var self = this;
-    
-    // Optional
-    self.username = credentialsData[ServerConstants.accountUserName];
-    
-    self.userType = credentialsData[ServerConstants.userType];
-    if (!isDefined(self.userType)) {
-        throw new Error("No userType in credentials data!");
-    }
+    self.creds = {};
 
-    if (self.userType != ServerConstants.userTypeSharing) {
-        throw new Error("Not dealing with Facebook owning users!");
-    }
+    if (isDefined(credentialsData)) {
+        self.facebookSecrets = Secrets.sharingService(Secrets.facebookSharingService);
 
-    self.accountType = credentialsData[ServerConstants.accountType];
-    if (!isDefined(self.accountType)) {
-        throw new Error("No accountType in credentials data!");
-    }
-
-    var userId = credentialsData[ServerConstants.facebookUserId];
-    if (!isDefined(userId)) {
-        throw new Error("No userId in credentials data!");
-    }
-    
-    var accessToken = credentialsData[ServerConstants.facebookUserAccessToken];
-    if (!isDefined(accessToken)) {
-        throw new Error("No accessToken in credentials data!");
-    }
-    
-    self.facebookSecrets = Secrets.sharingService(Secrets.facebookSharingService);
-
-    self.creds = {
-        userId: userId,
+        var userId = credentialsData[ServerConstants.facebookUserId];
+        if (!isDefined(userId)) {
+            throw new Error("No userId in credentials data!");
+        }
+        
+        var accessToken = credentialsData[ServerConstants.facebookUserAccessToken];
+        if (!isDefined(accessToken)) {
+            throw new Error("No accessToken in credentials data!");
+        }
+        
+        self.creds.userId = userId;
         
         // This is the new acccess token, just obtained from the app. Not the access token stored in Mongo.
-        accessToken: accessToken
-    };
+        self.creds.accessToken = accessToken;
+    }
 }
 
 // Returns a FacebookUserCredentials object if it can make one-- i.e., if credentialsData represents Facebook creds. Can throw an error. Returns null if no error and cannot create a Google creds object.
 FacebookUserCredentials.CreateIfOurs = function (credentialsData) {
     var result = null;
     
-    if (ServerConstants.accountTypeFacebook == credentialsData[ServerConstants.accountType]) {
+    if (ServerConstants.accountTypeFacebook == credentialsData[ServerConstants.accountType]  &&
+        ServerConstants.userTypeSharing == credentialsData[ServerConstants.userType]) {
         result = new FacebookUserCredentials(credentialsData);
+    }
+    
+    return result;
+}
+
+FacebookUserCredentials.CreateEmptyIfOurs = function (userType, accountType) {
+    var result = null;
+    
+    if (ServerConstants.accountTypeFacebook == accountType  &&
+        ServerConstants.userTypeSharing == userType) {
+        result = new FacebookUserCredentials();
     }
     
     return result;
@@ -74,44 +68,61 @@ FacebookUserCredentials.CreateIfOurs = function (credentialsData) {
 // Returning null from this indicates that we don't yet have any persistent creds, and creds need be validated in order to provide those persistent creds. NOTE: For Facebook, we get persistent creds from the app as parameters.
 FacebookUserCredentials.prototype.persistent = function () {
     var self = this;
-    return {
-        userId: self.creds.userId,
-        accessToken: self.creds.accessToken
-    };
+    
+    if (isDefined(self.creds.userId) && isDefined(self.creds.accessToken)) {
+        return {
+            userId: self.creds.userId,
+            accessToken: self.creds.accessToken
+        };
+    }
+    else {
+        return null;
+    }
 }
 
 // The parameter is the same data that was returned from a call to the .persistent function.
 // The callback method has one parameter: error
-FacebookUserCredentials.prototype.setPersistent = function (creds, callback) {
+FacebookUserCredentials.prototype.setPersistent = function (creds) {
 	var self = this;
 
     if (!isDefined(creds.userId) || !isDefined(creds.accessToken)) {
-        callback("One more of the creds properties was empty.");
-        return;
+        logger.debug("One more of the creds properties was empty.");
+        self.creds = {};
     }
-    
-    self.creds = {
-        userId: creds.userId,
-        accessToken: creds.accessToken
-    };
-
-    callback(null);
+    else {
+        self.creds = {
+            userId: creds.userId,
+            accessToken: creds.accessToken
+        };
+    }
 }
 
 // Returns an object suitable for querying persistent data, i.e., some of the data in the .persistent method may change over time, but that returned here doesn't change over time. 
 FacebookUserCredentials.prototype.persistentInvariant = function () {
 	var self = this;
-	return {
-        userId: self.creds.userId
-    };
+    
+    if (isDefined(self.creds.userId)) {
+        return {
+            userId: self.creds.userId
+        };
+    }
+    else {
+        return null;
+    }
 }
 
 // Returns any possibly time varying parts of the persistent data. Returns null if no time-variant parts.
 FacebookUserCredentials.prototype.persistentVariant = function () {
     var self = this;
-    return {
-        accessToken: self.creds.accessToken
-    };
+    
+    if (isDefined(self.creds.accessToken)) {
+        return {
+            accessToken: self.creds.accessToken
+        };
+    }
+    else {
+        return null;
+    }
 }
 
 // Requiring use of appsecret_proof on server API calls https://developers.facebook.com/docs/graph-api/securing-requests
@@ -122,7 +133,7 @@ FacebookUserCredentials.prototype.persistentVariant = function () {
 
 /* Check to see if these are valid credentials.
     Parameters:
-    1) mongoCreds: The credentials currently stored by Mongo (may be null).
+    1) mongoCreds: The credentials currently stored by Mongo in PSUserCredentials. Will not be null in this case because persistentInvariant returns non-null when we get initial params from app.
     2) callback: takes three parameters: 
         a) error, 
         b) if error is not null, a boolean which is true iff the error that occurred is that the user security information is stale. E.g., user should sign back in again.
@@ -199,7 +210,10 @@ FacebookUserCredentials.prototype.validate = function (mongoCreds, callback) {
             }
             else if (result.data.application == self.facebookSecrets.application &&
                 result.data.app_id == self.facebookSecrets.app_id &&
-                result.data.user_id == self.creds.userId) {
+                result.data.user_id == self.creds.userId &&
+                self.creds.userId == mongoCreds.userId) {
+                
+                // Return the last parameter as true because the creds access token we have is not stored in mongo, and needs to be stored there.
                 callback(null, null, true);
             }
             else {

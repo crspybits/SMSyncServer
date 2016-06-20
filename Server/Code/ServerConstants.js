@@ -88,8 +88,8 @@ function define(name, value) {
 	define("userTypeSharing",      "SharingUser");
     
         // SubKey: (for userTypeSharing only)
-	define("linkedSharingIndex",      "LinkedSharingIndex");
-        // Values: A integer value (0...N-1) indicating which of the linked accounts are being used.
+	define("linkedOwningUserId",      "LinkedOwningUserId");
+        // Values: A string giving a server internal id referencing the owning user's data being shared. This is particularly important when a sharing user can access data from more than one owning user.
     
         // SubKey:
 	define("accountType",      "AccountType");
@@ -108,13 +108,13 @@ function define(name, value) {
 	define("googleUserAuthCode",      "AuthCode");
             // Value is a one-time authentication code
 
-        // MARK: For Facebook, there are the following additional keys:
+        // MARK: For Facebook, there are the following additional keys:    
             // SubKey:
-	define("facebookUserId",      "FacebookUserId");
+	define("facebookUserId",      "userId");
             // Value: String
         
             // SubKey:
-	define("facebookUserAccessToken",      "FacebookAccessToken");
+	define("facebookUserAccessToken",      "accessToken");
             // Value: String
     
     // MARK: Other parameters sent to the server.

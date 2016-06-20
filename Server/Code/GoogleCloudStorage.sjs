@@ -1,4 +1,5 @@
 // Accessing the users cloud storage to transfer files. This deals with the details of the cloud storage systems (e.g., Google Drive).
+// This class is closely coupled to GoogleUserCredentials. E.g., it knows about GoogleUserCredentials .oauth2Client property.
 
 'use strict';
 
@@ -14,20 +15,23 @@ var File = require('./File.sjs');
 var PSUserCredentials = require('./PSUserCredentials');
 
 // Constructor
-// userCreds: Of type UserCredentials
-function CloudStorage(userCreds) {
+// psUserCreds: psUserCreds.signedInCreds() must be of type GoogleUserCredentials
+function GoogleCloudStorage(psUserCreds, cloudFolderPath) {
     var self = this;
     
-    self.userCreds = userCreds;
-    self.oauth2Client = userCreds.googleUserCredentials.oauth2Client;
-    self.cloudFolderPath = userCreds.cloudFolderPath;
+    self.psUserCreds = psUserCreds;
+    
+    var googleUserCredentials = self.psUserCreds.signedInCreds();
+    self.oauth2Client = googleUserCredentials.oauth2Client;
+    
+    self.cloudFolderPath = cloudFolderPath;
     self.cloudFolderId = null;
 }
 
 // instance methods
 
 // Callback: One parameter: error.
-CloudStorage.prototype.setup = function (callback) {
+GoogleCloudStorage.prototype.setup = function (callback) {
     var self = this;
     
     /* Need to:
@@ -68,21 +72,21 @@ CloudStorage.prototype.setup = function (callback) {
     });
 }
 
-CloudStorage.prototype.deleteFile = function (fileToSend, callback) {
+GoogleCloudStorage.prototype.deleteFile = function (fileToSend, callback) {
     var self = this;
     self.sendFile(true, fileToSend, callback);
 }
 
 // Copy data (i.e., upload) of the file from the SyncServer to cloud storage.
 // Callback params: 1) error, 2) file properties (if error is null).
-CloudStorage.prototype.outboundTransfer = function (fileToSend, callback) {
+GoogleCloudStorage.prototype.outboundTransfer = function (fileToSend, callback) {
     var self = this;
     self.sendFile(false, fileToSend, callback);
 }
 
 // Copy data (i.e., download) of the file to the SyncServer from cloud storage.
 // Callback params: 1) error, 2) file properties (if error is null).
-CloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
+GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
     var self = this;
     
     var drive = google.drive({ version: 'v2', auth: self.oauth2Client });
@@ -167,7 +171,7 @@ CloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
 // Transfer a file to the users cloud storage or delete the file.
 // Parameter: fileToSend of type File.
 // Callback parameters: 1) error, 2) If error is null, a JSON structure with the following properties: fileSizeBytes (only when not deleting).
-CloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback) {
+GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback) {
     var self = this;
     
     var drive = google.drive({ version: 'v2', auth: self.oauth2Client });
@@ -307,7 +311,7 @@ CloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback)
 
     Callback has two parameters: 1) error, 2) if error is null, the array of files.
 */
-CloudStorage.prototype.listFiles = function (query, callback) {
+GoogleCloudStorage.prototype.listFiles = function (query, callback) {
     var self = this;
     
     var parameters = {
@@ -339,7 +343,7 @@ CloudStorage.prototype.listFiles = function (query, callback) {
 /* Create a directory.
 Callback has two parameters: 1) error, 2) if error is null, the fileId of the created directory.
 */
-CloudStorage.prototype.createDirectory = function (directoryTitle, callback) {
+GoogleCloudStorage.prototype.createDirectory = function (directoryTitle, callback) {
     var self = this;
     
     var drive = google.drive({ version: 'v2', auth: self.oauth2Client });
@@ -374,14 +378,14 @@ This is because of an expired access token.
 // PRIVATE
 // Calls a Google Drive REST API function. Assumes that the callback & the apiFunction callback take two parameters, error and response. If the operation fails on an AccessTokenExpired error, this attempts to refresh the access token. If a second error occurs, this reported back to the original callback.
 // suffixCall is optional and if given is an object with properties: method (method name string), and param (parameter value). It will be called on the function result of calling the apiFunction.
-CloudStorage.prototype.callGoogleDriveAPI = function (apiFunction, parameters, suffixCall, callback) {
+GoogleCloudStorage.prototype.callGoogleDriveAPI = function (apiFunction, parameters, suffixCall, callback) {
     var self = this;
     
     self.callGoogleDriveAPIAux(2, apiFunction, parameters, suffixCall, callback);
 }
 
 // Don't call this directly. Call the above function.
-CloudStorage.prototype.callGoogleDriveAPIAux =
+GoogleCloudStorage.prototype.callGoogleDriveAPIAux =
     function (numberAttempts, apiFunction, parameters, suffixCall, callback) {
         var self = this;
         
@@ -395,7 +399,7 @@ CloudStorage.prototype.callGoogleDriveAPIAux =
                 // Attempt to refresh the access token, and then if successful, call the API function again.
                 logger.trace("Access token expired: Attempting to refresh");
                 
-                self.userCreds.signedInCreds().refreshSecurityTokens(function (err) {
+                self.psUserCreds.signedInCreds().refreshSecurityTokens(function (err) {
                     if (err) {
                         logger.error("Failed on refreshing access token: %j", err);
                         callback(err, response);
@@ -403,9 +407,8 @@ CloudStorage.prototype.callGoogleDriveAPIAux =
                     else {
                         logger.info("Succeeded on refreshing access token");
 
-                        // Save the updated userCreds to persistent storage.
-                        var psUserCreds = new PSUserCredentials(self.userCreds);
-                        psUserCreds.update(function (error) {
+                        // Save the updated psUserCreds to persistent storage.
+                        self.psUserCreds.update(function (error) {
                             if (error) {
                                 logger.error("Failed to save updated access token to persistent storage %j", error)
                                 callback(error, null);
@@ -437,4 +440,4 @@ CloudStorage.prototype.callGoogleDriveAPIAux =
 
 
 // export the class
-module.exports = CloudStorage;
+module.exports = GoogleCloudStorage;

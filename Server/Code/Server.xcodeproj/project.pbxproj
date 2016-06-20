@@ -27,12 +27,12 @@
 		839A06A01C50491A0037AD9A /* GoogleAPI.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = GoogleAPI.txt; path = ../Docs/Code/GoogleAPI.txt; sourceTree = "<group>"; };
 		839A06A11C5049230037AD9A /* testCases.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = testCases.txt; path = ../Docs/Code/testCases.txt; sourceTree = "<group>"; };
 		839A06A21C50492B0037AD9A /* Locks.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = Locks.txt; path = ../Docs/Code/Locks.txt; sourceTree = "<group>"; };
-		83B0BEBE1C114935002B5735 /* CloudStorage.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = CloudStorage.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
+		83B0BEBE1C114935002B5735 /* GoogleCloudStorage.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = GoogleCloudStorage.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83D1AE6E1D0BC30500353FE4 /* PSSharingInvitations.sjs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PSSharingInvitations.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF73A1C0A3BBE009F9796 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
 		83EBF73B1C0A3BBE009F9796 /* JSON.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = JSON.js; sourceTree = "<group>"; };
 		83EBF73C1C0A3BBE009F9796 /* Mongo.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Mongo.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
-		83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSUserCredentials.sjs; sourceTree = "<group>"; };
+		83EBF73D1C0A3BBE009F9796 /* PSUserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSUserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF73E1C0A3BBE009F9796 /* ServerConstants.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ServerConstants.js; sourceTree = "<group>"; };
 		83EBF73F1C0A3BBE009F9796 /* UserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = UserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		83EBF7611C0C217A009F9796 /* PSOutboundFileChange.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSOutboundFileChange.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
@@ -41,6 +41,7 @@
 		83EBF76E1C0E9E66009F9796 /* startMongoDb.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = startMongoDb.sh; path = Scripts/startMongoDb.sh; sourceTree = "<group>"; };
 		83EBF76F1C0E9E66009F9796 /* startServer.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = startServer.sh; path = Scripts/startServer.sh; sourceTree = "<group>"; };
 		83EFAC031C3F784900D54E14 /* PSFileTransferLog.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PSFileTransferLog.js; sourceTree = "<group>"; };
+		83F0728A1D152FF80089F967 /* Globals.sjs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Globals.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -81,7 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				830A66FE1D0E04AB00E33EAA /* GoogleUserCredentials.sjs */,
-				83B0BEBE1C114935002B5735 /* CloudStorage.sjs */,
+				83B0BEBE1C114935002B5735 /* GoogleCloudStorage.sjs */,
 			);
 			name = "Google Drive";
 			sourceTree = "<group>";
@@ -113,6 +114,7 @@
 				83EBF73B1C0A3BBE009F9796 /* JSON.js */,
 				836F28791C13CCE300385636 /* Logger.js */,
 				836F287E1C1679C900385636 /* Common.sjs */,
+				83F0728A1D152FF80089F967 /* Globals.sjs */,
 			);
 			name = JS;
 			sourceTree = "<group>";

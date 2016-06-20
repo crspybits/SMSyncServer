@@ -17,41 +17,89 @@ internal protocol SMServerAPIUserDelegate : class {
     func refreshUserCredentials()
 }
 
+public struct SMLinkedAccount {
+    // This is the userId assigned by the sync server, not by the specific account system.
+    public var internalUserId:SMInternalUserId
+    public var userName:String?
+    public var capabilityMask:SMSharingUserCapabilityMask
+}
+
+public enum SMUserType : Equatable {
+    case OwningUser
+    
+    // The owningUserId selects the specific shared/linked account being shared. It should only be nil when you are first creating the account, or redeeming a new sharing invitation.
+    case SharingUser(owningUserId:SMInternalUserId?)
+    
+    public func toString() -> String {
+        switch self {
+        case .OwningUser:
+            return SMServerConstants.userTypeOwning
+        case .SharingUser:
+            return SMServerConstants.userTypeSharing
+        }
+    }
+}
+
+public func ==(lhs:SMUserType, rhs:SMUserType) -> Bool {
+    switch lhs {
+    case .OwningUser:
+        switch rhs {
+        case .OwningUser:
+            return true
+        case .SharingUser(_):
+            return false
+        }
+        
+    case .SharingUser(_):
+        switch rhs {
+        case .OwningUser:
+            return false
+        case .SharingUser(_):
+            return true
+        }
+    }
+}
+
 // This enum is the interface from the client app to the SMSyncServer framework providing client credential information to the server.
 public enum SMUserCredentials {
-    // In the following, the owningUserId is only used for a SharingUser, and selects the specific shared/linked account being shared.
+    // In the following,
     
     // userType *must* be OwningUser.
     // When using as a parameter to call createNewUser, authCode must not be nil.
-    case Google(userType:String, owningUserId:SMInternalUserId?, idToken:String!, authCode:String?, userName:String?)
+    case Google(userType:SMUserType, idToken:String!, authCode:String?, userName:String?)
 
     // userType *must* be SharingUser
-    case Facebook(userType:String, owningUserId:SMInternalUserId?, accessToken:String!, userId:String!, userName:String?)
+    case Facebook(userType:SMUserType, accessToken:String!, userId:String!, userName:String?)
     
     internal func toServerParameterDictionary() -> [String:AnyObject] {
         var userCredentials = [String:AnyObject]()
         
         switch self {
-        case .Google(userType: let userType, owningUserId: _, idToken: let idToken, authCode: let authCode, userName: let userName):
-            Assert.If(userType != SMServerConstants.userTypeOwning, thenPrintThisString: "Yikes: Google accounts with userTypeSharing not yet implemented!")
+        case .Google(userType: let userType, idToken: let idToken, authCode: let authCode, userName: let userName):
+            Assert.If(userType != .OwningUser, thenPrintThisString: "Yikes: Google accounts with userTypeSharing not yet implemented!")
             Log.msg("Sending IdToken: \(idToken)")
             
-            userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeOwning
+            userCredentials[SMServerConstants.userType] = userType.toString()
             userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeGoogle
             userCredentials[SMServerConstants.googleUserIdToken] = idToken
             userCredentials[SMServerConstants.googleUserAuthCode] = authCode
             userCredentials[SMServerConstants.accountUserName] = userName
-
         
-        case .Facebook(userType: let userType, owningUserId: let owningUserId, accessToken: let accessToken, userId: let userId, userName: let userName):
-            Assert.If(userType != SMServerConstants.userTypeSharing, thenPrintThisString: "Yikes: Not allowed!")
+        case .Facebook(userType: let userType, accessToken: let accessToken, userId: let userId, userName: let userName):
+
+            switch userType {
+            case .OwningUser:
+                Assert.badMojo(alwaysPrintThisString: "Yikes: Not allowed!")
             
-            userCredentials[SMServerConstants.userType] = SMServerConstants.userTypeSharing
+            case .SharingUser(owningUserId: let owningUserId):
+                userCredentials[SMServerConstants.linkedOwningUserId] = owningUserId
+            }
+            
+            userCredentials[SMServerConstants.userType] = userType.toString()
             userCredentials[SMServerConstants.accountType] = SMServerConstants.accountTypeFacebook
             userCredentials[SMServerConstants.facebookUserId] = userId
             userCredentials[SMServerConstants.facebookUserAccessToken] = accessToken
             userCredentials[SMServerConstants.accountUserName] = userName
-            userCredentials[SMServerConstants.internalUserId] = owningUserId
         }
         
         return userCredentials
@@ -135,7 +183,7 @@ public class SMSyncServerUser {
     public func createNewUser(callbacksAfterSigninSuccess callbacksAfterSignin:Bool=true, userCreds:SMUserCredentials, completion:((error: NSError?)->())?) {
     
         switch (userCreds) {
-        case .Google(userType: _, owningUserId: _, idToken: _, authCode: let authCode, userName: _):
+        case .Google(userType: _, idToken: _, authCode: let authCode, userName: _):
             Assert.If(nil == authCode, thenPrintThisString: "The authCode must be non-nil when calling createNewUser for a Google user")
 
         case .Facebook:
@@ -161,7 +209,7 @@ public class SMSyncServerUser {
     }
     
     // Optionally can have a currently signed in user. i.e., if you give userCreds, they will be used. Otherwise, the currently signed in user creds are used.
-    public func redeemSharingInvitation(invitationCode invitationCode:String, userCreds:SMUserCredentials?=nil, completion:((couldNotRedeemSharingInvitation: Bool, error: NSError?)->())?) {
+    public func redeemSharingInvitation(invitationCode invitationCode:String, userCreds:SMUserCredentials?=nil, completion:((linkedOwningUserId:SMInternalUserId?, error: NSError?)->())?) {
         
         var userCredParams:[String:AnyObject]
         if userCreds == nil {
@@ -172,16 +220,11 @@ public class SMSyncServerUser {
         }
         
         SMServerAPI.session.redeemSharingInvitation(
-            userCredParams, invitationCode: invitationCode, completion: { (internalUserId, apiResult) in
-            
-            var couldNotRedeemSharingInvitation = false
-            if apiResult.returnCode == SMServerConstants.rcCouldNotRedeemSharingInvitation {
-                couldNotRedeemSharingInvitation = true
-            }
+            userCredParams, invitationCode: invitationCode, completion: { (linkedOwningUserId, internalUserId, apiResult) in
             
             let returnError = self.processSignInResult(forExistingUser: true, apiResult: apiResult)
             self.finish(withError: returnError) { error in
-                completion?(couldNotRedeemSharingInvitation: couldNotRedeemSharingInvitation, error: error)
+                completion?(linkedOwningUserId:linkedOwningUserId, error: error)
             }
         })
     }
@@ -191,6 +234,21 @@ public class SMSyncServerUser {
         completion?(error: error)
         if callbacksAfterSignin {
             self.callSignInCompletion(withError: error)
+        }
+    }
+    
+    public func getLinkedAccountsForSharingUser(userCreds:SMUserCredentials?=nil, completion:((linkedAccounts:[SMLinkedAccount]?, error:NSError?)->(Void))?) {
+        
+        var userCredParams:[String:AnyObject]
+        if userCreds == nil {
+            userCredParams = self.userCredentialParams!
+        }
+        else {
+            userCredParams = self.serverParameters(userCreds!)
+        }
+        
+        SMServerAPI.session.getLinkedAccountsForSharingUser(userCredParams) { (linkedAccounts, apiResult) -> (Void) in
+            completion?(linkedAccounts:linkedAccounts, error:apiResult.error)
         }
     }
     

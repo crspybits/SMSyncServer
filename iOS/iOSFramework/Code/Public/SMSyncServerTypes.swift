@@ -22,6 +22,11 @@ public struct SMSharingUserCapabilityMask : OptionSetType {
         case Delete /* Objects */ = 8
         case Invite /* New users to share */ = 16
         
+        // Upload-- Create for new versions of files; Update for existing versions.
+        // Download-- Read
+        // Invite-- Other users to share
+        // Delete-- delete files
+        
         private init?(capabilityName: String) {
             var rawValue = 1
             for name in UserCapability.allAsStrings {

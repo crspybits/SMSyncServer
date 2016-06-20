@@ -20,28 +20,8 @@ var Secrets = require('./Secrets');
 function GoogleUserCredentials(credentialsData) {
     var self = this;
     
-    // Optional
-    self.username = credentialsData[ServerConstants.accountUserName];
-    
-    self.userType = credentialsData[ServerConstants.userType];
-    if (!isDefined(self.userType)) {
-        throw new Error("No userType in credentials data!");
-    }
-
-    // Not dealing with Google SharingUsers yet.
-    if (self.userType != ServerConstants.userTypeOwning) {
-        throw new Error("Not dealing with Google sharing users yet!");
-    }
-
-    self.accountType = credentialsData[ServerConstants.accountType];
-    if (!isDefined(self.accountType)) {
-        throw new Error("No accountType in credentials data!");
-    }
-
     // Credentials specific to the user.
-    self.googleUserCredentials = {};
-    self.googleUserCredentials.sub = null; // user identifier
-    self.googleUserCredentials.oauth2Client = null;
+    self.sub = null; // user identifier
 
     // Data for signing into Google from clientSecretFile.
     self.googleServerCredentials = Secrets.cloudStorageService(Secrets.googleCloudStorageService);
@@ -50,21 +30,22 @@ function GoogleUserCredentials(credentialsData) {
     
     var auth = new googleAuth();
     
-    self.googleUserCredentials.oauth2Client = 
+    self.oauth2Client =
             new auth.OAuth2(self.googleServerCredentials.client_id,
                 self.googleServerCredentials.client_secret,
                 self.googleServerCredentials.redirect_uris[0]);
     
-    self.googleUserCredentials.idToken = credentialsData[ServerConstants.googleUserIdToken];
-    if (!isDefined(self.googleUserCredentials.idToken)) {
-        throw new Error("No Google IdToken in credentials data!");
+    if (isDefined(credentialsData)) {
+        self.idToken = credentialsData[ServerConstants.googleUserIdToken];
+        if (!isDefined(self.idToken)) {
+            throw new Error("No Google IdToken in credentials data!");
+        }
+        
+        self.authCode = credentialsData[ServerConstants.googleUserAuthCode];
+        
+        logger.debug("AuthCode: " + self.authCode);
     }
     
-    // logger.debug("IdToken: " + self.googleUserCredentials.idToken);
-    self.googleUserCredentials.authCode =
-    	credentialsData[ServerConstants.googleUserAuthCode];
-    
-    logger.debug("AuthCode: " + self.googleUserCredentials.authCode);
     logger.debug("Created GoogleUserCredentials object");
 }
 
@@ -72,8 +53,20 @@ function GoogleUserCredentials(credentialsData) {
 GoogleUserCredentials.CreateIfOurs = function (credentialsData) {
     var result = null;
     
-    if (ServerConstants.accountTypeGoogle == credentialsData[ServerConstants.accountType]) {
+    if (ServerConstants.accountTypeGoogle == credentialsData[ServerConstants.accountType] &&
+        ServerConstants.userTypeOwning == credentialsData[ServerConstants.userType]) {
         result = new GoogleUserCredentials(credentialsData);
+    }
+    
+    return result;
+}
+
+GoogleUserCredentials.CreateEmptyIfOurs = function (userType, accountType) {
+    var result = null;
+    
+    if (ServerConstants.accountTypeGoogle == accountType  &&
+        ServerConstants.userTypeOwning == userType) {
+        result = new GoogleUserCredentials();
     }
     
     return result;
@@ -89,15 +82,15 @@ GoogleUserCredentials.prototype.persistent = function () {
     var accessToken = null;
     var refreshToken = null;
     
-    if (isDefined(self.googleUserCredentials.oauth2Client.credentials)) {
-        accessToken = self.googleUserCredentials.oauth2Client.credentials.access_token;
-        refreshToken = self.googleUserCredentials.oauth2Client.credentials.refresh_token;
+    if (isDefined(self.oauth2Client.credentials)) {
+        accessToken = self.oauth2Client.credentials.access_token;
+        refreshToken = self.oauth2Client.credentials.refresh_token;
     }
     
     // I'm making both the refresh token and .sub critical as we should never be in a situation were, if we have persistent creds, we don't have one of these.
-    if (refreshToken || self.googleUserCredentials.sub) {
+    if (refreshToken || self.sub) {
         creds = {
-            sub: self.googleUserCredentials.sub,
+            sub: self.sub,
             access_token: accessToken,
             refresh_token: refreshToken
         };
@@ -106,23 +99,24 @@ GoogleUserCredentials.prototype.persistent = function () {
     return creds;
 }
 
-GoogleUserCredentials.prototype.setPersistent = function (creds, callback) {
+GoogleUserCredentials.prototype.setPersistent = function (creds) {
 	var self = this;
     
-    if (!creds.access_token || !creds.refresh_token || !creds.sub) {
-        logger.debug("creds: " + JSON.stringify(creds));
-        callback("One or more of the creds properties was empty.");
-        return;
+    logger.debug("creds: " + JSON.stringify(creds));
+
+    if (!creds.access_token || !creds.refresh_token) {
+        logger.debug("One or more of the creds properties was empty.");
+        
+        self.oauth2Client.setCredentials({});
     }
-            
-    self.googleUserCredentials.oauth2Client.setCredentials({
-        access_token: creds.access_token,
-        refresh_token: creds.refresh_token
-    });
+    else {
+        self.oauth2Client.setCredentials({
+            access_token: creds.access_token,
+            refresh_token: creds.refresh_token
+        });
+    }
     
-    self.googleUserCredentials.sub = creds.sub;
-    
-    callback(null);
+    self.sub = creds.sub;
 }
 
 GoogleUserCredentials.prototype.persistentInvariant = function () {
@@ -167,9 +161,17 @@ GoogleUserCredentials.prototype.persistentVariant = function () {
 	return creds;
 }
 
+// Only defined for a particular concrete subclass if persistentInvariant initially returns null for an apps creds. i.e., if a lookup has to occur before a validate.
+// Parameter: mongoCreds: In same format as in PSUserCredentials .creds for these specific creds.
+// Returns a Boolean -- true iff the creds were valid.
+GoogleUserCredentials.prototype.validateStored = function (mongoCreds) {
+    var self = this;
+    return mongoCreds.sub == self.sub;
+}
+
 /* Check to see if these are valid credentials.
     Parameters:
-    1) mongoCreds: The credentials currently stored by Mongo (may be null).
+    1) mongoCreds: The credentials currently stored by Mongo (may be null). Will be null in this case because persistentInvariant returns null when we get initial params from app.
     2) callback: takes three parameters: 
         a) error, 
         b) if error is not null, a boolean which is true iff the error that occurred is that the user security information is stale. E.g., user should sign back in again.
@@ -202,9 +204,8 @@ GoogleUserCredentials.prototype.validate = function (mongoCreds, callback) {
     
     // An IdToken is an encrypted JWT. See http://stackoverflow.com/questions/8311836/how-to-identify-a-google-oauth2-user/13016081#13016081
     // The second parameter to the callback is a LoginTicket object, which is just a thin wrapper over the parsed idToken. Is the LoginTicket empty if we get back an error below?
-    // logger.debug("Calling self.googleUserCredentials.oauth2Client.verifyIdToken");
-    self.googleUserCredentials.oauth2Client.verifyIdToken(
-        self.googleUserCredentials.idToken, audience, function(err, loginTicket) {
+    // logger.debug("Calling self.oauth2Client.verifyIdToken");
+    self.oauth2Client.verifyIdToken(self.idToken, audience, function(err, loginTicket) {
             // logger.debug('verifyIdToken loginTicket: ' + JSON.stringify(loginTicket));
             if (err) {
                 var stringMessage = "failed on verifyIdToken: error: "  + err;
@@ -228,15 +229,15 @@ GoogleUserCredentials.prototype.validate = function (mongoCreds, callback) {
             
             // See code. https://github.com/google/google-auth-library-nodejs/blob/master/lib/auth/loginticket.js
             // getUserId returns the "sub" field.
-            self.googleUserCredentials.sub = loginTicket.getUserId();
+            self.sub = loginTicket.getUserId();
 
             logger.debug("GoogleUserCredentials.prototype.validate: " + JSON.stringify(self));
-            // console.log(self.googleUserCredentials.oauth2Client.credentials);
+            // console.log(self.oauth2Client.credentials);
             
             // If there is an authorization code, I'm going to exchange it for an access token, and a refresh token (using exchangeAuthorizationCode), which generates a call to the Google servers, and thus takes some time. My assumption is that we will only have an authorization code here infrequently-- e.g., when the user initially signs into the app, this will generate an authorization code. Subsequently (and the main use case), when a silent sign in is used, there will be no authorization code, and hence no Google server access.
-            if (!isDefined(self.googleUserCredentials.authCode)) {
+            if (!isDefined(self.authCode)) {
                 logger.debug("We got no authorization code");
-                logger.info("self.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.googleUserCredentials.oauth2Client.credentials));
+                logger.info("self.oauth2Client.credentials: " + JSON.stringify(self.oauth2Client.credentials));
                 callback(null, null, false);
                 return;
             }
@@ -256,12 +257,12 @@ GoogleUserCredentials.prototype.validate = function (mongoCreds, callback) {
                     logger.debug("exchangedContent.refresh_token: " +
                          exchangedContent.refresh_token);
 
-                    self.googleUserCredentials.oauth2Client.setCredentials({
+                    self.oauth2Client.setCredentials({
                         access_token: exchangedContent.access_token,
                         refresh_token: exchangedContent.refresh_token
                     });
                     
-                    logger.info("self.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.googleUserCredentials.oauth2Client.credentials));
+                    logger.info("self.oauth2Client.credentials: " + JSON.stringify(self.oauth2Client.credentials));
                     
                     callback(null, null, true);
                 }
@@ -294,7 +295,7 @@ Here's an example of what I get back:
 function exchangeAuthorizationCode(self, callback) {
     var args = 
         {url:'https://www.googleapis.com/oauth2/v3/token', 
-         form: {code: self.googleUserCredentials.authCode,
+         form: {code: self.authCode,
                 client_id: self.googleServerCredentials.client_id,
                 client_secret: self.googleServerCredentials.client_secret,
                 grant_type: "authorization_code"
@@ -319,7 +320,7 @@ GoogleUserCredentials.prototype.refreshSecurityTokens = function (callback) {
     
     // See https://github.com/google/google-api-nodejs-client/#google-apis-nodejs-client
     
-    self.googleUserCredentials.oauth2Client.refreshAccessToken(function(err, tokens) {
+    self.oauth2Client.refreshAccessToken(function(err, tokens) {
         // your access_token is now refreshed and stored in oauth2Client
         // store these new tokens in a safe place (e.g. database)
         callback(err);

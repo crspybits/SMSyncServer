@@ -3,7 +3,7 @@
 'use strict';
 
 var Common = require('./Common');
-var CloudStorage = require('./CloudStorage.sjs');
+var CloudStorage = require('./GoogleCloudStorage.sjs');
 var Operation = require('./Operation');
 var PSOutboundFileChange = require('./PSOutboundFileChange.sjs');
 var logger = require('./Logger');
@@ -24,7 +24,7 @@ const maxNumberReceiveAttempts = 3;
 function FileTransfers(op, psOperationId) {
     // always initialize all instance properties
     
-    this.cloudStorage = new CloudStorage(op.userCreds);
+    this.cloudStorage = new GoogleCloudStorage(op.psUserCreds, op.psUserCreds.cloudFolderPath);
     this.op = op;
     this.psOperationId = psOperationId;
 }
@@ -35,7 +35,7 @@ FileTransfers.methodNameSendFiles = "sendFiles";
 // instance methods
 
 // Do post-constructor initialization/setup. It's assumed that this is called prior to any other instance methods.
-// My rationale for having this method is that with Google Drive, I seem unable to replace an existing file without first doing a listing of existing files. It's awkward to have a callback on a constructor, so I'm having a separate setup method, so I can call CloudStorage setup, which in the case of Google Drive, will do a directory/folder listing.
+// My rationale for having this method is that with Google Drive, I seem unable to replace an existing file without first doing a listing of existing files. It's awkward to have a callback on a constructor, so I'm having a separate setup method, so I can call GoogleCloudStorage setup, which in the case of Google Drive, will do a directory/folder listing.
 // Callback: One param: error
 FileTransfers.prototype.setup = function (callback) {
     var self = this;

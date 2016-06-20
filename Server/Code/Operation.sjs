@@ -8,7 +8,6 @@ var google = require('googleapis');
 
 var PSUserCredentials = require('./PSUserCredentials');
 var ServerConstants = require('./ServerConstants');
-var UserCredentials = require('./UserCredentials.sjs');
 var logger = require('./Logger');
 var PSOperationId = require('./PSOperationId')
 var PSLock = require('./PSLock')
@@ -16,14 +15,13 @@ var PSLock = require('./PSLock')
 // instance methods
 
 // Constructor
-// If no errors occur, creates a UserCredentials member named .userCreds and 
+// If no errors occur, creates a PSUserCredentials member named .psUserCreds and
 // Give errorHandling == true for handling server errors; the UserCredentials object will not be created in that case. Otherwise, give no errorHandling parameter and it will have a value of false by default.
 // If an error occurs, the .error member is set to true. I have handled the error this way and not using an exception because I suspect that if we throw an exception, we don't get an Operation object back. And I need an Operation object to call the end method, for error handling.
 function Operation(request, response, errorHandling) {
     var self = this;
     
     self.error = false;
-    self.psUserCreds = null;
     
     if (typeof(errorHandling) === "undefined") {
         errorHandling = false;
@@ -55,48 +53,85 @@ function Operation(request, response, errorHandling) {
             self.error = true;
         }
         else {
-            //logger.debug("Creating a new UserCredentials object");
-            
             try {
-                self.userCreds = new UserCredentials(credentialsData);
+                self.psUserCreds = new PSUserCredentials(credentialsData);
             } catch (error) {
-                logger.error("Failed creating UserCredentials: ", error.toString());
+                logger.error("Failed creating PSUserCredentials: ", error.toString());
                 self.result[ServerConstants.errorDetailsKey] = error.toString(); // just for convenience.
                 self.error = true;
             }
-            
-            // logger.debug("Finished creating a new UserCredentials object: " + JSON.stringify(self.userCreds));
         }
     }
 }
 
+// Must have retrieved/stored psUserCreds from/to Mongo
+Operation.prototype.userId = function() {
+    return this.psUserCreds._id;
+}
+
+Operation.prototype.deviceId = function() {
+    return this.psUserCreds.mobileDeviceUUID;
+}
+
 Operation.prototype.owningUserSignedIn = function () {
     var self = this;
-    return self.userCreds.owningUserSignedIn();
+    return self.psUserCreds.owningUserSignedIn();
 }
 
 Operation.prototype.sharingUserSignedIn = function () {
     var self = this;
-    return self.userCreds.sharingUserSignedIn();
+    return self.psUserCreds.sharingUserSignedIn();
 }
 
 // Is the current signed in user authorized to do this operation?
-// One parameter: A capability (e.g., ServerConstants.capabilityCreate
-// Returns true or false.
-Operation.prototype.userAuthorizedTo = function (capability) {
-    return self.userCreds.userAuthorizedTo(capability);
+// One parameter: A capability (e.g., ServerConstants.capabilityCreate)
+// Returns true or false. If it returns false, it ends the operation.
+Operation.prototype.endIfUserNotAuthorizedFor = function (capability) {
+    var self = this;
+    
+    if (self.psUserCreds.userAuthorizedFor(capability)) {
+        return true;
+    }
+    else {
+        var message = "User is not authorized for: " + capability;
+        logger.error(message);
+        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        return false;
+    }
 }
 
-// Checks if the user is on the system, and as a side effect (if no error), adds a PSUserCredentials object as a new member, .psUserCreds
-// userMustBeOnSystem is optional, and defaults to true.
-// On failure, ends the operation connection.
-// Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
-Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
+/* Checks if the user is on the system, and checks for a lock and operationId.
+    Parameters:
+    1) Option object (optional):
+        userMustBeOnSystem:Boolean (defaults to true)
+        mustHaveLinkedOwningUserId:Boolean (defaults to true)
+            When true, requires linkedOwningUserId when have a sharing user.
+    2) Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
+ 
+    On error, ends the operation connection.
+*/
+Operation.prototype.validateUser = function (options, callback) {
     var self = this;
 
-    if (typeof userMustBeOnSystem === 'function') {
-        callback = userMustBeOnSystem;
-        userMustBeOnSystem = true;
+    var userMustBeOnSystem = true;
+    var mustHaveLinkedOwningUserId = true;
+    
+    if (typeof options === 'function') {
+        callback = options;
+    }
+    else {
+        if (isDefined(options.userMustBeOnSystem)) {
+            userMustBeOnSystem = options.userMustBeOnSystem;
+        }
+        if (isDefined(options.mustHaveLinkedOwningUserId)) {
+            mustHaveLinkedOwningUserId = options.mustHaveLinkedOwningUserId;
+        }
+    }
+    
+    // When userMustBeOnSystem is true, validateUser is only called to perform operations, not to create users or check for existing users. When a sharing user is performing an operation, they *must* have a linkedOwningUserId
+    if (mustHaveLinkedOwningUserId && self.psUserCreds.userType == ServerConstants.userTypeSharing && !isDefined(self.psUserCreds.linkedOwningUserId)) {
+        self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, "Sharing user, but no linkedOwningUserId");
+        return;
     }
     
     self.validateUserAlwaysCallback(userMustBeOnSystem, function (error, staleUserSecurityInfo) {
@@ -176,13 +211,11 @@ Operation.prototype.validateUserAlwaysCallback = function (userMustBeOnSystem, c
         userMustBeOnSystem = true;
     }
     
-    self.checkForExistingUser(function (error, staleUserSecurityInfo, psUserCreds) {
+    self.checkForExistingUser(function (error, staleUserSecurityInfo) {
         if (error) {
 			callback(error, staleUserSecurityInfo);
 		}
         else {
-            self.psUserCreds = psUserCreds;
-            
             logger.info("UserId: " + self.userId());
             logger.info("DeviceId: " + self.deviceId());
 
@@ -248,109 +281,11 @@ Operation.prototype.prepareToEndDownloadWithRCAndErrorDetails = function (return
 /*
 Callback has parameters:
     1) error;
-    2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because ther security information is stale; this parameter is given as null if error is null
-    2) if error is null, a PSUserCredentials object (use the .stored property of that object to see if the user exists in persistent storage).
+    2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because there security information is stale; this parameter is given as null if error is null
 */
 Operation.prototype.checkForExistingUser = function (callback) {
     var self = this;
-    
-    // 6/14/16; I'm going to immediately create the PSUserCredentials object, and also do a lookup now because with some of my UserCredentials objects (Facebook, specifically), I need the currently stored creds, if any, to do validation.
-
-    try {
-        self.psUserCreds = new PSUserCredentials(self.userCreds);
-    } catch (error) {
-        logger.error("Failed creating PSUserCredentials");
-        logger.error(error);
-        callback(error, false, null);
-        return;
-    }
-
-    // 6/15/16: Identified a problem: I was doing a lookup before having done a validation. For Google creds, this meant we couldn't yet do the lookup because we haven't decrypted the IdToken, which give our "sub" identifier. For Facebook, this was OK since we have a non-encrpyted userId). Solution: I'm now making the decision about whether to do the lookup first (versus the validate first) on the basis of whether the specific creds (FB or Google at this point) gives us a non-null .persistentInvariant() function call value.
-
-    var lookupKeys = self.userCreds.signedInCreds().persistentInvariant();
-    
-    if (lookupKeys) {
-
-        logger.info("We have keys in order to do the lookup.");
-        self.psUserCreds.lookup(function (error) {
-            if (error) {
-                callback(error, false, null);
-            }
-            else {
-                var mongoCreds = null;
-                if (self.psUserCreds.stored) {
-                    mongoCreds = self.psUserCreds.creds;
-                }
-
-                self.userCreds.signedInCreds().validate(mongoCreds, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
-                    if (error) {
-                        callback(error, staleUserSecurityInfo, null);
-                    }
-                    else {
-                        finishCheckForExistingUser(self.psUserCreds, credsChangedDuringValidation, callback);
-                    }
-                });
-            }
-        });
-    }
-    else {
-        logger.info("We don't have the keys to do the lookup. Validate first.");
-        self.userCreds.signedInCreds().validate(null, function(error, staleUserSecurityInfo, credsChangedDuringValidation) {
-            if (error) {
-                callback(error, staleUserSecurityInfo, null);
-            }
-            else {
-                self.psUserCreds.lookup(function (error) {
-                    if (error) {
-                        callback(error, false, null);
-                    }
-                    else {
-                        finishCheckForExistingUser(self.psUserCreds, credsChangedDuringValidation, callback);
-                    }
-                });
-            }
-        });
-    }
-}
-
-function finishCheckForExistingUser(psUserCreds, credsChangedDuringValidation, callback) {
-    logger.debug("psUserCreds.stored: " + psUserCreds.stored + "; credsChangedDuringValidation: " + credsChangedDuringValidation);
-    
-    if (psUserCreds.stored) {
-        if (credsChangedDuringValidation) {
-            // Update persistent store with user creds data.
-            psUserCreds.update(function (error) {
-                if (error) {
-                    callback(error, false, null);
-                }
-                else {
-                    callback(null, null, psUserCreds);
-                }
-            });
-        }
-        else {
-            // Populate user creds object from persistent store.
-            psUserCreds.populateFromUserCreds(function (error) {
-                if (error) {
-                    callback(error, false, null);
-                }
-                else {
-                    callback(null, null, psUserCreds);
-                }
-            });
-        }
-    } 
-    else {
-        callback(null, null, psUserCreds);
-    }
-}
-
-Operation.prototype.userId = function() {
-    return this.psUserCreds._id;
-}
-
-Operation.prototype.deviceId = function() {
-    return this.userCreds.mobileDeviceUUID;
+    self.psUserCreds.lookupAndValidate(callback);
 }
 
 /**

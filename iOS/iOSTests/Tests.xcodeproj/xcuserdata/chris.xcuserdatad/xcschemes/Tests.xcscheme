@@ -69,6 +69,12 @@
                   Identifier = "SharingUsers/testPreparationCreatePersistedInvitations()">
                </Test>
                <Test
+                  Identifier = "SharingUsers/testThatGettingLinkedAccountsByOwningUserFails()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatInvitationsWereRedeemed()">
+               </Test>
+               <Test
                   Identifier = "SharingUsers/testThatInviteCapabilitySharingUserCanCreateSharingInvitation()">
                </Test>
                <Test

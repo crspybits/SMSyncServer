@@ -94,7 +94,22 @@ class SharingUsers: BaseClass {
     }
     
     func testThatRedeemingSharingInvitationByOwningExclusiveUserFails() {
-        XCTFail()
+        let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
+        let redeemSharingInvitationDone = self.expectationWithDescription("Created Invitation")
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.createSharingInvitation(capabilities: self.capabilities, completion: { (invitationCode, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(invitationCode != nil)
+                createSharingInvitationDone.fulfill()
+                
+                SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitation.stringValue) { (linkedOwningUserId, error) in
+                    XCTAssert(linkedOwningUserId == nil)
+                    XCTAssert(error != nil)
+                    redeemSharingInvitationDone.fulfill()
+                }
+            })
+        }
     }
     
     // The following tests are disabled because either you have to do them in a particular order, or you have to make sure to sign in to the right account to carry them out.
@@ -127,8 +142,8 @@ class SharingUsers: BaseClass {
         let checkRedeemedInvitations = self.expectationWithDescription("Check Invitation")
 
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.getLinkedAccountsForSharingUser { (linkedAccounts, apiResult) in
-                XCTAssert(apiResult.error != nil)
+            SMSyncServerUser.session.getLinkedAccountsForSharingUser { (linkedAccounts, error) in
+                XCTAssert(error != nil)
                 checkRedeemedInvitations.fulfill()
             }
         }
@@ -136,14 +151,15 @@ class SharingUsers: BaseClass {
         self.waitForExpectations()
     }
     
-    // 3) NOW: Launch app, without running testing, signout as the owning user, and sign in as a sharing (Facebook) user. Then, run the following test:
+    // 3) NOW: Launch app, without running testing, signout as the owning user, and sign in as a sharing (Facebook) user. 
+    // Then, run the following test:
     func testThatInvitationsWereRedeemed() {
         let checkRedeemedInvitations = self.expectationWithDescription("Check Invitation")
 
         self.waitUntilSyncServerUserSignin() {
             // Use REST API call to check which linked/shared accounts we have.
-            SMServerAPI.session.getLinkedAccountsForSharingUser { (linkedAccounts, apiResult) in
-                XCTAssert(apiResult.error == nil)
+            SMSyncServerUser.session.getLinkedAccountsForSharingUser { (linkedAccounts, error) in
+                XCTAssert(error == nil)
                 XCTAssert(linkedAccounts != nil)
                 XCTAssert(linkedAccounts!.count == 1)
                 XCTAssert(linkedAccounts![0].capabilityMask == self.capabilities)
@@ -162,11 +178,11 @@ class SharingUsers: BaseClass {
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitation.stringValue, completion: { (couldNotRedeem, error) in
-                XCTAssert(couldNotRedeem)
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitation.stringValue) { (linkedOwningUserId, error) in
+                XCTAssert(linkedOwningUserId == nil)
                 XCTAssert(error != nil)
                 redeemedSharingInvitationDone.fulfill()
-            })
+            }
         }
         
         self.waitForExpectations()
@@ -177,11 +193,11 @@ class SharingUsers: BaseClass {
         let redeemAttemptDone = self.expectationWithDescription("Redeem Attempt Done")
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: "", completion: { (couldNotRedeem, error) in
-                XCTAssert(couldNotRedeem)
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: "") { (linkedOwningUserId, error) in
+                XCTAssert(linkedOwningUserId == nil)
                 XCTAssert(error != nil)
                 redeemAttemptDone.fulfill()
-            })
+            }
         }
         
         self.waitForExpectations()
@@ -201,12 +217,12 @@ class SharingUsers: BaseClass {
         
         self.waitForExpectations()
     }
-    
-    func testThatInviteCapabilitySharingUserCanCreateSharingInvitation() {
+
+    func testThatRedeemingExpiredInvitationFails() {
         XCTFail()
     }
     
-    func testThatRedeemingExpiredInvitationFails() {
+    func testThatInviteCapabilitySharingUserCanCreateSharingInvitation() {
         XCTFail()
     }
     

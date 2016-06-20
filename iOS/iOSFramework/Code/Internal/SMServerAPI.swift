@@ -13,20 +13,20 @@
 import Foundation
 import SMCoreLib
 
-public struct SMOperationResult {
+internal struct SMOperationResult {
     var status:Int!
     var error:String!
     var count:Int!
 }
 
-public struct SMServerAPIResult {
+internal struct SMServerAPIResult {
     var returnCode:Int?
     var error: NSError?
 
-    public init() {
+    internal init() {
     }
     
-    public init(returnCode:Int?, error:NSError?) {
+    internal init(returnCode:Int?, error:NSError?) {
         self.error = error
         self.returnCode = returnCode
     }

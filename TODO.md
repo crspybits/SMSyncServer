@@ -14,6 +14,12 @@
 
 1. The "big" spinner should be activated when doing server interaction wrt. users: e.g., CheckForExistingUser because otherwise, long server latencies with these operations make it seem like nothing is going on. (This comes up with Heroku because the server spins down and takes some time to come back up).
 
+1. Need to have a way to rotate images.
+
+1. Need to have a way to share images-- e.g., via Facebook or text messages or email. Or to save to Photo Library.
+
+1. Need to be able to click on URL's.
+
 ## FUNCTIONALITY
 
 1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
@@ -65,6 +71,8 @@
 1. Making the client API fully reentrant: I have not yet specifically taken steps to ensure that the client API is reentrant. It should be analyzed to see if multiple threads making calls on the SMSyncServer.session calls may cause synchronization problems. (Note that I have taken steps within the client-side SMSyncServer framework to deal with synchronization issues due to the asynchronous callbacks present within the client-side framework). For now, I'm assuming that the typical use case for the client API is where it is called from *only* the main thread, and this reentrancy issue should not be an issue.
 
 1. Enabling README and other "static" files to be uploaded from a client to server. That is, files that should *not* be downloaded or synced to other devices. These files will also include files such an index.html file that could be used to allow the user to view the app's files. We need to handle these static files quite differently than the other files I've been considering. I could either keep a record of them in the server file index, or not. In any event, a normal getFileIndex from a client should not return these files-- so they don't get downloaded. I tried an implementation of README files using the normal sync mechanism, and its a mess. Way more complicated than it ought to be-- e.g., there's a nasty race condition where multiple apps may be uploading the README, and only one will win-- the others will fail because they are using the same remote file name. That's another thing that will have to be included in this functionality is the ability to overwrite the existing remote cloud file.
+
+1. Need to be able to deal with changes in sizes of some files/file contents in cloud storage. For example, from my Mac, I just opened up several image files that were stored in my SharedNotes.SyncServer folder, and *rotated* them. I did this despite the fact that I know that I shouldn't be messing around with these internals. Rotation did indeed change the file sizes and contents. What this really represents is a type of version change of the file. How to deal with?
 
 ## SHARING
 
