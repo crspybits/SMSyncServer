@@ -1934,6 +1934,12 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0700;
+				TargetAttributes = {
+					52D82BFDD1E808D9CB257431922C1EE4 = {
+						DevelopmentTeam = BH68R29JBE;
+						DevelopmentTeamName = "Spastic Muffin, LLC";
+					};
+				};
 			};
 			buildConfigurationList = 2D8E8EC45A3A1A1D94AE762CB5028504 /* Build configuration list for PBXProject "Pods" */;
 			compatibilityVersion = "Xcode 3.2";

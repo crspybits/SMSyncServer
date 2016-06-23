@@ -505,6 +505,8 @@
 				TargetAttributes = {
 					83D3E8741C4C01E800BFDA93 = {
 						CreatedOnToolsVersion = 7.2;
+						DevelopmentTeam = BH68R29JBE;
+						DevelopmentTeamName = "Spastic Muffin, LLC";
 					};
 					83D3E88B1C4C01E800BFDA93 = {
 						CreatedOnToolsVersion = 7.2;

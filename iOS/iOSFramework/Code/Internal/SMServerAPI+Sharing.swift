@@ -115,7 +115,7 @@ internal extension SMServerAPI {
             var internalUserId:SMInternalUserId?
             var linkedOwningUserId:SMInternalUserId?
 
-            if nil == result.error {
+            if nil == result.error || result.returnCode == SMServerConstants.rcUserOnSystem {
                 internalUserId = serverResponse![SMServerConstants.internalUserId] as? String
                 if nil == internalUserId {
                     result.error = Error.Create("Didn't get internalUserId back from server")

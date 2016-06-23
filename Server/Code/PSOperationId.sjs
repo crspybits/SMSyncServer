@@ -77,7 +77,7 @@ PSOperationId.prototype.storeNew = function (callback) {
     // Make sure this user/device doesn't already have an operationId.
     var query = {userId: self.userId, deviceId: self.deviceId};
     
-    Common.lookup(query, props, collectionName, function (error, objectFound) {
+    Common.lookup(query, query, props, collectionName, function (error, objectFound) {
         if (error) {
             callback(error);
         }

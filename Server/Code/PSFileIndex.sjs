@@ -186,7 +186,7 @@ PSFileIndex.prototype.updateOrStoreNew = function (sameVersionIfExists, callback
 // Looks up a PSFileIndex object based on the instance values. On success the instance has its values populated by the found object.
 // Callback parameters: 1) error, 2) if error is null, a boolean indicating if the object could be found. It is an error for more than one object to be found in a query using the instance values.
 PSFileIndex.prototype.lookup = function (callback) {
-    Common.lookup(this, props, collectionName, callback);
+    Common.lookup(this, this, props, collectionName, callback);
 }
 
 // Parameters: fileId is optional. If you give a fileId, it is not an error for the PSFileIndex object to not exist.

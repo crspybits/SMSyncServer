@@ -946,6 +946,8 @@
 					};
 					83D3ECE41C4DBFCF00BFDA93 = {
 						CreatedOnToolsVersion = 7.2;
+						DevelopmentTeam = BH68R29JBE;
+						DevelopmentTeamName = "Spastic Muffin, LLC";
 					};
 				};
 			};

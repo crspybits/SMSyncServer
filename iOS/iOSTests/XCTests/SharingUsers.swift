@@ -6,6 +6,8 @@
 //  Copyright © 2016 Spastic Muffin, LLC. All rights reserved.
 //
 
+// 6/20/16; I've been having problems with XCTests failing. Just posted to SO about this: http://stackoverflow.com/questions/37922146/xctests-failing-on-physical-device-canceling-tests-due-to-timeout
+
 import XCTest
 @testable import SMSyncServer
 import SMCoreLib

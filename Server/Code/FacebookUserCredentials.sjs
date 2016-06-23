@@ -143,9 +143,13 @@ FacebookUserCredentials.prototype.validate = function (mongoCreds, callback) {
     var self = this;
     
     if (isDefined(mongoCreds)) {
+        if (self.creds.userId != mongoCreds.userId) {
+            callback("Bad userId!", null, false);
+            return;
+        }
+        
         // Existing mongoDB creds for user.
-        if (self.creds.accessToken == mongoCreds.accessToken &&
-            self.creds.userId == mongoCreds.userId) {
+        if (self.creds.accessToken == mongoCreds.accessToken) {
             // Going to take this to mean that the accessToken hasn't changed, and since we already know about it, we must have validated it before.
             callback(null, null, false);
             return;
@@ -209,10 +213,8 @@ FacebookUserCredentials.prototype.validate = function (mongoCreds, callback) {
                 callback(message, true, null);
             }
             else if (result.data.application == self.facebookSecrets.application &&
-                result.data.app_id == self.facebookSecrets.app_id &&
-                result.data.user_id == self.creds.userId &&
-                self.creds.userId == mongoCreds.userId) {
-                
+                    result.data.app_id == self.facebookSecrets.app_id &&
+                    result.data.user_id == self.creds.userId) {
                 // Return the last parameter as true because the creds access token we have is not stored in mongo, and needs to be stored there.
                 callback(null, null, true);
             }

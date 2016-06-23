@@ -92,6 +92,7 @@ public enum SMUserCredentials {
                 Assert.badMojo(alwaysPrintThisString: "Yikes: Not allowed!")
             
             case .SharingUser(owningUserId: let owningUserId):
+                Log.msg("owningUserId: \(owningUserId)")
                 userCredentials[SMServerConstants.linkedOwningUserId] = owningUserId
             }
             
@@ -221,7 +222,7 @@ public class SMSyncServerUser {
         
         SMServerAPI.session.redeemSharingInvitation(
             userCredParams, invitationCode: invitationCode, completion: { (linkedOwningUserId, internalUserId, apiResult) in
-            
+            Log.msg("SMServerAPI linkedOwningUserId: \(linkedOwningUserId)")
             let returnError = self.processSignInResult(forExistingUser: true, apiResult: apiResult)
             self.finish(withError: returnError) { error in
                 completion?(linkedOwningUserId:linkedOwningUserId, error: error)

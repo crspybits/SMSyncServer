@@ -5,6 +5,8 @@
 */
 'use strict';
 
+var ObjectID = require('mongodb').ObjectID;
+
 var Mongo = require('./Mongo');
 var jsonExtras = require('./JSON');
 var logger = require('./Logger');
@@ -171,21 +173,23 @@ function PSUserCredentials(credentialsData) {
 
 // instance methods
 
-PSUserCredentials.prototype.initEmptySpecificCreds = function() {
+// The specific UserCredentials subclass must support this userType.
+PSUserCredentials.prototype.initEmptySpecificCreds = function(userType) {
     var self = this;
     
     // Assume each of the factory methods knows when it should create its creds. Stop at the first one that works.
     for (var methodIndex in emptyCreationMethods) {
         var factoryMethod = emptyCreationMethods[methodIndex];
         
-        self.specificCreds = factoryMethod(self.userType, self.accountType);
+        // Not using self.userType here because that is not defined; self.userTypes is defined, and it's an array.
+        self.specificCreds = factoryMethod(userType, self.accountType);
         if (self.specificCreds) {
             break;
         }
     }
     
     if (!self.specificCreds) {
-        throw new Error("Couldn't create specific account creds!");
+        throw new Error("Couldn't create specific account creds: userType: " + userType + "; accountType: " + self.accountType);
     }
 }
 
@@ -242,7 +246,12 @@ PSUserCredentials.prototype.initLinkedOwningUser = function (callback) {
     logger.info("About to callPSUserCredentials constructor.");
     
     var psUserCreds = new PSUserCredentials();
-    psUserCreds.lookup(self.linkedOwningUserId, function (error) {
+    var options = {
+        lookupId: self.linkedOwningUserId,
+        userType: ServerConstants.userTypeOwning
+    };
+    
+    psUserCreds.lookup(options, function (error) {
         if (error) {
             callback("Failed on lookup for PSUserCredentials: "
                 + JSON.stringify(error));
@@ -420,46 +429,74 @@ function queryData(self) {
     };
 }
 
-// Lookup user creds in persistent storage. A .specificCreds object is created (and initialized) after a successful lookup, if there is not one.
-// Parameters:
-// 1) (optional) lookupId string of a PSUserCredentials object: lookup purely by this _id. Must be an ObjectId.
-// 2) Callback: With a single parameter: error. If the error is null in the callback, check the member property .stored to see if the user creds are stored in persistent storage. The .stored member will be null if there is an error.
-PSUserCredentials.prototype.lookup = function (lookupId, callback) {
+/* Lookup user creds in persistent storage. A .specificCreds object is created (and initialized) after a successful lookup, if there is not one.
+
+    Parameters:
+    1) Options: A JSON object with the following keys and values:
+        lookupId: string of a PSUserCredentials object: lookup purely by this _id. Can be a string or ObjectId.
+        userType: either ServerConstants.userTypeSharing or ServerConstants.userTypeOwning
+            If you don't give this, it defaults to ServerConstants.userTypeSharing
+            This is used when if a .specificCreds object is created, to determine the userType of that object.
+    2) Callback: With a single parameter: error. If the error is null in the callback, check the member property .stored to see if the user creds are stored in persistent storage. The .stored member will be null if there is an error.
+*/
+PSUserCredentials.prototype.lookup = function (options, callback) {
     var self = this;
     
     //logger.debug("self: " + JSON.stringify(self));
-    
+    logger.debug("options: " + JSON.stringify(options));
+
     self.stored = null;
     var query = null;
+    var lookupId = options.lookupId;
+    var userType = options.userType;
     
-    if (typeof lookupId === 'function') {
-        callback = lookupId;
-        lookupId = null;
-        
-        query = queryData(self);
-        // lookup does flattening of query.
+    if (typeof options === 'function') {
+        callback = options;
     }
-    else {
+    
+    if (isDefined(lookupId)) {
+        if (typeof lookupId === 'string') {
+            try {
+                lookupId = new ObjectID.createFromHexString(lookupId);
+            } catch (error) {
+                callback(error);
+                return;
+            }
+        }
+    
         query = { _id: lookupId };
     }
+    else {
+        query = queryData(self);
+        // Common.lookup does *not* do flattening of query.
+        query = jsonExtras.flatten(query);
+    }
     
-    logger.debug("query: " + JSON.stringify(query));
+    if (!isDefined(userType)) {
+        userType = ServerConstants.userTypeSharing;
+    }
+    
+    if (!isDefined(query)) {
+        throw new Error("query is not defined!")
+    }
+    
+    logger.debug("query: " + JSON.stringify(query) + "; " + lookupId + "; " + typeof lookupId);
 
-    Common.lookup(query, props, collectionName, function (error, objectFound) {
+    var result = {};
+    Common.lookup(query, result, props, collectionName, function (error, objectFound) {
         if (error) {
             callback(error);
         }
         else {
             self.stored = objectFound;
+            logger.debug("self: " + JSON.stringify(self));
             
             if (objectFound) {
-                Common.assignPropsTo(self, query, props);
-                
-                //logger.debug("objectFound/self: " + JSON.stringify(self));
+                Common.assignPropsTo(self, result, props);
 
                 if (!isDefined(self.specificCreds)) {
                     // This will happen when we create a new PSUserCredentials object for the sole purpose of looking up by an id.
-                    self.initEmptySpecificCreds();
+                    self.initEmptySpecificCreds(userType);
                 }
                 
                 self.specificCreds.setPersistent(self.creds);
@@ -548,7 +585,12 @@ function makeAccountListAux(linkedAccounts, currIndex, currResult, callback) {
         }
         
         // Do a separate lookup for that owningUser to get its username.
-        psUserCreds.lookup(linkedAccount.owningUser, function (error) {
+        var options = {
+            lookupId: linkedAccount.owningUser,
+            userType: ServerConstants.userTypeOwning
+        };
+        
+        psUserCreds.lookup(options, function (error) {
             if (error) {
                 logger.error("Failed on lookup for PSUserCredentials: " + JSON.stringify(error));
                 callback(error, null);

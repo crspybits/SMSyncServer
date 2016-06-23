@@ -158,6 +158,8 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
                 }
             }
             
+            Log.msg("self.currentOwningUserId: \(self.currentOwningUserId)")
+            
             let syncServerFacebookUser = SMUserCredentials.Facebook(userType: .SharingUser(owningUserId: self.currentOwningUserId), accessToken: FBSDKAccessToken.currentAccessToken().tokenString, userId: FBSDKAccessToken.currentAccessToken().userID, userName: self.fbUserName)
             
             // We are not going to allow the user to create a new sharing user without an invitation code. There just doesn't seem any point: They wouldn't have any access capabilities. So, if we don't have an invitation code, check to see if this user is already on the system.
@@ -173,13 +175,14 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
                 // Success on redeeming does the sign callback in process.
                 SMSyncServerUser.session.redeemSharingInvitation(invitationCode: sharingInvitationCode!, userCreds: syncServerFacebookUser) { (linkedOwningUserId, error) in
                     if error == nil {
+                        // Now, when the Facebook creds get sent to the server, they'll have this linkedOwningUserId.
+                        self.currentOwningUserId = linkedOwningUserId
+                        Log.msg("redeemSharingInvitation self.currentOwningUserId: \(self.currentOwningUserId); linkedOwningUserId: \(linkedOwningUserId)")
+                        
                         self.delegate.smUserSignIn(userJustSignedIn: self)
                     
                         // If we could not redeem the invitation (couldNotRedeemSharingInvitation is true), we want to set the invitation to nil-- it was bad. If we could redeem it, we also want to set it to nil-- no point in trying to redeem it again.
                         self.delegate.smUserSignIn(resetSharingInvitationCodeForUserSignIn: self)
-                        
-                        // Now, when the Facebook creds get sent to the server, they'll have this linkedOwningUserId.
-                        self.currentOwningUserId = linkedOwningUserId
                     }
                     else if error != nil {
                         // TODO: Give them an error message.
