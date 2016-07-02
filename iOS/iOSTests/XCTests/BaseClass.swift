@@ -17,6 +17,7 @@ import XCTest
 import SMCoreLib
 
 class BaseClass: XCTestCase {
+    var timedCallback:TimedCallback?
     var initialDelayBeforeFirstTest:NSTimeInterval = 20
     let minServerResponseTime:NSTimeInterval = 15
     var extraServerResponseTime:Double = 0
@@ -118,7 +119,9 @@ class BaseClass: XCTestCase {
     }
     
     func waitUntilSyncServerUserSignin(completion:()->()) {
-        TimedCallback.withDuration(Float(self.initialDelayBeforeFirstTest)) {
+        Log.special("Waiting for user signin to server...")
+        self.timedCallback = TimedCallback.withDuration(Float(self.initialDelayBeforeFirstTest)) {
+            Log.special("Starting XCTest...")
             self.initialDelayBeforeFirstTest = 0.0
             self.processModeChanges = true
             completion()

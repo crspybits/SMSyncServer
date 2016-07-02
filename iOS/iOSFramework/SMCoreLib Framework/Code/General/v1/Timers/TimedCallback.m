@@ -8,6 +8,7 @@
 
 #import "TimedCallback.h"
 #import "RepeatingTimer.h"
+#import "SPASLog.h"
 
 @interface TimedCallback()
 @property (nonatomic, strong) void (^callback)(void);
@@ -19,6 +20,7 @@
 - (id) initWithDuration: (float) durationInSeconds andCallback: (void (^)(void)) callback {
     self = [super init];
     if (self) {
+        SPASLog(@"durationInSeconds: %f", durationInSeconds);
         self.callback = callback;
         
         self.timer = [[RepeatingTimer alloc] initWithInterval:durationInSeconds selector:@selector(doCallback) andTarget:self];
