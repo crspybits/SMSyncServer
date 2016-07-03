@@ -20,6 +20,16 @@
 
 1. Need to be able to click on URL's.
 
+1. I got a crash with app after I got a "red spinner" error, and did a reset by tapping on the red spinner. Crash occurred immediately after I did a sync by pulling down on the table view.
+
+1. HIGH PRIORITY. I got a "red spinner" error with app running on iPad when I tried to refresh when there were a bunch of files to download. This was with server running on Heroku. My guess right now is that this is due to a 30s run time limit per operation imposed by Heroku. From the server log, the operation was running for more than 30s. See also https://www.heroku.com/policy/aup#quota
+
+1. We need to present a sharing user with a set of linked/shared account options (if more than one), when they are signing in.
+
+1. When I tried to upload files from my iPhone, and there was a lock on the server, it seemed to have completed, but gave no error and didn't sync. There was a lock on the server, and no error is given in this situation. While this is "normal" operation right now, we need some better way of dealing with this. As a user, I assumed my files were synced, but they were not. (e.g., the files were not present on my Google Drive).
+
+1. It would be nice to have a Settings option to allow images to be saved at a lower resolution and/or JPG image quality. This would save server space, and reduce the amount of time spent syncing.
+
 ## FUNCTIONALITY
 
 1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
@@ -77,6 +87,8 @@
 ## SHARING
 
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
+
+1. Invitations for sharing. I could have a different redemption policy than I currently have. Right now, invitations can be redeemed exactly once for up to 24 hours after they are created. I could instead have different, perhaps selectable, policies. E.g., they could last for a period of time and allow for *all* redemptions within that time period. I could also allow a certain *number* of redemptions.
 
 1. 5/27/16. Hmmm. I think I just found a problem with the [sharing of Google Drive accounts](https://support.google.com/a/answer/33330?hl=en): "If you have multiple users frequently accessing the same account from various locations, you may reach a Gmail threshold and your account will be temporarily locked down." Actually, I think this is a problem due to this issue with sharing, plus a mechanism I implemented recently. On the server, I get a stale IdToken with OAuth2, and I send the return code rcStaleUserSecurityInfo back to the client app-- I let the user app refresh the IdToken. While after the initial signin by the user I have a refresh token on the server, I don't do the refresh of the IdToken on the server because it's a chicken and egg issue: Each server API call passes the IdToken along as its security identifier. I want to verify the security of the user before I do anything else on the server-- so I do a `verifyIdToken` call (using a Google Node.js API). In the normal case, `verifyIdToken` proceeds without error (thus authenticating the user), and returns an anonymized identifier for the user (Google calls it `sub`) that I use to index into my collection of users in MongoDB. If the `verifyIdToken` call fails, e.g., because the IdToken is stale, I don't allow this indexing, and instead, I send rcStaleUserSecurityInfo back to the client app, which assumes that the client side will be able to do the refresh of the IdToken (which is currently the way it works in the SMSyncServer client). I believe I need to rethink this so that the refresh can occur purely on the server-- to enable [sharing with respect to the issue as stated](https://support.google.com/a/answer/33330?hl=en), and to deal with more extended concepts of sharing-- e.g., where a user would not have the Google Drive (or other cloud creds) and use some other means, like Facebook creds, to authenticate.
 

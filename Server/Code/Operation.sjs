@@ -95,7 +95,7 @@ Operation.prototype.endIfUserNotAuthorizedFor = function (capability) {
     else {
         var message = "User is not authorized for: " + capability;
         logger.error(message);
-        op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         return false;
     }
 }

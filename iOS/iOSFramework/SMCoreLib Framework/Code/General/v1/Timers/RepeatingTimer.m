@@ -20,7 +20,7 @@
 - (id) initWithInterval: (float) intervalInSeconds selector: (SEL) selector andTarget: (id) target {
     self = [super init];
     if (self) {
-        SPASLogDetail(@"Constructor");
+        SPASLog(@"Constructor");
         NSMethodSignature * mySignature =
             [target methodSignatureForSelector:selector];
         self.invocation = [NSInvocation
@@ -39,12 +39,12 @@
 
 - (void) start {
     if (!self.timer) {
-        SPASLogDetail(@"start");
+        SPASLog(@"start");
         // 2/13/16; Just found a bug here. When I created a timer from a MultipeerConnectivity delegate (specificially, from my SMMultiPeer.swift), the timer callback would not get called. Adding the timer to the runloop didn't work. I had to dispatch it to the main thread.
         // See also http://stackoverflow.com/questions/9918103/nstimer-requiring-me-to-add-it-to-a-runloop/35386962#35386962
         
         [NSThread runSyncOnMainThread:^{
-            SPASLogDetail(@"start: On main queue");
+            SPASLog(@"start: On main queue");
             self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval  invocation: self.invocation repeats:YES];
         }];
 
@@ -54,12 +54,12 @@
 }
 
 - (void) cancel {
-    SPASLogDetail(@"cancel");
+    SPASLog(@"cancel");
 
     // "Calling this method requests the removal of the timer from the current run loop; as a result, you should always call the invalidate method from the same thread on which the timer was installed." (https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSTimer_Class/)
     
     [NSThread runSyncOnMainThread:^{
-        SPASLogDetail(@"cancel: On main queue");
+        SPASLog(@"cancel: On main queue");
         [self.timer invalidate];
         self.timer = nil;
     }];

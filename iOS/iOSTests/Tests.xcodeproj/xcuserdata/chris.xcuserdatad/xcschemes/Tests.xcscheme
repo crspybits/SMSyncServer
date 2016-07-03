@@ -66,10 +66,22 @@
                   Identifier = "DownloadRecovery/testThatCrash4RecoveryAfterTwoFileWorks()">
                </Test>
                <Test
+                  Identifier = "SharingUsers/testPreparationCreatePersistedInvitation1()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testPreparationCreatePersistedInvitation2()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testPreparationCreatePersistedInvitation3()">
+               </Test>
+               <Test
                   Identifier = "SharingUsers/testPreparationCreatePersistedInvitations()">
                </Test>
                <Test
                   Identifier = "SharingUsers/testThatGettingLinkedAccountsByOwningUserFails()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatInvitationWasRedeemed()">
                </Test>
                <Test
                   Identifier = "SharingUsers/testThatInvitationsWereRedeemed()">
@@ -88,6 +100,9 @@
                </Test>
                <Test
                   Identifier = "SharingUsers/testThatRedeemingExpiredInvitationFails()">
+               </Test>
+               <Test
+                  Identifier = "SharingUsers/testThatRedeemingInvitationFromSameOwningUserAccountOverwrites()">
                </Test>
                <Test
                   Identifier = "SharingUsers/testThatRedeemingSharingInvitationWorks()">

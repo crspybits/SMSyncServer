@@ -12,6 +12,12 @@ import SMSyncServer
 import SMCoreLib
 import Google
 
+/* 6/25/16; Just started seeing this issue: https://forums.developer.apple.com/message/148335#148335
+Failed to get remote view controller with error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.uikit.viewservice.com.apple.SafariViewService" UserInfo={NSDebugDescription=connection to service named com.apple.uikit.viewservice.com.apple.SafariViewService}
+It's only happening in the simulator. The console log also shows:
+A new version of the Google Sign-In iOS SDK is available: https://developers.google.com/identity/sign-in/ios/release
+so, it's possible this issue has been resolved.
+*/
 /* TODO: Handle this: Got it when I pressed the Sign In button to connect to Google.
 2015-11-26 21:09:38.198 NetDb[609/0x16e12f000] [lvl=3] __65-[GGLClearcutLogger sendNextPendingRequestWithCompletionHandler:]_block_invoke_3() Error posting to Clearcut: Error Domain=NSURLErrorDomain Code=-1005 "The network connection was lost." UserInfo={NSUnderlyingError=0x15558de70 {Error Domain=kCFErrorDomainCFNetwork Code=-1005 "(null)" UserInfo={_kCFStreamErrorCodeKey=57, _kCFStreamErrorDomainKey=1}}, NSErrorFailingURLStringKey=https://play.googleapis.com/log, NSErrorFailingURLKey=https://play.googleapis.com/log, _kCFStreamErrorDomainKey=1, _kCFStreamErrorCodeKey=57, NSLocalizedDescription=The network connection was lost.}
 */
