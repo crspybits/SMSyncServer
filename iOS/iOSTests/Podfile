@@ -1,4 +1,6 @@
 source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/crspybits/Specs.git'
+
 # Uncomment this line to define a global platform for your project
 platform :ios, '8.0'
 # Uncomment this line if you're using Swift
@@ -10,6 +12,7 @@ target ‘Tests’ do
 	pod 'FBSDKCoreKit'
 	pod 'FBSDKShareKit'
 	pod 'FBSDKLoginKit'
+	pod 'SMCoreLib' # SMCoreLib imports AFNetworking
 end
 
 target ‘XCTests’ do
