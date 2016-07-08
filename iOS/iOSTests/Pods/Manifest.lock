@@ -14,12 +14,12 @@ PODS:
   - AFNetworking/Serialization (3.1.0)
   - AFNetworking/UIKit (3.1.0):
     - AFNetworking/NSURLSession
-  - Bolts (1.7.0):
-    - Bolts/AppLinks (= 1.7.0)
-    - Bolts/Tasks (= 1.7.0)
-  - Bolts/AppLinks (1.7.0):
+  - Bolts (1.8.0):
+    - Bolts/AppLinks (= 1.8.0)
+    - Bolts/Tasks (= 1.8.0)
+  - Bolts/AppLinks (1.8.0):
     - Bolts/Tasks
-  - Bolts/Tasks (1.7.0)
+  - Bolts/Tasks (1.8.0)
   - FBSDKCoreKit (4.13.1):
     - Bolts (~> 1.7)
   - FBSDKLoginKit (4.13.1):
@@ -56,10 +56,12 @@ PODS:
     - GoogleSymbolUtilities (~> 1.0)
   - HPTextViewTapGestureRecognizer (0.1)
   - Reachability (3.2)
-  - SMCoreLib (0.0.2):
+  - SMCoreLib (0.0.9):
     - AFNetworking
     - HPTextViewTapGestureRecognizer (~> 0.1)
     - Reachability
+  - SMSyncServer (0.0.1):
+    - SMCoreLib
 
 DEPENDENCIES:
   - Bolts
@@ -68,10 +70,11 @@ DEPENDENCIES:
   - FBSDKShareKit
   - Google/SignIn
   - SMCoreLib
+  - SMSyncServer
 
 SPEC CHECKSUMS:
   AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
-  Bolts: a0058fa3b331c5a1e4402d534f2dae36dbff31e4
+  Bolts: 127daec4981dab569d07314c198dfcae47f4ce4c
   FBSDKCoreKit: 2807fe0da2ddb49a1469da6d6ff597f99912980f
   FBSDKLoginKit: 6d350cb6a22d6956e9d078885de6ee8a0ebc51b4
   FBSDKShareKit: c9438df7573b33780ac8c3451201c5ebb260ffca
@@ -87,8 +90,9 @@ SPEC CHECKSUMS:
   GoogleUtilities: 56c5ac05b7aa5dc417a1bb85221a9516e04d7032
   HPTextViewTapGestureRecognizer: 6a73fd09f858e49a2743c3a338dc5c0791b0fae0
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
-  SMCoreLib: 9f4756a9abfa695802a4f225e8fac2fff2b86d08
+  SMCoreLib: d42b5ccabbcb7f03f40ce62e07335edb53894596
+  SMSyncServer: 7da799e3946c868240ee81589ae63076865714ff
 
-PODFILE CHECKSUM: 06bc67e76c29ca2da362bed90ee50275325f4e2b
+PODFILE CHECKSUM: 005a23cb1e1b883af03c03a0849d3aa3269415b6
 
 COCOAPODS: 1.0.1

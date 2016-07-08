@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		53904C66DC1AFA04D0E33B99 /* Pods_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B2A1B7545EEE6D83600A84E /* Pods_Tests.framework */; };
-		8305BA731D0D1C5D0000A033 /* SMFacebookUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8305BA711D0D1C5D0000A033 /* SMFacebookUserSignIn.swift */; };
-		8305BA741D0D1C5D0000A033 /* SMGoogleUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8305BA721D0D1C5D0000A033 /* SMGoogleUserSignIn.swift */; };
 		8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */; };
 		8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */; };
 		8322EB921C700F1700DF418C /* ClassExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB911C700F1700DF418C /* ClassExtras.m */; };
@@ -17,6 +15,8 @@
 		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
 		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */; };
 		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
+		83496C911D2F526D00851FEA /* SMFacebookUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83496C8F1D2F526D00851FEA /* SMFacebookUserSignIn.swift */; };
+		83496C921D2F526D00851FEA /* SMGoogleUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83496C901D2F526D00851FEA /* SMGoogleUserSignIn.swift */; };
 		834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 834B166E1CA9FC9500D816EE /* SignInSignOut.swift */; };
 		83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */; };
 		83554C521C817C2B005F0C40 /* DownloadRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83554C511C817C2B005F0C40 /* DownloadRecovery.swift */; };
@@ -25,8 +25,6 @@
 		8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */; };
 		8369D33F1CD49E65006DA33C /* DownloadDeletionRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */; };
 		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
-		839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; };
-		839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 839A06751C4F0CA40037AD9A /* SMSyncServer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
 		839CAE7B1CF0CFBC0072C1BD /* ErrorHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */; };
 		839EC7AB1C894A0B00F9E988 /* DownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */; };
@@ -63,20 +61,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		839A06741C4F0CA40037AD9A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 83D3E9681C4C840C00BFDA93;
-			remoteInfo = SMSyncServer;
-		};
-		839A06781C4F0D980037AD9A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 83D3E9671C4C840C00BFDA93;
-			remoteInfo = SMSyncServer;
-		};
 		83D3E88D1C4C01E800BFDA93 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83D3E86D1C4C01E800BFDA93 /* Project object */;
@@ -93,7 +77,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				839A06771C4F0D980037AD9A /* SMSyncServer.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -105,8 +88,6 @@
 		22877A98B0C186208957351A /* Pods-Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-Tests/Pods-Tests.release.xcconfig"; sourceTree = "<group>"; };
 		719CAD7D0463A4990ABE1D4D /* Pods-XCTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-XCTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-XCTests/Pods-XCTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B2A1B7545EEE6D83600A84E /* Pods_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		8305BA711D0D1C5D0000A033 /* SMFacebookUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFacebookUserSignIn.swift; path = ../../iOSFramework/Code/SignIn/SMFacebookUserSignIn.swift; sourceTree = "<group>"; };
-		8305BA721D0D1C5D0000A033 /* SMGoogleUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleUserSignIn.swift; path = ../../iOSFramework/Code/SignIn/SMGoogleUserSignIn.swift; sourceTree = "<group>"; };
 		8322EB881C70047200DF418C /* TwoDeviceTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TwoDeviceTestCase.swift; path = TwoDeviceTests/TwoDeviceTestCase.swift; sourceTree = "<group>"; };
 		8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatServerHasNewFileWorks.swift; path = TwoDeviceTests/TestThatServerHasNewFileWorks.swift; sourceTree = "<group>"; };
 		8322EB901C700F1700DF418C /* ClassExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClassExtras.h; sourceTree = "<group>"; };
@@ -115,6 +96,8 @@
 		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
 		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFails.swift; path = TwoDeviceTests/TestThatOperationWithLockFails.swift; sourceTree = "<group>"; };
 		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
+		83496C8F1D2F526D00851FEA /* SMFacebookUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFacebookUserSignIn.swift; path = ../../SignIn/SMFacebookUserSignIn.swift; sourceTree = "<group>"; };
+		83496C901D2F526D00851FEA /* SMGoogleUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleUserSignIn.swift; path = ../../SignIn/SMGoogleUserSignIn.swift; sourceTree = "<group>"; };
 		834B166E1CA9FC9500D816EE /* SignInSignOut.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SignInSignOut.swift; path = TwoDeviceTests/SignInSignOut.swift; sourceTree = "<group>"; };
 		83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatRecoveryAfterBackgroundWorks.swift; path = TwoDeviceTests/TestThatRecoveryAfterBackgroundWorks.swift; sourceTree = "<group>"; };
 		83554C511C817C2B005F0C40 /* DownloadRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadRecovery.swift; path = XCTests/DownloadRecovery.swift; sourceTree = SOURCE_ROOT; };
@@ -124,7 +107,6 @@
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
 		836B7F1D1D0A63EA0040F259 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
 		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
-		839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SMSyncServer.xcodeproj; path = ../iOSFramework/SMSyncServer.xcodeproj; sourceTree = "<group>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ErrorHandling.swift; path = XCTests/ErrorHandling.swift; sourceTree = SOURCE_ROOT; };
 		839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletion.swift; path = XCTests/DownloadDeletion.swift; sourceTree = SOURCE_ROOT; };
@@ -170,7 +152,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				839A06761C4F0D980037AD9A /* SMSyncServer.framework in Frameworks */,
 				53904C66DC1AFA04D0E33B99 /* Pods_Tests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -260,21 +241,13 @@
 			name = "Two Device Tests";
 			sourceTree = "<group>";
 		};
-		839739F91CD97E1700FD8520 /* From iOSFramework */ = {
+		839739F91CD97E1700FD8520 /* SignIn */ = {
 			isa = PBXGroup;
 			children = (
-				8305BA711D0D1C5D0000A033 /* SMFacebookUserSignIn.swift */,
-				8305BA721D0D1C5D0000A033 /* SMGoogleUserSignIn.swift */,
+				83496C8F1D2F526D00851FEA /* SMFacebookUserSignIn.swift */,
+				83496C901D2F526D00851FEA /* SMGoogleUserSignIn.swift */,
 			);
-			name = "From iOSFramework";
-			sourceTree = "<group>";
-		};
-		839A06701C4F0CA40037AD9A /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				839A06751C4F0CA40037AD9A /* SMSyncServer.framework */,
-			);
-			name = Products;
+			name = SignIn;
 			sourceTree = "<group>";
 		};
 		83D3E86C1C4C01E800BFDA93 = {
@@ -306,7 +279,7 @@
 				83D3E8781C4C01E800BFDA93 /* AppDelegate.swift */,
 				83D3E8A61C4C064D00BFDA93 /* Core Data */,
 				8333C4EE1C7375A100A0A57A /* View Controllers */,
-				839739F91CD97E1700FD8520 /* From iOSFramework */,
+				839739F91CD97E1700FD8520 /* SignIn */,
 			);
 			path = Code;
 			sourceTree = "<group>";
@@ -375,7 +348,6 @@
 		83D3E8CB1C4C07C200BFDA93 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */,
 				7B2A1B7545EEE6D83600A84E /* Pods_Tests.framework */,
 				9095ABFF5025D674BC7FC45A /* Pods_XCTests.framework */,
 			);
@@ -412,7 +384,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				839A06791C4F0D980037AD9A /* PBXTargetDependency */,
 			);
 			name = Tests;
 			productName = Tests;
@@ -472,12 +443,6 @@
 			mainGroup = 83D3E86C1C4C01E800BFDA93;
 			productRefGroup = 83D3E8761C4C01E800BFDA93 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 839A06701C4F0CA40037AD9A /* Products */;
-					ProjectRef = 839A066F1C4F0CA40037AD9A /* SMSyncServer.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				83D3E8741C4C01E800BFDA93 /* Tests */,
@@ -485,16 +450,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		839A06751C4F0CA40037AD9A /* SMSyncServer.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = SMSyncServer.framework;
-			remoteRef = 839A06741C4F0CA40037AD9A /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		83D3E8731C4C01E800BFDA93 /* Resources */ = {
@@ -638,6 +593,7 @@
 				837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */,
 				83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */,
 				83E0642F1CE51B7A0088BE37 /* CoreDataTests.swift in Sources */,
+				83496C921D2F526D00851FEA /* SMGoogleUserSignIn.swift in Sources */,
 				83E0642D1CE51B7A0088BE37 /* AppFile.swift in Sources */,
 				83554C501C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift in Sources */,
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
@@ -645,14 +601,13 @@
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
 				8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */,
 				834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */,
-				8305BA731D0D1C5D0000A033 /* SMFacebookUserSignIn.swift in Sources */,
-				8305BA741D0D1C5D0000A033 /* SMGoogleUserSignIn.swift in Sources */,
 				83E0642C1CE51B7A0088BE37 /* AppFile.m in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,
 				83D3E8791C4C01E800BFDA93 /* AppDelegate.swift in Sources */,
 				8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */,
 				83A4F1D41C6854C60086B22F /* TestBasics.swift in Sources */,
 				83D3ECD11C4D922800BFDA93 /* ClientAppModel.xcdatamodel in Sources */,
+				83496C911D2F526D00851FEA /* SMFacebookUserSignIn.swift in Sources */,
 				8322EB8B1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift in Sources */,
 				8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */,
 			);
@@ -686,11 +641,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		839A06791C4F0D980037AD9A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = SMSyncServer;
-			targetProxy = 839A06781C4F0D980037AD9A /* PBXContainerItemProxy */;
-		};
 		83D3E88E1C4C01E800BFDA93 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 83D3E8741C4C01E800BFDA93 /* Tests */;
@@ -816,7 +766,10 @@
 				COMPRESS_PNG_FILES = NO;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
-				FRAMEWORK_SEARCH_PATHS = "${TARGET_BUILD_DIR}/**";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"${TARGET_BUILD_DIR}",
+				);
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -840,7 +793,10 @@
 				COMPRESS_PNG_FILES = NO;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				ENABLE_BITCODE = NO;
-				FRAMEWORK_SEARCH_PATHS = "${TARGET_BUILD_DIR}/**";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"${TARGET_BUILD_DIR}",
+				);
 				INFOPLIST_FILE = "Supporting Files/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
