@@ -1,9 +1,9 @@
 Contents:  
-[Introduction](#markdown-header-introduction)  
-[Development Status](#markdown-header-development-status)  
-[Installation](#markdown-header-installation)  
-[SharedNotes Demo App](#markdown-header-shared-notes-demo-app)  
-[Usage examples](#markdown-header-usage-examples)  
+[Introduction](#introduction)  
+[Development Status](#development-status)  
+[Installation](#installation)  
+[SharedNotes Demo App](#shared-notes-demo-app)  
+[Usage examples](#usage-examples)  
 
 # Introduction
 
@@ -104,7 +104,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 
-* One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#markdown-header-shared-notes-demo-app). 
+* One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#shared-notes-demo-app). 
 
 * Next, you need to replace the `GoogleService-Info.plist` symbolic link with your actual .plist file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>.
@@ -169,7 +169,7 @@ In `iOS/SharedNotes` there is a demo app, which enables multiple devices to acce
 [YouTube Demo of SharedNotes app](https://www.youtube.com/watch?v=9AVZa_pNvdo).
 
 # Usage Examples
-* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#markdown-header-shared-notes-demo-app). 
+* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#shared-notes-demo-app). 
 
 * In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted by the SMSyncServer framework after upload. Some of these examples are extracted from README_Examples.swift in the XCTests for the Tests app.
 
