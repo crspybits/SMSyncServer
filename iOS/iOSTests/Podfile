@@ -13,7 +13,7 @@ target ‘Tests’ do
 	pod 'FBSDKShareKit'
 	pod 'FBSDKLoginKit'
 	pod 'SMSyncServer' # SMSyncServer imports SMCoreLib, which imports AFNetworking
-	pod 'SMCoreLib' # SMCoreLib imports AFNetworking
+	# pod 'SMCoreLib' # SMCoreLib imports AFNetworking
 end
 
 target ‘XCTests’ do
