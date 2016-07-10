@@ -7,6 +7,7 @@ var assert = require('assert');
 var logger = require('./Logger');
 
 var mongoose = require('mongoose');
+
 // TODO: Take this out for production.
 mongoose.set('debug, true');
 
@@ -23,18 +24,20 @@ exports.connect = function(mongoDbURL) {
             logger.error("**** ERROR ****: Cannot connect to MongoDb database!");
         }
         else {
+            // This *must* *not* be the mongoose connection. See http://stackoverflow.com/questions/38288598/argument-must-be-a-string-with-certain-mongodb-objectids-in-node-js/38288625#38288625
+            connectedDb = db;
+            logger.info("Mongo: Connected to MongoDb database");
+            
             mongoose.connect(mongoDbURL);
-            var db = mongoose.connection;
-            db.on('error', console.error.bind(console, 'connection error:'));
-            db.once('open', function() {
+            var connectedMongooseDb = mongoose.connection;
+            connectedMongooseDb.on('error', console.error.bind(console, 'connection error:'));
+            connectedMongooseDb.once('open', function() {
+            
                 // SCHEMA's
                 exports.SharingInvitation = PSSharingInvitations.buildSchema(mongoose);
                 
                 logger.info("Mongoose: Connected to MongoDb database");
             });
-            
-            connectedDb = db;
-            logger.info("Mongo: Connected to MongoDb database");
         }
     });
 };

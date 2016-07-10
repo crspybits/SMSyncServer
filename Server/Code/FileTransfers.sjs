@@ -3,7 +3,7 @@
 'use strict';
 
 var Common = require('./Common');
-var CloudStorage = require('./GoogleCloudStorage.sjs');
+var GoogleCloudStorage = require('./GoogleCloudStorage.sjs');
 var Operation = require('./Operation');
 var PSOutboundFileChange = require('./PSOutboundFileChange.sjs');
 var logger = require('./Logger');

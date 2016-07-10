@@ -465,6 +465,9 @@ PSUserCredentials.prototype.lookup = function (options, callback) {
         }
     
         query = { _id: lookupId };
+        
+        // logger.debug("constructor");
+        // console.log(lookupId.constructor);
     }
     else {
         query = queryData(self);

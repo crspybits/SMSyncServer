@@ -167,6 +167,8 @@ Operation.prototype.validateUser = function (options, callback) {
                         return;
                     }
                     
+                    // Why am I creating a new PSOperationId before the .getFor call? It's not used.
+                    /*
                     var psOperationId = null;
                     
                     const operationIdData = {
@@ -181,6 +183,7 @@ Operation.prototype.validateUser = function (options, callback) {
                         self.endWithErrorDetails(error);
                         return;
                     }
+                    */
                     
                     PSOperationId.getFor(lock.operationId, self.userId(), self.deviceId(), function (error, psOperationId) {
                         if (error) {
