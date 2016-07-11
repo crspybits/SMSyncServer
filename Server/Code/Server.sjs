@@ -567,6 +567,10 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
+            if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityDelete)) {
+                return;
+            }
+            
             // We're getting an array of file descriptions from the client.
 
             var clientFileArray = null;
@@ -709,6 +713,8 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
             }
         }
         else {
+            // Not checking for required capabilities because those were checked on upload.
+            
             var psOperationId = null;
 
             try {
@@ -1238,6 +1244,10 @@ app.post('/' + ServerConstants.operationSetupInboundTransfers, function (request
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
+            if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityRead)) {
+                return;
+            }
+            
             logger.info("Parameters for files to transfer from cloud storage: %j", request.body[ServerConstants.filesToTransferFromCloudStorageKey]);
 
             var clientFileArray = null;
@@ -1846,9 +1856,8 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
             // Errors after this point will fail and will have marked the invitation as redeemed. Not the best of techniques, but once we get initial testing done, failures after this point should be rare. It would, of course, be better to rollback our db changes. :(. Thanks MongoDB! Not!
             // In the worst case we get an invitation that is marked as redeemed, but it fails to allow linking for the user. Presumably, the person that did the inviting in that case would have to generate a new invitation.
             
-            logger.trace("Found and redeemed Sharing Invitation: "
-                + JSON.stringify(invitationDoc));
-            
+            logger.trace("Found and redeemed Sharing Invitation: " + JSON.stringify(invitationDoc));
+                
             // Need to link the invitation into the sharing user's account.
             
             var newLinked = {
@@ -1859,12 +1868,20 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
             // First, let's see if the given owningUser is already present in the sharing user's linked accounts.
             var found = false;
             if (psUserCreds.stored) {
+                logger.debug("looking for owningUser in linked accounts");
+                
                 for (var linkedIndex in psUserCreds.linked) {
                     var linkedCreds = psUserCreds.linked[linkedIndex];
-                    if (invitationDoc.owningUser.equals(linkedCreds.owningUser)) {
+                    var linkedOwningUser = linkedCreds.owningUser;
+                    var invitationOwningUser = invitationDoc.owningUser;
+                    
+                    // See http://stackoverflow.com/questions/11060213/mongoose-objectid-comparisons-fail-inconsistently/38298148#38298148 for the reason for using string comparison and not the .equals method of ObjectID's.
+                    
+                    if (String(invitationOwningUser) === String(linkedOwningUser)) {
                         logger.info("Redeeming with existing owningUser: Replacing.");
                         found = true;
                         psUserCreds.linked[linkedIndex] = newLinked;
+                        break;
                     }
                 }
             }

@@ -27,6 +27,7 @@ exports.buildSchema = function(mongoose) {
         
         // The user is being invited to share the following:
         owningUser: ObjectId, // The _id of a PSUserCredentials object.
+        
         capabilities: [String] // capability names
     }, { collection: collectionName });
     

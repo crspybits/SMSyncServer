@@ -18,4 +18,5 @@ end
 
 target ‘XCTests’ do
 	pod 'Google/SignIn'
+	pod 'SMSyncServer'
 end
