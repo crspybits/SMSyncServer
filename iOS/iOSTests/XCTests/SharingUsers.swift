@@ -123,9 +123,9 @@ class SharingUsers: BaseClass {
     let readAndUpdateCapabilities:SMSharingUserCapabilityMask = [.Read, .Update]
     let inviteCapabilities:SMSharingUserCapabilityMask = [.Invite]
 
-    func createAndTestInvitation(expectation:XCTestExpectation, invitation:SMPersistItemString, capabilities:SMSharingUserCapabilityMask, testCompleted:(()->())?=nil) {
+    func createAndTestInvitation(expectation:XCTestExpectation, waitUntilSignIn:Bool=true, invitation:SMPersistItemString, capabilities:SMSharingUserCapabilityMask, testCompleted:(()->())?=nil) {
         
-        self.waitUntilSyncServerUserSignin() {
+        func createInvitation() {
             SMServerAPI.session.createSharingInvitation(capabilities: capabilities, completion: { (invitationCode, apiResult) in
                 XCTAssert(apiResult.error == nil)
                 XCTAssert(invitationCode != nil)
@@ -135,7 +135,16 @@ class SharingUsers: BaseClass {
             })
         }
         
-        self.waitForExpectations()
+        if waitUntilSignIn {
+            self.waitUntilSyncServerUserSignin() {
+                createInvitation()
+            }
+        
+            self.waitForExpectations()
+        }
+        else {
+            createInvitation()
+        }
     }
 
     // This needs to be run *first* before any of the redeeming tests. Run this when you are signed into an OwningUser account (e.g., Google). Do this and the following two tests in a sequence.
@@ -251,12 +260,18 @@ class SharingUsers: BaseClass {
         
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         let checkRedeemedInvitations = self.expectationWithDescription("Check Redeemed")
-        
+        let idleExpectation = self.expectationWithDescription("Idle")
+
         self.waitUntilSyncServerUserSignin() {
             SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationReadAndUpdate.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId != nil)
                 XCTAssert(error == nil)
                 redeemedSharingInvitationDone.fulfill()
+                
+                // Wait for idle after getLinkedAccountsForSharingUser completes-- because the signin callbacks, which occur after redeemSharingInvitation, will cause a check for downloads.
+                self.idleCallbacks.append() {
+                    idleExpectation.fulfill()
+                }
                 
                 SMSyncServerUser.session.getLinkedAccountsForSharingUser { (linkedAccounts, error) in
                     XCTAssert(error == nil)
@@ -280,20 +295,27 @@ class SharingUsers: BaseClass {
         
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
+        let idleExpectation = self.expectationWithDescription("Idle")
         
         self.waitUntilSyncServerUserSignin() {
+            // Wait for idle-- because the signin callbacks, which occur after redeemSharingInvitation, will cause a check for downloads.
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationInvite.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId != nil)
                 XCTAssert(error == nil)
                 redeemedSharingInvitationDone.fulfill()
                 
-                self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationInvite2, capabilities: self.inviteCapabilities)
+                self.createAndTestInvitation(createSharingInvitationDone, waitUntilSignIn:false, invitation: SharingUsers.invitationInvite2, capabilities: self.inviteCapabilities)
             }
         }
         
         self.waitForExpectations()
     }
     
+    // How to test? Manually change an expiration?
     func testThatRedeemingExpiredInvitationFails() {
         XCTFail()
     }
