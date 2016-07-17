@@ -287,6 +287,7 @@
 		83D3E88F1C4C01E800BFDA93 /* XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				83D3E8BA1C4C079900BFDA93 /* BaseClass.swift */,
 				83A57FD81D14AA2C00367F87 /* SharingUserOperations.swift */,
 				83D1AE761D0C8C3400353FE4 /* SharingUsers.swift */,
 				83C5ECEA1D048CE900FF4B50 /* README_Examples.swift */,
@@ -296,7 +297,6 @@
 				8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */,
 				839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */,
 				83D3E8B91C4C079900BFDA93 /* AutoCommit.swift */,
-				83D3E8BA1C4C079900BFDA93 /* BaseClass.swift */,
 				83D3E8BB1C4C079900BFDA93 /* Deletion.swift */,
 				83D3E8BC1C4C079900BFDA93 /* Download.swift */,
 				83554C511C817C2B005F0C40 /* DownloadRecovery.swift */,

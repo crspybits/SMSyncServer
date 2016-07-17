@@ -84,16 +84,16 @@ Operation.prototype.sharingUserSignedIn = function () {
 }
 
 // Is the current signed in user authorized to do this operation?
-// One parameter: A capability (e.g., ServerConstants.capabilityCreate)
+// One parameter: A sharingType (e.g., ServerConstants.sharingAdmin)
 // Returns true or false. If it returns false, it ends the operation.
-Operation.prototype.endIfUserNotAuthorizedFor = function (capability) {
+Operation.prototype.endIfUserNotAuthorizedFor = function (sharingType) {
     var self = this;
     
-    if (self.psUserCreds.userAuthorizedFor(capability)) {
+    if (self.psUserCreds.userAuthorizedFor(sharingType)) {
         return true;
     }
     else {
-        var message = "User is not authorized for: " + capability;
+        var message = "User is not authorized for: " + sharingType;
         logger.error(message);
         self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         return false;

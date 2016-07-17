@@ -311,16 +311,7 @@ app.post('/' + ServerConstants.operationUploadFile, upload, function (request, r
                 return;
             }
             
-            var requiredCapability = null;
-            
-            if (clientFile[ServerConstants.fileVersionKey] == 0) {
-                requiredCapability = ServerConstants.capabilityCreate;
-            }
-            else { // File version > 0
-                requiredCapability = ServerConstants.capabilityUpdate;
-            }
-            
-            if (!op.endIfUserNotAuthorizedFor(requiredCapability)) {
+            if (!op.endIfUserNotAuthorizedFor(ServerConstants.sharingUploader)) {
                 return;
             }
             
@@ -567,7 +558,7 @@ app.post('/' + ServerConstants.operationDeleteFiles, function (request, response
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
-            if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityDelete)) {
+            if (!op.endIfUserNotAuthorizedFor(ServerConstants.sharingUploader)) {
                 return;
             }
             
@@ -713,7 +704,7 @@ app.post('/' + ServerConstants.operationStartOutboundTransfer, function (request
             }
         }
         else {
-            // Not checking for required capabilities because those were checked on upload.
+            // Not checking for sharingType because it was checked on upload.
             
             var psOperationId = null;
 
@@ -1244,7 +1235,7 @@ app.post('/' + ServerConstants.operationSetupInboundTransfers, function (request
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
         else {
-            if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityRead)) {
+            if (!op.endIfUserNotAuthorizedFor(ServerConstants.sharingDownloader)) {
                 return;
             }
             
@@ -1691,39 +1682,32 @@ app.post('/' + ServerConstants.operationCreateSharingInvitation, function (reque
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
 
-        if (!op.endIfUserNotAuthorizedFor(ServerConstants.capabilityInvite)) {
+        if (!op.endIfUserNotAuthorizedFor(ServerConstants.sharingAdmin)) {
             return;
         }
                     
-        var capabilities = request.body[ServerConstants.userCapabilities];
-        if (!isDefined(capabilities)) {
-            var message = "No capabilities were sent!";
+        var sharingType = request.body[ServerConstants.sharingType];
+        if (!isDefined(sharingType)) {
+            var message = "No sharingType was sent!";
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             return;
         }
         
-        if (!(capabilities instanceof Array) || (capabilities.length == 0)) {
-            var message = "Capabilities was not an array or was empty!";
+        var possibleSharingTypeValues = [ServerConstants.sharingDownloader, ServerConstants.sharingUploader, ServerConstants.sharingAdmin];
+        
+        // Ensure we got a valid sharingType
+
+        if (possibleSharingTypeValues.indexOf(sharingType) == -1) {
+            var message = "You gave an unknown sharingType: " + sharingType;
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
             return;
-        }
-        
-        // Validate possible values for elements of capabilities array
-        for (var capIndex in capabilities) {
-            var cap = capabilities[capIndex];
-            if (ServerConstants.possibleUserCapabilityValues.indexOf(cap) == -1) {
-                var message = "You gave an unknown capability: " + cap;
-                logger.error(message);
-                op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
-                return;
-            }
         }
         
         var sharingInvitation = new Mongo.SharingInvitation({
             owningUser: op.userId(),
-            capabilities: capabilities
+            sharingType: sharingType
         });
         
         sharingInvitation.save(function (err, sharingInvitation) {
@@ -1779,7 +1763,7 @@ app.post('/' + ServerConstants.operationLookupSharingInvitation, function (reque
                 var invitationContents = {};
                 invitationContents[ServerConstants.invitationExpiryDate] = sharingInvitation.expiry;
                 invitationContents[ServerConstants.invitationOwningUser] = sharingInvitation.owningUser;
-                invitationContents[ServerConstants.invitationCapabilities] = sharingInvitation.capabilities;
+                invitationContents[ServerConstants.invitationSharingType] = sharingInvitation.sharingType;
                 
                 op.result[ServerConstants.resultInvitationContentsKey] = invitationContents;
                 
@@ -1862,7 +1846,7 @@ function finishRedeemingSharingInvitation(op, invitationCode, psUserCreds) {
             
             var newLinked = {
                 owningUser: invitationDoc.owningUser,
-                capabilities: invitationDoc.capabilities
+                sharingType: invitationDoc.sharingType
             };
                         
             // First, let's see if the given owningUser is already present in the sharing user's linked accounts.

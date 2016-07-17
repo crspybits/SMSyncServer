@@ -14,10 +14,10 @@ import SMCoreLib
 @testable import Tests
 
 class SharingUsers: BaseClass {
-    private static var invitationRead = SMPersistItemString(name: "SharingUsers.invitationRead1", initialStringValue: "", persistType: .UserDefaults)
-    private static var invitationReadAndUpdate = SMPersistItemString(name: "SharingUsers.invitationReadAndUpdate", initialStringValue: "", persistType: .UserDefaults)
-    private static var invitationInvite = SMPersistItemString(name: "SharingUsers.invitationInvite", initialStringValue: "", persistType: .UserDefaults)
-    private static var invitationInvite2 = SMPersistItemString(name: "SharingUsers.invitationInvite2", initialStringValue: "", persistType: .UserDefaults)
+    private static var invitationDownloader = SMPersistItemString(name: "SharingUsers.invitationDownloader", initialStringValue: "", persistType: .UserDefaults)
+    private static var invitationUploader = SMPersistItemString(name: "SharingUsers.invitationUploader", initialStringValue: "", persistType: .UserDefaults)
+    private static var invitationAdmin1 = SMPersistItemString(name: "SharingUsers.invitationAdmin1", initialStringValue: "", persistType: .UserDefaults)
+    private static var invitationAdmin2 = SMPersistItemString(name: "SharingUsers.invitationAdmin2", initialStringValue: "", persistType: .UserDefaults)
 
     override func setUp() {
         super.setUp()
@@ -31,11 +31,11 @@ class SharingUsers: BaseClass {
 
     // MARK: Server-level API testing: operationCreateSharingInvitation
     
-    func doTestSendCapabilitiesToServerExpectingError(capabilities:[String]?) {
+    func doTestSendSharingTypeToServerExpectingError(sharingType:String?) {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.createSharingInvitation(capabilities: capabilities, completion: { (authorizationCode, apiResult) in
+            SMServerAPI.session.createSharingInvitation(sharingType: sharingType, completion: { (authorizationCode, apiResult) in
                 XCTAssert(apiResult.error != nil)
                 XCTAssert(authorizationCode == nil)
                 createSharingInvitationDone.fulfill()
@@ -45,25 +45,21 @@ class SharingUsers: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatSendingNilCapabilitiesToServerFails() {
-        self.doTestSendCapabilitiesToServerExpectingError(nil)
-    }
-    
-    func testThatSendingEmptyCapabilitiesToServerFails() {
-        self.doTestSendCapabilitiesToServerExpectingError([])
+    func testThatSendingNilSharingTypeToServerFails() {
+        self.doTestSendSharingTypeToServerExpectingError(nil)
     }
     
     // One of the capabilities in the string array sent is bad. E.g., give "ReadIt".
-    func testThatSendingInvalidCapabilityToServerFails() {
-        self.doTestSendCapabilitiesToServerExpectingError(["ReadIt"])
+    func testThatSendingInvalidSharingTypeToServerFails() {
+        self.doTestSendSharingTypeToServerExpectingError("ReadIt")
     }
 
-    func doTestSendCapabilitiesToServerExpectingNoError(capabilities:SMSharingUserCapabilityMask) {
+    func doTestSendSharingTypeToServerExpectingNoError(sharingType:SMSharingType) {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
         let lookupSharingInvitationDone = self.expectationWithDescription("Lookup Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.createSharingInvitation(capabilities: capabilities, completion: { (invitationCode, apiResult) in
+            SMServerAPI.session.createSharingInvitation(sharingType:sharingType.rawValue, completion: { (invitationCode, apiResult) in
                 XCTAssert(apiResult.error == nil)
                 XCTAssert(invitationCode != nil)
                 createSharingInvitationDone.fulfill()
@@ -72,17 +68,17 @@ class SharingUsers: BaseClass {
                     
                     XCTAssert(apiResult.error == nil)
                     XCTAssert(invitationContents != nil)
-                    
-                    let expiryDate = invitationContents![SMServerConstants.invitationExpiryDate] as? String
-                    XCTAssert(expiryDate != nil)
 
-                    let owningUser = invitationContents![SMServerConstants.invitationOwningUser] as? String
-                    XCTAssert(owningUser != nil)
-
-                    let capabilities = invitationContents![SMServerConstants.invitationCapabilities] as? [String]
-                    XCTAssert(capabilities != nil)
+                    // Make sure the expiry date is about 24 hours advanced from now.
+                    let beforeExpiryDate = NSDate().plusMinutes(23.99*60)
+                    let afterExpiryDate = NSDate().plusMinutes(24.01*60)
                     
-                    lookupSharingInvitationDone.fulfill()
+                    if invitationContents!.expiryDate.withinRange(beforeExpiryDate, endDate: afterExpiryDate) {
+                        lookupSharingInvitationDone.fulfill()
+                    }
+                    else {
+                        XCTFail()
+                    }
                 })
             })
         }
@@ -90,12 +86,16 @@ class SharingUsers: BaseClass {
         self.waitForExpectations()
     }
     
-    func testThatSendingOneCapabilityWorks() {
-        self.doTestSendCapabilitiesToServerExpectingNoError([.Read])
+    func testThatSendingDownloaderWorks() {
+        self.doTestSendSharingTypeToServerExpectingNoError(.Downloader)
     }
     
-    func testThatSendingMultipleCapabilitiesWorks() {
-        self.doTestSendCapabilitiesToServerExpectingNoError([.Create, .Read])
+    func testThatSendingUploaderWorks() {
+        self.doTestSendSharingTypeToServerExpectingNoError(.Uploader)
+    }
+    
+    func testThatSendingAdminWorks() {
+        self.doTestSendSharingTypeToServerExpectingNoError(.Admin)
     }
     
     func testThatRedeemingSharingInvitationByOwningExclusiveUserFails() {
@@ -103,30 +103,28 @@ class SharingUsers: BaseClass {
         let redeemSharingInvitationDone = self.expectationWithDescription("Created Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.createSharingInvitation(capabilities: self.readCapabilities, completion: { (invitationCode, apiResult) in
+            SMServerAPI.session.createSharingInvitation(sharingType: SMSharingType.Downloader.rawValue, completion: { (invitationCode, apiResult) in
                 XCTAssert(apiResult.error == nil)
                 XCTAssert(invitationCode != nil)
                 createSharingInvitationDone.fulfill()
                 
-                SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationRead.stringValue) { (linkedOwningUserId, error) in
+                SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode!) { (linkedOwningUserId, error) in
                     XCTAssert(linkedOwningUserId == nil)
                     XCTAssert(error != nil)
                     redeemSharingInvitationDone.fulfill()
                 }
             })
         }
+        
+        self.waitForExpectations()
     }
     
     // The following tests are disabled because either you have to do them in a particular order, or you have to make sure to sign in to the right account to carry them out.
 
-    let readCapabilities:SMSharingUserCapabilityMask = [.Read]
-    let readAndUpdateCapabilities:SMSharingUserCapabilityMask = [.Read, .Update]
-    let inviteCapabilities:SMSharingUserCapabilityMask = [.Invite]
-
-    func createAndTestInvitation(expectation:XCTestExpectation, waitUntilSignIn:Bool=true, invitation:SMPersistItemString, capabilities:SMSharingUserCapabilityMask, testCompleted:(()->())?=nil) {
+    func createAndTestInvitation(expectation:XCTestExpectation, waitUntilSignIn:Bool=true, invitation:SMPersistItemString, sharingType:SMSharingType, testCompleted:(()->())?=nil) {
         
         func createInvitation() {
-            SMServerAPI.session.createSharingInvitation(capabilities: capabilities, completion: { (invitationCode, apiResult) in
+            SMServerAPI.session.createSharingInvitation(sharingType: sharingType.rawValue, completion: { (invitationCode, apiResult) in
                 XCTAssert(apiResult.error == nil)
                 XCTAssert(invitationCode != nil)
                 invitation.stringValue = invitationCode!
@@ -151,11 +149,11 @@ class SharingUsers: BaseClass {
     // 1a)
     func testPreparationCreatePersistedInvitation1() {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
-
-        self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationRead, capabilities: self.readCapabilities) {
+    
+        self.createAndTestInvitation(createSharingInvitationDone, invitation:  SharingUsers.invitationDownloader, sharingType: SMSharingType.Downloader) {
             
             // So I can run test 3), manually.
-            AppDelegate.sharingInvitationCode = SharingUsers.invitationRead.stringValue
+            AppDelegate.sharingInvitationCode = SharingUsers.invitationDownloader.stringValue
         }
     }
 
@@ -163,14 +161,14 @@ class SharingUsers: BaseClass {
     func testPreparationCreatePersistedInvitation2() {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
 
-        self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationReadAndUpdate, capabilities: self.readAndUpdateCapabilities)
+        self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationUploader, sharingType: SMSharingType.Uploader)
     }
 
     // 1c)
     func testPreparationCreatePersistedInvitation3() {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
 
-        self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationInvite, capabilities: self.inviteCapabilities)
+        self.createAndTestInvitation(createSharingInvitationDone, invitation: SharingUsers.invitationAdmin1, sharingType: SMSharingType.Admin)
     }
     
     // 2) Don't yet sign out of the OwningUser account, and run this.
@@ -198,7 +196,7 @@ class SharingUsers: BaseClass {
                 XCTAssert(error == nil)
                 XCTAssert(linkedAccounts != nil)
                 XCTAssert(linkedAccounts!.count == 1)
-                XCTAssert(linkedAccounts![0].capabilityMask == self.readCapabilities)
+                XCTAssert(linkedAccounts![0].sharingType == .Downloader)
                 checkRedeemedInvitations.fulfill()
             }
         }
@@ -209,12 +207,12 @@ class SharingUsers: BaseClass {
     // Must be signed in as a sharing user.
     // 4)
     func testThatRedeemingAlreadyRedeemedInvitationFails() {
-        Assert.If(SharingUsers.invitationRead.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
+        Assert.If(SharingUsers.invitationDownloader.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
         
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationRead.stringValue) { (linkedOwningUserId, error) in
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationDownloader.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId == nil)
                 XCTAssert(error != nil)
                 redeemedSharingInvitationDone.fulfill()
@@ -244,7 +242,7 @@ class SharingUsers: BaseClass {
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.createSharingInvitation(capabilities: [.Read]) { (invitationCode, apiResult) in
+            SMServerAPI.session.createSharingInvitation(sharingType: SMSharingType.Downloader.rawValue) { (invitationCode, apiResult) in
                 XCTAssert(apiResult.error != nil)
                 XCTAssert(invitationCode == nil)
                 createSharingInvitationDone.fulfill()
@@ -256,14 +254,14 @@ class SharingUsers: BaseClass {
 
     // 7) Sharing user signed in.
     func testThatRedeemingInvitationFromSameOwningUserAccountOverwrites() {
-        Assert.If(SharingUsers.invitationReadAndUpdate.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
+        Assert.If(SharingUsers.invitationUploader.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
         
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         let checkRedeemedInvitations = self.expectationWithDescription("Check Redeemed")
         let idleExpectation = self.expectationWithDescription("Idle")
 
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationReadAndUpdate.stringValue) { (linkedOwningUserId, error) in
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationUploader.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId != nil)
                 XCTAssert(error == nil)
                 redeemedSharingInvitationDone.fulfill()
@@ -280,9 +278,24 @@ class SharingUsers: BaseClass {
                     // Here's the critical bit: We should still just have a single linked account.
                     XCTAssert(linkedAccounts!.count == 1)
                     
-                    XCTAssert(linkedAccounts![0].capabilityMask == self.readAndUpdateCapabilities)
+                    XCTAssert(linkedAccounts![0].sharingType == SMSharingType.Uploader)
                     checkRedeemedInvitations.fulfill()
                 }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    // 7b) Now signed in as uploader capability sharing user.
+    func testThatUploaderCapabilitySharingUserCannotCreateSharingInvitation() {
+        let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
+        
+        self.waitUntilSyncServerUserSignin() {
+            SMServerAPI.session.createSharingInvitation(sharingType: SMSharingType.Downloader.rawValue) { (invitationCode, apiResult) in
+                XCTAssert(apiResult.error != nil)
+                XCTAssert(invitationCode == nil)
+                createSharingInvitationDone.fulfill()
             }
         }
         
@@ -291,7 +304,7 @@ class SharingUsers: BaseClass {
 
     // 8) Sharing user signed in.
     func testThatInviteCapabilitySharingUserCanCreateSharingInvitation() {
-        Assert.If(SharingUsers.invitationInvite.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
+        Assert.If(SharingUsers.invitationAdmin1.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
         
         let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
         let createSharingInvitationDone = self.expectationWithDescription("Created Invitation")
@@ -303,20 +316,39 @@ class SharingUsers: BaseClass {
                 idleExpectation.fulfill()
             }
             
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationInvite.stringValue) { (linkedOwningUserId, error) in
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationAdmin1.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId != nil)
                 XCTAssert(error == nil)
                 redeemedSharingInvitationDone.fulfill()
                 
-                self.createAndTestInvitation(createSharingInvitationDone, waitUntilSignIn:false, invitation: SharingUsers.invitationInvite2, capabilities: self.inviteCapabilities)
+                self.createAndTestInvitation(createSharingInvitationDone, waitUntilSignIn:false, invitation: SharingUsers.invitationAdmin2, sharingType: .Admin)
             }
         }
         
         self.waitForExpectations()
     }
     
-    // How to test? Manually change an expiration?
+    // BEFORE RUNNING THIS TEST: Manually modify that last created admin invitation in the Mongo database, and make it old.
     func testThatRedeemingExpiredInvitationFails() {
-        XCTFail()
+        Assert.If(SharingUsers.invitationAdmin2.stringValue == "", thenPrintThisString: "Haven't yet set up invitationCode")
+        
+        let redeemedSharingInvitationDone = self.expectationWithDescription("Redeemed Invitation")
+        
+        self.waitUntilSyncServerUserSignin() {
+            // We won't get the idle callback this time, because the signin callbacks won't complete.
+            /*
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            */
+            
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationAdmin2.stringValue) { (linkedOwningUserId, error) in
+                XCTAssert(linkedOwningUserId == nil)
+                XCTAssert(error != nil)
+                redeemedSharingInvitationDone.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
     }
 }

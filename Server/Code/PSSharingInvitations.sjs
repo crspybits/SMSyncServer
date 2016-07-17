@@ -13,8 +13,11 @@ exports.buildSchema = function(mongoose) {
     var Schema = mongoose.Schema;
     var ObjectId = Schema.ObjectId;
 
-    var expiryDate = new Date ();
-    expiryDate.setHours(expiryDate.getHours() + numberOfHoursBeforeExpiry);
+    function expiryDate() {
+        var expiryDate = new Date ();
+        expiryDate.setHours(expiryDate.getHours() + numberOfHoursBeforeExpiry);
+        return expiryDate;
+    }
 
     var invitationSchema = new Schema({
         // _id: (ObjectId), // Uniquely identifies the invitation (autocreated by Mongo)
@@ -28,7 +31,7 @@ exports.buildSchema = function(mongoose) {
         // The user is being invited to share the following:
         owningUser: ObjectId, // The _id of a PSUserCredentials object.
         
-        capabilities: [String] // capability names
+        sharingType: String
     }, { collection: collectionName });
     
     // The collection parameter above is so I can use camel case in my collection names, as I've been doing already

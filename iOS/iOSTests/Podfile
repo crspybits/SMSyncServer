@@ -12,11 +12,14 @@ target ‘Tests’ do
 	pod 'FBSDKCoreKit'
 	pod 'FBSDKShareKit'
 	pod 'FBSDKLoginKit'
-	pod 'SMSyncServer' # SMSyncServer imports SMCoreLib, which imports AFNetworking
+	pod 'SMSyncServer', :path => '../iOSFramework'
+	# pod 'SMSyncServer' # SMSyncServer imports SMCoreLib, which imports AFNetworking
 	# pod 'SMCoreLib' # SMCoreLib imports AFNetworking
+	
+	target ‘XCTests’ do
+		inherit! :search_paths
+		pod 'Google/SignIn'
+	end
 end
 
-target ‘XCTests’ do
-	pod 'Google/SignIn'
-	pod 'SMSyncServer'
-end
+

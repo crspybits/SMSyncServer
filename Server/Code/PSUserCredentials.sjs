@@ -66,9 +66,9 @@ const props = ["_id", "username", "userTypes", "accountType", "creds", "linked"]
             { 
                 // The _id of a PSUserCredentials object that must be an OwningUser
                 owningUser: ObjectId,
-                
-                // Each string is the description representation of a UserCapabilityMask item (see iOS client) -- e.g., Create or Read
-                capabilities: [String]
+            
+                // See ServerConstants.sharingType
+                sharingType: String
             }
         ]
 	}
@@ -111,8 +111,8 @@ function PSUserCredentials(credentialsData) {
         // Also for sharing users. The UserCredentials specific object for self.linkedOwningUserId, if defined.
         self.linkedOwningUserSpecificCreds = null;
         
-        // Capabilities that the sharing user has on the linkedOwningUserSpecificCreds.
-        self.capabilities = null;
+        // sharingType that the sharing user has on the linkedOwningUserSpecificCreds.
+        self.sharingType = null;
         
         // This is not saved into PSUserCredentials -- there may be several of these across users of the owning user account. i.e., several devices across which the data is being shared.
         self.mobileDeviceUUID = credentialsData[ServerConstants.mobileDeviceUUIDKey];
@@ -233,7 +233,7 @@ PSUserCredentials.prototype.initLinkedOwningUser = function (callback) {
     for (var linkedIndex in self.linked) {
         var linkedCreds = self.linked[linkedIndex];
         if (self.linkedOwningUserId == linkedCreds.owningUser) {
-            self.capabilities = linkedCreds.capabilities;
+            self.sharingType = linkedCreds.sharingType;
             found = true;
         }
     }
@@ -280,20 +280,41 @@ PSUserCredentials.prototype.sharingUserSignedIn = function () {
 }
 
 // Is the current signed in user authorized to do this operation?
-// One parameter: A capability (e.g., ServerConstants.capabilityCreate)
+// One parameter: A sharingType (e.g., ServerConstants.sharingAdmin)
 // Returns true or false.
-PSUserCredentials.prototype.userAuthorizedFor = function (capability) {
+PSUserCredentials.prototype.userAuthorizedFor = function (sharingType) {
     var self = this;
     
     if (self.owningUserSignedIn()) {
         return true;
     }
     else {
-        if (self.capabilities.indexOf(capability) == -1 ) {
-            return false;
-        }
-        else {
+        switch (self.sharingType) {
+        case ServerConstants.sharingAdmin:
             return true;
+            
+        case ServerConstants.sharingUploader:
+            switch (sharingType) {
+            case ServerConstants.sharingUploader:
+            case ServerConstants.sharingDownloader:
+                return true;
+                
+            default:
+                return false;
+            }
+
+        case ServerConstants.sharingDownloader:
+            switch (sharingType) {
+            case ServerConstants.sharingDownloader:
+                return true;
+                
+            default:
+                return false;
+            }
+        
+        default:
+            logger.error("ERROR: Undefined sharing type: " + self.sharingType);
+            return false;
         }
     }
 }
@@ -577,7 +598,7 @@ function makeAccountListAux(linkedAccounts, currIndex, currResult, callback) {
         
         var resultAccount = {};
         resultAccount[ServerConstants.internalUserId] = linkedAccount.owningUser;
-        resultAccount[ServerConstants.accountCapabilities] = linkedAccount.capabilities;
+        resultAccount[ServerConstants.accountSharingType] = linkedAccount.sharingType;
 
         var psUserCreds = null;
         try {

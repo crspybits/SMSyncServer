@@ -11,10 +11,27 @@ import SMCoreLib
 @testable import SMSyncServer
 
 class SharingUserOperations: BaseClass {
+
+    var downloadingInvitations = [SMPersistItemString]()
+    var uploadingInvitations = [SMPersistItemString]()
+    var adminInvitations = [SMPersistItemString]()
+    let numberInvitationsPerType = 5
+    
+    func setupPersistentInvitationsFor(sharingType:SMSharingType, inout result:[SMPersistItemString]) {
+        for invitationNumber in 1...numberInvitationsPerType {
+            let persisentInvitationName =
+                "SharingUsers.invitation\(sharingType.rawValue).\(invitationNumber)"
+            let persisentInvitation = SMPersistItemString(name: persisentInvitationName, initialStringValue: "", persistType: .UserDefaults)
+            result.append(persisentInvitation)
+        }
+    }
     
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        
+        self.setupPersistentInvitationsFor(.Downloader, result: &self.downloadingInvitations)
+        self.setupPersistentInvitationsFor(.Uploader, result: &self.uploadingInvitations)
+        self.setupPersistentInvitationsFor(.Admin, result: &self.adminInvitations)
     }
     
     override func tearDown() {
@@ -22,117 +39,173 @@ class SharingUserOperations: BaseClass {
         super.tearDown()
     }
     
-    enum TestCases {
-    // First mask should just one; second can have more
-    case Except(SMSharingUserCapabilityMask, SMSharingUserCapabilityMask)
-    case AtLeast(SMSharingUserCapabilityMask, SMSharingUserCapabilityMask)
+    func createInvitations(sharingType sharingType:SMSharingType, invitationNumber:Int, inout persistentInvitations:[SMPersistItemString], completed:(()->())?) {
+        
+        if invitationNumber < self.numberInvitationsPerType {
+            
+            SMServerAPI.session.createSharingInvitation(sharingType: sharingType.rawValue, completion: { (invitationCode, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(invitationCode != nil)
+                
+                persistentInvitations[invitationNumber].stringValue = invitationCode!
+
+                self.createInvitations(sharingType: sharingType, invitationNumber: invitationNumber+1, persistentInvitations: &persistentInvitations, completed: completed)
+            })
+        }
+        else {
+            completed?()
+        }
     }
     
-    // Creating invitations for these specific test cases.
-    let specificTestCases:[(TestCases, String)] = [
-        (.Except(.Create, [.Update]),           "ExceptCreate"),
-        (.Except(.Create, [.Delete, .Invite]),  "ExceptCreate"),
-        (.AtLeast(.Create, [.Create]),          "AtLeastCreate"),
-        (.AtLeast(.Create, [.Create, .Delete]), "AtLeastCreate"),
-        
-        (.Except(.Update, [.Create]),           "ExceptUpdate"),
-        (.Except(.Update, [.Read, .Delete]),    "ExceptUpdate"),
-        (.AtLeast(.Update, [.Update]),          "AtLeastUpdate"),
-        (.AtLeast(.Update, [.ALL]),             "AtLeastUpdate"),
-        
-        (.Except(.Delete, [.Create]),           "ExceptDelete"),
-        (.Except(.Delete, [.Read, .Create]),    "ExceptDelete"),
-        (.AtLeast(.Delete, [.Delete]),          "AtLeastDelete"),
-        (.AtLeast(.Delete, [.Update, .Delete]), "AtLeastDelete"),
-        
-        (.Except(.Read, [.Create]),             "ExceptRead"),
-        (.Except(.Read, [.Delete, .Create]),    "ExceptRead"),
-        (.AtLeast(.Read, [.Read]),              "AtLeastRead"),
-        (.AtLeast(.Read, [.ALL]),               "AtLeastRead")
-    ]
-    
-    func convertTestCases() -> [(TestCases, SMPersistItemString)] {
-        var result = [(TestCases, SMPersistItemString)] ()
-        var counter = 1
-        for (testCase, persistItemShortName) in self.specificTestCases {
-            let persistItemName = "SharingUserOperations.\(persistItemShortName)\(counter)"
-            counter += 1
-            let persistItem = SMPersistItemString(name: persistItemName, initialStringValue: "", persistType: .UserDefaults)
-            result.append((testCase, persistItem))
+    func createDownloadingInvitations(completed:()->()) {
+        self.createInvitations(sharingType:.Downloader, invitationNumber:0, persistentInvitations: &self.downloadingInvitations) {
+            completed()
         }
-        
-        return result
+    }
+    
+    func createUploadingInvitations(completed:()->()) {
+        self.createInvitations(sharingType:.Uploader, invitationNumber:0, persistentInvitations: &self.uploadingInvitations) {
+            completed()
+        }
+    }
+    
+    func createAdminInvitations(completed:()->()) {
+        self.createInvitations(sharingType:.Admin, invitationNumber:0, persistentInvitations: &self.adminInvitations) {
+            completed()
+        }
     }
     
     // Do this before any of the following tests.
     // Must be signed in as owning user or sharing user with invite capability
-    func createInvitations(testCases:[(TestCases, SMPersistItemString)], testCaseIndex:Int, completed:(()->())?) {
-        
-        if testCaseIndex < testCases.count {
-            let (testCase, persistItem) = testCases[testCaseIndex]
-            var capabilities:SMSharingUserCapabilityMask
-            
-            switch testCase {
-            case .AtLeast(_, let caps):
-                capabilities = caps
-            case .Except(_, let caps):
-                capabilities = caps
-            }
-            
-            SMServerAPI.session.createSharingInvitation(capabilities: capabilities, completion: { (invitationCode, apiResult) in
-                XCTAssert(apiResult.error == nil)
-                XCTAssert(invitationCode != nil)
-                persistItem.stringValue = invitationCode!
-
-                self.createInvitations(testCases, testCaseIndex: testCaseIndex+1, completed: completed)
-            })
-        }
-    }
-    
     func testCreateInvitations() {
-        let testCases = self.convertTestCases()
         let createSharingInvitationDone = self.expectationWithDescription("Done Creating")
-        
-        self.extraServerResponseTime = Double(testCases.count) * 20
+        self.extraServerResponseTime = Double(self.numberInvitationsPerType) * 3 * 20
         
         self.waitUntilSyncServerUserSignin() {
-            self.createInvitations(testCases, testCaseIndex: 0) {
-                createSharingInvitationDone.fulfill()
+            self.createDownloadingInvitations() {
+                self.createUploadingInvitations() {
+                    self.createAdminInvitations() {
+                        createSharingInvitationDone.fulfill()
+                    }
+                }
             }
         }
     
         self.waitForExpectations()
     }
     
-    // Capabilities: Any/all except Create
-    func testThatUploadOfNewFileByUnauthorizedSharingUserFails() {
+    func uploadFileExpectingFailure() {
     }
     
-    // Capabilities: At least Create
-    func testThatUploadOfNewFileByAuthorizedSharingUserWorks() {
+    /*
+    func uploadFiles(testFiles:[TestFile], uploadExpectations:[XCTestExpectation]?, commitComplete:XCTestExpectation?, idleExpectation:XCTestExpectation,
+        complete:(()->())?) {
+        
+        for testFileIndex in 0...testFiles.count-1 {
+            let testFile = testFiles[testFileIndex]
+            let uploadExpectation:XCTestExpectation? = uploadExpectations?[testFileIndex]
+        
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            
+            if uploadExpectation != nil {
+                self.singleUploadCallbacks.append() { uuid in
+                    XCTAssert(uuid.UUIDString == testFile.uuidString)
+                    uploadExpectation!.fulfill()
+                }
+            }
+        }
+
+        // The .Idle callback gets called first
+        self.idleCallbacks.append() {
+            if commitComplete == nil {
+                complete?()
+            }
+            idleExpectation.fulfill()
+        }
+        
+        if commitComplete != nil {
+            // Followed by the commit complete callback.
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == testFiles.count)
+                commitComplete!.fulfill()
+                self.checkFileSizes(testFiles, complete: complete)
+            }
+        }
+        
+        try! SMSyncServer.session.commit()
+    }
+    */
+    
+    // For the rest: Must be signed in as sharing user.
+    
+    // Test the following two when having redeemed *no* invitations. (i.e., the minimum capabilities in a sharing invitation is for downloading).
+    func testThatFileDownloadByUnauthorizedSharingUserFails() {
+    }
+
+    func testThatDownloadDeletionByUnauthorizedSharingUserFails() {
     }
     
-    // Capabilities: Any/all except Update
-    func testThatUploadOfExistingFileByUnauthorizedSharingUserFails() {
+    func testThatFileDownloadByDownloadSharingUserWorks() {
+        // Redeem Download invitation first.
     }
     
-    // Capabilities: At least Update
-    func testThatUploadOfExistingFileByAuthorizedSharingUserWorks() {
+    func testThatDownloadDeletionByDownloadSharingUserWorks() {
+        // Redeem Download invitation first.
     }
     
-    // Capabilities: Any/all except Delete
-    func testThatDeletionOfFileByUnauthorizedSharingUserFails() {
+    func testThatDownloadDeletionByUploadSharingUserWorks() {
+        // Redeem Upload invitation first.
     }
     
-    // Capabilities: At least Delete
-    func testThatDeletionOfFileByAuthorizedSharingUserWorks() {
+    func testThatFileDownloadByUploadSharingUserWorks() {
+        // Redeem Upload invitation first.
     }
     
-    // Capabilities: Any/all except Read
-    func testThatDownloadOfFileByUnauthorizedSharingUserFails() {
+    func testThatDownloadDeletionByAdminSharingUserWorks() {
+        // Redeem Admin invitation first.
     }
     
-    // Capabilities: At least Read
-    func testThatDownloadOfFileByAuthorizedSharingUserWorks() {
+    func testThatFileDownloadByAdminSharingUserWorks() {
+        // Redeem Admin invitation first.
+    }
+    
+    //MARK: Upload tests
+    
+    func testThatFileUploadByDownloadingSharingUserFails() {
+        // Redeem Download invitation first.
+    }
+    
+    func testThatUploadDeletionByDownloadingSharingUserFails() {
+        // Redeem Download invitation first.
+    }
+    
+    func testThatFileUploadByUploadSharingUserWorks() {
+        // Redeem Upload invitation first.
+    }
+    
+    func testThatUploadDeletionByUploadSharingUserWorks() {
+        // Redeem Upload invitation first.
+    }
+    
+    func testThatFileUploadByAdminSharingUserWorks() {
+        // Redeem Admin invitation first.
+    }
+    
+    func testThatUploadDeletionByAdminSharingUserWorks() {
+        // Redeem Admin invitation first.
+    }
+
+    //MARK: Invitation tests
+    
+    func testThatInvitationByDownloadingSharingUserFails() {
+        // Redeem Download invitation first.
+    }
+    
+    func testThatInvitationByUploadSharingUserFails() {
+        // Redeem Upload invitation first.
+    }
+    
+    func testThatInvitationByAdminSharingUserWorks() {
+        // Redeem Admin invitation first.
     }
 }

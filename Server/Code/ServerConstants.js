@@ -209,19 +209,12 @@ function define(name, value) {
     
     // MARK: Parameters sent in sharing operations
     // Key:
-	define("userCapabilities",      "UserCapabilities");
-    // Values:
-    // A (possibly empty) array of capability strings. See SMSharingUserCapabilityMask.
-    // The ordering of elements in the following array is utilized in SMSharingUserCapabilityMask. Be careful about changing the order!
-    // The syntax for the following array conveniently works in both Swift and Javascript!!
-	define("possibleUserCapabilityValues",      ["Create", "Read", "Update", "Delete", "Invite"]);
-    
-        // These are redundant with that above, but needed to give individual capabilities on the server-side.
-	define("capabilityCreate",      "Create");
-	define("capabilityRead",      "Read");
-	define("capabilityUpdate",      "Update");
-	define("capabilityDelete",      "Delete");
-	define("capabilityInvite",      "Invite");
+	define("sharingType",      "SharingType");
+    // Values: String, one of the following:
+
+	define("sharingDownloader",      "Downloader");
+	define("sharingUploader",      "Uploader");
+	define("sharingAdmin",      "Admin");
     
     // MARK Keys both sent to the server and received back from the server.
 
@@ -294,8 +287,8 @@ function define(name, value) {
         // Value: A unique id for the owning user.
         
         // SubKey:
-	define("invitationCapabilities",      "Capabilities");
-        // Value: An array of capability names. See SMSharingUserCapabilityMask.
+	define("invitationSharingType",      "SharingType");
+        // Value: A string. See SMSharingType.
     
     // Key:
 	define("resultOperationStatusCountKey",      "ServerOperationStatusCount");
@@ -313,8 +306,8 @@ function define(name, value) {
         // public static let accountUserName = "UserName" // already defined
     
         // SubKey:
-	define("accountCapabilities",      "AccountCapabilities");
-        // Value: Array of capability strings.
+	define("accountSharingType",      "SharingType");
+        // Value: A string. See SMSharingType.
     
     // MARK: Server result codes (rc's)
     

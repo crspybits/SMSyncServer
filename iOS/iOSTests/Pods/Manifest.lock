@@ -69,7 +69,11 @@ DEPENDENCIES:
   - FBSDKLoginKit
   - FBSDKShareKit
   - Google/SignIn
-  - SMSyncServer
+  - SMSyncServer (from `../iOSFramework`)
+
+EXTERNAL SOURCES:
+  SMSyncServer:
+    :path: ../iOSFramework
 
 SPEC CHECKSUMS:
   AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
@@ -90,8 +94,8 @@ SPEC CHECKSUMS:
   HPTextViewTapGestureRecognizer: 6a73fd09f858e49a2743c3a338dc5c0791b0fae0
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   SMCoreLib: 315e4adf1f9c5a7c4a5845ddcbeafbd3373bbb1e
-  SMSyncServer: 7da799e3946c868240ee81589ae63076865714ff
+  SMSyncServer: c640774d76d58e5786ff6f6a55ff7c195fa00cd3
 
-PODFILE CHECKSUM: db57b99c47a0199fd7b31141c903b28dc0878a42
+PODFILE CHECKSUM: 6ac1297ed5e0489afd8a74c8d544baa6a4865289
 
 COCOAPODS: 1.0.1
