@@ -152,6 +152,8 @@ function PSUserCredentials(credentialsData) {
         // The specific creds info (UserCredentials subclass instance) that follows is stored in Mongo, but each object provides its own methods for massaging that data so it can be stored.
         self.specificCreds = null;
         
+        logger.debug("PSUserCredentials: Account type: " + credentialsData[ServerConstants.accountType]);
+        
         // Assume each of the factory methods knows when it should create its creds. Stop at the first one that works.
         for (var methodIndex in accountCreationMethods) {
             var factoryMethod = accountCreationMethods[methodIndex];
@@ -201,13 +203,13 @@ PSUserCredentials.prototype.signedInCreds = function () {
 }
 
 // For owning users returns self.specificCreds. For sharing users, returns self.linkedOwningUserSpecificCreds if non-null. Throws an error otherwise.
-PSUserCredentials.prototype.cloudStorageCreds = function (callback) {
+PSUserCredentials.prototype.cloudStorageCreds = function () {
     var self = this;
     
     if (self.owningUserSignedIn()) {
-        callback(null, self.specificCreds);
+        return self.specificCreds;
     }
-    else if (isDefined(self.self.linkedOwningUserSpecificCreds)) {
+    else if (isDefined(self.linkedOwningUserSpecificCreds)) {
         return self.linkedOwningUserSpecificCreds;
     }
     else {

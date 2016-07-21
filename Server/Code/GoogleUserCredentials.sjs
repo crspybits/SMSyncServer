@@ -20,6 +20,8 @@ var Secrets = require('./Secrets');
 function GoogleUserCredentials(credentialsData) {
     var self = this;
     
+    self.accountType = ServerConstants.accountTypeGoogle;
+    
     // Credentials specific to the user.
     self.sub = null; // user identifier
 

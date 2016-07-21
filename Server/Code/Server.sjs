@@ -970,6 +970,8 @@ app.post('/' + ServerConstants.operationGetFileIndex, function (request, respons
 function finishOperationGetFileIndex(op, lock) {
 
     // Get a list of all our files in the PSFileIndex.
+    logger.debug("Getting list of files for userId: " + op.userId());
+    
     PSFileIndex.getAllFor(op.userId(), function (psFileIndexError, fileIndexObjs) {
         if (psFileIndexError) {
             if (isDefined(lock)) {

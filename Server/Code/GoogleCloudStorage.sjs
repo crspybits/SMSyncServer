@@ -13,15 +13,21 @@ var fs = require('fs');
 var logger = require('./Logger');
 var File = require('./File.sjs');
 var PSUserCredentials = require('./PSUserCredentials');
+var ServerConstants = require('./ServerConstants');
 
 // Constructor
-// psUserCreds: psUserCreds.signedInCreds() must be of type GoogleUserCredentials
+// psUserCreds: cloudStorageCreds() must be of type GoogleUserCredentials
 function GoogleCloudStorage(psUserCreds, cloudFolderPath) {
     var self = this;
     
     self.psUserCreds = psUserCreds;
     
-    var googleUserCredentials = self.psUserCreds.signedInCreds();
+    var googleUserCredentials = self.psUserCreds.cloudStorageCreds();
+    
+    if (googleUserCredentials.accountType != ServerConstants.accountTypeGoogle) {
+        throw new Error("Expected account type: " + ServerConstants.accountTypeGoogle);
+    }
+    
     self.oauth2Client = googleUserCredentials.oauth2Client;
     
     self.cloudFolderPath = cloudFolderPath;
@@ -45,6 +51,7 @@ GoogleCloudStorage.prototype.setup = function (callback) {
     
     self.listFiles(query, function (error, files) {
         if (error) {
+            logger.error("GoogleCloudStorage.setup: Failed on listFile: " + JSON.stringify(error))
             callback(error);
         }
         else {
@@ -144,7 +151,7 @@ GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback
             self.callGoogleDriveAPI(drive.files.get, parameters, suffixCall, function(err, response) {
                 var fileProperties = null;
                 if (err) {
-                    logger.error('The API returned an error: %j', err);
+                    logger.error('The API returned an error: drive.files.get: %j', err);
                 }
                 else {
                     fileProperties = {};
@@ -239,7 +246,7 @@ GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, cal
                     // Using drive.files.trash and not drive.files.delete so that earlier versions of file might be recovered (e.g., by the end-user).
                     self.callGoogleDriveAPI(drive.files.trash, parameters, function(err, response) {
                         if (err) {
-                            logger.error('The API returned an error: %j', err);
+                            logger.error('The API returned an error: drive.files.trash: %j', err);
                         }
                         callback(err, null);
                         // logger.debug("Google Drive API Response: %j", response);
@@ -252,7 +259,7 @@ GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, cal
                     self.callGoogleDriveAPI(drive.files.update, parameters, function(err, response) {
                         var fileProperties = null;
                         if (err) {
-                            logger.error('The API returned an error: %j', err);
+                            logger.error('The API returned an error: drive.files.update: %j', err);
                         }
                         else {
                             fileProperties = {};
@@ -290,7 +297,7 @@ GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, cal
                 self.callGoogleDriveAPI(drive.files.insert, parameters, function(err, response) {
                     var fileProperties = null;
                     if (err) {
-                        logger.error('The API returned an error: %j', err);
+                        logger.error('The API returned an error: drive.files.insert: %j', err);
                     }
                     else {
                         fileProperties = {};
@@ -315,7 +322,7 @@ GoogleCloudStorage.prototype.listFiles = function (query, callback) {
     var self = this;
     
     var parameters = {
-        auth: this.oauth2Client
+        auth: self.oauth2Client
     };
     
     if (typeof query === 'function') {
@@ -328,9 +335,11 @@ GoogleCloudStorage.prototype.listFiles = function (query, callback) {
 
     var drive = google.drive('v2');
     
+    logger.info("GoogleCloudStorage: listFiles: About to call callGoogleDriveAPI: parameters: " + JSON.stringify(parameters));
+    
     self.callGoogleDriveAPI(drive.files.list, parameters, function(err, response) {
         if (err) {
-            logger.error('The API returned an error: %j', err);
+            logger.error('GoogleCloudstorage: listFiles: The API returned an error: drive.files.list: %j', err);
             callback(err, null);
             return;
         }
@@ -357,7 +366,7 @@ GoogleCloudStorage.prototype.createDirectory = function (directoryTitle, callbac
     
     self.callGoogleDriveAPI(drive.files.insert, parameters, function(err, response) {
         if (err) {
-            logger.error('The API returned an error: %j',  err);
+            logger.error('The API returned an error: drive.files.insert: %j',  err);
             callback(err, null);
             return;
         }
@@ -393,7 +402,9 @@ GoogleCloudStorage.prototype.callGoogleDriveAPIAux =
             callback = suffixCall;
             suffixCall = null;
         }
-
+        
+        logger.info("GoogleCloudStorage.callGoogleDriveAPIAux: Call number: " + numberAttempts);
+        
         function apiFunctionCallback(err, response) {
            if (err && (numberAttempts > 1) && isDefined(err.code) && (AccessTokenExpired == err.code)) {
                 // Attempt to refresh the access token, and then if successful, call the API function again.

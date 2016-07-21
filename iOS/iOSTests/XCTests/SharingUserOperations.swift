@@ -140,8 +140,8 @@ class SharingUserOperations: BaseClass {
         var idleExpectation:XCTestExpectation
         
         init(fromTestClass testClass:XCTestCase) {
-            self.uploadCompleteCallbackExpectation = testClass.expectationWithDescription("Commit Complete")
-            self.singleUploadExpectation = testClass.expectationWithDescription("Upload Complete")
+            self.uploadCompleteCallbackExpectation = testClass.expectationWithDescription("Upload Complete")
+            self.singleUploadExpectation = testClass.expectationWithDescription("Single Upload Complete")
             self.idleExpectation = testClass.expectationWithDescription("Idle")
         }
     }
@@ -183,9 +183,11 @@ class SharingUserOperations: BaseClass {
     func uploadFile(testFile:TestFile, expectations:UploadFileExpectations, failureExpected:Bool=false, complete:(()->())?=nil) {
         try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
         
-        self.singleUploadCallbacks.append() { uuid in
-            XCTAssert(uuid.UUIDString == testFile.uuidString)
-            expectations.singleUploadExpectation.fulfill()
+        if !failureExpected {
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == testFile.uuidString)
+                expectations.singleUploadExpectation.fulfill()
+            }
         }
         
         self.idleCallbacks.append() {
@@ -200,8 +202,14 @@ class SharingUserOperations: BaseClass {
                 CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
                 SMSyncServer.session.resetFromError() { error in
+                    Log.msg("SMSyncServer.session.resetFromError: Completed")
                     XCTAssert(error == nil)
+                    
+                    // These aren't really true, but we need to fulfil them to clean up.
                     expectations.uploadCompleteCallbackExpectation.fulfill()
+                    expectations.singleUploadExpectation.fulfill()
+                    
+                    complete?()
                 }
             }
         }
@@ -222,7 +230,7 @@ class SharingUserOperations: BaseClass {
         complete:(()->())?=nil) {
         var numberDownloads = 0
         
-        SMSyncServer.session.resetMetaData(forUUID: NSUUID(UUIDString: self.uploadFile1UUID.stringValue)!)
+        SMSyncServer.session.resetMetaData(forUUID: testFile.uuid)
 
         self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
             XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile.uuidString)
@@ -321,6 +329,7 @@ class SharingUserOperations: BaseClass {
     // 1) Startup the app in Xcode, not doing a test.
     // 2) Sign out of owning user. 
     // 3) Sign in as Facebook user.
+    // 4) Then do the following:
     
     func testThatFileDownloadByDownloadSharingUserWorks() {
         // Redeem Download invitation first.
@@ -334,11 +343,13 @@ class SharingUserOperations: BaseClass {
         self.createUploadFiles(initial:false)
         
         self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId == nil)
-                XCTAssert(error != nil)
-                
+            self.idleCallbacks.append() {
                 self.downloadFile(self.uploadFile1, expectations: expectations)
+            }
+            
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
+                XCTAssert(linkedOwningUserId != nil)
+                XCTAssert(error == nil)
             }
         }
         
@@ -358,8 +369,8 @@ class SharingUserOperations: BaseClass {
         
         self.waitUntilSyncServerUserSignin() {
             SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId == nil)
-                XCTAssert(error != nil)
+                XCTAssert(linkedOwningUserId != nil)
+                XCTAssert(error == nil)
 
                 self.downloadDeletion(self.uploadFile2, expectation: expectations)
             }
@@ -393,14 +404,14 @@ class SharingUserOperations: BaseClass {
         
         let expectations = UploadFileExpectations(fromTestClass: self)
         
-        self.extraServerResponseTime = 30
+        self.extraServerResponseTime = 60
         
         let testFile = TestBasics.session.createTestFile("FileUploadByDownloadingSharingUser")
         
         self.waitUntilSyncServerUserSignin() {
             SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId == nil)
-                XCTAssert(error != nil)
+                XCTAssert(linkedOwningUserId != nil)
+                XCTAssert(error == nil)
 
                 self.uploadFile(testFile, expectations: expectations, failureExpected: true)
             }

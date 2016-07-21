@@ -18,6 +18,9 @@ var Secrets = require('./Secrets');
 // credentialsData has the same form as the .creds for Facebook in the data stored in PSUserCredetials.
 function FacebookUserCredentials(credentialsData) {
     var self = this;
+    
+    self.accountType = ServerConstants.accountTypeFacebook;
+    
     self.creds = {};
 
     if (isDefined(credentialsData)) {

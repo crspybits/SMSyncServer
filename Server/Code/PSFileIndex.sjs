@@ -6,6 +6,7 @@ var Mongo = require('./Mongo');
 var logger = require('./Logger');
 var Common = require('./Common');
 var ServerConstants = require('./ServerConstants');
+var ObjectID = require('mongodb').ObjectID;
 
 const collectionName = "FileIndex";
 
@@ -192,6 +193,15 @@ PSFileIndex.prototype.lookup = function (callback) {
 // Parameters: fileId is optional. If you give a fileId, it is not an error for the PSFileIndex object to not exist.
 // Callback parameters: 1) error, 2) if error not null, an array of PSFileIndex objects describing the file index for this userId (and, optionally, the fileId).
 PSFileIndex.getAllFor = function (userId, fileId, callback) {
+    if (typeof userId === 'string') {
+        try {
+            userId = new ObjectID.createFromHexString(userId);
+        } catch (error) {
+            callback(error, null);
+            return;
+        }
+    }
+
     var query = {
         userId: userId
     };

@@ -261,15 +261,15 @@ class SharingUsers: BaseClass {
         let idleExpectation = self.expectationWithDescription("Idle")
 
         self.waitUntilSyncServerUserSignin() {
+            // Wait for idle after getLinkedAccountsForSharingUser completes-- because the signin callbacks, which occur after redeemSharingInvitation, will cause a check for downloads.
+            self.idleCallbacks.append() {
+                idleExpectation.fulfill()
+            }
+            
             SMSyncServerUser.session.redeemSharingInvitation(invitationCode: SharingUsers.invitationUploader.stringValue) { (linkedOwningUserId, error) in
                 XCTAssert(linkedOwningUserId != nil)
                 XCTAssert(error == nil)
                 redeemedSharingInvitationDone.fulfill()
-                
-                // Wait for idle after getLinkedAccountsForSharingUser completes-- because the signin callbacks, which occur after redeemSharingInvitation, will cause a check for downloads.
-                self.idleCallbacks.append() {
-                    idleExpectation.fulfill()
-                }
                 
                 SMSyncServerUser.session.getLinkedAccountsForSharingUser { (linkedAccounts, error) in
                     XCTAssert(error == nil)

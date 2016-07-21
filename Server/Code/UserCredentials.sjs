@@ -2,6 +2,11 @@
 // Specific account classes need to implement the following methods:
 
 /*
+UserCredentials constructor
+    self.accountType = ... // E.g., ServerConstants.accountTypeFacebook
+*/
+
+/*
 UserCredentials.CreateIfOurs = function (credentialsData) {
 }
 

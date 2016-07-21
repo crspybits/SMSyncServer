@@ -5,6 +5,7 @@
 // TODO: Temporary: Just for testing
 // See https://developers.google.com/api-client-library/javascript/reference/referencedocs
 var google = require('googleapis');
+var ObjectID = require('mongodb').ObjectID;
 
 var PSUserCredentials = require('./PSUserCredentials');
 var ServerConstants = require('./ServerConstants');
@@ -65,7 +66,30 @@ function Operation(request, response, errorHandling) {
 }
 
 // Must have retrieved/stored psUserCreds from/to Mongo
+// Returns the underlying owner user id.
 Operation.prototype.userId = function() {
+    var self = this;
+    
+    if (self.owningUserSignedIn()) {
+        return self.psUserCreds._id;
+    }
+    else {
+        if (! isDefined(self.psUserCreds.linkedOwningUserId)) {
+            throw new Error("linkedOwningUserId is not defined!")
+        }
+        
+        var userId = self.psUserCreds.linkedOwningUserId;
+        
+        if (typeof userId === 'string') {
+            // Just allow the createFromHexString to throw. It's a problem, we need to catch it.
+            userId = new ObjectID.createFromHexString(userId);
+        }
+    
+        return userId;
+    }
+}
+
+Operation.prototype.signedInUserId = function() {
     return this.psUserCreds._id;
 }
 
@@ -222,7 +246,7 @@ Operation.prototype.validateUserAlwaysCallback = function (userMustBeOnSystem, c
 			callback(error, staleUserSecurityInfo);
 		}
         else {
-            logger.info("UserId: " + self.userId());
+            logger.info("SignInUserId: " + self.signedInUserId());
             logger.info("DeviceId: " + self.deviceId());
 
             if (userMustBeOnSystem && !self.psUserCreds.stored) {
