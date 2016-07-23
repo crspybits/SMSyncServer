@@ -78,8 +78,10 @@ class SharingUserOperations: BaseClass {
     
     var uploadFile1:TestFile!
     var uploadFile2:TestFile!
+    var uploadFile3:TestFile!
     let uploadFile1UUID = SMPersistItemString(name: "SharingUserOperations.uploadFile1", initialStringValue: "", persistType: .UserDefaults)
     let uploadFile2UUID = SMPersistItemString(name: "SharingUserOperations.uploadFile2", initialStringValue: "", persistType: .UserDefaults)
+    let uploadFile3UUID = SMPersistItemString(name: "SharingUserOperations.uploadFile3", initialStringValue: "", persistType: .UserDefaults)
     
     func createUploadFiles(initial initial:Bool) {
         if initial {
@@ -88,10 +90,14 @@ class SharingUserOperations: BaseClass {
             
             self.uploadFile2 = TestBasics.session.createTestFile("DownloadDeletionByDownloadSharingUser")
             self.uploadFile2UUID.stringValue = self.uploadFile2.uuidString
+            
+            self.uploadFile3 = TestBasics.session.createTestFile("UploadDeletionByDownloadSharingUser")
+            self.uploadFile3UUID.stringValue = self.uploadFile3.uuidString
         }
         else {
             self.uploadFile1 = TestBasics.session.recreateTestFile(fromUUID: self.uploadFile1UUID.stringValue)
             self.uploadFile2 = TestBasics.session.recreateTestFile(fromUUID: self.uploadFile2UUID.stringValue)
+            self.uploadFile3 = TestBasics.session.recreateTestFile(fromUUID: self.uploadFile3UUID.stringValue)
         }
     }
 
@@ -102,6 +108,8 @@ class SharingUserOperations: BaseClass {
         self.extraServerResponseTime = Double(self.numberInvitationsPerType) * 3 * 20
         let uploadExpectations1 = UploadFileExpectations(fromTestClass: self)
         let uploadExpectations2 = UploadFileExpectations(fromTestClass: self)
+        let uploadExpectations3 = UploadFileExpectations(fromTestClass: self)
+
         let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
        
         self.createUploadFiles(initial:true)
@@ -121,7 +129,9 @@ class SharingUserOperations: BaseClass {
                             self.uploadFile(self.uploadFile1, expectations: uploadExpectations1) {
                                 self.uploadFile(self.uploadFile2, expectations: uploadExpectations2) {
                                     self.uploadDeletion(self.uploadFile2, expectation: uploadDeletionExpectations) {
-                                        setupDone.fulfill()
+                                        self.uploadFile(self.uploadFile3, expectations: uploadExpectations3) {
+                                            setupDone.fulfill()
+                                        }
                                     }
                                 }
                             }
@@ -257,15 +267,19 @@ class SharingUserOperations: BaseClass {
         SMSyncControl.session.nextSyncOperation()
     }
     
-    func uploadDeletion(testFile:TestFile, expectation:UploadDeletionExpectations,
-        complete:(()->())?=nil) {
+    func uploadDeletion(testFile:TestFile, expectation:UploadDeletionExpectations, failureExpected:Bool=false, complete:(()->())?=nil) {
 
         try! SMSyncServer.session.deleteFile(testFile.uuid)
         
-        self.deletionCallbacks.append() { uuids in
-            XCTAssert(uuids.count == 1)
-            XCTAssert(uuids[0].UUIDString == testFile.uuidString)
+        if failureExpected {
             expectation.deletionExpectation.fulfill()
+        }
+        else {
+            self.deletionCallbacks.append() { uuids in
+                XCTAssert(uuids.count == 1)
+                XCTAssert(uuids[0].UUIDString == testFile.uuidString)
+                expectation.deletionExpectation.fulfill()
+            }
         }
         
         // The .Idle callback gets called first
@@ -273,19 +287,38 @@ class SharingUserOperations: BaseClass {
             expectation.idleExpectation.fulfill()
         }
         
-        // Followed by the commit complete.
-        self.commitCompleteCallbacks.append() { numberDeletions in
-            Log.msg("commitCompleteCallbacks: deleteFiles")
-            XCTAssert(numberDeletions == 1)
-            
-            let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
-            XCTAssert(fileAttr != nil)
-            XCTAssert(fileAttr!.deleted!)
-            
-            expectation.commitCompleteExpectation.fulfill()
-            complete?()
+        if failureExpected {
+            self.errorCallbacks.append() {
+                SMSyncServer.session.cleanupFile(testFile.uuid)
+                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                    testFile.appFile)
+                CoreData.sessionNamed(CoreDataTests.name).saveContext()
+                
+                SMSyncServer.session.resetFromError() { error in
+                    Log.msg("SMSyncServer.session.resetFromError: Completed")
+                    XCTAssert(error == nil)
+                    
+                    // This isn't really true, but we need to fulfil them to clean up.
+                    expectation.commitCompleteExpectation.fulfill()
+                    
+                    complete?()
+                }
+            }
         }
-    
+        else {
+            self.commitCompleteCallbacks.append() { numberDeletions in
+                Log.msg("commitCompleteCallbacks: deleteFiles")
+                XCTAssert(numberDeletions == 1)
+                
+                let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                XCTAssert(fileAttr != nil)
+                XCTAssert(fileAttr!.deleted!)
+                
+                expectation.commitCompleteExpectation.fulfill()
+                complete?()
+            }
+        }
+        
         try! SMSyncServer.session.commit()
     }
     
@@ -331,6 +364,21 @@ class SharingUserOperations: BaseClass {
     // 3) Sign in as Facebook user.
     // 4) Then do the following:
     
+    func startTestWithInvitationCode(invitationCode: String, testBody:()->()) {
+        self.waitUntilSyncServerUserSignin() {
+            self.idleCallbacks.append() {
+                testBody()
+            }
+            
+            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
+                XCTAssert(linkedOwningUserId != nil)
+                XCTAssert(error == nil)
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
     func testThatFileDownloadByDownloadSharingUserWorks() {
         // Redeem Download invitation first.
         let downloadInvitation = 0
@@ -342,18 +390,9 @@ class SharingUserOperations: BaseClass {
         
         self.createUploadFiles(initial:false)
         
-        self.waitUntilSyncServerUserSignin() {
-            self.idleCallbacks.append() {
-                self.downloadFile(self.uploadFile1, expectations: expectations)
-            }
-            
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId != nil)
-                XCTAssert(error == nil)
-            }
+        self.startTestWithInvitationCode(invitationCode) {
+            self.downloadFile(self.uploadFile1, expectations: expectations)
         }
-        
-        self.waitForExpectations()
     }
     
     func testThatDownloadDeletionByDownloadSharingUserWorks() {
@@ -367,32 +406,90 @@ class SharingUserOperations: BaseClass {
         
         self.createUploadFiles(initial:false)
         
-        self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId != nil)
-                XCTAssert(error == nil)
-
-                self.downloadDeletion(self.uploadFile2, expectation: expectations)
-            }
+        self.startTestWithInvitationCode(invitationCode) {
+            self.downloadDeletion(self.uploadFile2, expectation: expectations)
         }
-        
-        self.waitForExpectations()
     }
     
     func testThatDownloadDeletionByUploadSharingUserWorks() {
-        // Redeem Upload invitation first.
+        let uploadInvitation = 0
+        let invitationCode = self.uploadingInvitations[uploadInvitation].stringValue
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
+        let downloadDeletionExpectations = DownloadDeletionExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "DownloadDeletionByUploadSharingUser")
+            
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.uploadDeletion(testFile, expectation: uploadDeletionExpectations) {
+                    self.downloadDeletion(testFile, expectation: downloadDeletionExpectations)
+                }
+            }
+        }
     }
     
     func testThatFileDownloadByUploadSharingUserWorks() {
+        let uploadInvitation = 1
+        
         // Redeem Upload invitation first.
+        
+        let invitationCode = self.uploadingInvitations[uploadInvitation].stringValue
+        
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let downloadExpectations = DownloadFileExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "FileDownloadByUploadSharingUser")
+            
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.downloadFile(testFile, expectations: downloadExpectations)
+            }
+        }
     }
     
     func testThatDownloadDeletionByAdminSharingUserWorks() {
+        let adminInvitation = 0
+        
         // Redeem Admin invitation first.
+        
+        let invitationCode = self.adminInvitations[adminInvitation].stringValue
+        
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
+        let downloadDeletionExpectations = DownloadDeletionExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "DownloadDeletionByAdminSharingUser")
+            
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.uploadDeletion(testFile, expectation: uploadDeletionExpectations) {
+                    self.downloadDeletion(testFile, expectation: downloadDeletionExpectations)
+                }
+            }
+        }
     }
     
     func testThatFileDownloadByAdminSharingUserWorks() {
+        let adminInvitation = 1
         // Redeem Admin invitation first.
+        
+        let invitationCode = self.adminInvitations[adminInvitation].stringValue
+        
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let downloadExpectations = DownloadFileExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "FileDownloadByAdminSharingUser")
+            
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.downloadFile(testFile, expectations: downloadExpectations)
+            }
+        }
     }
     
     //MARK: Upload tests
@@ -407,53 +504,127 @@ class SharingUserOperations: BaseClass {
         self.extraServerResponseTime = 60
         
         let testFile = TestBasics.session.createTestFile("FileUploadByDownloadingSharingUser")
-        
-        self.waitUntilSyncServerUserSignin() {
-            SMSyncServerUser.session.redeemSharingInvitation(invitationCode: invitationCode) { (linkedOwningUserId, error) in
-                XCTAssert(linkedOwningUserId != nil)
-                XCTAssert(error == nil)
-
-                self.uploadFile(testFile, expectations: expectations, failureExpected: true)
-            }
+    
+        self.startTestWithInvitationCode(invitationCode) {
+            self.uploadFile(testFile, expectations: expectations, failureExpected: true)
         }
-        
-        self.waitForExpectations()
     }
     
     func testThatUploadDeletionByDownloadingSharingUserFails() {
         // Redeem Download invitation first.
         let downloadInvitation = 3
+        
+        let invitationCode = self.downloadingInvitations[downloadInvitation].stringValue
+        let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            self.uploadDeletion(self.uploadFile3, expectation: uploadDeletionExpectations, failureExpected: true)
+        }
     }
     
     func testThatFileUploadByUploadSharingUserWorks() {
+        let uploadInvitation = 2
         // Redeem Upload invitation first.
+        
+        let invitationCode = self.uploadingInvitations[uploadInvitation].stringValue
+
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "FileUploadByUploadSharingUser")
+            self.uploadFile(testFile, expectations: uploadExpectations)
+        }
     }
     
     func testThatUploadDeletionByUploadSharingUserWorks() {
+        let uploadInvitation = 3
         // Redeem Upload invitation first.
+        let invitationCode = self.uploadingInvitations[uploadInvitation].stringValue
+
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "UploadDeletionByUploadSharingUser")
+            
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.uploadDeletion(testFile, expectation: uploadDeletionExpectations)
+            }
+        }
     }
     
     func testThatFileUploadByAdminSharingUserWorks() {
+        let adminInvitation = 2
         // Redeem Admin invitation first.
+        
+        let invitationCode = self.adminInvitations[adminInvitation].stringValue
+
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "FileUploadByAdminSharingUser")
+            self.uploadFile(testFile, expectations: uploadExpectations)
+        }
     }
     
     func testThatUploadDeletionByAdminSharingUserWorks() {
+        let adminInvitation = 3
         // Redeem Admin invitation first.
+        let invitationCode = self.adminInvitations[adminInvitation].stringValue
+
+        let uploadExpectations = UploadFileExpectations(fromTestClass: self)
+        let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
+        
+        self.startTestWithInvitationCode(invitationCode) {
+            let testFile = TestBasics.session.createTestFile(
+                "UploadDeletionByAdminSharingUser")
+            self.uploadFile(testFile, expectations: uploadExpectations) {
+                self.uploadDeletion(testFile, expectation: uploadDeletionExpectations)
+            }
+        }
     }
 
     //MARK: Invitation tests
     
+    func doInvitation(invitationCode:String, failureExpected:Bool) {
+        self.startTestWithInvitationCode(invitationCode) {
+            SMServerAPI.session.createSharingInvitation(sharingType: SMSharingType.Admin.rawValue, completion: { (invitationCode, apiResult) in
+                if failureExpected {
+                    XCTAssert(apiResult.error != nil)
+                    XCTAssert(invitationCode == nil)
+                }
+                else {
+                    XCTAssert(apiResult.error == nil)
+                    XCTAssert(invitationCode != nil)
+                }
+            })
+        }
+    }
+    
     func testThatInvitationByDownloadingSharingUserFails() {
         // Redeem Download invitation first.
         let downloadInvitation = 4
-
+        let invitationCode = self.downloadingInvitations[downloadInvitation].stringValue
+        self.doInvitation(invitationCode, failureExpected: true)
     }
     
     func testThatInvitationByUploadSharingUserFails() {
+        let uploadInvitation = 4
+        
         // Redeem Upload invitation first.
+        let invitationCode = self.uploadingInvitations[uploadInvitation].stringValue
+        self.doInvitation(invitationCode, failureExpected: true)
     }
     
     func testThatInvitationByAdminSharingUserWorks() {
+        let adminInvitation = 4
+        
         // Redeem Admin invitation first.
+        
+        let invitationCode = self.adminInvitations[adminInvitation].stringValue
+        self.doInvitation(invitationCode, failureExpected: false)
     }
 }
