@@ -206,10 +206,10 @@ class SharingUserOperations: BaseClass {
         
         if failureExpected {
             self.errorCallbacks.append() {
-                SMSyncServer.session.cleanupFile(testFile.uuid)
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(
-                    testFile.appFile)
-                CoreData.sessionNamed(CoreDataTests.name).saveContext()
+//                SMSyncServer.session.cleanupFile(testFile.uuid)
+//                CoreData.sessionNamed(CoreDataTests.name).removeObject(
+//                    testFile.appFile)
+//                CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
                 SMSyncServer.session.resetFromError() { error in
                     Log.msg("SMSyncServer.session.resetFromError: Completed")
@@ -289,10 +289,10 @@ class SharingUserOperations: BaseClass {
         
         if failureExpected {
             self.errorCallbacks.append() {
-                SMSyncServer.session.cleanupFile(testFile.uuid)
-                CoreData.sessionNamed(CoreDataTests.name).removeObject(
-                    testFile.appFile)
-                CoreData.sessionNamed(CoreDataTests.name).saveContext()
+                //SMSyncServer.session.cleanupFile(testFile.uuid)
+                //CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                //    testFile.appFile)
+                //CoreData.sessionNamed(CoreDataTests.name).saveContext()
                 
                 SMSyncServer.session.resetFromError() { error in
                     Log.msg("SMSyncServer.session.resetFromError: Completed")
@@ -358,12 +358,6 @@ class SharingUserOperations: BaseClass {
     }
     */
     
-    // ***** For the rest: Must be signed in as sharing user.
-    // 1) Startup the app in Xcode, not doing a test.
-    // 2) Sign out of owning user. 
-    // 3) Sign in as Facebook user.
-    // 4) Then do the following:
-    
     func startTestWithInvitationCode(invitationCode: String, testBody:()->()) {
         self.waitUntilSyncServerUserSignin() {
             self.idleCallbacks.append() {
@@ -378,6 +372,12 @@ class SharingUserOperations: BaseClass {
         
         self.waitForExpectations()
     }
+    
+    // ***** For the rest: Must be signed in as sharing user.
+    // 1) Startup the app in Xcode, not doing a test.
+    // 2) Sign out of owning user. 
+    // 3) Sign in as Facebook user.
+    // 4) Then do the following:
     
     func testThatFileDownloadByDownloadSharingUserWorks() {
         // Redeem Download invitation first.
@@ -517,8 +517,15 @@ class SharingUserOperations: BaseClass {
         let invitationCode = self.downloadingInvitations[downloadInvitation].stringValue
         let uploadDeletionExpectations = UploadDeletionExpectations(fromTestClass: self)
         
+        self.createUploadFiles(initial:false)
+        
+        // The retries upon upload deletion failure take a while to finish.
+        self.extraServerResponseTime = 120
+
         self.startTestWithInvitationCode(invitationCode) {
-            self.uploadDeletion(self.uploadFile3, expectation: uploadDeletionExpectations, failureExpected: true)
+            self.uploadDeletion(self.uploadFile3, expectation: uploadDeletionExpectations, failureExpected: true) {
+                // Now need to redeem an uploader invitation, and check for downloads becasue there is still a download pending for self.uploadFile3.
+            }
         }
     }
     
@@ -590,15 +597,19 @@ class SharingUserOperations: BaseClass {
     //MARK: Invitation tests
     
     func doInvitation(invitationCode:String, failureExpected:Bool) {
+        let expectation = self.expectationWithDescription("Invitation Test")
+
         self.startTestWithInvitationCode(invitationCode) {
             SMServerAPI.session.createSharingInvitation(sharingType: SMSharingType.Admin.rawValue, completion: { (invitationCode, apiResult) in
                 if failureExpected {
                     XCTAssert(apiResult.error != nil)
                     XCTAssert(invitationCode == nil)
+                    expectation.fulfill()
                 }
                 else {
                     XCTAssert(apiResult.error == nil)
                     XCTAssert(invitationCode != nil)
+                    expectation.fulfill()
                 }
             })
         }
