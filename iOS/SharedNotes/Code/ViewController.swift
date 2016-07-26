@@ -15,6 +15,7 @@ class ViewController: UIViewController {
     private var barButtonSpinner:UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var signInOrOut: UIBarButtonItem!
+    @IBOutlet weak var share: UIBarButtonItem!
     private var coreDataSource:CoreDataSource!
     private let cellReuseIdentifier = "NoteCell"
     
@@ -91,13 +92,12 @@ class ViewController: UIViewController {
 
     @IBAction func signInAction(sender: AnyObject) {
         if SMSyncServerUser.session.signedIn {
-            // User is signed in; sign them out.
-            SMCloudStorageCredentials.session.syncServerSignOutUser()
+            SMSyncServerUser.session.signOut()
             self.changeSignInSignOutButton()
         }
         else {
             // User is not signed in; allow them to.
-            let signInController = SMCloudStorageCredentials.session.makeSignInController()
+            let signInController = SignInViewController()
             self.navigationController!.pushViewController(signInController, animated: true)
         }
     }
@@ -120,6 +120,39 @@ class ViewController: UIViewController {
                 try SMSyncServer.session.commit()
             } catch (let error) {
                 Misc.showAlert(fromParentViewController: self, title: "Error uploading new  note!", message: "\(error)")
+            }
+        }
+    }
+    
+    @IBAction func shareAction(sender: AnyObject) {
+        let alert = UIAlertController(title: "Share your data with Facebook user?", message: nil, preferredStyle: .ActionSheet)
+        alert.addAction(UIAlertAction(title: "Read-only", style: .Default){alert in
+            self.completeSharing(.Downloader)
+        })
+        alert.addAction(UIAlertAction(title: "Read & Change", style: .Default){alert in
+            self.completeSharing(.Uploader)
+        })
+        alert.addAction(UIAlertAction(title: "Read, Change, & Invite", style: .Default){alert in
+            self.completeSharing(.Admin)
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
+        })
+        if alert.popoverPresentationController != nil {
+            alert.popoverPresentationController!.barButtonItem = self.share
+        }
+        self.presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    private func completeSharing(sharingType:SMSharingType) {
+        SMSyncServerUser.session.createSharingInvitation(sharingType) { invitationCode, error in
+            if error == nil {
+                let sharingURLString = SMSharingInvitations.createSharingURL(invitationCode: invitationCode!, username: nil)
+                let email = SMEmail(parentViewController: self)
+                email.setMessageBody(sharingURLString, isHTML: false)
+                email.show()
+            }
+            else {
+                Misc.showAlert(fromParentViewController: self, title: "Error creating sharing invitation!", message: "\(error)")
             }
         }
     }

@@ -1,13 +1,31 @@
+source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/crspybits/Specs.git'
+
 # Uncomment this line to define a global platform for your project
-# platform :ios, '8.0'
+platform :ios, '8.0'
 # Uncomment this line if you're using Swift
 use_frameworks!
 
-target 'SharedNotes' do
+target ‘SharedNotes’ do
+	# Not using this because I made some mods to the ODRefreshControl code.
+	# pod 'ODRefreshControl', '~> 1.2'
+	
 	pod 'Google/SignIn'
+	pod 'Bolts'
+	pod 'FBSDKCoreKit'
+	pod 'FBSDKShareKit'
+	pod 'FBSDKLoginKit'
+	
+	pod 'SMSyncServer', :path => '../iOSFramework'
+	# pod 'SMSyncServer' # SMSyncServer imports SMCoreLib, which imports AFNetworking
+	
+	target ‘SharedNotesTests’ do
+		inherit! :search_paths
+		pod 'Google/SignIn'
+	end
 end
 
-target 'SharedNotesTests' do
-	pod 'Google/SignIn'
-end
+# target 'SharedNotesTests' do
+#	pod 'Google/SignIn'
+# end
 

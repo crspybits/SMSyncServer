@@ -44,9 +44,15 @@
                                     <action selector="createAction:" destination="BYZ-38-t0r" id="KCC-z3-Xu6"/>
                                 </connections>
                             </barButtonItem>
+                            <barButtonItem image="Share" id="05F-5O-KJj" userLabel="Share">
+                                <connections>
+                                    <action selector="shareAction:" destination="BYZ-38-t0r" id="hNF-3n-Tp9"/>
+                                </connections>
+                            </barButtonItem>
                         </rightBarButtonItems>
                     </navigationItem>
                     <connections>
+                        <outlet property="share" destination="05F-5O-KJj" id="yP9-6T-5h0"/>
                         <outlet property="signInOrOut" destination="oja-bx-r30" id="YGE-0h-Y7T"/>
                         <outlet property="tableView" destination="F8z-rj-gY9" id="Cm4-w9-4EX"/>
                     </connections>
@@ -143,5 +149,6 @@
     </scenes>
     <resources>
         <image name="Create" width="25" height="25"/>
+        <image name="Share" width="25" height="25"/>
     </resources>
 </document>

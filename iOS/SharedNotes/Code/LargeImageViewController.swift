@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 class LargeImageViewController : UIViewController {
     // Assign this before pushing to this view controller

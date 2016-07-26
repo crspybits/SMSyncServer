@@ -11,6 +11,7 @@ import Google
 import Foundation
 import SMSyncServer
 import SMCoreLib
+import GoogleSignIn
 
 /* 6/25/16; Just started seeing this issue: https://forums.developer.apple.com/message/148335#148335
 Failed to get remote view controller with error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.uikit.viewservice.com.apple.SafariViewService" UserInfo={NSDebugDescription=connection to service named com.apple.uikit.viewservice.com.apple.SafariViewService}
