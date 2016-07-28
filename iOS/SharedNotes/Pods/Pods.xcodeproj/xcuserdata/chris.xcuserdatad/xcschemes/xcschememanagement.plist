@@ -29,6 +29,16 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>FFGlobalAlertController-FFGlobalAlertController.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>FFGlobalAlertController.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>HPTextViewTapGestureRecognizer.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -67,11 +77,6 @@
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>11ECC08FC7549A23096D2D77041AC389</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
 		<key>1C3436CEA5C3D39764C5F54374794ECB</key>
 		<dict>
 			<key>primary</key>
@@ -87,7 +92,7 @@
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>389CA1162874297C76C580D6F152602A</key>
+		<key>3C6F32EA88FDED010426B61650F64B36</key>
 		<dict>
 			<key>primary</key>
 			<true/>
@@ -97,22 +102,37 @@
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>768A08BC7B0FCB35120AF3A7904CD237</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
 		<key>9D0F2E5EA1B46A5D72FFD42B0B39DBBC</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>A7DA09AF32A87D299E282FFDB0E7BCC2</key>
+		<key>AF9231FABC1ABD66B51BBB24E5BCE138</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
 		<key>B24BEFE060F3015511413D6D7F298505</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>CCA3AD04B06F73A52AF31F0C7B3F441D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>EEDE6FFE660087410E4C0B681484FC1C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>F699C22377D99D4BF0E8D59E29146FE8</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>FE34F01D22113EF688A14D95236A999F</key>
 		<dict>
 			<key>primary</key>
 			<true/>

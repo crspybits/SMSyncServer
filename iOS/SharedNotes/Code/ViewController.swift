@@ -96,6 +96,8 @@ class ViewController: UIViewController {
             self.changeSignInSignOutButton()
         }
         else {
+            // TODO: Need to give them a warning if there is data in the app, i.e., notes. If they sign out and sign into a different account, this is going to mess things up-- will need to reset the data.
+            
             // User is not signed in; allow them to.
             let signInController = SignInViewController()
             self.navigationController!.pushViewController(signInController, animated: true)
@@ -125,21 +127,29 @@ class ViewController: UIViewController {
     }
     
     @IBAction func shareAction(sender: AnyObject) {
-        let alert = UIAlertController(title: "Share your data with Facebook user?", message: nil, preferredStyle: .ActionSheet)
-        alert.addAction(UIAlertAction(title: "Read-only", style: .Default){alert in
-            self.completeSharing(.Downloader)
-        })
-        alert.addAction(UIAlertAction(title: "Read & Change", style: .Default){alert in
-            self.completeSharing(.Uploader)
-        })
-        alert.addAction(UIAlertAction(title: "Read, Change, & Invite", style: .Default){alert in
-            self.completeSharing(.Admin)
-        })
-        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
-        })
-        if alert.popoverPresentationController != nil {
-            alert.popoverPresentationController!.barButtonItem = self.share
+        var alert:UIAlertController
+        
+        if SMSyncServerUser.session.signedIn {
+            alert = UIAlertController(title: "Share your data with Facebook user?", message: nil, preferredStyle: .ActionSheet)
+            alert.addAction(UIAlertAction(title: "Read-only", style: .Default){alert in
+                self.completeSharing(.Downloader)
+            })
+            alert.addAction(UIAlertAction(title: "Read & Change", style: .Default){alert in
+                self.completeSharing(.Uploader)
+            })
+            alert.addAction(UIAlertAction(title: "Read, Change, & Invite", style: .Default){alert in
+                self.completeSharing(.Admin)
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
+            })
         }
+        else {
+            alert = UIAlertController(title: "Please sign in first!", message: "There is no signed in user.", preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .Cancel){alert in
+            })
+        }
+        
+        alert.popoverPresentationController?.barButtonItem = self.share
         self.presentViewController(alert, animated: true, completion: nil)
     }
     
@@ -148,7 +158,10 @@ class ViewController: UIViewController {
             if error == nil {
                 let sharingURLString = SMSharingInvitations.createSharingURL(invitationCode: invitationCode!, username: nil)
                 let email = SMEmail(parentViewController: self)
-                email.setMessageBody(sharingURLString, isHTML: false)
+                
+                let message = "I'd like to share my data with you through the SharedNotes app and your Facebook account. To share my data, you need to:\n1) download the SharedNotes iOS app onto your iPhone or iPad,\n2) tap the link below in the Apple Mail app, and\n3) follow the instructions within the app to sign in to your Facebook account to access my data.\n\n" + sharingURLString
+                
+                email.setMessageBody(message, isHTML: false)
                 email.show()
             }
             else {

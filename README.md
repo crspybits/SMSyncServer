@@ -89,9 +89,9 @@ Its structure is as follows:
 	
 * Each entry in the `CloudStorageServices` dictionary must abide by the structure required for the particular cloud storage service. For Google Drive, see [Google Sign In](https://developers.google.com/identity/sign-in/ios/).
 
-* Each entry in the `SharingServices` dictionary must abide by the structure required for the particular sharing service. For Facebook, you must enable an app with [https://developers.facebook.com](https://developers.facebook.com/docs/ios/getting-started). Note that you don't need to follow all of these steps, just (a) create a Facbook app corresponding to your iOS app, and (b) modify parts (if you are using the example iOSTests or SharedNotes app) or add parts (if you are making a new app) indicated to the `.plist` of the Xcode project.
+* Each entry in the `SharingServices` dictionary must abide by the structure required for the particular sharing service. For Facebook, you must enable an app with [https://developers.facebook.com](https://developers.facebook.com/docs/ios/getting-started). Note that you don't need to follow all of these steps, just (a) create a Facbook app corresponding to your iOS app, and (b) modify parts (if you are using the example iOSTests or SharedNotes app) or add parts (if you are making a new app) indicated to the `.plist` of the Xcode project. When creating the Facebook app, you must make sure to add your app as a Platform ([see this link](http://stackoverflow.com/questions/16345777/given-url-is-not-allowed-by-the-application-configuration)).
 
-* If you are using Facebooks sharing, so that your app can receive sharing invitations, you need to add the following URL Scheme to your apps .plist file:
+* If you are using Facebooks sharing, in order for your app to receive sharing invitations, you need to add the following URL Scheme to your apps .plist file:
 
 	<key>CFBundleURLTypes</key>
 	<array>

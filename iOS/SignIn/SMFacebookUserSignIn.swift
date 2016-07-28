@@ -185,7 +185,7 @@ extension SMFacebookUserSignIn : FBSDKLoginButtonDelegate {
                         self.delegate.smUserSignIn(resetSharingInvitationCodeForUserSignIn: self)
                     }
                     else if error != nil {
-                        // TODO: Give them an error message.
+                        // TODO: Give them a UI error message.
                         // Hmmm. We have an odd state here. If it was a new user, we created the user, but we couldn't redeem the invitation. What to do??
                         Log.error("Failed redeeming invitation.")
                         self.reallyLogOut()

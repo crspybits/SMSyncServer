@@ -1,6 +1,11 @@
 // Accessing the users cloud storage to transfer files. This deals with the details of the cloud storage systems (e.g., Google Drive).
 // This class is closely coupled to GoogleUserCredentials. E.g., it knows about GoogleUserCredentials .oauth2Client property.
 
+/* 7/26/16; Sometimes Google Drive puts (n) at the end of file names. I'm not sure which file it will read. See 
+https://productforums.google.com/forum/#!topic/drive/XJzVGC868DQ
+https://productforums.google.com/forum/#!topic/drive/WPF82xwXR-o
+*/
+
 'use strict';
 
 const AccessTokenExpired = 401;

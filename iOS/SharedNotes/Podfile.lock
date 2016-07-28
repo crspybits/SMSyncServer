@@ -26,6 +26,7 @@ PODS:
     - FBSDKCoreKit
   - FBSDKShareKit (4.14.0):
     - FBSDKCoreKit
+  - FFGlobalAlertController (1.0.2)
   - FirebaseAnalytics (3.2.1):
     - FirebaseInstanceID (~> 1.0)
     - GoogleInterchangeUtilities (~> 1.2)
@@ -68,6 +69,7 @@ DEPENDENCIES:
   - FBSDKCoreKit
   - FBSDKLoginKit
   - FBSDKShareKit
+  - FFGlobalAlertController
   - Google/SignIn
   - SMSyncServer (from `../iOSFramework`)
 
@@ -81,6 +83,7 @@ SPEC CHECKSUMS:
   FBSDKCoreKit: 6e020b5db0b5bd1e01f5fb0902131befd129a502
   FBSDKLoginKit: da563567a108050ef83739c8c8c001ee9e25fa13
   FBSDKShareKit: e8e5d4ccef69b41132fe33acda26db1e33143e33
+  FFGlobalAlertController: 40c66500ae173895085911ba19d79d045bd26742
   FirebaseAnalytics: 0fd6532cb2c3d03cd5cf26ad295ccb091efd3104
   FirebaseInstanceID: a9d923f3d0b6fbf9fac89310860357aaadc34be5
   Google: 813c467362eabc11385f5a5cc9ad0cb651a58f4e
@@ -96,6 +99,6 @@ SPEC CHECKSUMS:
   SMCoreLib: ad6aa186faaddbcc52e8f763b9e187ed88ddbbd2
   SMSyncServer: 2048ae1fe420d8cc7b010060b7c30f6eeff6d56f
 
-PODFILE CHECKSUM: fa576b1aa1941838b6ea0cbba1c2b584dadd17bf
+PODFILE CHECKSUM: 45540059a4a90997e1f70daf33b011373a99f2b0
 
 COCOAPODS: 1.0.1

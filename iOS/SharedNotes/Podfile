@@ -16,6 +16,8 @@ target ‘SharedNotes’ do
 	pod 'FBSDKShareKit'
 	pod 'FBSDKLoginKit'
 	
+	pod "FFGlobalAlertController"
+	
 	pod 'SMSyncServer', :path => '../iOSFramework'
 	# pod 'SMSyncServer' # SMSyncServer imports SMCoreLib, which imports AFNetworking
 	

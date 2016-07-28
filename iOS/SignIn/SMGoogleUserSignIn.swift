@@ -243,7 +243,8 @@ extension SMGoogleUserSignIn : GIDSignInDelegate {
                         self.idToken = idToken
                     }
                     else {
-                        // TODO: This does not necessarily the user is not on the system for the case of checkForExistingUser. E.g., on a server crash or a network failure, we'll also get here. If needed, could check an error return code from the server.
+                        // TODO: This does not necessarily indicate the user is not on the system for the case of checkForExistingUser. E.g., on a server crash or a network failure, we'll also get here. If needed, could check an error return code from the server.
+                        // Why sign the user out?
                         self.syncServerSignOutUser()
                         self.tellUserThereWasAnError(error!)
                     }

@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 import SMSyncServer
 import SMCoreLib
+import FFGlobalAlertController
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -112,7 +113,6 @@ extension AppDelegate : SMUserSignInAccountDelegate {
     }
     
     func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount) {
-    
         // In some non-fatal error cases, we can have userJustSignedOut called and we we'ren't officially signed in. E.g., when trying to sign in, but the sign in fails. SO, don't make this a fatal issue, just log a message.
         if AppDelegate.userSignInDisplayName.stringValue != userSignIn.displayNameI! {
             Log.error("Not currently signed into userSignIn.displayName!: \(userSignIn.displayNameI)")
@@ -144,5 +144,37 @@ extension AppDelegate : SMUserSignInManagerDelegate {
     func didReceiveSharingInvitation(manager:SMUserSignInManager, invitationCode: String, userName: String?) {
         AppDelegate.sharingInvitationCode = invitationCode
         // TODO: We should really just put up a UI here to ask them if they want to sign into their FB account. This will redeem the sharing invitation.
+        var alert:UIAlertController
+        var okAction:()->()
+        
+        let navController = self.window?.rootViewController as? UINavigationController
+        if navController == nil {
+            Log.error("Could not get the root view controller!")
+        }
+        
+        var message:String
+        // TODO: Need to make sure the signed in account is a sharing account.
+        if SMSyncServerUser.session.signedIn {
+            // This is really a bigger picture issue: If there is data, then this amounts to sharing other data, and we're not setup to deal with that.
+            message = "Redeem it with your current account?"
+            okAction = {
+            }
+        }
+        else {
+            message = "Sign into your Facebook account and redeem it?"
+            okAction = {
+                let signInController = SignInViewController()
+                navController?.popToRootViewControllerAnimated(true)
+                navController?.pushViewController(signInController, animated: true)
+            }
+        }
+        
+        alert = UIAlertController(title: "You got a sharing invite!", message: message, preferredStyle: .Alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
+        })
+        alert.addAction(UIAlertAction(title: "OK", style: .Default){alert in
+            okAction()
+        })
+        alert.show()
     }
 }
