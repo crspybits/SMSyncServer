@@ -264,15 +264,6 @@ Operation.prototype.end = function () {
     // The client expects a dictionary in response.
     logger.trace("Sending response back to client: " + JSON.stringify(this.result));
     this.response.end(JSON.stringify(this.result));
-    
-    /*
-    if (this.userCreds) {
-        // A test just to see if the Google creds are actually working...
-        listFiles(this.userCreds.googleUserCredentials.oauth2Client);
-    }
-    else {
-        logger.info("No this.userCreds defined (Can't run Google list files test)");
-    }*/
 }
 
 // Error details can be a string or an object.
@@ -316,32 +307,6 @@ Callback has parameters:
 Operation.prototype.checkForExistingUser = function (callback) {
     var self = this;
     self.psUserCreds.lookupAndValidate(callback);
-}
-
-/**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function listFiles(auth) {
-    logger.info("Listing files...");
-    var service = google.drive('v2');
-    service.files.list({auth: auth, maxResults: 10}, function(err, response) {
-        if (err) {
-            logger.error('The API returned an error: ' + JSON.stringify(err));
-            return;
-        }
-        var files = response.items;
-        if (files.length == 0) {
-            logger.info('No files found.');
-        } else {
-            logger.info('Files:');
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                logger.info('%s (%s)', file.title, file.id);
-            }
-        }
-    });
 }
 
 // export the class

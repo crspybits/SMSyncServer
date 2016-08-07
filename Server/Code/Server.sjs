@@ -46,10 +46,40 @@ var upload = multer({ dest: initialUploadDirectory}).single(ServerConstants.file
 // http://stackoverflow.com/questions/4295782/how-do-you-extract-post-data-in-node-js
 app.use(bodyParser.json({extended : true}));
 
+var serverPort = 8081;
+var serverIPAddress = '127.0.0.1';
+
+// 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only Heroku dependency in the server I think.
+//if (isDefined(process.env.PORT)) {
+//    serverPort = process.env.PORT;
+//}
+
+// 7/31/16
+// Changes for running on Bluemix.
+// https://console.ng.bluemix.net/docs/runtimes/nodejs/index.html#nodejs_runtime
+
+if (isDefined(process.env.VCAP_APP_PORT)) {
+    logger.info("Found VCAP_APP_PORT: Assuming that we're running on Bluemix.");
+
+    serverPort = process.env.VCAP_APP_PORT;
+    
+    if (!isDefined(process.env.VCAP_APP_HOST)) {
+        throw("Could not find process.env.VCAP_APP_HOST");
+    }
+    
+    serverIPAddress = process.env.VCAP_APP_HOST;
+}
+
 // Server main.
 Secrets.load(function (error) {
     assert.equal(null, error);
-    Mongo.connect(Secrets.mongoDbURL());
+    
+    var mongoDbURL = Secrets.mongoDbURL();
+    if (!isDefined(mongoDbURL)) {
+        throw new Error("mongoDbURL is not defined!");
+    }
+    
+    Mongo.connect(mongoDbURL);
 });
 
 // Enable creation of an owning or sharing user.
@@ -1952,9 +1982,8 @@ app.use(function(err, req, res, next) {
     logger.error(err.stack);
 });
 
-// 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only Heroku dependency in the server I think.
-app.set('port', (process.env.PORT || 8081));
-app.listen(app.get('port'), function() {
-  logger.info('Node app is running on port', app.get('port'));
+app.listen(serverPort, serverIPAddress, function() {
+  logger.info('Node app is running on port ' + serverPort);
+  logger.info('     with IP address: ' + serverIPAddress);
 });
 

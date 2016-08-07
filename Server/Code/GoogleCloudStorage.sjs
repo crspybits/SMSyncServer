@@ -54,6 +54,9 @@ GoogleCloudStorage.prototype.setup = function (callback) {
     var query = "mimeType = 'application/vnd.google-apps.folder' and title = '"
         + self.cloudFolderPath + "' and trashed = false";
     
+    // DEBUGGING
+    self.listAllFiles();
+    
     self.listFiles(query, function (error, files) {
         if (error) {
             logger.error("GoogleCloudStorage.setup: Failed on listFile: " + JSON.stringify(error))
@@ -454,6 +457,47 @@ GoogleCloudStorage.prototype.callGoogleDriveAPIAux =
         }
     }
 
+// DEBUGGING
+
+var successListingFiles = false;
+
+GoogleCloudStorage.prototype.listAllFiles = function() {
+    var self = this;
+    
+    if (successListingFiles) {
+        return;
+    }
+    
+    logger.info("Listing files...");
+    
+    if (!isDefined(self.cloudFolderId)) {
+        logger.debug("self.cloudFolderId is not defined");
+        return;
+    }
+    
+    var query = "'" + self.cloudFolderId + "' in parents";
+    
+    self.listFiles(query, function (error, files) {
+        if (error) {
+            logger.error("Error listing files: " + error);
+        }
+        else {
+            if (files.length == 0) {
+                logger.info('No files found.');
+            }
+            else {
+                logger.info('Files:');
+                
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    logger.info('%s (%s); %j', file.title, file.id, file);
+                }
+                
+                successListingFiles = true;
+            }
+        }
+    });
+}
 
 // export the class
 module.exports = GoogleCloudStorage;
