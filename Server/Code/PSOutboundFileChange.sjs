@@ -134,7 +134,7 @@ PSOutboundFileChange.commit = function (userId, deviceId, callback) {
 // Looks up a PSOutboundFileChange object based on the instance values. On success the instance has its values populated by the found object.
 // Callback parameters: 1) error, 2) if error is null, a boolean indicating if the object could be found. It is an error for more than one object to be found in a query using the instance values.
 PSOutboundFileChange.prototype.lookup = function (callback) {
-    Common.lookup(this, props, collectionName, callback);
+    Common.lookup(this, this, props, collectionName, callback);
 }
 
 // Callback parameters: 1) error, 2) if error not null, an array of PSOutboundFileChange objects describing the outbound file changes pending for this userId/deviceId.

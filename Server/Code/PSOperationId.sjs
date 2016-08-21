@@ -3,7 +3,6 @@
 'use strict';
 
 var ObjectID = require('mongodb').ObjectID;
-
 var Mongo = require('./Mongo');
 var logger = require('./Logger');
 var Common = require('./Common');
@@ -45,15 +44,30 @@ const props = ["_id", "userId", "deviceId", "startDate", "operationType", "opera
 function PSOperationId(idData) {
     var self = this;
     
-    if (!isDefined(idData) || !isDefined(idData.userId) || !isDefined(idData.deviceId)) {
-        throw new Error("idData or userId or deviceId not given!");
+    if (!isDefined(idData)) {
+        throw new Error("idData not given!");
+    }
+    
+    if (!isDefined(idData.userId)) {
+        throw new Error("userId not given!");
+    }
+    
+    if (!isDefined(idData.deviceId)) {
+        throw new Error("deviceId not given!");
     }
     
     if (isDefined(idData._id) && typeof idData._id === 'string') {
         // This can throw an error; let the caller of PSOperationId catch it.
-        idData._id = new ObjectID.createFromHexString(idData._id);
+        idData._id = ObjectID.createFromHexString(idData._id);
     }
-
+    
+    /*
+    if (isDefined(idData._id)) {
+        logger.debug("constructor");
+        console.log(idData._id.constructor);
+    }
+    */
+    
     Common.assignPropsTo(self, idData, props);
     
     if (!isDefined(self.startDate)) {
@@ -77,7 +91,7 @@ PSOperationId.prototype.storeNew = function (callback) {
     // Make sure this user/device doesn't already have an operationId.
     var query = {userId: self.userId, deviceId: self.deviceId};
     
-    Common.lookup(query, props, collectionName, function (error, objectFound) {
+    Common.lookup(query, query, props, collectionName, function (error, objectFound) {
         if (error) {
             callback(error);
         }
@@ -136,9 +150,17 @@ PSOperationId.prototype.update = function (callback) {
 // Return a PSOperationId object from PS based on the operationId (optional), userId, and deviceId. If given, the operationId given can be of ObjectId type, or of string type. If of string type, it will be converted to an ObjectId.
 // Callback: two parameters: 1) error, and 2) the PSOperationId object or null if it cannot be found.
 PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
+    // logger.debug("constructor");
+    // console.log(operationId.constructor);
+
+    // logger.debug("operationId: " + operationId + "; " + typeof operationId + "; " + operationId.constructor.name);
+    // logger.debug("userId: " + userId + "; " + typeof userId + "; " + userId.constructor.name);
+    // logger.debug("deviceId: " + deviceId + "; " + typeof deviceId + "; " + deviceId.constructor.name);
+    
     if (typeof operationId === 'string') {
+        // logger.debug("converting from a string");
         try {
-            operationId = new ObjectID.createFromHexString(operationId);
+            operationId = ObjectID.createFromHexString(operationId);
         } catch (error) {
             callback(error);
             return;
@@ -146,6 +168,9 @@ PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
     }
     // Else, if non-null, we'll try searching for it assuming it's an ObjectId
     
+    // console.log(operationId.constructor);
+    // logger.debug("operationId: " + operationId + "; " + typeof operationId + "; " + operationId.constructor.name);
+
     var query = {
         userId: userId,
         deviceId: deviceId
@@ -155,8 +180,12 @@ PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
         query._id = operationId;
     }
     
+    logger.debug("query: " + JSON.stringify(query));
+    
 	var cursor = Mongo.db().collection(collectionName).find(query);
-		
+    
+    // logger.debug(cursor.explain());
+    
 	if (!cursor) {
 		callback(new Error("Failed on find!"));
 		return;
@@ -166,7 +195,7 @@ PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
 		logger.debug("cursor.count: " + count);
 		
 		if (err) {
-            logger.error(err);
+            logger.error("cursor.count: " + JSON.stringify(err));
 			callback(err, null);
 		}
 		else if (count > 1) {
@@ -180,6 +209,12 @@ PSOperationId.getFor = function(operationId, userId, deviceId, callback) {
 			cursor.nextObject(function (err, doc) {
 				if (err) {
 					callback(err, null);
+				}
+				else if (!doc) {
+                    // 7/9/16; This test is here because I believe I got a failure on this today.
+                    var msg = "Don't have doc on nextObject";
+                    logger.error(msg);
+					callback(msg, null);
 				}
                 else {
                     // TODO: PSOperationId can throw an error.

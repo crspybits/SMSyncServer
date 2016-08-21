@@ -23,59 +23,10 @@ class DownloadDeletion: BaseClass {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-
-    // Download deletion of a single file: A file that exists, and hasn't been deleted locally.
+    
     func testThatDownloadDeletionOfASingleFileThatExistsWorks() {
-        let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
-        let commitCompleteUpload = self.expectationWithDescription("Commit Complete Upload")
-        let idleExpectationUpload = self.expectationWithDescription("Idle Upload")
-
-        let deletionExpectation = self.expectationWithDescription("Single Deletion Complete")
-        let commitCompleteDelete = self.expectationWithDescription("Commit Complete Download")
-        let idleExpectationDeletion = self.expectationWithDescription("Idle Deletion")
-
-        let clientShouldDeleteFilesExpectation = self.expectationWithDescription("Should Delete Files")
-        let idleAfterShouldDeleteFiles = self.expectationWithDescription("Idle After Should Delete")
-
-        self.extraServerResponseTime = 60
-        
-        self.waitUntilSyncServerUserSignin() {
-            let testFile = TestBasics.session.createTestFile("DownloadDeletionOfASingleFileThatExists")
-            
-            self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
-                // Upload done: Now idle
-                
-                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
-                    // Deletion done: Now idle.
-                    
-                    // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.
-                    // HOWEVER, since what we're trying to test is download-deletion, we now need to fake the local meta data state and mark the file as *not* deleted locally, then do another server sync-- which should result in a download-deletion.
-                    
-                    SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
-                    
-                    self.shouldDoDeletions.append() { deletions, acknowledgement in
-                        XCTAssert(deletions.count == 1)
-                        let attr = deletions[0]
-                        XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
-                        
-                        let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
-                        XCTAssert(fileAttr != nil)
-                        XCTAssert(fileAttr!.deleted!)
-                        
-                        clientShouldDeleteFilesExpectation.fulfill()
-                        acknowledgement()
-                    }
-                    
-                    self.idleCallbacks.append() {
-                        idleAfterShouldDeleteFiles.fulfill()
-                    }
-                    
-                    SMSyncControl.session.nextSyncOperation()
-                }
-            }
-        }
-        
-        self.waitForExpectations()
+        let testFile = TestBasics.session.createTestFile("DownloadDeletionOfASingleFileThatExists")
+        downloadDeletionOfASingleFileThatExists(testFile)
     }
 
     // Download deletion of a single file: A file that exists, and has already been deleted locally (but that is pending upload-deletion).
@@ -430,6 +381,60 @@ class DownloadDeletion: BaseClass {
                         
                         self.uploadFiles([testFile2], uploadExpectations: [singleUploadExpectation2], commitComplete: commitCompleteUpload2, idleExpectation: idleExpectationUpload2) {
                         }
+                    }
+                    
+                    SMSyncControl.session.nextSyncOperation()
+                }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+}
+
+extension BaseClass {
+    // Download deletion of a single file: A file that exists, and hasn't been deleted locally.
+    func downloadDeletionOfASingleFileThatExists(testFile:TestFile) {
+        let singleUploadExpectation = self.expectationWithDescription("Single Upload Complete")
+        let commitCompleteUpload = self.expectationWithDescription("Commit Complete Upload")
+        let idleExpectationUpload = self.expectationWithDescription("Idle Upload")
+
+        let deletionExpectation = self.expectationWithDescription("Single Deletion Complete")
+        let commitCompleteDelete = self.expectationWithDescription("Commit Complete Download")
+        let idleExpectationDeletion = self.expectationWithDescription("Idle Deletion")
+
+        let clientShouldDeleteFilesExpectation = self.expectationWithDescription("Should Delete Files")
+        let idleAfterShouldDeleteFiles = self.expectationWithDescription("Idle After Should Delete")
+
+        self.extraServerResponseTime = 60
+        
+        self.waitUntilSyncServerUserSignin() {
+            self.uploadFiles([testFile], uploadExpectations: [singleUploadExpectation], commitComplete: commitCompleteUpload, idleExpectation: idleExpectationUpload) {
+                // Upload done: Now idle
+                
+                self.deleteFiles([testFile], deletionExpectation: deletionExpectation, commitCompleteExpectation: commitCompleteDelete, idleExpectation: idleExpectationDeletion) {
+                    // Deletion done: Now idle.
+                    
+                    // Our situation now is that the file has been deleted on the server, and we've marked the file as deleted locally.
+                    // HOWEVER, since what we're trying to test is download-deletion, we now need to fake the local meta data state and mark the file as *not* deleted locally, then do another server sync-- which should result in a download-deletion.
+                    
+                    SMSyncServer.session.resetMetaData(forUUID: testFile.uuid, resetType: .Undelete)
+                    
+                    self.shouldDoDeletions.append() { deletions, acknowledgement in
+                        XCTAssert(deletions.count == 1)
+                        let attr = deletions[0]
+                        XCTAssert(attr.uuid.UUIDString == testFile.uuidString)
+                        
+                        let fileAttr = SMSyncServer.session.localFileStatus(testFile.uuid)
+                        XCTAssert(fileAttr != nil)
+                        XCTAssert(fileAttr!.deleted!)
+                        
+                        clientShouldDeleteFilesExpectation.fulfill()
+                        acknowledgement()
+                    }
+                    
+                    self.idleCallbacks.append() {
+                        idleAfterShouldDeleteFiles.fulfill()
                     }
                     
                     SMSyncControl.session.nextSyncOperation()

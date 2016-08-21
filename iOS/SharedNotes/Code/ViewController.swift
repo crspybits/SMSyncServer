@@ -15,6 +15,7 @@ class ViewController: UIViewController {
     private var barButtonSpinner:UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var signInOrOut: UIBarButtonItem!
+    @IBOutlet weak var share: UIBarButtonItem!
     private var coreDataSource:CoreDataSource!
     private let cellReuseIdentifier = "NoteCell"
     
@@ -59,12 +60,17 @@ class ViewController: UIViewController {
         
         case .NonRecoverableError, .InternalError:
             let alert = UIAlertController(title: "Reset error?", message: nil, preferredStyle: .ActionSheet)
-            alert.addAction(UIAlertAction(title: "Reset", style: .Destructive) { action in
-                SMSyncServer.session.resetFromError()
+            alert.addAction(UIAlertAction(title: "Partial reset", style: .Destructive) { action in
+                SMSyncServer.session.resetFromError(resetType: .Server)
+            })
+            alert.addAction(UIAlertAction(title: "Full reset", style: .Destructive) { action in
+                SMSyncServer.session.resetFromError(resetType: [.Local, .Server])
             })
             alert.addAction(UIAlertAction(title: "Cancel", style: .Default) { action in
             })
-            alert.popoverPresentationController!.barButtonItem = self.barButtonSpinner
+            if alert.popoverPresentationController != nil {
+                alert.popoverPresentationController!.barButtonItem = self.barButtonSpinner
+            }
             self.presentViewController(alert, animated: true, completion: nil)
         }
     }
@@ -86,13 +92,14 @@ class ViewController: UIViewController {
 
     @IBAction func signInAction(sender: AnyObject) {
         if SMSyncServerUser.session.signedIn {
-            // User is signed in; sign them out.
-            SMCloudStorageCredentials.session.syncServerSignOutUser()
+            SMSyncServerUser.session.signOut()
             self.changeSignInSignOutButton()
         }
         else {
+            // TODO: Need to give them a warning if there is data in the app, i.e., notes. If they sign out and sign into a different account, this is going to mess things up-- will need to reset the data.
+            
             // User is not signed in; allow them to.
-            let signInController = SMCloudStorageCredentials.session.makeSignInController()
+            let signInController = SignInViewController()
             self.navigationController!.pushViewController(signInController, animated: true)
         }
     }
@@ -115,6 +122,50 @@ class ViewController: UIViewController {
                 try SMSyncServer.session.commit()
             } catch (let error) {
                 Misc.showAlert(fromParentViewController: self, title: "Error uploading new  note!", message: "\(error)")
+            }
+        }
+    }
+    
+    @IBAction func shareAction(sender: AnyObject) {
+        var alert:UIAlertController
+        
+        if SMSyncServerUser.session.signedIn {
+            alert = UIAlertController(title: "Share your data with Facebook user?", message: nil, preferredStyle: .ActionSheet)
+            alert.addAction(UIAlertAction(title: "Read-only", style: .Default){alert in
+                self.completeSharing(.Downloader)
+            })
+            alert.addAction(UIAlertAction(title: "Read & Change", style: .Default){alert in
+                self.completeSharing(.Uploader)
+            })
+            alert.addAction(UIAlertAction(title: "Read, Change, & Invite", style: .Default){alert in
+                self.completeSharing(.Admin)
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
+            })
+        }
+        else {
+            alert = UIAlertController(title: "Please sign in first!", message: "There is no signed in user.", preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .Cancel){alert in
+            })
+        }
+        
+        alert.popoverPresentationController?.barButtonItem = self.share
+        self.presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    private func completeSharing(sharingType:SMSharingType) {
+        SMSyncServerUser.session.createSharingInvitation(sharingType) { invitationCode, error in
+            if error == nil {
+                let sharingURLString = SMSharingInvitations.createSharingURL(invitationCode: invitationCode!, username: nil)
+                let email = SMEmail(parentViewController: self)
+                
+                let message = "I'd like to share my data with you through the SharedNotes app and your Facebook account. To share my data, you need to:\n1) download the SharedNotes iOS app onto your iPhone or iPad,\n2) tap the link below in the Apple Mail app, and\n3) follow the instructions within the app to sign in to your Facebook account to access my data.\n\n" + sharingURLString
+                
+                email.setMessageBody(message, isHTML: false)
+                email.show()
+            }
+            else {
+                Misc.showAlert(fromParentViewController: self, title: "Error creating sharing invitation!", message: "\(error)")
             }
         }
     }

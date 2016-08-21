@@ -10,10 +10,24 @@ import UIKit
 import CoreData
 import SMSyncServer
 import SMCoreLib
+import FFGlobalAlertController
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
+    private static let _sharingInvitationCode = SMPersistItemString(name: "AppDelegate.sharingInvitationCode", initialStringValue: "", persistType: .UserDefaults)
+    
+    static var sharingInvitationCode:String? {
+        get {
+            return self._sharingInvitationCode.stringValue == "" ? nil : self._sharingInvitationCode.stringValue
+        }
+        set {
+            self._sharingInvitationCode.stringValue = newValue == nil ? "" : newValue!
+        }
+    }
+    
+    private static let userSignInDisplayName = SMPersistItemString(name: "AppDelegate.userSignInDisplayName", initialStringValue: "", persistType: .UserDefaults)
+    
     var window: UIWindow?
 
     // MARK: Developers making use of SharedNotes demo app need to change the contents of this plist file.
@@ -36,13 +50,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // This is the path on the cloud storage service (Google Drive for now) where the app's data will be synced
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        // Starting to establish cloud storage credentials-- user will also have to sign in to their specific account.
-        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId)
+        // Starting to establish account credentials-- user will also have to sign in to their specific account.
+        let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
+        googleSignIn.delegate = self
+        SMUserSignInManager.session.addSignInAccount(googleSignIn, launchOptions:launchOptions)
+        
+        let facebookSignIn = SMFacebookUserSignIn()
+        facebookSignIn.delegate = self
+        SMUserSignInManager.session.addSignInAccount(facebookSignIn, launchOptions:launchOptions)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)
+        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andUserSignInLazyDelegate: SMUserSignInManager.session.lazyCurrentUser)
         
-        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
+        SMUserSignInManager.session.delegate = self
         
         return true
     }
@@ -50,7 +71,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication,
         openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
         
-        return SMCloudStorageCredentials.session.handleURL(url, sourceApplication: sourceApplication, annotation: annotation)
+        if SMUserSignInManager.session.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+            return true
+        }
+
+        return false
     }
 
     func applicationWillResignActive(application: UIApplication) {
@@ -74,6 +99,82 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
-
 }
 
+extension AppDelegate : SMUserSignInAccountDelegate {
+    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccount) {
+        guard AppDelegate.userSignInDisplayName.stringValue == "" || AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+        else {
+            Assert.badMojo(alwaysPrintThisString: "Yikes: Need to sign out of other sign-in (\(AppDelegate.userSignInDisplayName.stringValue))!")
+            return
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount) {
+        // In some non-fatal error cases, we can have userJustSignedOut called and we we'ren't officially signed in. E.g., when trying to sign in, but the sign in fails. SO, don't make this a fatal issue, just log a message.
+        if AppDelegate.userSignInDisplayName.stringValue != userSignIn.displayNameI! {
+            Log.error("Not currently signed into userSignIn.displayName!: \(userSignIn.displayNameI)")
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = ""
+    }
+    
+    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccount) -> Bool {
+        return AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(getSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) -> String? {
+        return AppDelegate.sharingInvitationCode
+    }
+    
+    func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) {
+        AppDelegate.sharingInvitationCode = nil
+    }
+    
+    func smUserSignIn(userSignIn userSignIn:SMUserSignInAccount, linkedAccountsForSharingUser:[SMLinkedAccount], selectLinkedAccount:(internalUserId:SMInternalUserId)->()) {
+        // TODO: What we really need to do here is to put up a UI and ask the user which linked account they want to use. That is, if there is more than one linked account. For now, just choose the first.
+        selectLinkedAccount(internalUserId: linkedAccountsForSharingUser[0].internalUserId)
+    }
+}
+
+extension AppDelegate : SMUserSignInManagerDelegate {
+    // This gets called when the user clicks on a sharing invitation URL in an email, or pastes that URL into a browser
+    func didReceiveSharingInvitation(manager:SMUserSignInManager, invitationCode: String, userName: String?) {
+        AppDelegate.sharingInvitationCode = invitationCode
+        // TODO: We should really just put up a UI here to ask them if they want to sign into their FB account. This will redeem the sharing invitation.
+        var alert:UIAlertController
+        var okAction:()->()
+        
+        let navController = self.window?.rootViewController as? UINavigationController
+        if navController == nil {
+            Log.error("Could not get the root view controller!")
+        }
+        
+        var message:String
+        // TODO: Need to make sure the signed in account is a sharing account.
+        if SMSyncServerUser.session.signedIn {
+            // This is really a bigger picture issue: If there is data, then this amounts to sharing other data, and we're not setup to deal with that.
+            message = "Redeem it with your current account?"
+            okAction = {
+            }
+        }
+        else {
+            message = "Sign into your Facebook account and redeem it?"
+            okAction = {
+                let signInController = SignInViewController()
+                navController?.popToRootViewControllerAnimated(true)
+                navController?.pushViewController(signInController, animated: true)
+            }
+        }
+        
+        alert = UIAlertController(title: "You got a sharing invite!", message: message, preferredStyle: .Alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel){alert in
+        })
+        alert.addAction(UIAlertAction(title: "OK", style: .Default){alert in
+            okAction()
+        })
+        alert.show()
+    }
+}

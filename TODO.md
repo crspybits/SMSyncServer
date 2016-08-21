@@ -8,11 +8,29 @@
 
 1. DONE: 5/25/16; Encode related object of a ImageNote in the JSON. So after it's received at destination, we can relate it. HOW DO WE DO THIS? The way we are doing it so far files don't have any general meta data that apps can set. It seems we need to provide this -- e.g., a json structure would seem to be a good way to go. And make it part of the SMSyncAttributes. This could just replace the appDataType-- as it's a really just more general app specific chunk of data. This is important for deletion-- without knowing the images related to a note, when we delete the note, the images will not also actually get deleted.
 
+1. It is possible to get an error with Google Drive where a file that we have in the server file index cannot be obtained from Google Drive. We should be able do a partial download (i.e., of the remaining files) and not fail completely just because a single file cannot be downloaded. This happened because of scopes for Google Drive. I didn't authorize Google Drive for all files (only for files created by the app), but I changed a file externally of the app-- which caused that file to not be visible to the app.
+
 1. Bug/Crash: I just did a pull-down refresh on SharedNotes when I hadn't  used the app for about 10 hours, and I got a persistent stale credentials issue. While I thought I'd been getting these errors on a server lock before, I thought they'd been resolving themselves. This gave the "red" error spinner on the app. When I tapped on the red spinner, the app crashed. This is an interesting bug. The purpose of tapping on the red spinner button is to do a clean up on the server. However, a cleanup will not be possible because of the credentials/authorization problem. 5/23/16: I think I've fixed the stale creds issue. Still need some way to test the red spinner reset.
 
 1. Figure out if we have a combination of adds and deletes of images if we upload the right ones and delete the right ones-- with no trash left over.
 
 1. The "big" spinner should be activated when doing server interaction wrt. users: e.g., CheckForExistingUser because otherwise, long server latencies with these operations make it seem like nothing is going on. (This comes up with Heroku because the server spins down and takes some time to come back up).
+
+1. Need to have a way to rotate images.
+
+1. Need to have a way to share images-- e.g., via Facebook or text messages or email. Or to save to Photo Library.
+
+1. Need to be able to click on URL's.
+
+1. I got a crash with app after I got a "red spinner" error, and did a reset by tapping on the red spinner. Crash occurred immediately after I did a sync by pulling down on the table view.
+
+1. HIGH PRIORITY. I got a "red spinner" error with app running on iPad when I tried to refresh when there were a bunch of files to download. This was with server running on Heroku. My guess right now is that this is due to a 30s run time limit per operation imposed by Heroku. From the server log, the operation was running for more than 30s. See also https://www.heroku.com/policy/aup#quota
+
+1. We need to present a sharing user with a set of linked/shared account options (if more than one), when they are signing in.
+
+1. When I tried to upload files from my iPhone, and there was a lock on the server, it seemed to have completed, but gave no error and didn't sync. There was a lock on the server, and no error is given in this situation. While this is "normal" operation right now, we need some better way of dealing with this. As a user, I assumed my files were synced, but they were not. (e.g., the files were not present on my Google Drive).
+
+1. It would be nice to have a Settings option to allow images to be saved at a lower resolution and/or JPG image quality. This would save server space, and reduce the amount of time spent syncing.
 
 ## FUNCTIONALITY
 
@@ -66,9 +84,15 @@
 
 1. Enabling README and other "static" files to be uploaded from a client to server. That is, files that should *not* be downloaded or synced to other devices. These files will also include files such an index.html file that could be used to allow the user to view the app's files. We need to handle these static files quite differently than the other files I've been considering. I could either keep a record of them in the server file index, or not. In any event, a normal getFileIndex from a client should not return these files-- so they don't get downloaded. I tried an implementation of README files using the normal sync mechanism, and its a mess. Way more complicated than it ought to be-- e.g., there's a nasty race condition where multiple apps may be uploading the README, and only one will win-- the others will fail because they are using the same remote file name. That's another thing that will have to be included in this functionality is the ability to overwrite the existing remote cloud file.
 
+1. Need to be able to deal with changes in sizes of some files/file contents in cloud storage. For example, from my Mac, I just opened up several image files that were stored in my SharedNotes.SyncServer folder, and *rotated* them. I did this despite the fact that I know that I shouldn't be messing around with these internals. Rotation did indeed change the file sizes and contents. What this really represents is a type of version change of the file. How to deal with? ALSO: It's really easy to mistakenly remove files from these folders...
+
 ## SHARING
 
 1. Implement an improved sharing mechanism. Currently, sharing of data requires sharing of credentials for a cloud storage account. A user should be able to invite a Facebook or other user, give them some (possibly) limited permissions and give them access to their data. Since we've got cloud storage credentials (OAuth2) stored on the server, this should be possible. Part of the intent of this improved sharing mechanism is also to allow integration with other systems. E.g., in the case of a Pet Vet Records app such as the Petunia iPad app, to enable back-end office vet systems to add/read data from a particular client's data in a specific manner-- without giving the vet access to all of your data!
+
+1. User should be able to revoke or change ability of a sharing user. E.g., you give a Facebook user access to your data, and later change your mind.
+
+1. Invitations for sharing. I could have a different redemption policy than I currently have. Right now, invitations can be redeemed exactly once for up to 24 hours after they are created. I could instead have different, perhaps selectable, policies. E.g., they could last for a period of time and allow for *all* redemptions within that time period. I could also allow a certain *number* of redemptions.
 
 1. 5/27/16. Hmmm. I think I just found a problem with the [sharing of Google Drive accounts](https://support.google.com/a/answer/33330?hl=en): "If you have multiple users frequently accessing the same account from various locations, you may reach a Gmail threshold and your account will be temporarily locked down." Actually, I think this is a problem due to this issue with sharing, plus a mechanism I implemented recently. On the server, I get a stale IdToken with OAuth2, and I send the return code rcStaleUserSecurityInfo back to the client app-- I let the user app refresh the IdToken. While after the initial signin by the user I have a refresh token on the server, I don't do the refresh of the IdToken on the server because it's a chicken and egg issue: Each server API call passes the IdToken along as its security identifier. I want to verify the security of the user before I do anything else on the server-- so I do a `verifyIdToken` call (using a Google Node.js API). In the normal case, `verifyIdToken` proceeds without error (thus authenticating the user), and returns an anonymized identifier for the user (Google calls it `sub`) that I use to index into my collection of users in MongoDB. If the `verifyIdToken` call fails, e.g., because the IdToken is stale, I don't allow this indexing, and instead, I send rcStaleUserSecurityInfo back to the client app, which assumes that the client side will be able to do the refresh of the IdToken (which is currently the way it works in the SMSyncServer client). I believe I need to rethink this so that the refresh can occur purely on the server-- to enable [sharing with respect to the issue as stated](https://support.google.com/a/answer/33330?hl=en), and to deal with more extended concepts of sharing-- e.g., where a user would not have the Google Drive (or other cloud creds) and use some other means, like Facebook creds, to authenticate.
 
