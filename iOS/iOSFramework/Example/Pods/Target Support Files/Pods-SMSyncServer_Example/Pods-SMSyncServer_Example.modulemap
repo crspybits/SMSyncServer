@@ -1,0 +1,6 @@
+framework module Pods_SMSyncServer_Example {
+  umbrella header "Pods-SMSyncServer_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}
