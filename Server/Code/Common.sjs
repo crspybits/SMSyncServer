@@ -4,6 +4,7 @@
 
 var Mongo = require('./Mongo');
 var logger = require('./Logger');
+var jsonExtras = require('./JSON');
 
 // Not used, but needed to define name "Common".
 function Common() {
@@ -53,11 +54,15 @@ Common.shallowClone = function (objectToClone) {
     return newObject;
 }
 
-// Looks up a MongoDb object in the given collection based on the instance values. On success the instance has its values populated by the found object.
+// Looks up a MongoDb object in the given collection based on the query values. On success the "self" object has its values populated by the found object. Does *not* do flattening of the query.
 // Callback parameters: 1) error, 2) if error is null, a boolean indicating if the object could be found. It is an error for more than one object to be found in a query using the instance values.
-Common.lookup = function (self, props, mongoCollectionName, callback) {
-
-    var query = Common.extractPropsFrom(self, props);
+Common.lookup = function (query, self, props, mongoCollectionName, callback) {
+    // query = jsonExtras.flatten(query);
+    // Calling jsonExtras.flatten doesn't work well when you have certain types of objects in the query. I just had a problem with this when I was using an ObjectId in the query. Here's what I got:
+    // Common.lookup: query: {"_id._bsontype":"ObjectID","_id.id":"WdcÜì\u001d\bZ{\nÅ","_id.toHexString":{},"_id.get_inc":{},"_id.getInc":{},"_id.generate":{},"_id.toString":{},"_id.inspect":{},"_id.toJSON":{},"_id.equals":{},"_id.getTimestamp":{},"_id.generationTime":1466196956}
+    
+    logger.info("Common.lookup: query: " + JSON.stringify(query));
+    
 	var cursor = Mongo.db().collection(mongoCollectionName).find(query);
 		
 	if (!cursor) {

@@ -14,6 +14,19 @@ import SMSyncServer
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
+    private static let _sharingInvitationCode = SMPersistItemString(name: "AppDelegate.sharingInvitationCode", initialStringValue: "", persistType: .UserDefaults)
+    
+    static var sharingInvitationCode:String? {
+        get {
+            return self._sharingInvitationCode.stringValue == "" ? nil : self._sharingInvitationCode.stringValue
+        }
+        set {
+            self._sharingInvitationCode.stringValue = newValue == nil ? "" : newValue!
+        }
+    }
+    
+    private static let userSignInDisplayName = SMPersistItemString(name: "AppDelegate.userSignInDisplayName", initialStringValue: "", persistType: .UserDefaults)
+    
     // MARK: Users of SMSyncServer iOSTests client need to change the contents of this file.
     private let smSyncServerClientPlist = "SMSyncServer-client.plist"
 
@@ -32,12 +45,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // This is the path on the cloud storage service (Google Drive for now) where the app's data will be synced
         SMSyncServerUser.session.cloudFolderPath = cloudFolderPath
         
-        // Starting to establish cloud storage credentials-- user will also have to sign in their specific account.
-        SMCloudStorageCredentials.session = SMGoogleCredentials(serverClientID: googleServerClientId)
+        // Starting to establish account credentials-- user will also have to sign in to their specific account.
+        let googleSignIn = SMGoogleUserSignIn(serverClientID: googleServerClientId)
+        googleSignIn.delegate = self
+        SMUserSignInManager.session.addSignInAccount(googleSignIn, launchOptions:launchOptions)
+        
+        let facebookSignIn = SMFacebookUserSignIn()
+        facebookSignIn.delegate = self
+        SMUserSignInManager.session.addSignInAccount(facebookSignIn, launchOptions:launchOptions)
         
         // Setup the SMSyncServer (Node.js) server URL.
         let serverURL = NSURL(string: serverURLString)
-        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andCloudStorageUserDelegate: SMCloudStorageCredentials.session)
+        SMSyncServer.session.appLaunchSetup(withServerURL: serverURL!, andUserSignInLazyDelegate: SMUserSignInManager.session.lazyCurrentUser)
+        
+        SMUserSignInManager.session.delegate = self
 
         return true
     }
@@ -45,7 +66,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication,
         openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
         
-        return SMCloudStorageCredentials.session.handleURL(url, sourceApplication: sourceApplication, annotation: annotation)
+        if SMUserSignInManager.session.application(application, openURL: url, sourceApplication: sourceApplication, annotation: annotation) {
+            return true
+        }
+
+        return false
     }
 
     func applicationWillResignActive(application: UIApplication) {
@@ -71,3 +96,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
+extension AppDelegate : SMUserSignInAccountDelegate {
+    func smUserSignIn(userJustSignedIn userSignIn:SMUserSignInAccount) {
+        guard AppDelegate.userSignInDisplayName.stringValue == "" || AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+        else {
+            Assert.badMojo(alwaysPrintThisString: "Yikes: Need to sign out of other sign-in (\(AppDelegate.userSignInDisplayName.stringValue))!")
+            return
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(userJustSignedOut userSignIn:SMUserSignInAccount) {
+    
+        // In some non-fatal error cases, we can have userJustSignedOut called and we we'ren't officially signed in. E.g., when trying to sign in, but the sign in fails. SO, don't make this a fatal issue, just log a message.
+        if AppDelegate.userSignInDisplayName.stringValue != userSignIn.displayNameI! {
+            Log.error("Not currently signed into userSignIn.displayName!: \(userSignIn.displayNameI)")
+        }
+        
+        AppDelegate.userSignInDisplayName.stringValue = ""
+    }
+    
+    func smUserSignIn(activelySignedIn userSignIn:SMUserSignInAccount) -> Bool {
+        return AppDelegate.userSignInDisplayName.stringValue == userSignIn.displayNameI!
+    }
+    
+    func smUserSignIn(getSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) -> String? {
+        return AppDelegate.sharingInvitationCode
+    }
+    
+    func smUserSignIn(resetSharingInvitationCodeForUserSignIn userSignIn:SMUserSignInAccount) {
+        AppDelegate.sharingInvitationCode = nil
+    }
+    
+    func smUserSignIn(userSignIn userSignIn:SMUserSignInAccount, linkedAccountsForSharingUser:[SMLinkedAccount], selectLinkedAccount:(internalUserId:SMInternalUserId)->()) {
+        // What we really need to do here is to put up a UI and ask the user which linked account they want to use. For now, just choose the first.
+        selectLinkedAccount(internalUserId: linkedAccountsForSharingUser[0].internalUserId)
+    }
+}
+
+extension AppDelegate : SMUserSignInManagerDelegate {
+    func didReceiveSharingInvitation(manager:SMUserSignInManager, invitationCode: String, userName: String?) {
+        AppDelegate.sharingInvitationCode = invitationCode
+    }
+}

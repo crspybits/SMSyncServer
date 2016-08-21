@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10174" systemVersion="15E65" minimumToolsVersion="Xcode 7.0">
+    <entity name="SMDownloadBlock" representedClassName=".SMDownloadBlock" syncable="YES">
+        <attribute name="numberBytes" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="startByteOffset" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="download" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMDownloadFile" inverseName="blocks" inverseEntity="SMDownloadFile" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadDeletion" representedClassName=".SMDownloadDeletion" parentEntity="SMDownloadFileOperation" syncable="YES">
+        <attribute name="internalConflictType" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadFile" representedClassName=".SMDownloadFile" parentEntity="SMDownloadFileOperation" syncable="YES">
+        <attribute name="internalConflictType" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="internalOperationStage" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="internalRelativeLocalURL" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="serverVersion" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <relationship name="blocks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMDownloadBlock" inverseName="download" inverseEntity="SMDownloadBlock" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadFileOperation" representedClassName=".SMDownloadFileOperation" isAbstract="YES" parentEntity="SMDownloadOperation" syncable="YES">
+        <relationship name="localFile" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMLocalFile" inverseName="downloadOperations" inverseEntity="SMLocalFile" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadOperation" representedClassName=".SMDownloadOperation" isAbstract="YES" syncable="YES">
+        <relationship name="queue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="internalBeingDownloaded" inverseEntity="SMQueues" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadStartup" representedClassName=".SMDownloadStartup" parentEntity="SMDownloadOperation" syncable="YES">
+        <attribute name="internalStartupStage" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="SMLocalFile" representedClassName="SMLocalFile" syncable="YES">
+        <attribute name="internalAppMetaData" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="internalDeletedOnServer" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="internalSyncState" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="localVersion" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="mimeType" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="remoteFileName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="uuid" optional="YES" attributeType="String" indexed="YES" syncable="YES"/>
+        <relationship name="downloadOperations" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMDownloadFileOperation" inverseName="localFile" inverseEntity="SMDownloadFileOperation" syncable="YES"/>
+        <relationship name="pendingUploads" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMUploadFileOperation" inverseName="localFile" inverseEntity="SMUploadFileOperation" syncable="YES"/>
+    </entity>
+    <entity name="SMQueues" representedClassName=".SMQueues" syncable="YES">
+        <relationship name="beingUploaded" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMUploadQueue" inverseName="beingUploaded" inverseEntity="SMUploadQueue" syncable="YES"/>
+        <relationship name="internalBeingDownloaded" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMDownloadOperation" inverseName="queue" inverseEntity="SMDownloadOperation" syncable="YES"/>
+        <relationship name="internalCommittedUploads" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMUploadQueue" inverseName="committedUploads" inverseEntity="SMUploadQueue" syncable="YES"/>
+        <relationship name="uploadsBeingPrepared" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMUploadQueue" inverseName="uncommittedUploads" inverseEntity="SMUploadQueue" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadBlock" representedClassName=".SMUploadBlock" syncable="YES">
+        <attribute name="numberBytes" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="startByteOffset" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="upload" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMUploadFile" inverseName="blocks" inverseEntity="SMUploadFile" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadDeletion" representedClassName=".SMUploadDeletion" parentEntity="SMUploadFileOperation" syncable="YES"/>
+    <entity name="SMUploadFile" representedClassName="SMUploadFile" parentEntity="SMUploadFileOperation" syncable="YES">
+        <attribute name="deleteLocalFileAfterUpload" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="internalRelativeLocalURL" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="internalUndeleteServerFile" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <relationship name="blocks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMUploadBlock" inverseName="upload" inverseEntity="SMUploadBlock" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadFileOperation" representedClassName=".SMUploadFileOperation" isAbstract="YES" parentEntity="SMUploadOperation" syncable="YES">
+        <attribute name="internalOperationStage" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="localFile" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMLocalFile" inverseName="pendingUploads" inverseEntity="SMLocalFile" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadOperation" representedClassName=".SMUploadOperation" isAbstract="YES" syncable="YES">
+        <relationship name="queue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMUploadQueue" inverseName="operations" inverseEntity="SMUploadQueue" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadQueue" representedClassName=".SMUploadQueue" syncable="YES">
+        <relationship name="beingUploaded" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="beingUploaded" inverseEntity="SMQueues" syncable="YES"/>
+        <relationship name="committedUploads" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="internalCommittedUploads" inverseEntity="SMQueues" syncable="YES"/>
+        <relationship name="operations" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="SMUploadOperation" inverseName="queue" inverseEntity="SMUploadOperation" syncable="YES"/>
+        <relationship name="uncommittedUploads" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SMQueues" inverseName="uploadsBeingPrepared" inverseEntity="SMQueues" syncable="YES"/>
+    </entity>
+    <entity name="SMUploadWrapup" representedClassName=".SMUploadWrapup" parentEntity="SMUploadOperation" syncable="YES">
+        <attribute name="internalWrapupStage" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="SMDownloadBlock" positionX="790" positionY="351" width="128" height="90"/>
+        <element name="SMDownloadDeletion" positionX="243" positionY="369" width="128" height="60"/>
+        <element name="SMDownloadFile" positionX="567" positionY="360" width="171" height="120"/>
+        <element name="SMDownloadFileOperation" positionX="421" positionY="540" width="164" height="58"/>
+        <element name="SMDownloadOperation" positionX="423" positionY="680" width="162" height="58"/>
+        <element name="SMDownloadStartup" positionX="612" positionY="549" width="189" height="60"/>
+        <element name="SMLocalFile" positionX="61" positionY="485" width="128" height="180"/>
+        <element name="SMQueues" positionX="-144" positionY="162" width="128" height="105"/>
+        <element name="SMUploadBlock" positionX="-585" positionY="387" width="128" height="90"/>
+        <element name="SMUploadDeletion" positionX="-254" positionY="594" width="128" height="45"/>
+        <element name="SMUploadFile" positionX="-432" positionY="590" width="128" height="105"/>
+        <element name="SMUploadFileOperation" positionX="-333" positionY="482" width="153" height="75"/>
+        <element name="SMUploadOperation" positionX="-225" positionY="372" width="128" height="58"/>
+        <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="105"/>
+        <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
+    </elements>
+</model>

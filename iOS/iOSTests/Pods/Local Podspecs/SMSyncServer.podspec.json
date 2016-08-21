@@ -1,0 +1,31 @@
+{
+  "name": "SMSyncServer",
+  "version": "0.0.1",
+  "summary": "iOS Client Framework for SMSyncServer",
+  "homepage": "https://github.com/crspybits/SMSyncServer.iOSFramework.git",
+  "license": {
+    "type": "GPL3",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "Christopher Prince": "chris@SpasticMuffin.biz"
+  },
+  "source": {
+    "git": "https://github.com/crspybits/SMSyncServer.iOSFramework.git",
+    "tag": "0.0.1"
+  },
+  "pod_target_xcconfig": {
+    "GCC_PREPROCESSOR_DEFINITIONS[config=Debug]": "DEBUG=1",
+    "OTHER_SWIFT_FLAGS[config=Debug]": "-DDEBUG"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source_files": "SMSyncServer/Classes/**/*",
+  "resources": "SMSyncServer/Assets/*.xcdatamodel",
+  "dependencies": {
+    "SMCoreLib": [
+
+    ]
+  }
+}

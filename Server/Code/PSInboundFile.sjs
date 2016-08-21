@@ -73,8 +73,8 @@ PSInboundFile.prototype.storeNew = function (callback) {
         callback(error);
     }
     
-    // We should not allow multiple entries in the collection of inbound file changes for the the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
-    Common.lookup(copy, props, collectionName, function (error, objectFound) {
+    // We should not allow multiple entries in the collection of inbound file changes for the same userId/fileId/deviceId. That is, why should an app be putting in a request for two downloads for the same file?
+    Common.lookup(copy, copy, props, collectionName, function (error, objectFound) {
         if (error) {
             callback(error);
         }
@@ -89,7 +89,7 @@ PSInboundFile.prototype.storeNew = function (callback) {
 // Looks up a PSInboundFile object based on the instance values. On success the instance has its values populated by the found object.
 // Callback parameters: 1) error, 2) if error is null, a boolean indicating if the object could be found. It is an error for more than one object to be found in a query using the instance values.
 PSInboundFile.prototype.lookup = function (callback) {
-    Common.lookup(this, props, collectionName, callback);
+    Common.lookup(this, this, props, collectionName, callback);
 }
 
 // Get inbound files that are *not* already marked as received.

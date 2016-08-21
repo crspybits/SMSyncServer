@@ -17,6 +17,7 @@ import XCTest
 import SMCoreLib
 
 class BaseClass: XCTestCase {
+    var timedCallback:TimedCallback?
     var initialDelayBeforeFirstTest:NSTimeInterval = 20
     let minServerResponseTime:NSTimeInterval = 15
     var extraServerResponseTime:Double = 0
@@ -118,7 +119,9 @@ class BaseClass: XCTestCase {
     }
     
     func waitUntilSyncServerUserSignin(completion:()->()) {
-        TimedCallback.withDuration(Float(self.initialDelayBeforeFirstTest)) {
+        Log.special("Waiting for user signin to server...")
+        self.timedCallback = TimedCallback.withDuration(Float(self.initialDelayBeforeFirstTest)) {
+            Log.special("Starting XCTest...")
             self.initialDelayBeforeFirstTest = 0.0
             self.processModeChanges = true
             completion()
@@ -341,5 +344,71 @@ extension BaseClass : SMSyncServerDelegate {
         }
         
         try! SMSyncServer.session.commit()
+    }
+    
+    func downloadOneFile(testFile:TestFile) {
+
+        let uploadCompleteCallbackExpectation = self.expectationWithDescription("Commit Complete")
+        let singleUploadExpectation = self.expectationWithDescription("Upload Complete")
+        let singleDownloadExpectation = self.expectationWithDescription("Single Download")
+        let allDownloadsCompleteExpectation = self.expectationWithDescription("All Downloads Complete")
+        let idleExpectation1 = self.expectationWithDescription("Idle1")
+        let idleExpectation2 = self.expectationWithDescription("Idle2")
+
+        var numberDownloads = 0
+        
+        self.extraServerResponseTime = 360
+        
+        self.waitUntilSyncServerUserSignin() {
+            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
+            
+            self.singleUploadCallbacks.append() { uuid in
+                XCTAssert(uuid.UUIDString == testFile.uuidString)
+                singleUploadExpectation.fulfill()
+            }
+            
+            self.commitCompleteCallbacks.append() { numberUploads in
+                XCTAssert(numberUploads == 1)
+                TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                    uploadCompleteCallbackExpectation.fulfill()
+                }
+            }
+            
+            self.singleDownload.append() { (downloadedFile:NSURL, downloadedFileAttr: SMSyncAttributes) in
+                XCTAssert(downloadedFileAttr.uuid.UUIDString == testFile.uuidString)
+                let filesAreTheSame = SMFiles.compareFiles(file1: testFile.url, file2: downloadedFile)
+                XCTAssert(filesAreTheSame)
+                numberDownloads += 1
+                singleDownloadExpectation.fulfill()
+            }
+            
+            self.shouldSaveDownloads.append() { downloadedFiles, ack in
+                XCTAssert(numberDownloads == 1)
+                XCTAssert(downloadedFiles.count == 1)
+                let (_, _) = downloadedFiles[0]
+                allDownloadsCompleteExpectation.fulfill()
+                ack()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation1.fulfill()
+                
+                // Forget locally about the uploaded file so we can download it.
+                SMSyncServer.session.resetMetaData(forUUID:testFile.uuid)
+                
+                // Force the check for downloads.
+                SMSyncControl.session.nextSyncOperation()
+            }
+            
+            // let idleExpectation = self.expectationWithDescription("Idle")
+            self.idleCallbacks.append() {
+                idleExpectation2.fulfill()
+            }
+            
+            try! SMSyncServer.session.commit()
+        }
+        
+        self.waitForExpectations()
     }
 }

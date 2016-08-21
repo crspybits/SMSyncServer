@@ -4,7 +4,7 @@ Data Model:
 
 A) UserCredentials: Info for the users credentials for the particular cloud storage system in use
 
-	See PSUserCredentials.js
+	See PSUserCredentials.sjs
 
 B) OutboundFiles: Represents a collection of files that are on their way to the cloud storage system. These files are stored (temporarily) on the sync server.
 

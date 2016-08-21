@@ -2,12 +2,14 @@
 
 # Script to extract constants out of .swift file containing constants and put them into a .js module so we don't have to keep retyping them every time they change.
 
-# Assuming we're running this script from the root of the iOSFramework
-# The relative path for INPUTFILE assumes that we run this script from the directory where serverConstants.js is located.
-# Any spaces in the directory names don't need backslashes to escape the spaces.
-INPUTFILE="Code/Internal/SMServerConstants.swift"
+# Parameters to the script:
+# First: INPUTFILE: Swift file with constants.
+# Second: OUTPUTFILE: .js file that will contain the constants for the server.
 
-OUTPUTFILE="../../Server/Code/ServerConstants.js"
+# Any spaces in the directory names don't need backslashes.
+INPUTFILE=$1
+OUTPUTFILE=$2
+
 START="SERVER-CONSTANTS-START"
 END="SERVER-CONSTANTS-END"
 WARNING="// ***** This is a machine generated file: Do not change by hand!! *****"
@@ -32,14 +34,19 @@ echo "}" >> "${OUTPUTFILE}"
 # The second awk is to retain, in their entirety, purely comment lines (and empty lines), and do our define substitution on the other lines.
 
 # The other lines have the form: public static let X = Y
-# To change the pattern for the "other lines", you need to change the $4, $6 field numbers below appropriately.
+# Y is taken as the text remaining on the line after the "=", which adds some complexity below.
+# 	See http://stackoverflow.com/questions/2961635/using-awk-to-print-all-columns-from-the-nth-to-the-last for the technique used to print out text from $6 onwards.
 
 # which we'll replace with: define("X", Y);
 # print -- prints with a newline; printf -- prints without a newline
 awk "/${START}/{flag=1;next}/${END}/{flag=0}flag" "${INPUTFILE}" | \
 	awk '{ if (($1 == "//") || (0 == NF))\
 				print $0; \
-			else \
-				printf "\tdefine(\"%s\", %s);\n", $4, $6 }' >> "${OUTPUTFILE}"
+			else { \
+				xvar = $4; \
+				$1=$2=$3=$4=$5=""; \
+				printf "\tdefine(\"%s\", %s);\n", xvar, $0; \
+			} \
+		}' >> "${OUTPUTFILE}"
 								
 echo "${WARNING}" >> "${OUTPUTFILE}"

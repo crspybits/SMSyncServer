@@ -93,6 +93,9 @@ PSFileTransferLog.getAllFor = function (userId, callback) {
         }
     }
     
+    // logger.debug("constructor");
+    // console.log(userId.constructor);
+    
     var query = {
         'fileIndex.userId': userId
     };

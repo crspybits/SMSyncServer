@@ -1,9 +1,9 @@
 Contents:  
-[Introduction](#markdown-header-introduction)  
-[Development Status](#markdown-header-development-status)  
-[Installation](#markdown-header-installation)  
-[SharedNotes Demo App](#markdown-header-shared-notes-demo-app)  
-[Usage examples](#markdown-header-usage-examples)  
+[Introduction](#introduction)  
+[Development Status](#development-status)  
+[Installation](#installation)  
+[SharedNotes Demo App](#shared-notes-demo-app)  
+[Usage examples](#usage-examples)  
 
 # Introduction
 
@@ -40,14 +40,17 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 * The SMSyncServer project is in "beta" and supports uploading, upload-deletion, downloading, download-deletion, and conflict management.
 * Currently an iOS client has been implemented (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [see also this SO post](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)).
 * Currently Google Drive is supported in terms of cloud storage systems.
+* Currently Facebook credentials are supported in terms of sharing data with other users. Access to your data can be partial (e.g., read-only).
 * No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
-* Sharing with other users currently amounts to complete read/write access to all files with other users accessing with the same cloud storage credentials. There are plans for more sophisticated access control.
+* 23,600 lines of program code and documentation, across client interface, client examples, tests, and server.
+* 116 XCTests-- single device tests.
+* 7 custom two device tests
 * [TODO development list](./TODO.md)
 
 # Installation
 ## 1) Create Google Developer Credentials
 
-* To enable access to user Google Drive accounts, you must create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests app or in your app making use of the iOSFramework. See
+* To enable access to user Google Drive accounts, you must create Google Developer credentials for your iOS app using the SMSyncServer Framework and the SMSyncServer Node.js server. These credentials need to be installed in either the iOSTests or SharedNotes app or in your app making use of the iOSFramework. See
 <https://developers.google.com/identity/sign-in/ios/>. Make sure you enable the Google Drive API for your Google project.
 
 ## 2) MongoDb installation
@@ -56,7 +59,8 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 ## 3) Server installation
 
-* Create your own `serverSecrets.json` file (i.e., `Server/Code/serverSecrets.json`). This file is not in the public repo because it has private info -- it is in the SMSyncServer .gitignore file. You must create your own. This file contains keys for cloud storage access and for MongoDb access. Its structure is as follows:
+* Create your own `serverSecrets.json` file (i.e., `Server/Code/serverSecrets.json`). This file is not in the public repo because it has private info -- it is in the SMSyncServer .gitignore file. You must create your own. This file contains keys for cloud storage access and for MongoDb access. The field for `SharingServices` is optional but necessary if you want to share access to SMSyncServer using Facebook.
+Its structure is as follows:
 
 ### `serverSecrets.json`
 
@@ -72,12 +76,34 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 				"auth_uri": "https://accounts.google.com/o/oauth2/auth",
 				"token_uri": "https://accounts.google.com/o/oauth2/token"
 			}
+		},
+		"SharingServices": {
+			"Facebook": {
+				"app_id": "<snip>",
+				"application": "<snip>",
+				"app_secret": "<snip>",
+				"client_token": "<snip>"
+			}
 		}
 	}
 	
-Each entry in the `CloudStorageServices` dictionary must abide by the structure required for the particular cloud storage service. For Google Drive, see [Google Sign In](https://developers.google.com/identity/sign-in/ios/).
+* Each entry in the `CloudStorageServices` dictionary must abide by the structure required for the particular cloud storage service. For Google Drive, see [Google Sign In](https://developers.google.com/identity/sign-in/ios/).
 
-* The SMSyncServer server is written in Node.js. Current tests are using Node.js v6.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
+* Each entry in the `SharingServices` dictionary must abide by the structure required for the particular sharing service. For Facebook, you must enable an app with [https://developers.facebook.com](https://developers.facebook.com/docs/ios/getting-started). Note that you don't need to follow all of these steps, just (a) create a Facbook app corresponding to your iOS app, and (b) modify parts (if you are using the example iOSTests or SharedNotes app) or add parts (if you are making a new app) indicated to the `.plist` of the Xcode project. When creating the Facebook app, you must make sure to add your app as a Platform ([see this link](http://stackoverflow.com/questions/16345777/given-url-is-not-allowed-by-the-application-configuration)).
+
+* If you are using Facebooks sharing, in order for your app to receive sharing invitations, you need to add the following URL Scheme to your apps .plist file:
+
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>{Your-Apps-BundleId}.invitation</string>
+			</array>
+		</dict>
+	</array>
+	
+* The SMSyncServer server is written in Node.js. Current tests are running using Node.js v6.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
 
 * A startup script to run the SMSyncServer Node.js on your local Mac OS X system is `Server/Code/Scripts/startServer.sh`.
 
@@ -92,7 +118,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 
-* One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#markdown-header-shared-notes-demo-app). 
+* One way to get familiar with the client (iOS app) side of the SMSyncServer system is to use the provided sample app. This is contained in the iOSTests folder. See also the [SharedNotes app](#shared-notes-demo-app). 
 
 * Next, you need to replace the `GoogleService-Info.plist` symbolic link with your actual .plist file and edit the URL Scheme's in this Xcode project to match your Google credentials. See:
 <https://developers.google.com/identity/sign-in/ios/>.
@@ -114,15 +140,17 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
             </dict>
             </plist>
 
-* You should now be ready to build the Tests.workspace onto your device.
+SMSyncServer uses [Cocoapods](https://cocoapods.org) to manage libraries for iOS. You must install [Cocoapods](https://cocoapods.org), and then run `pod install`. Once you do that, you should be ready to 
+
+* You should now be ready to build the `Tests.xcworkspace` project and install to your device.
 
 ## 5) Adding the iOSFramework into your own Xcode project 
 
-* You must call the iOS client from Swift, not Objective-C, because the iOS client API uses some Swift features that are not compatible with Objective-C (tuples, enums with associated values, and String enum's).
+* You must call the iOS client (`SMSyncServer.iOSFramework` Cocoapod) from Swift, not Objective-C, because the iOS client API uses some Swift features that are not compatible with Objective-C (e.g., tuples, enums with associated values, and String enum's).
  
-* Drag the file `iOSFramework/Code/Signin/SMGoogleCredentials.swift` into your Xcode project. This .swift file depends on the Google Sign In Framework (see next step), which is not linked into the SMSyncServer framework, and so isn't explicitly part of the SMSyncServer framework.
-
-* You need most of the code in your App Delegate from the example AppDelegate.swift file-- all of it except for that using Core Data. See the method `didFinishLaunchingWithOptions` and the method:
+* As indicated above, SMSyncServer uses [Cocoapods](https://cocoapods.org) to manage libraries for iOS. You will need a `Podfile` in your project. For examples, see the Podfile in the iOSTests or the SharedNotes app.
+ 
+* You need most of the code in your App Delegate from the example AppDelegate.swift file (see iOSTests and SharedNotes app) -- all of it except for that using Core Data. See the method `didFinishLaunchingWithOptions` and the method:
 
 		func application(application: UIApplication,
 			openURL url: NSURL, sourceApplication: String?, annotation: AnyObject) -> Bool {
@@ -130,13 +158,7 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You need to create your own `SMSyncServer-client.plist` file. See above.
 
-* Link the [Google SignIn Framework](https://developers.google.com/identity/sign-in/ios/) into your app. It seems easiest to do this [using the Cocoapod](https://developers.google.com/identity/sign-in/ios/start-integrating). As indicated in these directions, you will need to create or use a configuration file (`GoogleService-Info.plist`). Your `client_id` and `client_secret` will need to be placed into your `serverSecrets.json` server file. See above.
-
-* With your own Xcode project open in Xcode and with a Mac OS Finder folder open so you can see iOSFramework files, you need to drag `SMSyncServer.xcodeproj` from the iOSFramework folder into your Xcode project.
-
-* Then, entirely within your Xcode project, drag SMSyncServer.framework to Embedded Binaries in the General tab.
-
-* Also entirely within your Xcode project, locate SMCoreLib.framework and drag this to Embedded Binaries in the General tab (while you don't have to explicitly make use of SMCoreLib in your code, it is used by the SMSyncServer Framework, and this step seems necessary to build).
+* Since you are already using Cocoapods for SMSyncServer, use it also to link the [Google SignIn Framework](https://developers.google.com/identity/sign-in/ios/) into your app. As indicated in these directions, you will need to create or use a configuration file (`GoogleService-Info.plist`). Your `client_id` and `client_secret` will need to be placed into your `serverSecrets.json` server file. See above.
 
 * You might get the error "App Transport Security has blocked a cleartext HTTP (http://) resource load since it is insecure. Temporary exceptions can be configured via your app's Info.plist file." when you try run your app. For testing, you may want to use HTTP instead of HTTPS to access your SMSyncServer server. To do this, you can add the following to your app's Info.plist:
 
@@ -150,14 +172,14 @@ Each entry in the `CloudStorageServices` dictionary must abide by the structure 
 
 * You will also need to setup a delegate for the SMSyncServer session shared instance.
 
-# Shared Notes Demo App
+# SharedNotes Demo App
 
-In `iOS/SharedNotes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Open the project `SharedNotes.workspace` in Xcode.
+In `iOS/SharedNotes` there is a demo app, which enables multiple devices to access the same collection of text notes and images across iOS devices. Again, you'll need to use Cocoapods, doing: `pod install`. Open the project `SharedNotes.xcworkspace` in Xcode.
 
 [YouTube Demo of SharedNotes app](https://www.youtube.com/watch?v=9AVZa_pNvdo).
 
 # Usage Examples
-* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#markdown-header-shared-notes-demo-app). 
+* The most comprehensive set of usage examples are in the XCTests in the sample iOSTests app (though some of these make use of internal methods using `@testable`).  See also the [SharedNotes demo app](#shared-notes-demo-app). 
 
 * In the following an `immutable` file is one assumed to not change while upload is occurring. A `temporary` file is one that will be deleted by the SMSyncServer framework after upload. Some of these examples are extracted from README_Examples.swift in the XCTests for the Tests app.
 
@@ -281,8 +303,12 @@ In `iOS/SharedNotes` there is a demo app, which enables multiple devices to acce
 // Downloads are caused by other devices uploading files, and these are initiated by the SMSyncServer and reported by the delegate method `syncServerShouldSaveDownloads` (see below). If needed, you can programmatically make a sync request which will do any currently needed downloads:
 
 	SMSyncServer.session.sync()
-    
-## 7) SMSyncServer.session.delegate
+	
+## 7) Sharing data with Facebook users
+
+// If you want to share your data stored using SMSyncServer with others, you either give them your Google Drive credentials (not recommended), or invite them to share using their Facebook account. To do this, you must create a sharing invitation.
+
+## 8) SMSyncServer.session.delegate
 
 	// These delegate methods are called on the main thread.
 	public protocol SMSyncServerDelegate : class {

@@ -1,0 +1,6 @@
+framework module SMSyncServer {
+  umbrella header "SMSyncServer-umbrella.h"
+
+  export *
+  module * { export * }
+}

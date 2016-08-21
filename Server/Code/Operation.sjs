@@ -5,10 +5,10 @@
 // TODO: Temporary: Just for testing
 // See https://developers.google.com/api-client-library/javascript/reference/referencedocs
 var google = require('googleapis');
+var ObjectID = require('mongodb').ObjectID;
 
 var PSUserCredentials = require('./PSUserCredentials');
 var ServerConstants = require('./ServerConstants');
-var UserCredentials = require('./UserCredentials.sjs');
 var logger = require('./Logger');
 var PSOperationId = require('./PSOperationId')
 var PSLock = require('./PSLock')
@@ -16,7 +16,7 @@ var PSLock = require('./PSLock')
 // instance methods
 
 // Constructor
-// If no errors occur, creates a UserCredentials member named .userCreds and 
+// If no errors occur, creates a PSUserCredentials member named .psUserCreds and
 // Give errorHandling == true for handling server errors; the UserCredentials object will not be created in that case. Otherwise, give no errorHandling parameter and it will have a value of false by default.
 // If an error occurs, the .error member is set to true. I have handled the error this way and not using an exception because I suspect that if we throw an exception, we don't get an Operation object back. And I need an Operation object to call the end method, for error handling.
 function Operation(request, response, errorHandling) {
@@ -31,7 +31,7 @@ function Operation(request, response, errorHandling) {
     self.request = request;
     self.response = response;
     
-    // The client expects a dictionary in response.
+    // The client expects a dictionary in response to the HTTP request.
     self.result = {};
     
     // Many more cases fail than succeed, so make failure the default.
@@ -41,45 +41,124 @@ function Operation(request, response, errorHandling) {
     // TODO: "Compile" this out (using a macro?) in development.
     self.debugTestCase = request.body[ServerConstants.debugTestCaseKey];
     
-    // This important output on logging- may want to change the color to be something more distinctive.
+    // This is important output on logging- may want to change the color to be something more distinctive.
     logger.trace("OPERATION: request.url: " + request.url);
     
     if (!errorHandling) {
-        // Only log the request info in non-error handling cases.
         // logger.info("request.body: " + JSON.stringify(request.body));
 
         var credentialsData = request.body[ServerConstants.userCredentialsDataKey];
-        if (!credentialsData) {
+        if (!isDefined(credentialsData)) {
             var error = "No user credentials sent in request!";
             self.result[ServerConstants.errorDetailsKey] = error; // just for convenience.
             self.error = true;
         }
         else {
-            //logger.debug("Creating a new UserCredentials object");
-            
             try {
-                self.userCreds = new UserCredentials(credentialsData);
+                self.psUserCreds = new PSUserCredentials(credentialsData);
             } catch (error) {
-                logger.error("Failed creating UserCredentials: ", error.toString());
-                self.result[ServerConstants.errorDetailsKey] = error; // just for convenience.
+                logger.error("Failed creating PSUserCredentials: ", error.toString());
+                self.result[ServerConstants.errorDetailsKey] = error.toString(); // just for convenience.
                 self.error = true;
             }
-            
-            //logger.debug("Finished creating a new UserCredentials object: this.error: " + this.error);
         }
     }
 }
 
-// Checks if the user is on the system, and as a side effect (if no error), adds a PSUserCredentials object as a new member, .psUserCreds
-// userMustBeOnSystem is optional, and defaults to true.
-// On failure, ends the operation connection.
-// Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
-Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
+// Must have retrieved/stored psUserCreds from/to Mongo
+// Returns the underlying owner user id.
+Operation.prototype.userId = function() {
+    var self = this;
+    
+    if (self.owningUserSignedIn()) {
+        return self.psUserCreds._id;
+    }
+    else {
+        if (! isDefined(self.psUserCreds.linkedOwningUserId)) {
+            throw new Error("linkedOwningUserId is not defined!")
+        }
+        
+        var userId = self.psUserCreds.linkedOwningUserId;
+        
+        if (typeof userId === 'string') {
+            // Just allow the createFromHexString to throw. It's a problem, we need to catch it.
+            userId = new ObjectID.createFromHexString(userId);
+        }
+    
+        return userId;
+    }
+}
+
+Operation.prototype.signedInUserId = function() {
+    return this.psUserCreds._id;
+}
+
+Operation.prototype.deviceId = function() {
+    return this.psUserCreds.mobileDeviceUUID;
+}
+
+Operation.prototype.owningUserSignedIn = function () {
+    var self = this;
+    return self.psUserCreds.owningUserSignedIn();
+}
+
+Operation.prototype.sharingUserSignedIn = function () {
+    var self = this;
+    return self.psUserCreds.sharingUserSignedIn();
+}
+
+// Is the current signed in user authorized to do this operation?
+// One parameter: A sharingType (e.g., ServerConstants.sharingAdmin)
+// Returns true or false. If it returns false, it ends the operation.
+Operation.prototype.endIfUserNotAuthorizedFor = function (sharingType) {
+    var self = this;
+    
+    if (self.psUserCreds.userAuthorizedFor(sharingType)) {
+        return true;
+    }
+    else {
+        var message = "User is not authorized for: " + sharingType;
+        logger.error(message);
+        self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
+        return false;
+    }
+}
+
+/* Checks if the user is on the system, and checks for a lock and operationId.
+    Parameters:
+    1) Option object (optional):
+        userMustBeOnSystem:Boolean (defaults to true)
+        mustHaveLinkedOwningUserId:Boolean (defaults to true)
+            When true, requires linkedOwningUserId when have a sharing user.
+    2) Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
+ 
+    On error, ends the operation connection.
+*/
+Operation.prototype.validateUser = function (options, callback) {
     var self = this;
 
-    if (typeof userMustBeOnSystem === 'function') {
-        callback = userMustBeOnSystem;
-        userMustBeOnSystem = true;
+    var userMustBeOnSystem = true;
+    var mustHaveLinkedOwningUserId = true;
+    
+    if (typeof options === 'function') {
+        callback = options;
+    }
+    else {
+        if (isDefined(options.userMustBeOnSystem)) {
+            userMustBeOnSystem = options.userMustBeOnSystem;
+        }
+        if (isDefined(options.mustHaveLinkedOwningUserId)) {
+            mustHaveLinkedOwningUserId = options.mustHaveLinkedOwningUserId;
+        }
+    }
+    
+    // logger.debug("validateUser: ");
+    // logger.debug(self);
+    
+    // When userMustBeOnSystem is true, validateUser is only called to perform operations, not to create users or check for existing users. When a sharing user is performing an operation, they *must* have a linkedOwningUserId
+    if (mustHaveLinkedOwningUserId && self.psUserCreds.userType == ServerConstants.userTypeSharing && !isDefined(self.psUserCreds.linkedOwningUserId)) {
+        self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, "Sharing user, but no linkedOwningUserId");
+        return;
     }
     
     self.validateUserAlwaysCallback(userMustBeOnSystem, function (error, staleUserSecurityInfo) {
@@ -89,7 +168,7 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                 self.endWithRCAndErrorDetails(ServerConstants.rcStaleUserSecurityInfo, error);
             }
             else {
-                logger.error("validateUser: Invalid user: security info is not stale");
+                logger.error("validateUser: Invalid user: security info is not stale: " + JSON.stringify(error));
                 self.endWithErrorDetails(error);
             }
         }
@@ -112,6 +191,8 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                         return;
                     }
                     
+                    // Why am I creating a new PSOperationId before the .getFor call? It's not used.
+                    /*
                     var psOperationId = null;
                     
                     const operationIdData = {
@@ -126,6 +207,7 @@ Operation.prototype.validateUser = function (userMustBeOnSystem, callback) {
                         self.endWithErrorDetails(error);
                         return;
                     }
+                    */
                     
                     PSOperationId.getFor(lock.operationId, self.userId(), self.deviceId(), function (error, psOperationId) {
                         if (error) {
@@ -159,15 +241,12 @@ Operation.prototype.validateUserAlwaysCallback = function (userMustBeOnSystem, c
         userMustBeOnSystem = true;
     }
     
-    // Pass update as false because I'm assuming we won't have an authorization code when checking for an existing user.
-    self.checkForExistingUser(false, function (error, staleUserSecurityInfo, psUserCreds) {
+    self.checkForExistingUser(function (error, staleUserSecurityInfo) {
         if (error) {
 			callback(error, staleUserSecurityInfo);
 		}
         else {
-            self.psUserCreds = psUserCreds;
-            
-            logger.info("UserId: " + self.userId());
+            logger.info("SignInUserId: " + self.signedInUserId());
             logger.info("DeviceId: " + self.deviceId());
 
             if (userMustBeOnSystem && !self.psUserCreds.stored) {
@@ -185,15 +264,6 @@ Operation.prototype.end = function () {
     // The client expects a dictionary in response.
     logger.trace("Sending response back to client: " + JSON.stringify(this.result));
     this.response.end(JSON.stringify(this.result));
-    
-    /*
-    if (this.userCreds) {
-        // A test just to see if the Google creds are actually working...
-        listFiles(this.userCreds.googleUserCredentials.oauth2Client);
-    }
-    else {
-        logger.info("No this.userCreds defined (Can't run Google list files test)");
-    }*/
 }
 
 // Error details can be a string or an object.
@@ -229,101 +299,14 @@ Operation.prototype.prepareToEndDownloadWithRCAndErrorDetails = function (return
     return this.prepareToEndDownloadWithRC(returnCode);
 }
 
-/* 
-    update is of type bool:
-        If the user exists in persistent storage, and:
-        a) If update is true, this will update the persistent storage with any changes in the user credentials. (The intent here is for Google parameters where the access token, and refresh token will change if an authorization code is given in the user creds; this assumes that validate may change the user creds).
-        b) If update is false, this will populate the user creds object with data from persistent storage. This should be the normal case: An API call needs to check the user creds, and update them with details from persistent storage if the user creds are valid.
-    Callback has parameters: 
-        1) error;
-        2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because ther security information is stale; this parameter is given as null if error is null
-        2) if error is null, a PSUserCredentials object (use the .stored property of that object to see if the user exists in persistent storage).
+/*
+Callback has parameters:
+    1) error;
+    2) if error != null, a boolean, which if true indicates the error was that the user could not be validated because there security information is stale; this parameter is given as null if error is null
 */
-Operation.prototype.checkForExistingUser = function (update, callback) {
+Operation.prototype.checkForExistingUser = function (callback) {
     var self = this;
-    
-	self.userCreds.validate(function(error, staleUserSecurityInfo) {
-		if (error) {
-			callback(error, staleUserSecurityInfo, null);
-		}
-		else {
-            logger.info("self.userCreds.googleUserCredentials.oauth2Client.credentials: " + JSON.stringify(self.userCreds.googleUserCredentials.oauth2Client.credentials));
-            
-            var psUserCreds = null;
-            try {
-                psUserCreds = new PSUserCredentials(self.userCreds);
-            } catch (error) {
-                callback(error, false, null);
-            }
-            
-			psUserCreds.lookup(function (error) {
-				if (error) {
-                    callback(error, false, null);
-				}
-				else if (psUserCreds.stored) {
-                    if (update) {
-                        // Update persistent store with user creds data.
-                        psUserCreds.update(function (error) {
-                            if (error) {
-                                callback(error, false, null);
-                            }
-                            else {
-                                callback(null, null, psUserCreds);
-                            }
-                        });
-                    }
-                    else {
-                        // Populate user creds object from persistent store.
-                        psUserCreds.populateFromUserCreds(function (error) {
-                            if (error) {
-                                callback(error, false, null);
-                            }
-                            else {
-                                callback(null, null, psUserCreds);
-                            }
-                        });
-                    }
-				} 
-				else {
-					callback(null, null, psUserCreds);
-				}
-			});
-		}
-	});
-}
-
-Operation.prototype.userId = function() {
-    return this.psUserCreds._id;
-}
-
-Operation.prototype.deviceId = function() {
-    return this.userCreds.mobileDeviceUUID;
-}
-
-/**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function listFiles(auth) {
-    logger.info("Listing files...");
-    var service = google.drive('v2');
-    service.files.list({auth: auth, maxResults: 10}, function(err, response) {
-        if (err) {
-            logger.error('The API returned an error: ' + JSON.stringify(err));
-            return;
-        }
-        var files = response.items;
-        if (files.length == 0) {
-            logger.info('No files found.');
-        } else {
-            logger.info('Files:');
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                logger.info('%s (%s)', file.title, file.id);
-            }
-        }
-    });
+    self.psUserCreds.lookupAndValidate(callback);
 }
 
 // export the class
