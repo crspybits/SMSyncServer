@@ -93,7 +93,13 @@ public class SMGoogleUserSignIn : SMUserSignInAccount {
         // https://developers.google.com/identity/sign-in/ios/offline-access?hl=en
         GIDSignIn.sharedInstance().serverClientID = self.serverClientID 
 
-        GIDSignIn.sharedInstance().scopes.append("https://www.googleapis.com/auth/drive.file")
+        // 8/20/16; I had a difficult to resolve issue relating to scopes. I had re-created a file used by SharedNotes, outside of SharedNotes, and that application was no longer able to access the file. See https://developers.google.com/drive/v2/web/scopes The fix to this issue was in two parts: 1) to change the scope to access all of the users files, and to 2) force updating of the access_token/refresh_token on the server. (I did this later part by hand-- it would be good to be able to force this automatically).
+        
+        // "Per-file access to files created or opened by the app"
+        // GIDSignIn.sharedInstance().scopes.append("https://www.googleapis.com/auth/drive.file")
+        
+        // "Full, permissive scope to access all of a user's files."
+        GIDSignIn.sharedInstance().scopes.append("https://www.googleapis.com/auth/drive")
         
         // 12/20/15; Trying to resolve my user sign in issue
         // It looks like, at least for Google Drive, calling this method is sufficient for dealing with rcStaleUserSecurityInfo. I.e., having the IdToken for Google become stale. (Note that while it deals with the IdToken becoming stale, dealing with an expired access token on the server is a different matter-- and the server seems to need to refresh the access token from the refresh token to deal with this independently).

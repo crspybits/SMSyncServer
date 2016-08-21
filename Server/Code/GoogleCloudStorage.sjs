@@ -52,10 +52,7 @@ GoogleCloudStorage.prototype.setup = function (callback) {
     Originally, I was going to get a listing of all files in our cloud folder. HOWEVER, Google places limits on the number of files returned in a listing. So, it seems better to do this on a per file basis. Number of files returned has default of 100, and a max of 1000. See https://developers.google.com/drive/v2/reference/files/list
     */
     var query = "mimeType = 'application/vnd.google-apps.folder' and title = '"
-        + self.cloudFolderPath + "' and trashed = false";
-    
-    // DEBUGGING
-    self.listAllFiles();
+        + self.cloudFolderPath + "' and trashed=false";
     
     self.listFiles(query, function (error, files) {
         if (error) {
@@ -81,6 +78,10 @@ GoogleCloudStorage.prototype.setup = function (callback) {
                 // The cloud folder existed! Yea!. Need to get its folder id.
                 self.cloudFolderId = files[0].id;
                 logger.info("cloudFolderId: " + self.cloudFolderId);
+                    
+                // DEBUGGING
+                // self.listAllFiles();
+    
                 callback(null);
             }
         }
@@ -123,7 +124,7 @@ GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback
     
     // First, see if our file exists in the cloud folder.
     var query = "title = '" + cloudFileName + "' "
-            + " and '" + self.cloudFolderId + "' in parents and trashed = false";
+            + " and '" + self.cloudFolderId + "' in parents and trashed=false";
     
     self.listFiles(query, function (error, files) {
         if (error) {
@@ -217,7 +218,7 @@ GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, cal
     
     // First, see if our file exists in the cloud folder.
     var query = "title = '" + cloudFileName + "' "
-            + " and '" + self.cloudFolderId + "' in parents and trashed = false";
+            + " and '" + self.cloudFolderId + "' in parents and trashed=false";
     
     self.listFiles(query, function (error, files) {
         if (error) {
@@ -459,19 +460,13 @@ GoogleCloudStorage.prototype.callGoogleDriveAPIAux =
 
 // DEBUGGING
 
-var successListingFiles = false;
-
 GoogleCloudStorage.prototype.listAllFiles = function() {
     var self = this;
     
-    if (successListingFiles) {
-        return;
-    }
-    
-    logger.info("Listing files...");
+    logger.info("listAllFiles: Listing files...");
     
     if (!isDefined(self.cloudFolderId)) {
-        logger.debug("self.cloudFolderId is not defined");
+        logger.debug("listAllFiles: self.cloudFolderId is not defined");
         return;
     }
     
@@ -479,21 +474,19 @@ GoogleCloudStorage.prototype.listAllFiles = function() {
     
     self.listFiles(query, function (error, files) {
         if (error) {
-            logger.error("Error listing files: " + error);
+            logger.error("listAllFiles: Error listing files: " + error);
         }
         else {
             if (files.length == 0) {
-                logger.info('No files found.');
+                logger.info('listAllFiles: No files found.');
             }
             else {
-                logger.info('Files:');
+                logger.info('listAllFiles: Files:');
                 
                 for (var i = 0; i < files.length; i++) {
                     var file = files[i];
-                    logger.info('%s (%s); %j', file.title, file.id, file);
+                    logger.info("File#" + i + ': %s (%s); %j', file.title, file.id, file);
                 }
-                
-                successListingFiles = true;
             }
         }
     });

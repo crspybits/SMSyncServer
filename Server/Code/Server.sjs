@@ -47,7 +47,7 @@ var upload = multer({ dest: initialUploadDirectory}).single(ServerConstants.file
 app.use(bodyParser.json({extended : true}));
 
 var serverPort = 8081;
-var serverIPAddress = '127.0.0.1';
+var serverIPAddress = '0.0.0.0';
 
 // 5/1/16; Changes for running on Heroku. process.env.PORT is an environmental dependency on Heroku. The only Heroku dependency in the server I think.
 //if (isDefined(process.env.PORT)) {
