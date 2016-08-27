@@ -327,17 +327,34 @@ internal class SMServerAPI {
 
     //MARK: File operations
     
-    internal func lock(completion:((apiResult:SMServerAPIResult)->(Void))?) {
-        let serverParams = self.userDelegate.userCredentialParams
+    // If you set force to true, this will always ensure there is a lock, independent of current operation state. E.g., this is useful when doing a reset.
+    // `previousLock` will be true iff there was no error in the call, and there was a lock held by the current user previously. It is nil if there was an error.
+    internal func lock(force force:Bool=false, completion:((previousLockForUser:Bool?, apiResult:SMServerAPIResult)->(Void))?) {
+        var serverParams = self.userDelegate.userCredentialParams
         Assert.If(nil == serverParams, thenPrintThisString: "No user server params!")
+        
+        if force {
+            serverParams![SMServerConstants.forceLock] = true
+        }
         
         let serverOpURL = NSURL(string: self.serverURLString +
                         "/" + SMServerConstants.operationLock)!
         
         SMServerNetworking.session.sendServerRequestTo(toURL: serverOpURL, withParameters: serverParams!) { (serverResponse:[String:AnyObject]?, error:NSError?) in
         
-            let result = self.initialServerResponseProcessing(serverResponse, error: error)
-            completion?(apiResult: result)
+            var result = self.initialServerResponseProcessing(serverResponse, error: error)
+            
+            var lockHeldPrevously:Bool?
+            if result.error == nil {
+                if let lock = serverResponse![SMServerConstants.resultLockHeldPreviously] as? Bool {
+                    lockHeldPrevously = lock
+                }
+                else {
+                    result.error = Error.Create("No resultLockHeldPreviously in response!")
+                }
+            }
+            
+            completion?(previousLockForUser: lockHeldPrevously, apiResult: result)
         }
     }
     

@@ -6,12 +6,12 @@ iOS/SharedNotes/Code/CoreData/*.swift \
 README.md \
 TODO.md \
 \
-iOS/iOSFramework/README.md \
-iOS/iOSFramework/Code/Internal/*.swift \
-iOS/iOSFramework/Code/Internal/CoreData/*.swift \
-iOS/iOSFramework/Code/Public/*.swift \
-iOS/iOSFramework/Code/Public/*.h \
-iOS/iOSFramework/Code/SignIn/SMGoogleCredentials.swift \
+iOS/iOSFramework/SMSyncServer/Classes/Internal/*.swift \
+iOS/iOSFramework/SMSyncServer/Classes/Internal/CoreData/*.swift \
+iOS/iOSFramework/SMSyncServer/Classes/Public/*.swift \
+iOS/iOSFramework/SMSyncServer/Classes/Public/*.h \
+\
+iOS/SignIn/*.swift \
 \
 iOS/iOSTests/Code/*.swift \
 iOS/iOSTests/Code/*.h \

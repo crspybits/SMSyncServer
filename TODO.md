@@ -8,6 +8,8 @@
 
 1. DONE: 5/25/16; Encode related object of a ImageNote in the JSON. So after it's received at destination, we can relate it. HOW DO WE DO THIS? The way we are doing it so far files don't have any general meta data that apps can set. It seems we need to provide this -- e.g., a json structure would seem to be a good way to go. And make it part of the SMSyncAttributes. This could just replace the appDataType-- as it's a really just more general app specific chunk of data. This is important for deletion-- without knowing the images related to a note, when we delete the note, the images will not also actually get deleted.
 
+1. May want to put a Settings switch control in for Google credentials to select between the only-app created scope and all-files scope. See issue below. If this is created, this should force an update of the access_token and refresh_token on the next sign in because otherwise, the scope update doesn't appear to propagate to the server.
+
 1. It is possible to get an error with Google Drive where a file that we have in the server file index cannot be obtained from Google Drive. We should be able do a partial download (i.e., of the remaining files) and not fail completely just because a single file cannot be downloaded. This happened because of scopes for Google Drive. I didn't authorize Google Drive for all files (only for files created by the app), but I changed a file externally of the app-- which caused that file to not be visible to the app.
 
 1. Bug/Crash: I just did a pull-down refresh on SharedNotes when I hadn't  used the app for about 10 hours, and I got a persistent stale credentials issue. While I thought I'd been getting these errors on a server lock before, I thought they'd been resolving themselves. This gave the "red" error spinner on the app. When I tapped on the red spinner, the app crashed. This is an interesting bug. The purpose of tapping on the red spinner button is to do a clean up on the server. However, a cleanup will not be possible because of the credentials/authorization problem. 5/23/16: I think I've fixed the stale creds issue. Still need some way to test the red spinner reset.
@@ -20,11 +22,11 @@
 
 1. Need to have a way to share images-- e.g., via Facebook or text messages or email. Or to save to Photo Library.
 
-1. Need to be able to click on URL's.
+1. Need to be able to click on URL's that are present with the note text.
 
 1. I got a crash with app after I got a "red spinner" error, and did a reset by tapping on the red spinner. Crash occurred immediately after I did a sync by pulling down on the table view.
 
-1. HIGH PRIORITY. I got a "red spinner" error with app running on iPad when I tried to refresh when there were a bunch of files to download. This was with server running on Heroku. My guess right now is that this is due to a 30s run time limit per operation imposed by Heroku. From the server log, the operation was running for more than 30s. See also https://www.heroku.com/policy/aup#quota
+1. HIGH PRIORITY. I got a "red spinner" error with app running on iPad when I tried to refresh when there were a bunch of files to download. This was with server running on Heroku. My guess right now is that this is due to a 30s run time limit per operation imposed by Heroku. From the server log, the operation was running for more than 30s. See also https://www.heroku.com/policy/aup#quota. 8/20/16; I believe I have fixed this now-- I'm now using the IBM Bluemix server and that doesn't seem to have the same kind of limits. 
 
 1. We need to present a sharing user with a set of linked/shared account options (if more than one), when they are signing in.
 
@@ -33,6 +35,8 @@
 1. It would be nice to have a Settings option to allow images to be saved at a lower resolution and/or JPG image quality. This would save server space, and reduce the amount of time spent syncing.
 
 ## FUNCTIONALITY
+
+1. Improve robustness of recovering from errors in network/server access. I've been encountering some failures in server access where (I think) due to a poor network connection (a) I don't detect that the network is down, but (b) the connection to the server fails. Right now what happens is that the server API call is retried several times, then the client goes into a failure mode. Instead, upon such a server API failure, it should be treated the same as a network loss. Even if the server was down, I think this is the right way to handle this issue. With the server down, we'd need to restart the server, and the app should later retry. TESTING: Add manual tests which shut down the network at certain points. In that way, the network will be up, but the server will be unresponsive.
 
 1. DONE 5/19/16. Conflict management: Dealing with downloads that conflict with local modifications.
 1. DONE. What about conflicts where the local app is modifying some data. It seems like there should be some kind of lock that can be set by an app to prevent modification while modifying the data. E.g., in the Shared Notes app, a user might be in the midst of making a change to a note. Don't want that note overwritten without taking their changes into account. Presumably these locks should not span launches of the app. e.g., to deal with the case where the app crashes or loses CPU. DECISION: I decided not to deal with app level modification locks within the SMSyncServer. [For the rationale for that choice see this link](http://www.spasticmuffin.biz/blog/2016/05/11/conflict-management-in-the-smsyncserver/)
@@ -47,8 +51,6 @@
 
 1. DONE 5/30/16. I need to rethink the use of .ClientAPIError in the mode. E.g., in the SMSyncServer.session.deleteFile call, the call can change the mode to .ClientAPIError. But, what if the mode was .Synchronizing before this??? Seems like I need to separate between internal mode of the sync server, and errors caused directly by calling the client API. Need also to review uses of .NonRecoverableError. Some of these are .ClientAPIErrors and need to be rethought as above.
 	5/26/16; I just ran into a specific instance of this. [Implemented this by using Swift throws in client API].
-  
-1. Improve robustness of recovering from errors in network/server access. I've been encountering some failures in server access where (I think) due to a poor network connection (a) I don't detect that the network is down, but (b) the connection to the server fails. Right now what happens is that the server API call is retried several times, then the client goes into a failure mode. Instead, upon such a server API failure, it should be treated the same as a network loss. Even if the server was down, I think this is the right way to handle this issue. With the server down, we'd need to restart the server, and the app should later retry. TESTING: Add manual tests which shut down the network at certain points. In that way, the network will be up, but the server will be unresponsive.
 
 1. Some calls to SMServerAPI break down into multiple server calls. Need to change this because I think it's interfering with recovery ability of client.
 

@@ -119,7 +119,6 @@ function define(name, value) {
     
     // MARK: Other parameters sent to the server.
 
-    
     // Used with GetFileIndex operation
     // Key:
 	define("requirePreviouslyHeldLockKey",      "RequirePreviouslyHeldLock");
@@ -223,6 +222,11 @@ function define(name, value) {
 	define("sharingInvitationCode",      "SharingInvitationCode");
     // Value: A code uniquely identifying the sharing invitation.
     
+    // MARK: Parameter for lock operation
+    
+	define("forceLock",      "ForceLock");
+    // Value: Bool, true or false. Default (don't give the parameter) is false.
+    
     // MARK: Responses from server
     
     // Key:
@@ -308,6 +312,11 @@ function define(name, value) {
         // SubKey:
 	define("accountSharingType",      "SharingType");
         // Value: A string. See SMSharingType.
+    
+    // MARK: Results from lock operation
+    
+	define("resultLockHeldPreviously",      "LockHeldPreviously");
+    // Values: A Bool.
     
     // MARK: Server result codes (rc's)
     

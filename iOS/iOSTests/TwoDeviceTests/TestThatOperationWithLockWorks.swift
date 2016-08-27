@@ -27,7 +27,7 @@ class SMTwoDeviceTestThatOperationWithLockWorks : TwoDeviceTestCase {
     override func master() {
         super.master()
     
-        SMServerAPI.session.lock() { apiResult in
+        SMServerAPI.session.lock() { previousLockForUser, apiResult in
             self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error obtaining lock on master.")
             TimedCallback.withDuration(SMTwoDeviceTestThatOperationWithLockWorks.longWait) {
                 SMServerAPI.session.unlock(){ apiResult in
@@ -49,7 +49,7 @@ class SMTwoDeviceTestThatOperationWithLockWorks : TwoDeviceTestCase {
         
         // A short wait before the lock to (try to) make sure that master has the lock before we try to obtain it.
         TimedCallback.withDuration(SMTwoDeviceTestThatOperationWithLockWorks.shortWait) {
-            SMServerAPI.session.lock() { apiResult in
+            SMServerAPI.session.lock() { previousLockForUser, apiResult in
                 self.assertIf(apiResult.error != nil, thenFailAndGiveMessage: "Error obtaining lock on slave.")
                 SMServerAPI.session.unlock(){ apiResult in
                     if apiResult.error == nil {

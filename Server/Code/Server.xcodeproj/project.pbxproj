@@ -11,7 +11,6 @@
 		830A67001D0E0A6700E33EAA /* FacebookUserCredentials.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FacebookUserCredentials.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		833BFC9F1C52F7A000CFCBF6 /* PSInboundFile.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSInboundFile.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		8357A3EA1C0FD864005891B9 /* PSLock.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = PSLock.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
-		8369D3431CD827C6006DA33C /* startOnHeroku.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = startOnHeroku.sh; sourceTree = "<group>"; };
 		8369D3451CD8E458006DA33C /* Secrets.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Secrets.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28751C128D1D00385636 /* FileTransfers.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = FileTransfers.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		836F28761C12D9E700385636 /* Server.sjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = Server.sjs; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
@@ -130,7 +129,6 @@
 		83EBF7421C0A3BE6009F9796 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				8369D3431CD827C6006DA33C /* startOnHeroku.sh */,
 				83EBF76D1C0E9E66009F9796 /* makeServerConstants.sh */,
 				83EBF76E1C0E9E66009F9796 /* startMongoDb.sh */,
 				83EBF76F1C0E9E66009F9796 /* startServer.sh */,

@@ -60,7 +60,6 @@ internal class SMSyncControl {
     private var numberGetFileIndexAttempts = 0
     private var numberGetFileIndexForUploadAttempts = 0
     private var numberUnlockAttempts = 0
-    private var numberCleanupAttempts = 0
     private var numberResetAttempts = 0
     
     private func resetAttempts() {
@@ -68,7 +67,6 @@ internal class SMSyncControl {
         self.numberGetFileIndexAttempts = 0
         self.numberGetFileIndexForUploadAttempts = 0
         self.numberUnlockAttempts = 0
-        self.numberCleanupAttempts = 0
         self.numberResetAttempts = 0
     }
 
@@ -208,7 +206,6 @@ internal class SMSyncControl {
         self.nextOperationLock.lock()
 
         SMQueues.current().flush()
-        self.numberCleanupAttempts = 0
 
         // Since we just did the localCleanup(), which flushed the SMQueues, there is no point in calling doNextUploadOrStop() because there will not be any uploads or other queued operations.
         
@@ -266,7 +263,7 @@ internal class SMSyncControl {
         
         // Don't bother checking for the lock. It's simpler if we just go for it. If we already have the lock, we won't fail. Plus, resets will be infrequent.
 
-        SMServerAPI.session.lock { apiResult in
+        SMServerAPI.session.lock(force: true) { previousLockForUser, apiResult in
             if nil == apiResult.error {
                 self.resetFromErrorAux2(resetType:resetType, originalErrorMode: originalErrorMode, completion: completion)
             }
@@ -438,7 +435,7 @@ internal class SMSyncControl {
     }
     
     private func getServerLock(success success:()->()) {
-        SMServerAPI.session.lock() { lockResult in
+        SMServerAPI.session.lock() { previousLockForUser, lockResult in
             if SMTest.If.success(lockResult.error, context: .Lock) {
                 self.haveServerLock = true
                 self.numberLockAttempts = 0

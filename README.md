@@ -42,7 +42,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 * Currently Google Drive is supported in terms of cloud storage systems.
 * Currently Facebook credentials are supported in terms of sharing data with other users. Access to your data can be partial (e.g., read-only).
 * No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
-* 23,600 lines of program code and documentation, across client interface, client examples, tests, and server.
+* 26,582 lines of program code and documentation, across client interface, client examples, tests, and server.
 * 116 XCTests-- single device tests.
 * 7 custom two device tests
 * [TODO development list](./TODO.md)
@@ -55,7 +55,7 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 
 ## 2) MongoDb installation
 
-* SMSyncServer makes use of MongoDb to store file meta data and locks. Current tests are using MongoDb locally on a Mac OS X system (version v3.0.7), and on [mLab](https://www.mlab.com) as an add-on service through [Heroku](https://heroku.com). You can [find MongoDb here](https://www.mongodb.org).
+* SMSyncServer makes use of MongoDb to store file meta data and locks. Current tests are using MongoDb locally on a Mac OS X system (version v3.0.7), and on [mLab](https://www.mlab.com). You can [find MongoDb here](https://www.mongodb.org).
 
 ## 3) Server installation
 
@@ -103,18 +103,11 @@ Its structure is as follows:
 		</dict>
 	</array>
 	
-* The SMSyncServer server is written in Node.js. Current tests are running using Node.js v6.1.0 on Mac OS X and on [Heroku](https://heroku.com). You can find [Node.js here](https://nodejs.org/).
+* The SMSyncServer server is written in Node.js. Current tests are running using Node.js v6.1.0 on Mac OS X and on [IBM Bluemix](https://bluemix.net). You can find [Node.js here](https://nodejs.org/).
 
 * A startup script to run the SMSyncServer Node.js on your local Mac OS X system is `Server/Code/Scripts/startServer.sh`.
 
-* A startup script to run the SMSyncServer Node.js server on [Heroku](https://heroku.com) is `Server/Code/startOnHeroku.sh`. This script assumes you already have created an account on Heroku and installed the Heroku Toolbelt. This script also assumes you have have initialized a Git project within `Server/Code/` and created the Heroku server/app. You need to initially do something like:
-
-		git init
-		git add .
-		git commit -a -m "Initial commit"
-		heroku create
-		mv .git .ignored.git
-		# The last line is needed because I don't have the server code setup as a Git submodule.
+* A startup script to run the SMSyncServer Node.js server on [IBM Bluemix](https://bluemix.net) is `Server/Code/startOnBluemix.sh`. This script assumes you already have created an account on Bluemix and installed the SMSyncServer git repo on Bluemix. For some tips on this, see [https://hub.jazz.net/tutorials/jazzeditor/](https://hub.jazz.net/tutorials/jazzeditor/) and [https://www.raymondcamden.com/2015/03/02/hosting-node-js-apps-on-bluemix/](https://www.raymondcamden.com/2015/03/02/hosting-node-js-apps-on-bluemix/).
 
 ## 4) Using the iOSTests Example App with the iOSFramework iOS Framework
 

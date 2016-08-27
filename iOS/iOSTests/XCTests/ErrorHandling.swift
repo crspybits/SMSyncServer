@@ -9,7 +9,62 @@
 import XCTest
 @testable import SMSyncServer
 import SMCoreLib
-import Tests
+@testable import Tests
+
+class GenerateInternalError {
+    var testCase:BaseClass!
+    var errorCallbackExpectation:XCTestExpectation!
+    var singleUploadExpectation:XCTestExpectation!
+    var idleExpectation:XCTestExpectation!
+
+    init(withTestCase testCase:BaseClass) {
+        self.testCase = testCase
+        
+        self.errorCallbackExpectation = testCase.expectationWithDescription("Error Callback")
+        self.singleUploadExpectation = testCase.expectationWithDescription("Single Upload")
+        self.idleExpectation = testCase.expectationWithDescription("Idle")
+    }
+    
+    // Does not do a reset from the error.
+    func run(withFileName fileName:String, completion:()->()) {
+        let fileName1 = fileName + ".1"
+        var testFile1 = TestBasics.session.createTestFile(fileName1)
+        testFile1.remoteFileName = fileName1
+
+        try! SMSyncServer.session.uploadImmutableFile(testFile1.url, withFileAttributes: testFile1.attr)
+        
+        var testFile2 = TestBasics.session.createTestFile(fileName + ".2")
+        testFile2.remoteFileName = testFile1.remoteFileName
+
+        try! SMSyncServer.session.uploadImmutableFile(testFile2.url, withFileAttributes: testFile2.attr)
+        
+        self.testCase.idleCallbacks.append() {
+            self.idleExpectation.fulfill()
+        }
+        
+        try! SMSyncServer.session.commit()
+        
+        self.testCase.singleUploadCallbacks.append() { uuid in
+            XCTAssert(uuid.UUIDString == testFile1.uuidString)
+            self.singleUploadExpectation.fulfill()
+        }
+        
+        self.testCase.errorCallbacks.append() {
+            SMSyncServer.session.cleanupFile(testFile1.uuid)
+            SMSyncServer.session.cleanupFile(testFile2.uuid)
+            
+            CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                testFile1.appFile)
+            CoreData.sessionNamed(CoreDataTests.name).removeObject(
+                testFile2.appFile)
+            CoreData.sessionNamed(CoreDataTests.name).saveContext()
+            
+            self.errorCallbackExpectation.fulfill()
+            
+            completion()
+        }
+    }
+}
 
 class ErrorHandling: BaseClass {
     
@@ -29,48 +84,6 @@ class ErrorHandling: BaseClass {
         XCTAssert(SMQueues.current().internalBeingDownloaded == nil || SMQueues.current().internalBeingDownloaded!.count == 0)
         XCTAssert(SMQueues.current().internalCommittedUploads == nil || SMQueues.current().internalCommittedUploads!.count == 0)
     }
-
-    // Seems ClientAPI error is not used any more-- since we now are using throws for client API errors.
-#if false
-    func testThatResetFromClientAPIErrorWorks() {
-        let idleExpectation = self.expectationWithDescription("Idle Callback")
-        let resetExpectation = self.expectationWithDescription("Reset Callback")
-        let errorExpectation = self.expectationWithDescription("Error Callback")
-
-        self.waitUntilSyncServerUserSignin() {
-            // Add something into a queue to make this actually do something.
-            
-            // Turn off network so commit doesn't kick off.
-            Network.session().debugNetworkOff = true
-            
-            let testFile = TestBasics.session.createTestFile("ResetFromClientAPIError")
-            try! SMSyncServer.session.uploadImmutableFile(testFile.url, withFileAttributes: testFile.attr)
-            try! SMSyncServer.session.commit()
-
-            // Generate a client API error: Attempt to delete a file unknown to SMSyncServer. Need to do this because resetFromError requires that the mode currently be an error mode.
-            let testFile2 = TestBasics.session.createTestFile("ResetFromClientAPIError.2")
-            do {
-                try SMSyncServer.session.deleteFile(testFile2.uuid)
-            } catch {
-            }
-            
-            self.idleCallbacks.append() {
-                idleExpectation.fulfill()
-            }
-            
-            SMSyncServer.session.resetFromError { error in
-                XCTAssert(error == nil)
-                self.assertsForEmptyQueues()
-                XCTAssert(SMSyncServer.session.mode == .Idle)
-                
-                Network.session().debugNetworkOff = false
-                resetExpectation.fulfill()
-            }
-        }
-        
-        self.waitForExpectations()
-    }
-#endif
 
     func testSeriousError(doSecondRequest secondRequest:Bool) {
         let idleExpectation = self.expectationWithDescription("Idle Callback")
@@ -117,10 +130,26 @@ class ErrorHandling: BaseClass {
     }
     
     func testThatPurelyLocalResetWorks() {
-        XCTFail()
+        let error = GenerateInternalError(withTestCase: self)
+        
+        self.extraServerResponseTime = 120
+        let completed = self.expectationWithDescription("Completed")
+        
+        self.waitUntilSyncServerUserSignin() {
+
+            error.run(withFileName: "testThatPurelyLocalResetWorks") {
+                SMSyncServer.session.resetFromError(resetType: .Local)
+                
+                // Results of resetFromError: 1) Queues get flushed, 2) mode is idle.
+                self.assertsForEmptyQueues()
+                XCTAssert(SMSyncServer.session.mode == .Idle)
+                
+                completed.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
     }
     
-    func testThatPurelyServerResetWorks() {
-        XCTFail()
-    }
+    // I have a deficiency here: I have been unable to artifically create an error state where: (a) there is an error mode, and (b) there is a lock held on the server.
 }

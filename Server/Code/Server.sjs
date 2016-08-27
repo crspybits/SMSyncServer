@@ -152,23 +152,30 @@ app.post('/' + ServerConstants.operationLock, function (request, response) {
     op.validateUser(function (psLock, psOperationId) {
         // User is on the system.
         
-        // Need to make sure no lock is held right now. e.g., no other user with this same userId is changing files. It is possible (though unlikely) that between the time that we check to see a lock is held, then try to get the lock, that someone else got the lock. Since we're using the userId as the primary key into PSLock, only one attempt to create the lock will be successful.
+        // Generally: Need to make sure no lock is held right now. e.g., no other user with this same userId is changing files. It is possible (though unlikely) that between the time that we check to see a lock is held, then try to get the lock, that someone else got the lock. Since we're using the userId as the primary key into PSLock, only one attempt to create the lock will be successful.
         
         // Do the directory creation first (the directory is needed for file upload and download) so that failing on directory creation doesn't leave us holding a lock.
         var localFiles = new File(op.userId(), op.deviceId());
         
         // This directory can serve for uploads to the cloud storage for the userId, and downloads from it. This works because the PSLock is going to lock uploads or downloads for the specific userId.
         
+        var forceLock = request.body[ServerConstants.forceLock];
+        
         fse.ensureDir(localFiles.localDirectoryPath(), function (err) {
             if (err) {
                 op.endWithErrorDetails(error);
             }
             else {
-                // Next, check to see if we've (user/device) already has a lock. This should be for error recovery if we do.
+                // Next, check to see if we (user/device) already have a lock.
 
-                if (isDefined(psLock)){
-                    if (isDefined(psOperationId)) {
-                        // We have a lock and operationId. App must be doing error recovery. Make sure operation status is right.
+                op.result[ServerConstants.resultLockHeldPreviously] = isDefined(psLock);
+ 
+                if (isDefined(psLock)) {
+                    /* We have a lock and operationId. Two possibilities:
+                    1) App is doing a reset from an error-- ignore operation status.
+                    2) App is doing error recovery. Make sure operation status is right.
+                    */
+                    if (isDefined(psOperationId) && !forceLock) {
                         if (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus) {
                             var message = "Yikes-- an async operation is already in progress!"
                             logger.error(message);
@@ -177,7 +184,6 @@ app.post('/' + ServerConstants.operationLock, function (request, response) {
                         }
                     }
                     
-                     // Good-- We're not going to start another async operation.
                     logger.info("Returning operationId to client: " + psLock.operationId);
                     op.result[ServerConstants.resultOperationIdKey] = psLock.operationId;
                     op.endWithRC(ServerConstants.rcOK);
@@ -1188,12 +1194,7 @@ app.post('/' + ServerConstants.operationCleanup, function (request, response) {
             logger.error(message);
             op.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, message);
         }
-        else if (isDefined(psOperationId) && (ServerConstants.rcOperationStatusInProgress == psOperationId.operationStatus)) {
-            // Yikes.
-            var message = "Operation status was rcOperationStatusInProgress";
-            logger.error(message);
-            op.endWithRCAndErrorDetails(ServerConstants.rcOperationInProgress, message);
-        }
+        // 8/24/16; Going to go forward with this even if psOperationId.operationStatus is ServerConstants.rcOperationStatusInProgress-- because this is a cleanup operation, and we may be cleaning up from an operation that was in progress until it failed.
         else {
             // Remove the PSOutboundFileChange's before the lock because that seems safer. If we fail on removing the file changes, at least we still have the lock.
             PSOutboundFileChange.getAllFor(op.userId(), op.deviceId(), function (error, psOutboundFileChangeObjs) {

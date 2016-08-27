@@ -31,11 +31,11 @@ class ServerAPI: BaseClass {
         let unlock = self.expectationWithDescription("Second Lock")
 
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { lockResult in
+            SMServerAPI.session.lock() { previousLockForUser, lockResult in
                 XCTAssert(lockResult.error == nil)
                 firstLock.fulfill()
                 
-                SMServerAPI.session.lock() { lockResult in
+                SMServerAPI.session.lock() { previousLockForUser, lockResult in
                     XCTAssert(lockResult.error == nil)
                     secondLock.fulfill()
                     
@@ -80,7 +80,7 @@ class ServerAPI: BaseClass {
                 
                 let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             
-                SMServerAPI.session.lock() { lockResult in
+                SMServerAPI.session.lock() { previousLockForUser, lockResult in
                     XCTAssert(lockResult.error == nil)
             
                     SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
@@ -113,7 +113,7 @@ class ServerAPI: BaseClass {
             let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             serverFile.localURL = testFile.url
             
-            SMServerAPI.session.lock() { lockResult in
+            SMServerAPI.session.lock() { previousLockForUser, lockResult in
                 XCTAssert(lockResult.error == nil)
         
                 SMServerAPI.session.uploadFile(serverFile) { apiResult in
@@ -158,7 +158,7 @@ class ServerAPI: BaseClass {
         let noServerFiles = [SMServerFile]()
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { lockResult in
+            SMServerAPI.session.lock() { previousLockForUser, lockResult in
                 XCTAssert(lockResult.error == nil)
                 
                 SMServerAPI.session.setupInboundTransfer(noServerFiles) { (sitResult)  in
@@ -240,7 +240,7 @@ class ServerAPI: BaseClass {
 
         self.waitUntilSyncServerUserSignin() {
 
-            SMServerAPI.session.lock() { lockResult in
+            SMServerAPI.session.lock() { previousLockForUser, lockResult in
                 XCTAssert(lockResult.error == nil)
 
                 let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1B", toBaseURLType: .DocumentsDirectory)

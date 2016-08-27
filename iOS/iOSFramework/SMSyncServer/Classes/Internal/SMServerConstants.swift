@@ -128,7 +128,6 @@ public class SMServerConstants {
     
     // MARK: Other parameters sent to the server.
 
-    
     // Used with GetFileIndex operation
     // Key:
     public static let requirePreviouslyHeldLockKey = "RequirePreviouslyHeldLock"
@@ -232,6 +231,11 @@ public class SMServerConstants {
     public static let sharingInvitationCode = "SharingInvitationCode"
     // Value: A code uniquely identifying the sharing invitation.
     
+    // MARK: Parameter for lock operation
+    
+    public static let forceLock = "ForceLock"
+    // Value: Bool, true or false. Default (don't give the parameter) is false.
+    
     // MARK: Responses from server
     
     // Key:
@@ -317,6 +321,11 @@ public class SMServerConstants {
         // SubKey:
         public static let accountSharingType = "SharingType"
         // Value: A string. See SMSharingType.
+    
+    // MARK: Results from lock operation
+    
+    public static let resultLockHeldPreviously = "LockHeldPreviously"
+    // Values: A Bool.
     
     // MARK: Server result codes (rc's)
     
