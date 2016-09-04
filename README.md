@@ -39,12 +39,12 @@ Contact: <chris@SpasticMuffin.biz> (primary developer)
 # Development Status
 
 * The SMSyncServer project is in "beta" and supports uploading, upload-deletion, downloading, download-deletion, and conflict management.
-* Currently an iOS client has been implemented (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [see also this SO post](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)).
-* Currently Google Drive is supported in terms of cloud storage systems.
-* Currently Facebook credentials are supported in terms of sharing data with other users. Access to your data can be partial (e.g., read-only).
+* An iOS client has been implemented (written in Swift; [requires iOS7 or later](https://developer.apple.com/swift/blog/?id=2); [see also this SO post](http://stackoverflow.com/questions/24001778/do-swift-based-applications-work-on-os-x-10-9-ios-7-and-lower)).
+* Google Drive is supported in terms of cloud storage systems.
+* Facebook credentials are supported in terms of sharing data with other users. Access to your data can be partial (e.g., read-only).
 * No server side support yet for multiple concurrent server instances ([due to file system assumptions](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)).
 * 26,582 lines of program code and documentation, across client interface, client examples, tests, and server.
-* 116 XCTests-- single device tests.
+* 147 XCTests-- single device tests.
 * 7 custom two device tests
 * [TODO development list](./TODO.md)
 
