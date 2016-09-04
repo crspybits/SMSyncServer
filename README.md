@@ -32,6 +32,7 @@ See the blog articles:
 * [The Many Senses of Recovery in SMSyncServer](http://www.spasticmuffin.biz/blog/2016/04/26/the-many-senses-of-recovery-in-smsyncserver/)
 * [Re-Architecting the SMSyncServer File System](http://www.spasticmuffin.biz/blog/2016/05/09/re-architecting-the-smsyncserver-file-system/)
 * [Conflict Management in the SMSyncServer](http://www.spasticmuffin.biz/blog/2016/05/11/conflict-management-in-the-smsyncserver/)
+* [To Lock or not to Lock in the SMSyncServer](http://www.spasticmuffin.biz/blog/2016/09/03/to-lock-or-not-to-lock-in-the-smsyncserver/)
 
 Contact: <chris@SpasticMuffin.biz> (primary developer)
 
