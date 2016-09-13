@@ -50,7 +50,7 @@ class ServerNetworking: XCTestCase {
     // TODO: Should test that this one fails for all of the valid server operations. i.e., that you get a failure without creds on all of them.
     func testThatItFailsWithoutCredentials() {
         let serverOpURL = NSURL(string: SMServerAPI.session.serverURLString +
-                        "/" + SMServerConstants.operationLock)
+                        "/" + SMServerConstants.operationUploadFile)
         let parameters:[String:AnyObject] = [:]
         
         self.doTheTestWith(serverOpURL!, parameters: parameters, expectedRC:  SMServerConstants.rcOperationFailed)

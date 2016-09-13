@@ -51,6 +51,7 @@
 #import "NSArray+Globbing.h"
 #import "SMCoreLib.h"
 #import "ChangeFrameTransitioningDelegate.h"
+#import "SMEmail.h"
 #import "SMModal.h"
 #import "SMRotation.h"
 #import "SMEdgeInsetLabel.h"

@@ -146,6 +146,9 @@
 		81B617F8D26BB10C5726D75E85D21EB7 /* UIButton+AFNetworking.h in Headers */ = {isa = PBXBuildFile; fileRef = 398A94FE394B2F7D42A98C33653FF670 /* UIButton+AFNetworking.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		822C26C2EAC5F940E3A9827DC14AA4C1 /* NSThread+Extras.h in Headers */ = {isa = PBXBuildFile; fileRef = 7528377E393D61AF26BFC703F9A8E088 /* NSThread+Extras.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		830FA65D50626ACDBF2E1F361A24AF7C /* NSObject+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = E82D7336F02AA826DD7187EE4332FD1E /* NSObject+Extras.m */; };
+		832635B21D7CC30800F04BC0 /* SMDownloadWrapup+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832635B01D7CC30800F04BC0 /* SMDownloadWrapup+CoreDataProperties.swift */; };
+		832635B31D7CC30800F04BC0 /* SMDownloadWrapup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832635B11D7CC30800F04BC0 /* SMDownloadWrapup.swift */; };
+		832635B71D7CF68300F04BC0 /* SMServerAPI+Upload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 832635B61D7CF68300F04BC0 /* SMServerAPI+Upload.swift */; };
 		84E64E38847E719CC281D359D49D65DA /* SMCoreData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F003B11212AEE0C619C93D5B8466164 /* SMCoreData.swift */; };
 		85F8D4939F47E277D3E66B52FF2FB82B /* UINavigationController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = A272B289DE7867BDD647692976A32CAA /* UINavigationController+Extras.m */; };
 		861DDA97945FFE4794D19B1752982FD3 /* LogFile.h in Headers */ = {isa = PBXBuildFile; fileRef = F2F052B66E90DB97B14D5007EF466442 /* LogFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -489,6 +492,9 @@
 		8054BD5132D41F2EA2779B461D4436CA /* SPASLog.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SPASLog.h; path = SMCoreLib/Classes/Debugging/SPASLog.h; sourceTree = "<group>"; };
 		817F0209347E447E73D5B815FFA57765 /* SMServerAPI+Sharing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SMServerAPI+Sharing.swift"; sourceTree = "<group>"; };
 		819AE409DD61B71A8EA6D1ABF178D4DA /* SMUploadBlock.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SMUploadBlock.swift; sourceTree = "<group>"; };
+		832635B01D7CC30800F04BC0 /* SMDownloadWrapup+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SMDownloadWrapup+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		832635B11D7CC30800F04BC0 /* SMDownloadWrapup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMDownloadWrapup.swift; sourceTree = "<group>"; };
+		832635B61D7CF68300F04BC0 /* SMServerAPI+Upload.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SMServerAPI+Upload.swift"; sourceTree = "<group>"; };
 		835C5763F74C7A53031C6C275EA2E120 /* SMDefaults.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SMDefaults.swift; path = SMCoreLib/Classes/PersistentVars/SMDefaults.swift; sourceTree = "<group>"; };
 		83FA454769FB586AD9D48C5537F0746F /* KeyChain.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = KeyChain.m; path = SMCoreLib/Classes/PersistentVars/KeyChain.m; sourceTree = "<group>"; };
 		867DC83E28B76740E889ED4CB39A1752 /* Pods-SMSyncServer_Example-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-SMSyncServer_Example-umbrella.h"; sourceTree = "<group>"; };
@@ -1013,6 +1019,8 @@
 				0EE2CFA4A0A318A819540E26053546B0 /* SMDownloadQueue+CoreDataProperties.swift */,
 				4E6C5F7E5CC252861ACF9FAFEA9F1C67 /* SMDownloadStartup.swift */,
 				A6B68153E972E6D5551CE0DD3C2428CC /* SMDownloadStartup+CoreDataProperties.swift */,
+				832635B11D7CC30800F04BC0 /* SMDownloadWrapup.swift */,
+				832635B01D7CC30800F04BC0 /* SMDownloadWrapup+CoreDataProperties.swift */,
 				DDB60537F77BB34459D810AC4C5A0E07 /* SMFileChange.swift */,
 				CD98C98B90DDB2C769399FC51743B49A /* SMLocalFile.swift */,
 				D781E471AF7A90CFE480B83400E6C35D /* SMLocalFile+CoreDataProperties.swift */,
@@ -1066,6 +1074,16 @@
 				66B06B14D6D806CA3128CDBC792A5059 /* Products */,
 				F071068EE7C4F476091F8DFC5E6137D0 /* Targets Support Files */,
 			);
+			sourceTree = "<group>";
+		};
+		832635B41D7CCCFB00F04BC0 /* SMServerAPI */ = {
+			isa = PBXGroup;
+			children = (
+				A55EF113075D06801EA4E7C583EFE949 /* SMServerAPI.swift */,
+				832635B61D7CF68300F04BC0 /* SMServerAPI+Upload.swift */,
+				817F0209347E447E73D5B815FFA57765 /* SMServerAPI+Sharing.swift */,
+			);
+			name = SMServerAPI;
 			sourceTree = "<group>";
 		};
 		837424053A757CAF889E3F8F7CAFF370 /* iOS */ = {
@@ -1176,8 +1194,7 @@
 				2533BD5103CDC309A9C1C9FC3102C3B8 /* SMDownloadFiles.swift */,
 				6A6B6CFAC6619C26EAD9865AC62F1474 /* SMExtras.swift */,
 				DFB4097306A72CEB5B4D058536E9775D /* SMFiles.swift */,
-				A55EF113075D06801EA4E7C583EFE949 /* SMServerAPI.swift */,
-				817F0209347E447E73D5B815FFA57765 /* SMServerAPI+Sharing.swift */,
+				832635B41D7CCCFB00F04BC0 /* SMServerAPI */,
 				5418B3279EAC974703AD0C72F19F9A27 /* SMServerConstants.swift */,
 				633E739429A6D1052B6AE2E8CE30FD4F /* SMServerNetworking.swift */,
 				BE980BB71AD06EB4CB0F05463EA3F566 /* SMSyncControl.swift */,
@@ -1658,6 +1675,8 @@
 				793E768CD8827870D1E2EDFF82747C89 /* SMDownloadDeletion+CoreDataProperties.swift in Sources */,
 				56E11DAACCD50490DDFE3B4802C6F511 /* SMDownloadDeletion.swift in Sources */,
 				D6807DA1520BF34AE8E77ADC9B29AD7D /* SMDownloadFile+CoreDataProperties.swift in Sources */,
+				832635B21D7CC30800F04BC0 /* SMDownloadWrapup+CoreDataProperties.swift in Sources */,
+				832635B71D7CF68300F04BC0 /* SMServerAPI+Upload.swift in Sources */,
 				4A2867E4A4A6DB85D747BFEBCE504AD8 /* SMDownloadFile.swift in Sources */,
 				201E19E0142C97C166A777D0A6DA47A5 /* SMDownloadFileOperation+CoreDataProperties.swift in Sources */,
 				418B21E8410A112A15B28C96EDC48AE7 /* SMDownloadFileOperation.swift in Sources */,
@@ -1675,6 +1694,7 @@
 				CE3F6DE3960D26A72A8B23F8BC814013 /* SMLocalFile.swift in Sources */,
 				63290421AAAC137C9CD73EFE07873FFE /* SMQueues+CoreDataProperties.swift in Sources */,
 				174128C401EC3582F9DDAF84C6BD956B /* SMQueues.swift in Sources */,
+				832635B31D7CC30800F04BC0 /* SMDownloadWrapup.swift in Sources */,
 				6035D5246BAB54D83DAF3AD8F0C499AA /* SMServerAPI+Sharing.swift in Sources */,
 				66C47833D348F234FCE2BD17B30D448D /* SMServerAPI.swift in Sources */,
 				C611664074E8397B7BDA84FB380AA8C4 /* SMServerConstants.swift in Sources */,

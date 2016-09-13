@@ -1,4 +1,4 @@
 'use strict';
 
 require('sweet.js').loadMacro('./macros.sjs');
-var server = require("./Server.sjs");
+var server = require("./RESTEntryPoints/Routes.sjs");

@@ -13,7 +13,6 @@
 		8322EB921C700F1700DF418C /* ClassExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 8322EB911C700F1700DF418C /* ClassExtras.m */; };
 		833198FF1CF5340A00810678 /* AppMetaData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833198FE1CF5340A00810678 /* AppMetaData.swift */; };
 		8333C4E71C72D97B00A0A57A /* TestThatTwoUploadsWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */; };
-		8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */; };
 		8333C4ED1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */; };
 		83496C911D2F526D00851FEA /* SMFacebookUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83496C8F1D2F526D00851FEA /* SMFacebookUserSignIn.swift */; };
 		83496C921D2F526D00851FEA /* SMGoogleUserSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83496C901D2F526D00851FEA /* SMGoogleUserSignIn.swift */; };
@@ -24,7 +23,6 @@
 		8369D3061CCEEBDD006DA33C /* DownloadConflicts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D3051CCEEBDD006DA33C /* DownloadConflicts.swift */; };
 		8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */; };
 		8369D33F1CD49E65006DA33C /* DownloadDeletionRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */; };
-		837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */; };
 		839B469A1C55A3540083AAA6 /* SMSyncServer-client.plist in Resources */ = {isa = PBXBuildFile; fileRef = 839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */; };
 		839CAE7B1CF0CFBC0072C1BD /* ErrorHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */; };
 		839EC7AB1C894A0B00F9E988 /* DownloadDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */; };
@@ -94,7 +92,6 @@
 		8322EB911C700F1700DF418C /* ClassExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClassExtras.m; sourceTree = "<group>"; };
 		833198FE1CF5340A00810678 /* AppMetaData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppMetaData.swift; path = XCTests/AppMetaData.swift; sourceTree = SOURCE_ROOT; };
 		8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatTwoUploadsWork.swift; path = TwoDeviceTests/TestThatTwoUploadsWork.swift; sourceTree = "<group>"; };
-		8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockFails.swift; path = TwoDeviceTests/TestThatOperationWithLockFails.swift; sourceTree = "<group>"; };
 		8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatUpdatedFileWorks.swift; path = TwoDeviceTests/TestThatUpdatedFileWorks.swift; sourceTree = "<group>"; };
 		83496C8F1D2F526D00851FEA /* SMFacebookUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMFacebookUserSignIn.swift; path = ../../SignIn/SMFacebookUserSignIn.swift; sourceTree = "<group>"; };
 		83496C901D2F526D00851FEA /* SMGoogleUserSignIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SMGoogleUserSignIn.swift; path = ../../SignIn/SMGoogleUserSignIn.swift; sourceTree = "<group>"; };
@@ -106,7 +103,6 @@
 		8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatDownloadDeletionWorks.swift; path = TwoDeviceTests/TestThatDownloadDeletionWorks.swift; sourceTree = "<group>"; };
 		8369D33E1CD49E65006DA33C /* DownloadDeletionRecovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletionRecovery.swift; path = XCTests/DownloadDeletionRecovery.swift; sourceTree = SOURCE_ROOT; };
 		836B7F1D1D0A63EA0040F259 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Supporting Files/Info.plist"; sourceTree = "<group>"; };
-		837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestThatOperationWithLockWorks.swift; path = TwoDeviceTests/TestThatOperationWithLockWorks.swift; sourceTree = "<group>"; };
 		839B46991C55A3540083AAA6 /* SMSyncServer-client.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SMSyncServer-client.plist"; path = "Supporting Files/SMSyncServer-client.plist"; sourceTree = "<group>"; };
 		839CAE7A1CF0CFBC0072C1BD /* ErrorHandling.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ErrorHandling.swift; path = XCTests/ErrorHandling.swift; sourceTree = SOURCE_ROOT; };
 		839EC7AA1C894A0B00F9E988 /* DownloadDeletion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DownloadDeletion.swift; path = XCTests/DownloadDeletion.swift; sourceTree = SOURCE_ROOT; };
@@ -194,7 +190,6 @@
 		8333C4EA1C72D9EB00A0A57A /* Diff Cloud Creds */ = {
 			isa = PBXGroup;
 			children = (
-				837E06311C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift */,
 				8333C4E61C72D97B00A0A57A /* TestThatTwoUploadsWork.swift */,
 				83A1DB4A1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift */,
 			);
@@ -206,7 +201,6 @@
 			children = (
 				8322EB8A1C7004FC00DF418C /* TestThatServerHasNewFileWorks.swift */,
 				8333C4EC1C72DAF200A0A57A /* TestThatUpdatedFileWorks.swift */,
-				8333C4E81C72D9E500A0A57A /* TestThatOperationWithLockFails.swift */,
 				8369D33C1CD3FAFD006DA33C /* TestThatDownloadDeletionWorks.swift */,
 				83554C4F1C817A57005F0C40 /* TestThatRecoveryAfterBackgroundWorks.swift */,
 			);
@@ -590,7 +584,6 @@
 				8369D33D1CD3FAFE006DA33C /* TestThatDownloadDeletionWorks.swift in Sources */,
 				83A1DB4B1CA7C4A700F5D889 /* TestThatTwoUploadsWithLargerFileWork.swift in Sources */,
 				83E0642E1CE51B7A0088BE37 /* AppFile+CoreDataProperties.m in Sources */,
-				837E06321C7C08EB000695F2 /* TestThatOperationWithLockWorks.swift in Sources */,
 				83D3E8B61C4C072800BFDA93 /* FileViewerVC.swift in Sources */,
 				83E0642F1CE51B7A0088BE37 /* CoreDataTests.swift in Sources */,
 				83496C921D2F526D00851FEA /* SMGoogleUserSignIn.swift in Sources */,
@@ -599,7 +592,6 @@
 				8322EB921C700F1700DF418C /* ClassExtras.m in Sources */,
 				83A4F1D01C6839BE0086B22F /* TwoDeviceTests.swift in Sources */,
 				8322EB891C70047200DF418C /* TwoDeviceTestCase.swift in Sources */,
-				8333C4E91C72D9E500A0A57A /* TestThatOperationWithLockFails.swift in Sources */,
 				834B166F1CA9FC9500D816EE /* SignInSignOut.swift in Sources */,
 				83E0642C1CE51B7A0088BE37 /* AppFile.m in Sources */,
 				83D3E8B81C4C072800BFDA93 /* Settings.swift in Sources */,

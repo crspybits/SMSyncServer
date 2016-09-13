@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10174" systemVersion="15E65" minimumToolsVersion="Xcode 7.0">
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10174" systemVersion="15F34" minimumToolsVersion="Xcode 7.0">
     <entity name="SMDownloadBlock" representedClassName=".SMDownloadBlock" syncable="YES">
         <attribute name="numberBytes" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <attribute name="startByteOffset" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
@@ -23,6 +23,9 @@
     </entity>
     <entity name="SMDownloadStartup" representedClassName=".SMDownloadStartup" parentEntity="SMDownloadOperation" syncable="YES">
         <attribute name="internalStartupStage" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="SMDownloadWrapup" representedClassName=".SMDownloadWrapup" parentEntity="SMDownloadOperation" syncable="YES">
+        <attribute name="internalWrapupStage" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="SMLocalFile" representedClassName="SMLocalFile" syncable="YES">
         <attribute name="internalAppMetaData" optional="YES" attributeType="Binary" syncable="YES"/>
@@ -85,5 +88,6 @@
         <element name="SMUploadOperation" positionX="-225" positionY="372" width="128" height="58"/>
         <element name="SMUploadQueue" positionX="-441" positionY="176" width="128" height="105"/>
         <element name="SMUploadWrapup" positionX="-144" positionY="477" width="171" height="60"/>
+        <element name="SMDownloadWrapup" positionX="835" positionY="558" width="128" height="58"/>
     </elements>
 </model>

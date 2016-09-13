@@ -68,7 +68,9 @@ public class TestBasics {
     private init() {
     }
     
-    public var failure:(()->())!
+    public var failure:(()->()) = {
+        Log.error("TestBasics: Failure!")
+    }
     
     public func makeNewFile(withFileName fileName: String) -> AppFile {
         let file = AppFile.newObjectAndMakeUUID(true)
@@ -94,7 +96,7 @@ public class TestBasics {
         do {
             try fileContents.writeToURL(file.url(), atomically: true, encoding: NSASCIIStringEncoding)
         } catch {
-            self.failure!()
+            self.failure()
         }
         
         return (file, fileSizeBytes)
@@ -130,11 +132,11 @@ public class TestBasics {
     
     private func checkForFileOnServer(attemptNumber:Int, uuid:String, fileExists:(Bool)->()) {
         if attemptNumber > maxNumberCheckFileSizeAttempts {
-            self.failure!()
+            self.failure()
             return
         }
         
-        SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
+        SMServerAPI.session.getFileIndex() { (fileIndex, fileIndexVersion, apiResult) in
             if apiResult.error == nil {
                 let result = fileIndex!.filter({
                     $0.uuid.UUIDString == uuid
@@ -149,19 +151,12 @@ public class TestBasics {
                 }
                 else {
                     Log.error("Found \(result.count) files")
-                    self.failure!()
-                }
-            }
-            else if apiResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
-                let attempt = attemptNumber+1
-                
-                SMServerNetworking.exponentialFallback(forAttempt: attempt) {
-                    self.checkForFileOnServer(attempt, uuid: uuid, fileExists: fileExists)
+                    self.failure()
                 }
             }
             else {
                 Log.error("checkFileSize: Got an error: \(apiResult.error)")
-                self.failure!()
+                self.failure()
             }
         }
     }
@@ -175,11 +170,11 @@ public class TestBasics {
         Log.msg("getFileIndex from checkFileSizeAux")
         
         if attemptNumber > maxNumberCheckFileSizeAttempts {
-            self.failure!()
+            self.failure()
             return
         }
         
-        SMServerAPI.session.getFileIndex() { (fileIndex, apiResult) in
+        SMServerAPI.session.getFileIndex() { (fileIndex, fileIndexVersion, apiResult) in
             if apiResult.error == nil {
                 let result = fileIndex!.filter({
                     $0.uuid.UUIDString == uuid
@@ -190,24 +185,17 @@ public class TestBasics {
                     }
                     else {
                         Log.error("Did not find expected \(size) bytes for uuid \(uuid) but found \(result[0].sizeBytes) bytes")
-                        self.failure!()
+                        self.failure()
                     }
                 }
                 else {
                     Log.error("Found \(result.count) files")
-                    self.failure!()
-                }
-            }
-            else if apiResult.returnCode == SMServerConstants.rcLockAlreadyHeld {
-                let attempt = attemptNumber+1
-                
-                SMServerNetworking.exponentialFallback(forAttempt: attempt) {
-                    self.checkFileSize(attempt, uuid: uuid, size: size, finish: finish)
+                    self.failure()
                 }
             }
             else {
                 Log.error("checkFileSize: Got an error: \(apiResult.error)")
-                self.failure!()
+                self.failure()
             }
         }
     }

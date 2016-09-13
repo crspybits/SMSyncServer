@@ -81,7 +81,6 @@ internal class SMUploadFiles : NSObject {
     }
     
     enum OperationNeeds {
-        case ServerLock
         case ServerFileIndex
         case Nothing
     }
@@ -104,7 +103,7 @@ internal class SMUploadFiles : NSObject {
         self.uploadOperations = [
             (unownedSelf.doUploadDeletions, .ServerFileIndex),
             (unownedSelf.doUploadFiles, .ServerFileIndex),
-            (unownedSelf.doOutboundTransfer, .ServerLock),
+            (unownedSelf.doOutboundTransfer, .Nothing),
             (unownedSelf.startToPollForOperationFinish, .Nothing),
             (unownedSelf.removeOperationId, .Nothing)
         ]

@@ -24,31 +24,98 @@ class ServerAPI: BaseClass {
         super.tearDown()
     }
     
-    // We should be able to do a lock followed by a lock, as long as we're using the same deviceId/userId.
-    func testThatLockFollowedByLockWorks() {
-        let firstLock = self.expectationWithDescription("First Lock")
-        let secondLock = self.expectationWithDescription("Second Lock")
-        let unlock = self.expectationWithDescription("Second Lock")
+    func testThatFileIndexDoesNotFail() {
+        let getFileIndex = self.expectationWithDescription("FileIndex Complete")
 
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                XCTAssert(lockResult.error == nil)
-                firstLock.fulfill()
+            
+            SMServerAPI.session.getFileIndex() { (fileIndex, fileIndexVersion, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(fileIndexVersion != nil)
                 
-                SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                    XCTAssert(lockResult.error == nil)
-                    secondLock.fulfill()
+                getFileIndex.fulfill()
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    func testThatFinishUploadsDoesNotFail() {
+        let finishUploads = self.expectationWithDescription("FinishUploads Complete")
+        
+        self.waitUntilSyncServerUserSignin() {
+
+            SMServerAPI.session.getFileIndex() { (fileIndex, fileIndexVersion, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(fileIndexVersion != nil)
+                
+                SMServerAPI.session.finishUploads(fileIndexVersion: fileIndexVersion!) { apiResult in
+                    XCTAssert(apiResult.error == nil)
+
+                    finishUploads.fulfill()
+                }
+            }
+        }
+        
+        self.waitForExpectations()
+    }
+    
+    func singleFileUploadUsingServerAPI(giveExpectedFileIndexVersion giveExpectedFileIndexVersion:Bool, fileName:String) {
+        let uploadComplete = self.expectationWithDescription("Upload Complete")
+        
+        self.waitUntilSyncServerUserSignin() {
+            let testFile = TestBasics.session.createTestFile(fileName)
+            let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
+            serverFile.localURL = testFile.url
+            
+            SMServerAPI.session.getFileIndex() { (fileIndex, fileIndexVersion, apiResult) in
+                XCTAssert(apiResult.error == nil)
+                XCTAssert(fileIndexVersion != nil)
+                
+                SMServerAPI.session.uploadFile(serverFile) { apiResult in
+                    XCTAssert(apiResult.error == nil)
                     
-                    SMServerAPI.session.unlock() { unlockResult in
-                        XCTAssert(unlockResult.error == nil)
-                        unlock.fulfill()
+                    var fileIndexVersionToSend = fileIndexVersion!
+                    if !giveExpectedFileIndexVersion {
+                        fileIndexVersionToSend = -1
+                    }
+                    
+                    SMServerAPI.session.finishUploads(fileIndexVersion: fileIndexVersionToSend) { apiResult in
+                    
+                        if giveExpectedFileIndexVersion {
+                            XCTAssert(apiResult.error == nil)
+
+                            TestBasics.session.failure = {
+                                XCTFail("Failed on testThatSingleFileUploadUsingServerAPIWorks")
+                            }
+                            
+                            TestBasics.session.checkFileSize(testFile.uuidString, size: testFile.sizeInBytes) {
+                                uploadComplete.fulfill()
+                            }
+                        }
+                        else {
+                            XCTAssert(apiResult.error != nil)
+                            uploadComplete.fulfill()
+                        }
                     }
                 }
             }
         }
-                
+        
         self.waitForExpectations()
     }
+
+    func testThatSingleFileUploadUsingServerAPIWorks() {
+        let fileName = "SingleFileUploadUsingServerAPI"
+        singleFileUploadUsingServerAPI(giveExpectedFileIndexVersion:true, fileName:fileName)
+    }
+    
+    func testThatSingleFileUploadUsingServerAPIUsingIncorrectVersionFails() {
+        let fileName = "SingleFileUploadUsingServerAPIUsingIncorrectVersion"
+        singleFileUploadUsingServerAPI(giveExpectedFileIndexVersion:false, fileName:fileName)
+    }
+    
+    // TODO: Do the same two tests-- but with upload-deletion.
     
     // Calling the deleteFiles API interface twice with the same file(s) should work, and not cause an error the second time.
     func testThatDoubleDeletionOfASingleFileWorks() {
@@ -80,20 +147,16 @@ class ServerAPI: BaseClass {
                 
                 let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             
-                SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                    XCTAssert(lockResult.error == nil)
-            
+                SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
+                    XCTAssert(apiResult.error == nil)
+
                     SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
                         XCTAssert(apiResult.error == nil)
 
-                        SMServerAPI.session.deleteFiles([serverFile]) { apiResult in
-                            XCTAssert(apiResult.error == nil)
-
-                            SMServerAPI.session.cleanup(){ cleanupResult in
-                                XCTAssert(cleanupResult.error == nil)
-                                
-                                deletionExpectation.fulfill()
-                            }
+                        SMServerAPI.session.cleanup(){ cleanupResult in
+                            XCTAssert(cleanupResult.error == nil)
+                            
+                            deletionExpectation.fulfill()
                         }
                     }
                 }
@@ -112,21 +175,17 @@ class ServerAPI: BaseClass {
             let testFile = TestBasics.session.createTestFile("DoubleUploadOfASingleFile")
             let serverFile = SMServerFile(uuid: testFile.uuid, remoteFileName: testFile.remoteFile, mimeType: testFile.mimeType, appMetaData: nil, version: 0)
             serverFile.localURL = testFile.url
-            
-            SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                XCTAssert(lockResult.error == nil)
         
+            SMServerAPI.session.uploadFile(serverFile) { apiResult in
+                XCTAssert(apiResult.error == nil)
+
                 SMServerAPI.session.uploadFile(serverFile) { apiResult in
                     XCTAssert(apiResult.error == nil)
 
-                    SMServerAPI.session.uploadFile(serverFile) { apiResult in
-                        XCTAssert(apiResult.error == nil)
-
-                        SMServerAPI.session.cleanup(){ cleanupResult in
-                            XCTAssert(cleanupResult.error == nil)
-                            
-                            uploadExpectation.fulfill()
-                        }
+                    SMServerAPI.session.cleanup(){ cleanupResult in
+                        XCTAssert(cleanupResult.error == nil)
+                        
+                        uploadExpectation.fulfill()
                     }
                 }
             }
@@ -158,20 +217,17 @@ class ServerAPI: BaseClass {
         let noServerFiles = [SMServerFile]()
         
         self.waitUntilSyncServerUserSignin() {
-            SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                XCTAssert(lockResult.error == nil)
                 
-                SMServerAPI.session.setupInboundTransfer(noServerFiles) { (sitResult)  in
+            SMServerAPI.session.setupInboundTransfer(noServerFiles) { (sitResult)  in
+            
+                XCTAssert(sitResult.error != nil)
+                XCTAssert(sitResult.returnCode == SMServerConstants.rcServerAPIError)
                 
-                    XCTAssert(sitResult.error != nil)
-                    XCTAssert(sitResult.returnCode == SMServerConstants.rcServerAPIError)
+                // Get rid of the lock.
+                SMServerAPI.session.cleanup(){ cleanupResult in
+                    XCTAssert(cleanupResult.error == nil)
                     
-                    // Get rid of the lock.
-                    SMServerAPI.session.cleanup(){ cleanupResult in
-                        XCTAssert(cleanupResult.error == nil)
-                        
-                        afterStartExpectation.fulfill()
-                    }
+                    afterStartExpectation.fulfill()
                 }
             }
         }
@@ -239,24 +295,16 @@ class ServerAPI: BaseClass {
         let expectation = self.expectationWithDescription("Handler called")
 
         self.waitUntilSyncServerUserSignin() {
-
-            SMServerAPI.session.lock() { previousLockForUser, lockResult in
-                XCTAssert(lockResult.error == nil)
-
-                let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1B", toBaseURLType: .DocumentsDirectory)
-                
-                let serverFile = SMServerFile(uuid: NSUUID())
-                serverFile.localURL = downloadFileURL
+            let downloadFileURL = SMRelativeLocalURL(withRelativePath: "download1B", toBaseURLType: .DocumentsDirectory)
             
-                SMServerAPI.session.downloadFile(serverFile) { downloadResult in
-                    // Should get an error here.
-                    XCTAssert(downloadResult.error != nil)
-                    
-                    SMServerAPI.session.unlock() { unlockResult in
-                        XCTAssert(unlockResult.error == nil)
-                        expectation.fulfill()
-                    }
-                }
+            let serverFile = SMServerFile(uuid: NSUUID())
+            serverFile.localURL = downloadFileURL
+        
+            SMServerAPI.session.downloadFile(serverFile) { downloadResult in
+                // Should get an error here.
+                XCTAssert(downloadResult.error != nil)
+                expectation.fulfill()
+
             }
         }
         

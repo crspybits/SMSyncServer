@@ -32,28 +32,19 @@ public class SMServerConstants {
     public static let operationRedeemSharingInvitation = "RedeemSharingInvitation"
     public static let operationGetLinkedAccountsForSharingUser = "GetLinkedAccountsForSharingUser"
     
-    public static let operationLock = "Lock"
-    
     public static let operationUploadFile = "UploadFile"
     public static let operationDeleteFiles = "DeleteFiles"
+    public static let operationFinishUploads = "FinishUploads"
     
-    // Holding the lock is optional for this operation (but the lock cannot already be held by another user of the same cloud storage account).
     public static let operationGetFileIndex = "GetFileIndex"
-    
     public static let operationSetupInboundTransfers = "SetupInboundTransfers"
 
-    // Both of these implicitly do an Unlock after the cloud storage transfer.
-    // operationStartOutboundTransfer is also known as the "commit" operation.
     public static let operationStartOutboundTransfer = "StartOutboundTransfer"
     public static let operationStartInboundTransfer = "StartInboundTransfer"
     
-    // Provided to deal with the case of checking for downloads, but no downloads need to be carried out. Don't use if an operationId has been generated.
-    public static let operationUnlock = "Unlock"
-    
     public static let operationGetOperationId = "GetOperationId"
-
-    // Both of the following are carried out in an unlocked state.
     public static let operationDownloadFile = "DownloadFile"
+    
     // Remove the downloaded file from the server.
     public static let operationRemoveDownloadFile = "RemoveDownloadFile"
 
@@ -63,15 +54,18 @@ public class SMServerConstants {
     // Recover from errors that occur after starting to transfer files from cloud storage.
     public static let operationInboundTransferRecovery = "InboundTransferRecovery"
 
-    // For development/debugging only. Removes lock. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
+    // For development/debugging only. Removes all outbound file changes. Intended for use with automated testing to cleanup between tests that cause rcServerAPIError.
     public static let operationCleanup = "Cleanup"
 
-    // MARK: Custom HTTP headers sent back from server
+    // MARK: Custom HTTP headers
     
     // For custom header naming conventions, see http://stackoverflow.com/questions/3561381/custom-http-headers-naming-conventions
     
-    // Used for operationDownloadFile only.
+    // Used by operationDownloadFile only.
     public static let httpDownloadParamHeader = "SMSyncServer-Download-Parameters"
+
+    // Used by SMServerNetworking uploadFileTo only. Hmmm. For some reason these get converted to lower case. Better use lower case to start with.
+    public static let httpUploadParamHeader = "smsyncserver-upload-parameters"
 
     // MARK: Credential parameters sent to the server.
 
@@ -127,11 +121,10 @@ public class SMServerConstants {
             // Value: String
     
     // MARK: Other parameters sent to the server.
-
-    // Used with GetFileIndex operation
+    
     // Key:
-    public static let requirePreviouslyHeldLockKey = "RequirePreviouslyHeldLock"
-    // Value: Boolean
+    public static let fileIndexVersionKey = "FileIndexVersion"
+    // Value: A non-negative integer-- the overall version of the data for a particular owning user.
     
     // When one or more files are being deleted (operationDeleteFiles), use the following
     // Key:
@@ -207,11 +200,6 @@ public class SMServerConstants {
     // Simulated failure when transferring files to/from cloud storage. Occurs after dbTcSetup. Applies to both uploads and downloads.
     public static let dbTcTransferFiles = 5
     
-    // Simulated failure when removing the lock after doing cloud storage transfer. Applies to both uploads and downloads.
-    public static let dbTcRemoveLockAfterCloudStorageTransfer = 6
-    
-    public static let dbTcGetLockForDownload = 7
-
     // Simulated failure in a file download, when getting download file info. Applies to download only.
     public static let dbTcGetDownloadFileInfo = 8
     
@@ -230,11 +218,6 @@ public class SMServerConstants {
     // Key:
     public static let sharingInvitationCode = "SharingInvitationCode"
     // Value: A code uniquely identifying the sharing invitation.
-    
-    // MARK: Parameter for lock operation
-    
-    public static let forceLock = "ForceLock"
-    // Value: Bool, true or false. Default (don't give the parameter) is false.
     
     // MARK: Responses from server
     
@@ -322,11 +305,6 @@ public class SMServerConstants {
         public static let accountSharingType = "SharingType"
         // Value: A string. See SMSharingType.
     
-    // MARK: Results from lock operation
-    
-    public static let resultLockHeldPreviously = "LockHeldPreviously"
-    // Values: A Bool.
-    
     // MARK: Server result codes (rc's)
     
     // Common result codes
@@ -350,9 +328,6 @@ public class SMServerConstants {
     public static let rcUserOnSystem = 51
     public static let rcUserNotOnSystem = 52
     
-    // 2/13/16; This is not necessarily an API error. E.g., I just ran into a situation where a lock wasn't obtained (because it was held by another app/device), and this resulted in an attempted upload recovery. And the upload recovery failed because the lock wasn't held.
-    public static let rcLockNotHeld = 53
-    
     public static let rcNoOperationId = 54
     
     // This will be because the invitation didn't exist, because it expired, or because it already had been redeemed.
@@ -367,9 +342,6 @@ public class SMServerConstants {
     // rcOK (new user was created).
     // rcUserOnSystem: Informational response; could be an error in app, depending on context.
     // rcOperationFailed: error
-    
-    // operationStartUploads
-    public static let rcLockAlreadyHeld = 100
     
     // rc's for OperationStatus
     
@@ -390,6 +362,8 @@ public class SMServerConstants {
     
     // Really the same as rcOperationStatusInProgress, but making this a different different value because of the Swift -> Javascript conversion.
     public static let rcOperationInProgress = 300
+    
+    public static let rcFileIndexVersionDifferentThanExpected = 400
     
     // -------- Other constants --------
 

@@ -10,8 +10,6 @@ var ObjectID = require('mongodb').ObjectID;
 var PSUserCredentials = require('./PSUserCredentials');
 var ServerConstants = require('./ServerConstants');
 var logger = require('./Logger');
-var PSOperationId = require('./PSOperationId')
-var PSLock = require('./PSLock')
 
 // instance methods
 
@@ -124,13 +122,13 @@ Operation.prototype.endIfUserNotAuthorizedFor = function (sharingType) {
     }
 }
 
-/* Checks if the user is on the system, and checks for a lock and operationId.
+/* Checks if the user is on the system, and checks for an operationId.
     Parameters:
     1) Option object (optional):
         userMustBeOnSystem:Boolean (defaults to true)
         mustHaveLinkedOwningUserId:Boolean (defaults to true)
             When true, requires linkedOwningUserId when have a sharing user.
-    2) Callback has parameters: 1) psLock (null if no lock), and 2) psOperationId (null if no lock or operationId). Callback is *not* called on an error.
+    2) Callback has no parameters
  
     On error, ends the operation connection.
 */
@@ -157,6 +155,7 @@ Operation.prototype.validateUser = function (options, callback) {
     
     // When userMustBeOnSystem is true, validateUser is only called to perform operations, not to create users or check for existing users. When a sharing user is performing an operation, they *must* have a linkedOwningUserId
     if (mustHaveLinkedOwningUserId && self.psUserCreds.userType == ServerConstants.userTypeSharing && !isDefined(self.psUserCreds.linkedOwningUserId)) {
+    
         self.endWithRCAndErrorDetails(ServerConstants.rcServerAPIError, "Sharing user, but no linkedOwningUserId");
         return;
     }
@@ -173,59 +172,8 @@ Operation.prototype.validateUser = function (options, callback) {
             }
         }
         else {
-            // Because this is commonly something we want, check to see if we have a lock/operationId.
-            
-            PSLock.checkForOurLock(self.userId(), self.deviceId(), function (err, lock) {
-                if (err) {
-                    logger.error("Error on checkForOurLock: %j", err);
-                    self.endWithErrorDetails(err);
-                }
-                else if (!lock) {
-                    logger.info("Valid user: No lock");
-                    callback(null, null);
-                }
-                else {
-                    if (!isDefined(lock.operationId)) {
-                        logger.info("Valid user: With lock, but no operationId");
-                        callback(lock, null);
-                        return;
-                    }
-                    
-                    // Why am I creating a new PSOperationId before the .getFor call? It's not used.
-                    /*
-                    var psOperationId = null;
-                    
-                    const operationIdData = {
-                        _id: lock.operationId,
-                        userId: self.userId(),
-                        deviceId: self.deviceId()
-                    };
-                    
-                    try {
-                        psOperationId = new PSOperationId(operationIdData);
-                    } catch (error) {
-                        self.endWithErrorDetails(error);
-                        return;
-                    }
-                    */
-                    
-                    PSOperationId.getFor(lock.operationId, self.userId(), self.deviceId(), function (error, psOperationId) {
-                        if (error) {
-                            self.endWithErrorDetails(error);
-                        }
-                        else if (!isDefined(psOperationId)) {
-                            var message = "validateUser: Could not get operation id:" +
-                                lock.operationId;
-                            logger.error(message);
-                            self.endWithErrorDetails(message);
-                        }
-                        else {
-                            logger.info("Valid user: With lock & operationId");
-                            callback(lock, psOperationId);
-                        }
-                    });
-                }
-            });
+            logger.info("Valid user");
+            callback();
         }
     });
 }

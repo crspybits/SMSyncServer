@@ -275,10 +275,6 @@ class UploadRecovery: BaseClass {
         self.transferRecovery(transferTestCase: SMServerConstants.dbTcTransferFiles)
     }
     
-    func testThatServerRemoveLockAfterCloudStorageTransferTestCaseWorks() {
-        self.transferRecovery(transferTestCase: SMServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)
-    }
-    
     // Simulate a failure while updating collections on the server during transfer to cloud storage-- this is important so that we know that the log scheme I'm using on the server can enable recovery.
     func testThatServerSendFilesUpdateOneFileTestCaseWorks() {
         self.transferRecovery(transferTestCase: SMServerConstants.dbTcSendFilesUpdate)

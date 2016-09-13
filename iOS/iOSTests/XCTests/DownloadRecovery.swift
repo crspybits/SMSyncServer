@@ -286,14 +286,6 @@ class DownloadRecovery: BaseClass {
     func testThatServerDownloadTransferFilesFailureRecovery() {
         self.serverDownloadFailureRecovery(SMServerConstants.dbTcTransferFiles)
     }
-
-    func testThatServerDownloadRemoveLockAfterCloudStorageTransferFailureRecovery() {
-        self.serverDownloadFailureRecovery(SMServerConstants.dbTcRemoveLockAfterCloudStorageTransfer)
-    }
-    
-    func testThatServerDownloadGetLockForDownloadFailureRecovery() {
-        self.serverDownloadFailureRecovery(SMServerConstants.dbTcGetLockForDownload)
-    }
     
     func testThatServerDownloadGetDownloadFileInfoFailureRecovery() {
         self.serverDownloadFailureRecovery(SMServerConstants.dbTcGetDownloadFileInfo)
@@ -311,14 +303,6 @@ class DownloadRecovery: BaseClass {
     
     func testThatServerDownloadTransferFilesFailure2FileRecovery() {
         self.serverDownloadFailureRecovery(SMServerConstants.dbTcTransferFiles, numberOfFilesToDownload: .Two)
-    }
-
-    func testThatServerDownloadRemoveLockAfterCloudStorageTransferFailure2FileRecovery() {
-        self.serverDownloadFailureRecovery(SMServerConstants.dbTcRemoveLockAfterCloudStorageTransfer, numberOfFilesToDownload: .Two)
-    }
-    
-    func testThatServerDownloadGetLockForDownloadFailure2FileRecovery() {
-        self.serverDownloadFailureRecovery(SMServerConstants.dbTcGetLockForDownload, numberOfFilesToDownload: .Two)
     }
     
     func testThatServerDownloadGetDownloadFileInfoFailure2FileRecovery() {

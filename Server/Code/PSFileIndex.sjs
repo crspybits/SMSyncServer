@@ -241,7 +241,9 @@ PSFileIndex.getAllFor = function (userId, fileId, callback) {
     });
 }
 
-// instance methods
+PSFileIndex.collection = function () {
+    return Mongo.db().collection(collectionName);
+}
 
 // export the class
 module.exports = PSFileIndex;

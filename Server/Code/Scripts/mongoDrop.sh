@@ -4,12 +4,10 @@ clear
 
 mongo << EOF
 
-db.Locks.drop()
-db.OutboundFileChanges.drop()
-db.OperationIds.drop()
 db.FileIndex.drop()
-db.FileTransferLog.drop()
-db.InboundFiles.drop()
 db.SharingInvitations.drop()
+db.Uploads.drop()
+db.GlobalVersions.drop()
+db.distributedlocks.drop()
 
 EOF

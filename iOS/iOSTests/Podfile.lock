@@ -60,7 +60,7 @@ PODS:
     - AFNetworking
     - HPTextViewTapGestureRecognizer (~> 0.1)
     - Reachability
-  - SMSyncServer (0.0.1):
+  - SMSyncServer (0.0.2):
     - SMCoreLib
 
 DEPENDENCIES:
@@ -94,7 +94,7 @@ SPEC CHECKSUMS:
   HPTextViewTapGestureRecognizer: 6a73fd09f858e49a2743c3a338dc5c0791b0fae0
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   SMCoreLib: 315e4adf1f9c5a7c4a5845ddcbeafbd3373bbb1e
-  SMSyncServer: c640774d76d58e5786ff6f6a55ff7c195fa00cd3
+  SMSyncServer: 2048ae1fe420d8cc7b010060b7c30f6eeff6d56f
 
 PODFILE CHECKSUM: 6ac1297ed5e0489afd8a74c8d544baa6a4865289
 

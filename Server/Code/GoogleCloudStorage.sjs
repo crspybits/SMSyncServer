@@ -88,18 +88,21 @@ GoogleCloudStorage.prototype.setup = function (callback) {
     });
 }
 
+// fileToSend is a File object.
 GoogleCloudStorage.prototype.deleteFile = function (fileToSend, callback) {
     var self = this;
     self.sendFile(true, fileToSend, callback);
 }
 
-// Copy data (i.e., upload) of the file from the SyncServer to cloud storage.
+// fileToSend is a File object.
+// Stream the file to cloud storage.
 // Callback params: 1) error, 2) file properties (if error is null).
 GoogleCloudStorage.prototype.outboundTransfer = function (fileToSend, callback) {
     var self = this;
     self.sendFile(false, fileToSend, callback);
 }
 
+// fileToReceive is of type File
 // Copy data (i.e., download) of the file to the SyncServer from cloud storage.
 // Callback params: 1) error, 2) file properties (if error is null).
 GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback) {
@@ -109,8 +112,6 @@ GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback
     
     var cloudFileName = fileToReceive.cloudFileName;
     var mimeType = fileToReceive.mimeType;
-    
-    var dest = fs.createWriteStream(fileToReceive.localFileNameWithPath());
     
     // Adapted from https://developers.google.com/drive/v3/web/manage-downloads
     // See also https://gist.github.com/davestevens/6f376f220cc31b4a25cd
@@ -154,7 +155,7 @@ GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback
            
             var suffixCall = {
                 method: "pipe",
-                param: dest
+                param: dest.stream
             };
            
             self.callGoogleDriveAPI(drive.files.get, parameters, suffixCall, function(err, response) {
@@ -185,7 +186,10 @@ GoogleCloudStorage.prototype.inboundTransfer = function (fileToReceive, callback
 
 // PRIVATE
 // Transfer a file to the users cloud storage or delete the file.
-// Parameter: fileToSend of type File.
+// Parameter:
+//      1) deleteTheFile: Boolean: If true, file is being deleted.
+//          If false, file is being transferred.
+//      2) fileToSend of type File.
 // Callback parameters: 1) error, 2) If error is null, a JSON structure with the following properties: fileSizeBytes (only when not deleting).
 GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, callback) {
     var self = this;
@@ -200,7 +204,7 @@ GoogleCloudStorage.prototype.sendFile = function (deleteTheFile, fileToSend, cal
     if (!deleteTheFile) {
         mediaParameter = {
             mimeType: mimeType,
-            body: fs.createReadStream(fileToSend.localFileNameWithPath())
+            body: fileToSend.fileReadStream
         };
     }
     
@@ -336,7 +340,7 @@ GoogleCloudStorage.prototype.listFiles = function (query, callback) {
     
     if (typeof query === 'function') {
         callback = query;
-        query = null
+        query = null;
     }
     else {
         parameters["q"] = query;

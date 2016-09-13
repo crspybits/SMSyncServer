@@ -60,26 +60,15 @@ internal class SMDownloadFiles : NSObject {
     
     // This is a singleton because we need centralized control over the file download operations.
     internal static let session = SMDownloadFiles()
-
-    enum OperationState {
-        case Some
-        case None
-    }
-    
-    enum OperationNeeds {
-        case ServerLock
-        case ServerLockOptional // Needs server lock except for recovery.
-        case Nothing
-    }
     
     enum SyncOperationResult {
-        // OperationNeeds given only for Some OperationState
-        case Operation(OperationState, OperationNeeds?)
+        case SomeOperationsToDo
+        case NoOperationsToDo
         case Error
     }
     
     // Operations and their priority.
-    private var downloadOperations:[((checkIfOperations: Bool)-> Bool?, OperationNeeds)]!
+    private var downloadOperations:[(checkIfOperations: Bool)-> Bool?]!
     
     override private init() {
         super.init()
@@ -93,13 +82,14 @@ internal class SMDownloadFiles : NSObject {
         */
         self.downloadOperations = [
             // I've separated Setup and Start to make recovery easier.
-            (unownedSelf.doSetupInboundTransfers, .ServerLock),
-            (unownedSelf.doStartInboundTransfers, .ServerLockOptional),
+            unownedSelf.doSetupInboundTransfers,
+            unownedSelf.doStartInboundTransfers,
             
-            (unownedSelf.startToPollForOperationFinish, .Nothing),
-            (unownedSelf.removeOperationId, .Nothing),
-            (unownedSelf.doFileDownloads, .Nothing),
-            (unownedSelf.doCallbacks, .Nothing)
+            unownedSelf.startToPollForOperationFinish,
+            unownedSelf.removeOperationId,
+            unownedSelf.doFileDownloads,
+            unownedSelf.refetchFileIndex,
+            unownedSelf.doCallbacks
         ]
     }
     
@@ -112,10 +102,10 @@ internal class SMDownloadFiles : NSObject {
 
     // Check if there are operations that need to be done, and if they need a lock. Doesn't start any operation.
     func checkWhatOperationsNeed() -> SyncOperationResult {
-        for (downloadOperation, operationNeeds) in self.downloadOperations {
+        for downloadOperation in self.downloadOperations {
             if let operationsToDo = downloadOperation(checkIfOperations: true) {
                 if operationsToDo {
-                    return .Operation(.Some, operationNeeds)
+                    return .SomeOperationsToDo
                 }
             }
             else {
@@ -123,7 +113,7 @@ internal class SMDownloadFiles : NSObject {
             }
         }
         
-        return .Operation(.None, nil)
+        return .NoOperationsToDo
     }
     
     func doDownloadOperations() {
@@ -133,7 +123,7 @@ internal class SMDownloadFiles : NSObject {
 
     // Control for operations. Each call to this control method does at most one of the asynchronous operations.
     private func downloadControl() {
-        for (downloadOperation, _) in self.downloadOperations {
+        for downloadOperation in self.downloadOperations {
             let successfulOperation = downloadOperation(checkIfOperations: false)
             
             // If there was an error (nil), or if the operation was successful, then we're done with this go-around. Most of the the operations run asynchronously, when successful, and will callback as needed to downloadControl() to do the next operation.
@@ -346,6 +336,10 @@ internal class SMDownloadFiles : NSObject {
         }
         
         return true
+    }
+    
+    private func refetchFileIndex(checkIfOperations:Bool) -> Bool? {
+        return false
     }
     
     // File download, file deletion, and file conflict callbacks.

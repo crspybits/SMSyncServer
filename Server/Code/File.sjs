@@ -2,10 +2,11 @@
 
 'use strict';
 
-// fildId is optional, but must be given if you want to use the fileNameWithPath function.
+// fileId is optional, but must be given if you want to use the fileNameWithPath function.
 /* Optional public member properties can be added later:
     cloudFileName: Name of the file (without path) in the cloud.
     mimeType: MIME type for the file.
+    fileReadStream: stream for file
 */
 // See [1] below for reason for having deviceId has parameter.
 function File(userId, deviceId, fileId) {
@@ -21,7 +22,7 @@ function File(userId, deviceId, fileId) {
     
     // Format "uploads/userN.deviceM/" directory name, which will hold the uploads.
     
-    // [1]. The reason the subdirectory has both userId and deviceId components (and not just userId) is because, while in normal operation, all we need is the userId, and we're locked for userId with PSLock, upon failures (e.g., say a series of file transfers to cloud storage fails), we want to be able to restart those file transfers without paying the cost of transferring all the data again from the device to the SyncServer. So, this acts as a temporary directory for this specific userId/deviceId.
+    // [1]. The reason the subdirectory has both userId and deviceId components (and not just userId) is because, while in normal operation, all we need is the userId, upon failures (e.g., say a series of file transfers to cloud storage fails), we want to be able to restart those file transfers without paying the cost of transferring all the data again from the device to the SyncServer. So, this acts as a temporary directory for this specific userId/deviceId.
     var subDir = self.userId + "." + self.deviceId;
     
     self.dir = __dirname + '/uploads/' + subDir;

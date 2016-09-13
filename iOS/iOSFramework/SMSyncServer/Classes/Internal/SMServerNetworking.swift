@@ -152,20 +152,27 @@ internal class SMServerNetworking {
 
         // For the reason for this JSON serialization, see https://stackoverflow.com/questions/37449472/afnetworking-v3-1-0-multipartformrequestwithmethod-uploads-json-numeric-values-w/
         var jsonData:NSData?
+        var jsonString:String?
         
         do {
             try jsonData = NSJSONSerialization.dataWithJSONObject(sendParameters!, options: NSJSONWritingOptions(rawValue: 0))
         } catch (let error) {
             Assert.badMojo(alwaysPrintThisString: "Yikes: Error serializing to JSON data: \(error)")
         }
+ 
+        do {
+            try jsonString = String(data: jsonData!, encoding: NSUTF8StringEncoding)
+        } catch (let error) {
+            Assert.badMojo(alwaysPrintThisString: "Yikes: Error serializing to JSON string: \(error)")
+        }
         
         // The server needs to pull SMServerConstants.serverParametersForFileUpload out of the request body, then convert the value to JSON
-        let serverParameters = [SMServerConstants.serverParametersForFileUpload : jsonData!]
+        //let serverParameters = [SMServerConstants.serverParametersForFileUpload : jsonData!]
         
         // http://stackoverflow.com/questions/34517582/how-can-i-prevent-modifications-of-a-png-file-uploaded-using-afnetworking-to-a-n
         // I have now set the COMPRESS_PNG_FILES Build Setting to NO to deal with this.
         
-        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: serverParameters, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
+        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: nil, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
                 // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
                 // Was getting an odd try/catch error here, so this is the reason for "try!"; see https://github.com/AFNetworking/AFNetworking/issues/3005
                 // 12/12/15; I think this issue was because I wasn't doing the do/try/catch, however.
@@ -183,6 +190,9 @@ internal class SMServerNetworking {
             completion?(serverResponse: nil, error: error)
             return
         }
+        
+        request.setValue(jsonString, forHTTPHeaderField: SMServerConstants.httpUploadParamHeader)
+        Log.msg("httpUploadParamHeader: \(jsonString)")
         
         self.uploadTask = self.manager.uploadTaskWithStreamedRequest(request, progress: { (progress:NSProgress) in
             },

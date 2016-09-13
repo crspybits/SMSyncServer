@@ -6,12 +6,18 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var logger = require('./Logger');
 
+// Uses a Mongo collection called "DistributedLock"
+var MongooseLock = require('./mongoose-distributed-lock/index.js');
+
 var mongoose = require('mongoose');
 
 // TODO: Take this out for production.
 mongoose.set('debug, true');
 
-var PSSharingInvitations = require('./PSSharingInvitations')
+// Mongoose schemas
+var PSUpload = require('./PSUpload')
+var PSSharingInvitations = require('./PSSharingInvitation')
+var PSGlobalVersion = require('./PSGlobalVersion');
 
 var connectedDb = null;
 
@@ -33,7 +39,11 @@ exports.connect = function(mongoDbURL) {
             connectedMongooseDb.on('error', console.error.bind(console, 'connection error:'));
             connectedMongooseDb.once('open', function() {
             
-                // SCHEMA's
+                exports.fileIndexLock = MongooseLock('FileIndexLock');
+
+                // Mongoose SCHEMA's
+                exports.Upload = PSUpload.buildSchema(mongoose);
+                exports.GlobalVersion = PSGlobalVersion.buildSchema(mongoose);
                 exports.SharingInvitation = PSSharingInvitations.buildSchema(mongoose);
                 
                 logger.info("Mongoose: Connected to MongoDb database");

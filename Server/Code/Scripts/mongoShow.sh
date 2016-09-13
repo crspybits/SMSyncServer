@@ -16,28 +16,22 @@ function showCollectionNameFor(collection) {
     }
 }
 
-showCollectionNameFor("OutboundFileChanges");
-db.OutboundFileChanges.find().pretty()
-
 showCollectionNameFor("UserCredentials");
 db.UserCredentials.find().pretty()
-
-showCollectionNameFor("Locks");
-db.Locks.find().pretty()
 
 showCollectionNameFor("FileIndex");
 db.FileIndex.find().pretty()
 
-showCollectionNameFor("OperationIds");
-db.OperationIds.find().pretty()
-
-showCollectionNameFor("FileTransferLog");
-db.PSFileTransferLog.find().pretty()
-
-showCollectionNameFor("InboundFiles");
-db.InboundFiles.find().pretty()
-
 showCollectionNameFor("SharingInvitations");
 db.SharingInvitations.find().pretty()
+
+showCollectionNameFor("GlobalVersions");
+db.GlobalVersions.find().pretty()
+
+showCollectionNameFor("Uploads");
+db.Uploads.find().pretty()
+
+showCollectionNameFor("distributedlocks");
+db.distributedlocks.find().pretty()
 
 EOF

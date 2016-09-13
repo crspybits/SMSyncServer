@@ -93,7 +93,7 @@ public enum SMSyncServerEvent {
     // Commit was called, but there were no files to upload and no upload-deletions to send to the server.
     case NoFilesToUpload
     
-    // Attempted to do an operation but a lock was already held. This can occur both at the local app level and with the server lock.
+    // This is a client-side lock, not a server-side lock.
     case LockAlreadyHeld
     
     // Internal error recovery event.
