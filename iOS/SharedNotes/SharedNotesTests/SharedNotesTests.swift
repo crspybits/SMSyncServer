@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import US
+@testable import SharedNotes
 import SMCoreLib
 
 class SharedNotesTests: XCTestCase {

@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = 'primary'
-               BlueprintIdentifier = '2954656DA976C64CF9781CF73B63DB93'
+               BlueprintIdentifier = '1DCD84D4CB3D14B0941B8972D74135BA'
                BlueprintName = 'HPTextViewTapGestureRecognizer'
                ReferencedContainer = 'container:Pods.xcodeproj'
                BuildableName = 'HPTextViewTapGestureRecognizer.framework'>

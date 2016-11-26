@@ -1,6 +1,6 @@
 {
   "name": "SMSyncServer",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "summary": "iOS Client Framework for SMSyncServer",
   "homepage": "https://github.com/crspybits/SMSyncServer.iOSFramework.git",
   "license": {
@@ -12,7 +12,7 @@
   },
   "source": {
     "git": "https://github.com/crspybits/SMSyncServer.iOSFramework.git",
-    "tag": "0.0.1"
+    "tag": "0.0.3"
   },
   "pod_target_xcconfig": {
     "GCC_PREPROCESSOR_DEFINITIONS[config=Debug]": "DEBUG=1",

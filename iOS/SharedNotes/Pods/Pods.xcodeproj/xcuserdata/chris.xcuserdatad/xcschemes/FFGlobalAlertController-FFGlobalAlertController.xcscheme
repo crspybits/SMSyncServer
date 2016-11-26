@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = 'primary'
-               BlueprintIdentifier = 'FE34F01D22113EF688A14D95236A999F'
+               BlueprintIdentifier = '30791007ABA9545B09E89E4A0CD080AD'
                BlueprintName = 'FFGlobalAlertController-FFGlobalAlertController'
                ReferencedContainer = 'container:Pods.xcodeproj'
                BuildableName = 'FFGlobalAlertController.bundle'>

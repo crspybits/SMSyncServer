@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = 'primary'
-               BlueprintIdentifier = 'E536E00E2F33BB7BABBAE7B9DD50957C'
+               BlueprintIdentifier = '197CDEEF6FE847415D48A08CC637E673'
                BlueprintName = 'SMSyncServer'
                ReferencedContainer = 'container:Pods.xcodeproj'
                BuildableName = 'SMSyncServer.framework'>

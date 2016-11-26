@@ -140,7 +140,7 @@ public class SMSharingInvitations {
         var returnResult = false
         
         // Use case insensitive comparison because the incoming url scheme will be lower case.
-        if url.scheme.caseInsensitiveCompare(SMSharingInvitations.urlScheme) == NSComparisonResult.OrderedSame {
+        if url.scheme!.caseInsensitiveCompare(SMSharingInvitations.urlScheme) == NSComparisonResult.OrderedSame {
             if let components = NSURLComponents(URL: url, resolvingAgainstBaseURL: false) {
                 Log.msg("components.queryItems: \(components.queryItems)")
                 if components.queryItems != nil {
@@ -155,6 +155,7 @@ public class SMSharingInvitations {
 
                             if queryItemUserName.name == self.queryItemUserName && queryItemUserName.value != nil {
                                 Log.msg("queryItemUserName.value: \(queryItemUserName.value!)")
+                                username = queryItemUserName.value
                             }
                         }
                         

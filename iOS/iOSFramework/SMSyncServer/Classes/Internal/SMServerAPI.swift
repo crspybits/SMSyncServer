@@ -265,7 +265,7 @@ internal class SMServerAPI {
     internal var serverURL:NSURL!
     
     internal var serverURLString:String {
-        return serverURL.absoluteString
+        return serverURL.absoluteString!
     }
     
     internal static let session = SMServerAPI()
@@ -330,7 +330,7 @@ internal class SMServerAPI {
     // On success, the returned SMSyncServerFile objects will have nil localURL members.
     internal func getFileIndex(completion:((fileIndex:[SMServerFile]?, fileIndexVersion:Int?, apiResult:SMServerAPIResult)->(Void))?) {
     
-        var params = self.userDelegate.userCredentialParams
+        let params = self.userDelegate.userCredentialParams
         Assert.If(nil == params, thenPrintThisString: "No user server params!")
         Log.msg("parameters: \(params)")
         

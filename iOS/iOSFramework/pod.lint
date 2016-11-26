@@ -1,1 +1,0 @@
-pod lib lint --sources="https://github.com/crspybits/Specs.git,https://github.com/CocoaPods/Specs.git" --allow-warnings

@@ -66,7 +66,7 @@ internal class SMServerNetworking {
             return
         }
         
-        self.manager.POST(serverURL.absoluteString, parameters: sendParameters, progress: nil,
+        self.manager.POST(serverURL.absoluteString!, parameters: sendParameters, progress: nil,
             success: { (request:NSURLSessionDataTask, response:AnyObject?) in
                 if let responseDict = response as? [String:AnyObject] {
                     Log.msg("AFNetworking Success: \(response)")
@@ -172,7 +172,7 @@ internal class SMServerNetworking {
         // http://stackoverflow.com/questions/34517582/how-can-i-prevent-modifications-of-a-png-file-uploaded-using-afnetworking-to-a-n
         // I have now set the COMPRESS_PNG_FILES Build Setting to NO to deal with this.
         
-        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString, parameters: nil, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
+        let request = AFHTTPRequestSerializer().multipartFormRequestWithMethod("POST", URLString: serverURL.absoluteString!, parameters: nil, constructingBodyWithBlock: { (formData: AFMultipartFormData) in
                 // NOTE!!! the name: given here *must* match up with that used on the server in the "multer" single parameter.
                 // Was getting an odd try/catch error here, so this is the reason for "try!"; see https://github.com/AFNetworking/AFNetworking/issues/3005
                 // 12/12/15; I think this issue was because I wasn't doing the do/try/catch, however.
