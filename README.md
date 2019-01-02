@@ -1,3 +1,5 @@
+This version of SyncServer is deprecated and not supported. See [SyncServerII](https://github.com/crspybits/SyncServerII).
+
 Contents:  
 [Introduction](#introduction)  
 [Development Status](#development-status)  
